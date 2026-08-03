@@ -1,0 +1,391 @@
+import os
+import json
+from datetime import datetime, timedelta, timezone
+from flask import Flask, render_template_string, jsonify, request, redirect, url_for
+from supabase import create_client, Client
+
+app = Flask(__name__)
+
+# === CREDANCIALES SUPABASE ===
+SUPABASE_URL = "https://sfdoobkwnaljgrmbzwvl.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmZG9vYmt3bmFsamdybWJ6d3ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NDgzMjcsImV4cCI6MjEwMTMyNDMyN30.ZvkJqP9QiDFAi9syxeMnam6gOlVMTMhiD_wEudqt11I"
+
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# === TIEMPOS DE COOLDOWN (Minutos) ===
+COOLDOWNS = {
+    "Muggron 1": 180,
+    "Muggron 2": 180,
+    "Dreadhorn 1": 60,
+    "Dreadhorn 2": 60,
+    "Moltragon 1": 60,
+    "Moltragon 2": 60,
+    "Borgar": 120,
+    "Kharzul 1": 420,
+    "Kharzul 2": 420,
+    "Kharzul 3": 420,
+    "Vescrya 1": 420,
+    "Vescrya 2": 420,
+    "Vescrya 3": 420,
+    "Yellow Goblin": 600,
+    "Blue Goblin": 600,
+    "Red Goblin": 600,
+    "Red Dragon": 360,
+    "Santa 1": 360,
+    "Santa 2": 360,
+    "White Wizard 1": 360,
+    "White Wizard 2": 360,
+    "Skeleton King 1": 360,
+    "Skeleton King 2": 360,
+    "Muggron Barracks 1": 180,
+    "Muggron Barracks 2": 180,
+    "Muggron Crywolf 1": 180,
+    "Muggron Crywolf 2": 180
+}
+
+SERVIDORES = ["Server 1", "Server 2", "Server 3", "Server 20"]
+
+# === FUNCIONES DE BASE DE DATOS ===
+def parsear_fecha_utc(dt_str):
+    if not dt_str: return None
+    try:
+        clean_str = str(dt_str).replace('Z', '+00:00')
+        dt_obj = datetime.fromisoformat(clean_str)
+        if dt_obj.tzinfo is None: dt_obj = dt_obj.replace(tzinfo=timezone.utc)
+        return dt_obj
+    except Exception:
+        return None
+
+def obtener_datos():
+    timers_map = {svr: {} for svr in SERVIDORES}
+    pcs_map = {svr: "Sin reportes" for svr in SERVIDORES}
+    pj_map = {svr: "Desconocido" for svr in SERVIDORES}
+    hb_map = {svr: None for svr in SERVIDORES}
+
+    try:
+        res = supabase.table('timers_bosses').select('*').execute()
+        ahora_utc = datetime.now(timezone.utc)
+
+        if res.data:
+            for row in res.data:
+                svr = row.get('server')
+                if not svr or svr not in SERVIDORES: continue
+
+                boss_timers = {}
+                raw_timers = row.get('timers') or {}
+
+                if isinstance(raw_timers, dict):
+                    for boss, dt_str in raw_timers.items():
+                        dt_obj = parsear_fecha_utc(dt_str)
+                        if dt_obj and dt_obj > ahora_utc:
+                            boss_timers[boss] = int(dt_obj.timestamp())
+
+                timers_map[svr] = boss_timers
+                pcs_map[svr] = row.get('last_pc') or 'Sin reportes'
+                pj_map[svr] = row.get('last_pj') or 'Desconocido'
+                hb_map[svr] = row.get('last_heartbeat')
+
+        return timers_map, pcs_map, pj_map, hb_map
+    except Exception as e:
+        return timers_map, pcs_map, pj_map, hb_map
+
+def guardar_boss(server, boss, pc_id, pj_name):
+    try:
+        res = supabase.table('timers_bosses').select('timers').eq('server', server).execute()
+        current = (res.data[0]['timers'] if res.data and res.data[0].get('timers') else {})
+        
+        nueva_fecha = datetime.now(timezone.utc) + timedelta(minutes=COOLDOWNS[boss])
+        current[boss] = nueva_fecha.isoformat()
+        ahora_iso = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+
+        supabase.table('timers_bosses').update({
+            'timers': current,
+            'last_pc': pc_id,
+            'last_pj': pj_name,
+            'last_heartbeat': ahora_iso
+        }).eq('server', server).execute()
+    except Exception as e:
+        print(f"Error guardando: {e}")
+
+def borrar_boss(server, boss):
+    try:
+        res = supabase.table('timers_bosses').select('timers').eq('server', server).execute()
+        current = (res.data[0]['timers'] if res.data and res.data[0].get('timers') else {})
+        if boss in current:
+            del current[boss]
+            supabase.table('timers_bosses').update({'timers': current}).eq('server', server).execute()
+    except Exception as e:
+        pass
+
+def actualizar_heartbeat(server, pc_id, pj_name):
+    try:
+        ahora_iso = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+        supabase.table('timers_bosses').update({
+            'last_pc': pc_id,
+            'last_pj': pj_name,
+            'last_heartbeat': ahora_iso
+        }).eq('server', server).execute()
+    except Exception:
+        pass
+
+# === INTERFAZ WEB (USANDO FORMULARIOS PURE HTML) ===
+HTML_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚔️ Monitor Multi-PC - MuDream ⚔️</title>
+    <style>
+        :root { --bg-dark: #0a0814; --card-bg: #141126; --card-border: #2a244d; --accent-purple: #7b2cbf; --accent-glow: #9d4edd; --text-primary: #e6e1ff; --text-secondary: #8e85b8; --alive-green: #2ecc71; --cd-red: #ff4757; --window-yellow: #f1c40f; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-dark); color: var(--text-primary); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        header { text-align: center; margin-bottom: 20px; width: 100%; max-width: 1200px; }
+        h1 { font-size: 1.8rem; margin: 0; color: #fff; text-shadow: 0 0 10px rgba(123, 44, 191, 0.5); }
+        .controls-bar { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 25px; background: #100d21; padding: 12px 20px; border-radius: 12px; border: 1px solid var(--card-border); }
+        .view-btn { background: #1e1938; border: 1px solid var(--card-border); color: var(--text-primary); padding: 10px 18px; font-size: 0.95rem; font-weight: 600; border-radius: 8px; cursor: pointer; }
+        .view-btn.active { background: var(--accent-purple); border-color: var(--accent-glow); color: #fff; }
+        .dashboard-container { width: 100%; max-width: 1200px; }
+        .grid-all { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
+        .server-block { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 18px; }
+        .server-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--card-border); padding-bottom: 10px; margin-bottom: 8px; }
+        .server-title { font-size: 1.4rem; font-weight: bold; color: #fff; }
+        .bot-status-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 0.8rem; background: #0c091f; padding: 6px 10px; border-radius: 6px; }
+        .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+        .dot-online { background-color: var(--alive-green); }
+        .dot-offline { background-color: var(--cd-red); }
+        .pc-badge { font-size: 0.75rem; color: var(--text-secondary); }
+        .pj-badge { font-size: 0.8rem; color: #b8acff; font-weight: bold; }
+        .boss-list { display: flex; flex-direction: column; gap: 10px; }
+        .boss-row { background: #0d0a1a; border: 1px solid #1f1a3a; border-radius: 8px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; }
+        .boss-name { font-weight: bold; font-size: 0.95rem; }
+        .boss-respawn { font-size: 0.75rem; color: var(--text-secondary); }
+        .timer-badge { font-family: monospace; font-size: 1rem; font-weight: bold; padding: 4px 8px; border-radius: 6px; text-align: center; min-width: 110px; }
+        .status-alive { color: var(--alive-green); border: 1px solid var(--alive-green); }
+        .status-cd { color: var(--cd-red); border: 1px solid var(--cd-red); }
+        .status-window { color: var(--window-yellow); border: 1px solid var(--window-yellow); }
+        .btn-action { background: var(--accent-purple); border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem; }
+        .btn-action:hover { background: var(--accent-glow); }
+        .btn-reset { background: #2a2347; color: #aaa; margin-left: 4px; }
+        .btn-reset:hover { background: #ff4757; color: #fff; }
+        .actions-group { display: flex; align-items: center; gap: 4px; }
+        form { margin: 0; padding: 0; display: inline; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>⚔️ MONITOR MUDREAM ⚔️</h1>
+    </header>
+
+    <div class="controls-bar">
+        <button class="view-btn active" onclick="setVista('TODOS')">👁️ Ver Todos Juntos</button>
+        <button class="view-btn" onclick="setVista('Server 1')">Server 1</button>
+        <button class="view-btn" onclick="setVista('Server 2')">Server 2</button>
+        <button class="view-btn" onclick="setVista('Server 3')">Server 3</button>
+        <button class="view-btn" onclick="setVista('Server 20')">Server 20</button>
+    </div>
+
+    <div class="dashboard-container" id="dashboard"></div>
+
+    <script>
+        let modoVista = 'TODOS';
+        let estadoWeb = {};
+
+        function setVista(vista) {
+            modoVista = vista;
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                const esActivo = (vista === 'TODOS' && btn.innerText.includes('Todos')) || btn.innerText === vista;
+                btn.classList.toggle('active', esActivo);
+            });
+            render();
+        }
+
+        async function pedirTimers() {
+            try {
+                const res = await fetch('/api/timers');
+                estadoWeb = await res.json();
+                render();
+            } catch (e) {}
+        }
+
+        function render() {
+            const container = document.getElementById('dashboard');
+            container.innerHTML = '';
+            const serversDisponibles = estadoWeb.servers || ["Server 1", "Server 2", "Server 3", "Server 20"];
+            const timers = estadoWeb.timers || {};
+            const cooldowns = estadoWeb.cooldowns || {};
+            const ultimosReportes = estadoWeb.ultimas_pcs || {};
+            const ultimosPjs = estadoWeb.ultimos_pjs || {};
+            const heartbeats = estadoWeb.heartbeats || {};
+            const ahoraUnix = Math.floor(Date.now() / 1000);
+            const servidoresAMostrar = (modoVista === 'TODOS') ? serversDisponibles : [modoVista];
+            container.className = (modoVista === 'TODOS') ? "dashboard-container grid-all" : "dashboard-container";
+
+            servidoresAMostrar.forEach(svr => {
+                let serverBlock = document.createElement('div');
+                serverBlock.className = 'server-block';
+                const pcOrigen = ultimosReportes[svr] || 'Sin reportes';
+                const pjOrigen = ultimosPjs[svr] || 'Desconocido';
+                
+                let esOnline = false;
+                if (heartbeats[svr]) {
+                    const fechaLimpia = heartbeats[svr].replace(' ', 'T');
+                    const hbUnix = Math.floor(new Date(fechaLimpia).getTime() / 1000);
+                    if (!isNaN(hbUnix) && Math.abs(ahoraUnix - hbUnix) <= 60) { 
+                        esOnline = true; 
+                    }
+                }
+
+                const statusHtml = esOnline 
+                    ? `<span><span class="status-dot dot-online"></span><strong style="color:#2ecc71;">ONLINE</strong></span>`
+                    : `<span><span class="status-dot dot-offline"></span><strong style="color:#ff4757;">OFFLINE</strong></span>`;
+
+                let htmlContent = `
+                    <div class="server-header">
+                        <div class="server-title">${svr}</div>
+                        <div>${statusHtml}</div>
+                    </div>
+                    <div class="bot-status-container">
+                        <div class="pj-badge">👤 PJ: ${pjOrigen}</div>
+                        <div class="pc-badge">💻 PC: ${pcOrigen}</div>
+                    </div>
+                    <div class="boss-list">
+                `;
+
+                const bossesServidor = timers[svr] || {};
+                for (const [bossName, cdMinutos] of Object.entries(cooldowns)) {
+                    if (svr === "Server 20") {
+                        if (["Borgar", "Yellow Goblin", "Blue Goblin", "Red Goblin", "Red Dragon", "Santa 1", "Santa 2", "White Wizard 1", "White Wizard 2", "Skeleton King 1", "Skeleton King 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Muggron 1", "Muggron 2"].includes(bossName)) continue;
+                    } else {
+                        if (["Muggron Barracks 1", "Muggron Barracks 2", "Muggron Crywolf 1", "Muggron Crywolf 2", "Kharzul 2", "Kharzul 3", "Vescrya 2", "Vescrya 3"].includes(bossName)) continue;
+                    }
+
+                    let statusState = 'alive';
+                    let displayTimer = '';
+
+                    if (bossName in bossesServidor) {
+                        const targetUnix = bossesServidor[bossName];
+                        const diffSec = targetUnix - ahoraUnix;
+                        if (["Yellow Goblin", "Blue Goblin", "Red Goblin"].includes(bossName)) {
+                            const inicioVentanaUnix = targetUnix;
+                            const finVentanaUnix = targetUnix + 3600;
+                            if (ahoraUnix < inicioVentanaUnix) {
+                                statusState = 'cd';
+                                const cdSec = inicioVentanaUnix - ahoraUnix;
+                                const h = Math.floor(cdSec / 3600), m = Math.floor((cdSec % 3600) / 60), s = cdSec % 60;
+                                displayTimer = `<div class="timer-badge status-cd">🔴 ${h}h ${m < 10 ? '0':''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
+                            } else if (ahoraUnix >= inicioVentanaUnix && ahoraUnix <= finVentanaUnix) {
+                                statusState = 'window';
+                                const winSec = finVentanaUnix - ahoraUnix;
+                                const m = Math.floor(winSec / 60), s = winSec % 60;
+                                displayTimer = `<div class="timer-badge status-window">🟡 VENTANA (${m}m ${s < 10 ? '0':''}${s}s)</div>`;
+                            }
+                        } else if (diffSec > 0) {
+                            statusState = 'cd';
+                            const h = Math.floor(diffSec / 3600), m = Math.floor((diffSec % 3600) / 60), s = diffSec % 60;
+                            displayTimer = `<div class="timer-badge status-cd">🔴 ${h > 0 ? h + 'h ' : ''}${m < 10 ? '0':''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
+                        }
+                    }
+
+                    if (statusState === 'alive') displayTimer = `<div class="timer-badge status-alive">🟢 ¡VIVO!</div>`;
+
+                    // Clic nativo enviado directamente por Formulario (Imposible de bloquear)
+                    htmlContent += `
+                        <div class="boss-row">
+                            <div>
+                                <div class="boss-name">${bossName}</div>
+                                <div class="boss-respawn">${cdMinutos} min</div>
+                            </div>
+                            ${displayTimer}
+                            <div class="actions-group">
+                                <form action="/action/kill" method="POST">
+                                    <input type="hidden" name="server" value="${svr}">
+                                    <input type="hidden" name="boss" value="${bossName}">
+                                    <button type="submit" class="btn-action">⚔️ Kill</button>
+                                </form>
+                                ${statusState !== 'alive' ? `
+                                <form action="/action/reset" method="POST">
+                                    <input type="hidden" name="server" value="${svr}">
+                                    <input type="hidden" name="boss" value="${bossName}">
+                                    <button type="submit" class="btn-action btn-reset">✖</button>
+                                </form>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+                htmlContent += `</div>`;
+                serverBlock.innerHTML = htmlContent;
+                container.appendChild(serverBlock);
+            });
+        }
+        setInterval(pedirTimers, 1000);
+        pedirTimers();
+    </script>
+</body>
+</html>
+"""
+
+# === RUTAS API ===
+@app.route('/')
+def index():
+    return render_template_string(HTML_TEMPLATE)
+
+@app.route('/ping')
+def ping():
+    return "OK", 200
+
+@app.route('/api/timers', methods=['GET'])
+def get_timers():
+    timers_map, pcs_map, pj_map, hb_map = obtener_datos()
+    return jsonify({
+        "timers": timers_map, 
+        "cooldowns": COOLDOWNS, 
+        "servers": SERVIDORES, 
+        "ultimas_pcs": pcs_map, 
+        "ultimos_pjs": pj_map, 
+        "heartbeats": hb_map
+    })
+
+# Manejo de acciones enviadas por la Web
+@app.route('/action/kill', methods=['POST'])
+def action_kill():
+    svr = request.form.get("server")
+    boss = request.form.get("boss")
+    if svr and boss:
+        guardar_boss(svr, boss, "Navegador Web", "Web")
+    return redirect(url_for('index'))
+
+@app.route('/action/reset', methods=['POST'])
+def action_reset():
+    svr = request.form.get("server")
+    boss = request.form.get("boss")
+    if svr and boss:
+        borrar_boss(svr, boss)
+    return redirect(url_for('index'))
+
+# Endpoint exclusivo para el Bot en Python
+@app.route('/api/kill', methods=['POST'])
+def api_kill():
+    data = request.get_json(silent=True) or {}
+    svr = data.get("server")
+    boss = data.get("boss")
+    pc_id = data.get("pc_id", "Desconocida")
+    pj_name = data.get("pj_name", "Desconocido")
+    if svr and boss:
+        guardar_boss(svr, boss, pc_id, pj_name)
+        return jsonify({"status": "ok"}), 200
+    return jsonify({"status": "error"}), 400
+
+@app.route('/api/heartbeat', methods=['POST'])
+def api_heartbeat():
+    data = request.get_json(silent=True) or {}
+    svr = data.get("server")
+    pc_id = data.get("pc_id", "Desconocida")
+    pj_name = data.get("pj_name", "Desconocido")
+    if svr:
+        actualizar_heartbeat(svr, pc_id, pj_name)
+        return jsonify({"status": "ok"}), 200
+    return jsonify({"status": "error"}), 400
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
