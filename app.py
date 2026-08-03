@@ -2,17 +2,22 @@ import os
 import json
 from datetime import datetime, timedelta, timezone
 from flask import Flask, render_template_string, jsonify, request, redirect, url_for
-from supabase import create_client, Client
+import requests
 
 app = Flask(__name__)
 
-# === NUEVAS CREDENCIALES SUPABASE ===
+# === CONFIGURACIÓN DE SUPABASE REST API ===
 SUPABASE_URL = "https://csdwnpkvuymtasxpujza.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzZHducGt2dXltdGFzeHB1anphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3ODU0NDYsImV4cCI6MjEwMTM2MTQ0Nn0.IwgSW7QwoqLArOTfHYT4TyONA_57y1ELCaiQyZ3xyRg"
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+HEADERS = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": f"Bearer {SUPABASE_KEY}",
+    "Content-Type": "application/json",
+    "Prefer": "return=representation"
+}
 
-# === TIEMPOS DE COOLDOWN (en minutos) ===
+# === COOLDOWNS (en minutos) ===
 COOLDOWNS = {
     "Muggron 1": 180,
     "Muggron 2": 180,
@@ -45,7 +50,6 @@ COOLDOWNS = {
 
 SERVIDORES = ["Server 1", "Server 2", "Server 3", "Server 20"]
 
-# === FUNCIONES BASE DE DATOS ===
 def parsear_fecha_utc(dt_str):
     if not dt_str: return None
     try:
@@ -63,11 +67,13 @@ def obtener_datos():
     hb_map = {svr: None for svr in SERVIDORES}
 
     try:
-        res = supabase.table('timers_bosses').select('*').execute()
+        url = f"{SUPABASE_URL}/rest/v1/timers_bosses?select=*"
+        res = requests.get(url, headers=HEADERS, timeout=5)
         ahora_utc = datetime.now(timezone.utc)
 
-        if res.data:
-            for row in res.data:
+        if res.status_code == 200:
+            data = res.json()
+            for row in data:
                 svr = row.get('server')
                 if not svr or svr not in SERVIDORES: continue
 
@@ -91,40 +97,53 @@ def obtener_datos():
 
 def guardar_boss(server, boss, pc_id, pj_name):
     try:
-        res = supabase.table('timers_bosses').select('timers').eq('server', server).execute()
-        current = (res.data[0]['timers'] if res.data and res.data[0].get('timers') else {})
-        
+        url_get = f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}&select=timers"
+        res_get = requests.get(url_get, headers=HEADERS, timeout=5)
+        current = {}
+        if res_get.status_code == 200 and res_get.json():
+            current = res_get.json()[0].get('timers') or {}
+
         nueva_fecha = datetime.now(timezone.utc) + timedelta(minutes=COOLDOWNS[boss])
         current[boss] = nueva_fecha.isoformat()
         ahora_iso = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
 
-        supabase.table('timers_bosses').update({
+        payload = {
             'timers': current,
             'last_pc': pc_id,
             'last_pj': pj_name,
             'last_heartbeat': ahora_iso
-        }).eq('server', server).execute()
+        }
+        url_patch = f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}"
+        requests.patch(url_patch, headers=HEADERS, json=payload, timeout=5)
     except Exception as e:
         print(f"Error guardando: {e}")
 
 def borrar_boss(server, boss):
     try:
-        res = supabase.table('timers_bosses').select('timers').eq('server', server).execute()
-        current = (res.data[0]['timers'] if res.data and res.data[0].get('timers') else {})
+        url_get = f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}&select=timers"
+        res_get = requests.get(url_get, headers=HEADERS, timeout=5)
+        current = {}
+        if res_get.status_code == 200 and res_get.json():
+            current = res_get.json()[0].get('timers') or {}
+
         if boss in current:
             del current[boss]
-            supabase.table('timers_bosses').update({'timers': current}).eq('server', server).execute()
+            payload = {'timers': current}
+            url_patch = f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}"
+            requests.patch(url_patch, headers=HEADERS, json=payload, timeout=5)
     except Exception:
         pass
 
 def actualizar_heartbeat(server, pc_id, pj_name):
     try:
         ahora_iso = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
-        supabase.table('timers_bosses').update({
+        payload = {
             'last_pc': pc_id,
             'last_pj': pj_name,
             'last_heartbeat': ahora_iso
-        }).eq('server', server).execute()
+        }
+        url_patch = f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}"
+        requests.patch(url_patch, headers=HEADERS, json=payload, timeout=5)
     except Exception:
         pass
 
@@ -324,7 +343,7 @@ HTML_TEMPLATE = """
 </html>
 """
 
-# === RUTAS Y ENDPOINTS ===
+# === ENDPOINTS API ===
 @app.route('/')
 def index():
     return render_template_string(HTML_TEMPLATE)
