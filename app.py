@@ -343,7 +343,7 @@ HTML_TEMPLATE = """
 </html>
 """
 
-# === ENDPOINTS API ===
+# === RUTAS API ===
 @app.route('/')
 def index():
     return render_template_string(HTML_TEMPLATE)
@@ -364,22 +364,24 @@ def get_timers():
         "heartbeats": hb_map
     })
 
-@app.route('/action/kill', methods=['POST'])
+# ACCIONES DE KILL/RESET ADAPTADAS A GET Y POST
+@app.route('/action/kill', methods=['GET', 'POST'])
 def action_kill():
-    svr = request.form.get("server")
-    boss = request.form.get("boss")
+    svr = request.form.get("server") or request.args.get("server")
+    boss = request.form.get("boss") or request.args.get("boss")
     if svr and boss:
         guardar_boss(svr, boss, "Navegador Web", "Web")
     return redirect(url_for('index'))
 
-@app.route('/action/reset', methods=['POST'])
+@app.route('/action/reset', methods=['GET', 'POST'])
 def action_reset():
-    svr = request.form.get("server")
-    boss = request.form.get("boss")
+    svr = request.form.get("server") or request.args.get("server")
+    boss = request.form.get("boss") or request.args.get("boss")
     if svr and boss:
         borrar_boss(svr, boss)
     return redirect(url_for('index'))
 
+# ENDPOINTS API PARA EL BOT LOCAL
 @app.route('/api/kill', methods=['POST'])
 def api_kill():
     data = request.get_json(silent=True) or {}
