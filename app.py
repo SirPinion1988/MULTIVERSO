@@ -6,13 +6,13 @@ from supabase import create_client, Client
 
 app = Flask(__name__)
 
-# === CREDANCIALES SUPABASE ===
-SUPABASE_URL = "https://sfdoobkwnaljgrmbzwvl.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmZG9vYmt3bmFsamdybWJ6d3ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NDgzMjcsImV4cCI6MjEwMTMyNDMyN30.ZvkJqP9QiDFAi9syxeMnam6gOlVMTMhiD_wEudqt11I"
+# === NUEVAS CREDENCIALES SUPABASE ===
+SUPABASE_URL = "https://csdwnpkvuymtasxpujza.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzZHducGt2dXltdGFzeHB1anphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3ODU0NDYsImV4cCI6MjEwMTM2MTQ0Nn0.IwgSW7QwoqLArOTfHYT4TyONA_57y1ELCaiQyZ3xyRg"
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# === TIEMPOS DE COOLDOWN (Minutos) ===
+# === TIEMPOS DE COOLDOWN (en minutos) ===
 COOLDOWNS = {
     "Muggron 1": 180,
     "Muggron 2": 180,
@@ -45,7 +45,7 @@ COOLDOWNS = {
 
 SERVIDORES = ["Server 1", "Server 2", "Server 3", "Server 20"]
 
-# === FUNCIONES DE BASE DE DATOS ===
+# === FUNCIONES BASE DE DATOS ===
 def parsear_fecha_utc(dt_str):
     if not dt_str: return None
     try:
@@ -86,7 +86,7 @@ def obtener_datos():
                 hb_map[svr] = row.get('last_heartbeat')
 
         return timers_map, pcs_map, pj_map, hb_map
-    except Exception as e:
+    except Exception:
         return timers_map, pcs_map, pj_map, hb_map
 
 def guardar_boss(server, boss, pc_id, pj_name):
@@ -114,7 +114,7 @@ def borrar_boss(server, boss):
         if boss in current:
             del current[boss]
             supabase.table('timers_bosses').update({'timers': current}).eq('server', server).execute()
-    except Exception as e:
+    except Exception:
         pass
 
 def actualizar_heartbeat(server, pc_id, pj_name):
@@ -128,7 +128,7 @@ def actualizar_heartbeat(server, pc_id, pj_name):
     except Exception:
         pass
 
-# === INTERFAZ WEB (USANDO FORMULARIOS PURE HTML) ===
+# === PLANTILLA WEB ===
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="es">
@@ -289,7 +289,6 @@ HTML_TEMPLATE = """
 
                     if (statusState === 'alive') displayTimer = `<div class="timer-badge status-alive">🟢 ¡VIVO!</div>`;
 
-                    // Clic nativo enviado directamente por Formulario (Imposible de bloquear)
                     htmlContent += `
                         <div class="boss-row">
                             <div>
@@ -325,7 +324,7 @@ HTML_TEMPLATE = """
 </html>
 """
 
-# === RUTAS API ===
+# === RUTAS Y ENDPOINTS ===
 @app.route('/')
 def index():
     return render_template_string(HTML_TEMPLATE)
@@ -346,7 +345,6 @@ def get_timers():
         "heartbeats": hb_map
     })
 
-# Manejo de acciones enviadas por la Web
 @app.route('/action/kill', methods=['POST'])
 def action_kill():
     svr = request.form.get("server")
@@ -363,7 +361,6 @@ def action_reset():
         borrar_boss(svr, boss)
     return redirect(url_for('index'))
 
-# Endpoint exclusivo para el Bot en Python
 @app.route('/api/kill', methods=['POST'])
 def api_kill():
     data = request.get_json(silent=True) or {}
