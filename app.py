@@ -17,41 +17,59 @@ HEADERS = {
     "Prefer": "return=representation"
 }
 
-# === COOLDOWNS (en minutos) ===
-COOLDOWNS = {
-    "Muggron 1": 180,
-    "Muggron 2": 180,
-    "Dreadhorn 1": 60,
-    "Dreadhorn 2": 60,
-    "Moltragon 1": 60,
-    "Moltragon 2": 60,
-    "Borgar": 120,
-    "Kharzul 1": 420,
-    "Kharzul 2": 420,
-    "Kharzul 3": 420,
-    "Vescrya 1": 420,
-    "Vescrya 2": 420,
-    "Vescrya 3": 420,
-    "Yellow Goblin": 600,
-    "Blue Goblin": 600,
-    "Red Goblin": 600,
-    "Red Dragon": 360,
-    "Santa 1": 360,
-    "Santa 2": 360,
-    "White Wizard 1": 360,
-    "White Wizard 2": 360,
-    "Skeleton King 1": 360,
-    "Skeleton King 2": 360,
-    "Muggron Barracks 1": 180,
-    "Muggron Barracks 2": 180,
-    "Muggron Crywolf 1": 180,
-    "Muggron Crywolf 2": 180
+# === CONFIGURACIÓN DE COOLDOWNS Y VENTANAS (en minutos) ===
+# Formato: "Nombre": (Tiempo_Minimo_Cooldown, Duracion_Ventana_En_Minutos)
+COOLDOWNS_CONFIG = {
+    "Muggron 1": (180, 60),
+    "Muggron 2": (180, 60),
+    "Dreadhorn 1": (60, 60),
+    "Dreadhorn 2": (60, 60),
+    "Moltragon 1": (60, 60),    # Sale entre min 60 y min 120 (60 + 60)
+    "Moltragon 2": (60, 60),
+    "Borgar": (120, 60),
+    "Kharzul 1": (420, 60),
+    "Kharzul 2": (420, 60),
+    "Kharzul 3": (420, 60),
+    "Vescrya 1": (420, 60),
+    "Vescrya 2": (420, 60),
+    "Vescrya 3": (420, 60),
+    "Yellow Goblin": (600, 60),
+    "Blue Goblin": (600, 60),
+    "Red Goblin": (600, 60),
+    "Red Dragon": (360, 60),
+    "Santa 1": (360, 60),
+    "Santa 2": (360, 60),
+    "White Wizard 1": (360, 60),
+    "White Wizard 2": (360, 60),
+    "Skeleton King 1": (360, 60),
+    "Skeleton King 2": (360, 60),
+    "Muggron Barracks 1": (180, 60),
+    "Muggron Barracks 2": (180, 60),
+    "Muggron Crywolf 1": (180, 60),
+    "Muggron Crywolf 2": (180, 60)
 }
+
+# Mapeo simple de cooldowns para compatibilidad
+COOLDOWNS = {k: v[0] for k, v in COOLDOWNS_CONFIG.items()}
 
 SERVIDORES = ["Server 1", "Server 2", "Server 3", "Server 20"]
 
-# Bosses exclusivamente manuales (no se detectan automáticamente por lectura de pantalla)
+# Bosses exclusivamente manuales
 BOSSES_MANUALES = ["Yellow Goblin", "Blue Goblin", "Red Goblin", "Skeleton King 1", "Skeleton King 2"]
+
+# Grupos de bosses dobles para rotar en lugar de activar ambos a la vez
+GRUPOS_PARES = [
+    ["Moltragon 1", "Moltragon 2"],
+    ["Dreadhorn 1", "Dreadhorn 2"],
+    ["Muggron 1", "Muggron 2"],
+    ["Santa 1", "Santa 2"],
+    ["White Wizard 1", "White Wizard 2"],
+    ["Skeleton King 1", "Skeleton King 2"],
+    ["Kharzul 1", "Kharzul 2", "Kharzul 3"],
+    ["Vescrya 1", "Vescrya 2", "Vescrya 3"],
+    ["Muggron Barracks 1", "Muggron Barracks 2"],
+    ["Muggron Crywolf 1", "Muggron Crywolf 2"]
+]
 
 def parsear_fecha_utc(dt_str):
     if not dt_str: return None
@@ -64,7 +82,6 @@ def parsear_fecha_utc(dt_str):
         return None
 
 def guardar_backup_supabase_online(server, timers, pc_id, pj_name):
-    """Guarda un historial/backup directamente en la tabla secundaria timers_backup de Supabase."""
     try:
         url_post = f"{SUPABASE_URL}/rest/v1/timers_backup"
         payload = {
@@ -111,7 +128,35 @@ def obtener_datos():
     except Exception:
         return timers_map, pcs_map, pj_map, hb_map
 
-def guardar_boss(server, boss, pc_id, pj_name, custom_minutes=None):
+def seleccionar_boss_objetivo(server, boss_recibido, current_timers):
+    """
+    Si el reporte llega como 'Moltragon', determina automáticamente si debe aplicar a
+    'Moltragon 1' o a 'Moltragon 2' dependiendo de cuál está libre.
+    """
+    ahora_utc = datetime.now(timezone.utc)
+
+    for grupo in GRUPOS_PARES:
+        # Verifica si el boss recibido pertenece a un grupo (ej. 'Moltragon' o 'Moltragon 1')
+        nombre_base = boss_recibido.split(" ")[0]
+        if any(b.startswith(nombre_base) for b in grupo):
+            # Si se especificó el número exacto y está libre, usar ese
+            if boss_recibido in grupo:
+                return boss_recibido
+
+            # Buscar el primer boss del grupo que esté disponible/libre
+            for b_opcion in grupo:
+                dt_str = current_timers.get(b_opcion)
+                dt_obj = parsear_fecha_utc(dt_str) if dt_str else None
+                # Si no tiene timer o ya expiró (ya nació), elegimos este
+                if not dt_obj or dt_obj <= ahora_utc:
+                    return b_opcion
+            
+            # Si todos están en cooldown, reiniciamos el primero del grupo
+            return grupo[0]
+
+    return boss_recibido
+
+def guardar_boss(server, boss_solicitado, pc_id, pj_name, custom_minutes=None):
     try:
         url_get = f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}&select=timers"
         res_get = requests.get(url_get, headers=HEADERS, timeout=5)
@@ -119,9 +164,12 @@ def guardar_boss(server, boss, pc_id, pj_name, custom_minutes=None):
         if res_get.status_code == 200 and res_get.json():
             current = res_get.json()[0].get('timers') or {}
 
-        minutos = custom_minutes if custom_minutes is not None else COOLDOWNS.get(boss, 60)
+        # Determina cuál de los dos (o tres) bosses del grupo debe marcarse
+        boss_final = seleccionar_boss_objetivo(server, boss_solicitado, current)
+
+        minutos = custom_minutes if custom_minutes is not None else COOLDOWNS_CONFIG.get(boss_final, (60, 60))[0]
         nueva_fecha = datetime.now(timezone.utc) + timedelta(minutes=minutos)
-        current[boss] = nueva_fecha.isoformat()
+        current[boss_final] = nueva_fecha.isoformat()
         ahora_iso = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
 
         payload = {
@@ -266,7 +314,6 @@ HTML_TEMPLATE = """
             position: relative;
         }
         
-        /* ETIQUETA SUPERIOR DERECHA (S1, S2, S3, S20) */
         .server-badge-top {
             position: absolute;
             top: 6px;
@@ -388,7 +435,6 @@ HTML_TEMPLATE = """
             const heartbeats = estadoWeb.heartbeats || {};
             const ahoraUnix = Math.floor(Date.now() / 1000);
 
-            // VISTA "VER TODOS JUNTOS"
             if (modoVista === 'TODOS') {
                 let generalBlock = document.createElement('div');
                 generalBlock.className = 'server-block';
@@ -420,34 +466,22 @@ HTML_TEMPLATE = """
                             const targetUnix = bossesServidor[bossName];
                             const diffSec = targetUnix - ahoraUnix;
 
-                            if (["Yellow Goblin", "Blue Goblin", "Red Goblin"].includes(bossName)) {
-                                const inicioVentanaUnix = targetUnix;
-                                const finVentanaUnix = targetUnix + 3600;
-                                if (ahoraUnix < inicioVentanaUnix) {
-                                    statusState = 'cd';
-                                    const cdSec = inicioVentanaUnix - ahoraUnix;
-                                    prioridadOrden = cdSec; 
-                                    const h = Math.floor(cdSec / 3600), m = Math.floor((cdSec % 3600) / 60), s = cdSec % 60;
-                                    displayTimer = `<div class="timer-badge status-cd">🔴 ${h}h ${m < 10 ? '0':''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
-                                } else if (ahoraUnix >= inicioVentanaUnix && ahoraUnix <= finVentanaUnix) {
-                                    statusState = 'window';
-                                    prioridadOrden = -500;
-                                    const winSec = finVentanaUnix - ahoraUnix;
-                                    const m = Math.floor(winSec / 60), s = winSec % 60;
-                                    displayTimer = `<div class="timer-badge status-window">🟡 VENTANA (${m}m ${s < 10 ? '0':''}${s}s)</div>`;
-                                } else {
-                                    const vivoSec = ahoraUnix - finVentanaUnix;
-                                    prioridadOrden = -1000 - vivoSec; 
-                                    const h = Math.floor(vivoSec / 3600), m = Math.floor((vivoSec % 3600) / 60), s = vivoSec % 60;
-                                    displayTimer = `<div class="timer-badge status-alive">🟢 VIVO +${h > 0 ? h + 'h ' : ''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
-                                }
-                            } else if (diffSec > 0) {
+                            // Ventana configurada de 60 min adicionales tras cumplir el cd mínimo
+                            const finVentanaUnix = targetUnix + 3600;
+
+                            if (diffSec > 0) {
                                 statusState = 'cd';
                                 prioridadOrden = diffSec;
                                 const h = Math.floor(diffSec / 3600), m = Math.floor((diffSec % 3600) / 60), s = diffSec % 60;
                                 displayTimer = `<div class="timer-badge status-cd">🔴 ${h > 0 ? h + 'h ' : ''}${m < 10 ? '0':''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
+                            } else if (ahoraUnix >= targetUnix && ahoraUnix <= finVentanaUnix) {
+                                statusState = 'window';
+                                prioridadOrden = -500;
+                                const winSec = finVentanaUnix - ahoraUnix;
+                                const m = Math.floor(winSec / 60), s = winSec % 60;
+                                displayTimer = `<div class="timer-badge status-window">🟡 VENTANA (${m}m ${s < 10 ? '0':''}${s}s)</div>`;
                             } else {
-                                const vivoSec = Math.abs(diffSec);
+                                const vivoSec = ahoraUnix - finVentanaUnix;
                                 prioridadOrden = -1000 - vivoSec;
                                 const h = Math.floor(vivoSec / 3600), m = Math.floor((vivoSec % 3600) / 60), s = vivoSec % 60;
                                 displayTimer = `<div class="timer-badge status-alive">🟢 VIVO +${h > 0 ? h + 'h ' : ''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
@@ -502,7 +536,6 @@ HTML_TEMPLATE = """
                 container.appendChild(generalBlock);
 
             } else {
-                // VISTA INDIVIDUAL DE UN SERVIDOR
                 const svr = modoVista;
                 let serverBlock = document.createElement('div');
                 serverBlock.className = 'server-block';
@@ -551,35 +584,21 @@ HTML_TEMPLATE = """
                     if (bossName in bossesServidor) {
                         const targetUnix = bossesServidor[bossName];
                         const diffSec = targetUnix - ahoraUnix;
+                        const finVentanaUnix = targetUnix + 3600;
 
-                        if (["Yellow Goblin", "Blue Goblin", "Red Goblin"].includes(bossName)) {
-                            const inicioVentanaUnix = targetUnix;
-                            const finVentanaUnix = targetUnix + 3600;
-                            if (ahoraUnix < inicioVentanaUnix) {
-                                statusState = 'cd';
-                                const cdSec = inicioVentanaUnix - ahoraUnix;
-                                prioridadOrden = cdSec; 
-                                const h = Math.floor(cdSec / 3600), m = Math.floor((cdSec % 3600) / 60), s = cdSec % 60;
-                                displayTimer = `<div class="timer-badge status-cd">🔴 ${h}h ${m < 10 ? '0':''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
-                            } else if (ahoraUnix >= inicioVentanaUnix && ahoraUnix <= finVentanaUnix) {
-                                statusState = 'window';
-                                prioridadOrden = -500;
-                                const winSec = finVentanaUnix - ahoraUnix;
-                                const m = Math.floor(winSec / 60), s = winSec % 60;
-                                displayTimer = `<div class="timer-badge status-window">🟡 VENTANA (${m}m ${s < 10 ? '0':''}${s}s)</div>`;
-                            } else {
-                                const vivoSec = ahoraUnix - finVentanaUnix;
-                                prioridadOrden = -1000 - vivoSec; 
-                                const h = Math.floor(vivoSec / 3600), m = Math.floor((vivoSec % 3600) / 60), s = vivoSec % 60;
-                                displayTimer = `<div class="timer-badge status-alive">🟢 VIVO +${h > 0 ? h + 'h ' : ''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
-                            }
-                        } else if (diffSec > 0) {
+                        if (diffSec > 0) {
                             statusState = 'cd';
                             prioridadOrden = diffSec;
                             const h = Math.floor(diffSec / 3600), m = Math.floor((diffSec % 3600) / 60), s = diffSec % 60;
                             displayTimer = `<div class="timer-badge status-cd">🔴 ${h > 0 ? h + 'h ' : ''}${m < 10 ? '0':''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
+                        } else if (ahoraUnix >= targetUnix && ahoraUnix <= finVentanaUnix) {
+                            statusState = 'window';
+                            prioridadOrden = -500;
+                            const winSec = finVentanaUnix - ahoraUnix;
+                            const m = Math.floor(winSec / 60), s = winSec % 60;
+                            displayTimer = `<div class="timer-badge status-window">🟡 VENTANA (${m}m ${s < 10 ? '0':''}${s}s)</div>`;
                         } else {
-                            const vivoSec = Math.abs(diffSec);
+                            const vivoSec = ahoraUnix - finVentanaUnix;
                             prioridadOrden = -1000 - vivoSec;
                             const h = Math.floor(vivoSec / 3600), m = Math.floor((vivoSec % 3600) / 60), s = vivoSec % 60;
                             displayTimer = `<div class="timer-badge status-alive">🟢 VIVO +${h > 0 ? h + 'h ' : ''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
@@ -693,7 +712,6 @@ def api_kill():
     pc_id = data.get("pc_id", "Desconocida")
     pj_name = data.get("pj_name", "Desconocido")
     
-    # Ignora registros automáticos enviados por el bot para bosses de carga exclusivamente manual
     if boss in BOSSES_MANUALES and pc_id != "Navegador Web":
         return jsonify({"status": "ignored_manual_only"}), 200
 
