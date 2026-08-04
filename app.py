@@ -52,7 +52,7 @@ COOLDOWNS_CONFIG = {
 COOLDOWNS = {k: v[0] for k, v in COOLDOWNS_CONFIG.items()}
 SERVIDORES = ["Server 1", "Server 2", "Server 3", "Server 20"]
 
-# Bosses exclusivamente manuales (ocultos por defecto hasta ser ingresados)
+# Bosses exclusivamente manuales (Ocultos por defecto hasta ser cargados)
 BOSSES_MANUALES = ["Yellow Goblin", "Blue Goblin", "Red Goblin", "Skeleton King 1", "Skeleton King 2", "Red Dragon", "Santa 1", "Santa 2"]
 
 GRUPOS_PARES = [
@@ -721,6 +721,7 @@ HTML_TEMPLATE = """
                                 const m = Math.floor(winSec / 60), s = winSec % 60;
                                 displayTimer = `<div class="timer-badge status-window">🟡 VENTANA (${m}m ${s < 10 ? '0':''}${s}s)</div>`;
                             } else {
+                                // SI EXPIRÓ LA VENTANA Y ES UN BOSS MANUAL EXCLUSIVO, SE OCULTA DE LA PANTALLA
                                 if (BOSSES_MANUALES_LIST.includes(bossName)) {
                                     continue;
                                 }
@@ -730,6 +731,7 @@ HTML_TEMPLATE = """
                                 displayTimer = `<div class="timer-badge status-alive">🟢 VIVO +${h > 0 ? h + 'h ' : ''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
                             }
                         } else {
+                            // SI NO HA SIDO CARGADO Y ES UN BOSS MANUAL EXCLUSIVO, SE OCULTA DE LA PANTALLA
                             if (BOSSES_MANUALES_LIST.includes(bossName)) {
                                 continue;
                             }
@@ -991,6 +993,7 @@ def api_kill():
     pc_id = data.get("pc_id", "Desconocida")
     pj_name = data.get("pj_name", "Desconocido")
     
+    # Descarta capturas automáticas para los bosses de carga exclusivamente manual
     if boss in BOSSES_MANUALES and pc_id != "Navegador Web":
         return jsonify({"status": "ignored_manual_only"}), 200
 
