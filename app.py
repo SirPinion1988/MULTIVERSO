@@ -50,6 +50,9 @@ COOLDOWNS = {
 
 SERVIDORES = ["Server 1", "Server 2", "Server 3", "Server 20"]
 
+# Bosses exclusivamente manuales (no se detectan automáticamente por lectura de pantalla)
+BOSSES_MANUALES = ["Yellow Goblin", "Blue Goblin", "Red Goblin", "Skeleton King 1", "Skeleton King 2"]
+
 def parsear_fecha_utc(dt_str):
     if not dt_str: return None
     try:
@@ -128,11 +131,9 @@ def guardar_boss(server, boss, pc_id, pj_name, custom_minutes=None):
             'last_heartbeat': ahora_iso
         }
         
-        # Guardado en tabla principal
         url_patch = f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}"
         requests.patch(url_patch, headers=HEADERS, json=payload, timeout=5)
 
-        # Resguardo secundario online en Supabase
         guardar_backup_supabase_online(server, current, pc_id, pj_name)
 
     except Exception as e:
@@ -152,7 +153,6 @@ def borrar_boss(server, boss):
             url_patch = f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}"
             requests.patch(url_patch, headers=HEADERS, json=payload, timeout=5)
             
-            # Resguardo secundario online en Supabase
             guardar_backup_supabase_online(server, current, "Navegador Web", "Reset")
     except Exception:
         pass
@@ -235,8 +235,8 @@ HTML_TEMPLATE = """
         .view-btn { background: #1e1938; border: 1px solid var(--card-border); color: var(--text-primary); padding: 10px 18px; font-size: 0.95rem; font-weight: 600; border-radius: 8px; cursor: pointer; }
         .view-btn.active { background: var(--accent-purple); border-color: var(--accent-glow); color: #fff; }
         .dashboard-container { width: 100%; max-width: 1200px; }
-        .grid-all { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
-        .server-block { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 18px; }
+        
+        .server-block { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 18px; margin-bottom: 20px; }
         .server-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--card-border); padding-bottom: 10px; margin-bottom: 8px; }
         .server-title { font-size: 1.4rem; font-weight: bold; color: #fff; }
         .bot-status-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 0.8rem; background: #0c091f; padding: 6px 10px; border-radius: 6px; }
@@ -248,23 +248,41 @@ HTML_TEMPLATE = """
         
         .boss-grid { 
             display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
-            gap: 10px; 
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); 
+            gap: 12px; 
         }
         .boss-card { 
             background: #0d0a1a; 
             border: 1px solid #1f1a3a; 
             border-radius: 10px; 
-            padding: 10px; 
+            padding: 12px 10px 10px 10px; 
             display: flex; 
             flex-direction: column; 
             justify-content: space-between; 
             align-items: center; 
             text-align: center;
-            min-height: 120px;
+            min-height: 125px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            position: relative;
         }
-        .boss-name { font-weight: bold; font-size: 0.85rem; margin-bottom: 2px; }
+        
+        /* ETIQUETA SUPERIOR DERECHA (S1, S2, S3, S20) */
+        .server-badge-top {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            font-size: 0.7rem;
+            background: var(--accent-purple);
+            color: #ffffff;
+            padding: 2px 6px;
+            border-radius: 5px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            border: 1px solid var(--accent-glow);
+            box-shadow: 0 0 5px rgba(157, 78, 221, 0.4);
+        }
+
+        .boss-name { font-weight: bold; font-size: 0.85rem; margin-top: 6px; margin-bottom: 2px; width: 100%; word-break: break-word; }
         .boss-respawn { font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 6px; }
         
         .timer-badge { font-family: monospace; font-size: 0.85rem; font-weight: bold; padding: 4px 6px; border-radius: 6px; text-align: center; width: 100%; box-sizing: border-box; margin-bottom: 8px; }
@@ -321,6 +339,14 @@ HTML_TEMPLATE = """
         let modoVista = 'TODOS';
         let estadoWeb = {};
 
+        function obtenerTagServer(svr) {
+            if (svr === "Server 1") return "S1";
+            if (svr === "Server 2") return "S2";
+            if (svr === "Server 3") return "S3";
+            if (svr === "Server 20") return "S20";
+            return svr;
+        }
+
         function poblarSelectorBosses() {
             const selectBoss = document.getElementById('manualBoss');
             if (!selectBoss || selectBoss.options.length > 1) return;
@@ -361,10 +387,123 @@ HTML_TEMPLATE = """
             const ultimosPjs = estadoWeb.ultimos_pjs || {};
             const heartbeats = estadoWeb.heartbeats || {};
             const ahoraUnix = Math.floor(Date.now() / 1000);
-            const servidoresAMostrar = (modoVista === 'TODOS') ? serversDisponibles : [modoVista];
-            container.className = (modoVista === 'TODOS') ? "dashboard-container grid-all" : "dashboard-container";
 
-            servidoresAMostrar.forEach(svr => {
+            // VISTA "VER TODOS JUNTOS"
+            if (modoVista === 'TODOS') {
+                let generalBlock = document.createElement('div');
+                generalBlock.className = 'server-block';
+                
+                let htmlContent = `
+                    <div class="server-header">
+                        <div class="server-title">🔥 VISTA GENERAL DE TIMERS (TODOS LOS SERVIDORES)</div>
+                    </div>
+                    <div class="boss-grid">
+                `;
+
+                let todosLosBosses = [];
+
+                serversDisponibles.forEach(svr => {
+                    const bossesServidor = timers[svr] || {};
+
+                    for (const [bossName, cdMinutos] of Object.entries(cooldowns)) {
+                        if (svr === "Server 20") {
+                            if (["Borgar", "Yellow Goblin", "Blue Goblin", "Red Goblin", "Red Dragon", "Santa 1", "Santa 2", "White Wizard 1", "White Wizard 2", "Skeleton King 1", "Skeleton King 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Muggron 1", "Muggron 2"].includes(bossName)) continue;
+                        } else {
+                            if (["Muggron Barracks 1", "Muggron Barracks 2", "Muggron Crywolf 1", "Muggron Crywolf 2", "Kharzul 2", "Kharzul 3", "Vescrya 2", "Vescrya 3"].includes(bossName)) continue;
+                        }
+
+                        let statusState = 'alive';
+                        let displayTimer = '';
+                        let prioridadOrden = 0;
+
+                        if (bossName in bossesServidor) {
+                            const targetUnix = bossesServidor[bossName];
+                            const diffSec = targetUnix - ahoraUnix;
+
+                            if (["Yellow Goblin", "Blue Goblin", "Red Goblin"].includes(bossName)) {
+                                const inicioVentanaUnix = targetUnix;
+                                const finVentanaUnix = targetUnix + 3600;
+                                if (ahoraUnix < inicioVentanaUnix) {
+                                    statusState = 'cd';
+                                    const cdSec = inicioVentanaUnix - ahoraUnix;
+                                    prioridadOrden = cdSec; 
+                                    const h = Math.floor(cdSec / 3600), m = Math.floor((cdSec % 3600) / 60), s = cdSec % 60;
+                                    displayTimer = `<div class="timer-badge status-cd">🔴 ${h}h ${m < 10 ? '0':''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
+                                } else if (ahoraUnix >= inicioVentanaUnix && ahoraUnix <= finVentanaUnix) {
+                                    statusState = 'window';
+                                    prioridadOrden = -500;
+                                    const winSec = finVentanaUnix - ahoraUnix;
+                                    const m = Math.floor(winSec / 60), s = winSec % 60;
+                                    displayTimer = `<div class="timer-badge status-window">🟡 VENTANA (${m}m ${s < 10 ? '0':''}${s}s)</div>`;
+                                } else {
+                                    const vivoSec = ahoraUnix - finVentanaUnix;
+                                    prioridadOrden = -1000 - vivoSec; 
+                                    const h = Math.floor(vivoSec / 3600), m = Math.floor((vivoSec % 3600) / 60), s = vivoSec % 60;
+                                    displayTimer = `<div class="timer-badge status-alive">🟢 VIVO +${h > 0 ? h + 'h ' : ''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
+                                }
+                            } else if (diffSec > 0) {
+                                statusState = 'cd';
+                                prioridadOrden = diffSec;
+                                const h = Math.floor(diffSec / 3600), m = Math.floor((diffSec % 3600) / 60), s = diffSec % 60;
+                                displayTimer = `<div class="timer-badge status-cd">🔴 ${h > 0 ? h + 'h ' : ''}${m < 10 ? '0':''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
+                            } else {
+                                const vivoSec = Math.abs(diffSec);
+                                prioridadOrden = -1000 - vivoSec;
+                                const h = Math.floor(vivoSec / 3600), m = Math.floor((vivoSec % 3600) / 60), s = vivoSec % 60;
+                                displayTimer = `<div class="timer-badge status-alive">🟢 VIVO +${h > 0 ? h + 'h ' : ''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
+                            }
+                        } else {
+                            prioridadOrden = -999;
+                            displayTimer = `<div class="timer-badge status-alive">🟢 ¡VIVO!</div>`;
+                        }
+
+                        todosLosBosses.push({
+                            svr,
+                            bossName,
+                            cdMinutos,
+                            statusState,
+                            displayTimer,
+                            prioridadOrden
+                        });
+                    }
+                });
+
+                todosLosBosses.sort((a, b) => a.prioridadOrden - b.prioridadOrden);
+
+                todosLosBosses.forEach(b => {
+                    const tagServer = obtenerTagServer(b.svr);
+                    htmlContent += `
+                        <div class="boss-card">
+                            <span class="server-badge-top">${tagServer}</span>
+                            <div>
+                                <div class="boss-name">${b.bossName}</div>
+                                <div class="boss-respawn">${b.cdMinutos} min</div>
+                            </div>
+                            ${b.displayTimer}
+                            <div class="actions-group">
+                                <form action="/action/kill" method="POST">
+                                    <input type="hidden" name="server" value="${b.svr}">
+                                    <input type="hidden" name="boss" value="${b.bossName}">
+                                    <button type="submit" class="btn-action">⚔️ Kill</button>
+                                </form>
+                                ${b.statusState !== 'alive' ? `
+                                <form action="/action/reset" method="POST">
+                                    <input type="hidden" name="server" value="${b.svr}">
+                                    <input type="hidden" name="boss" value="${b.bossName}">
+                                    <button type="submit" class="btn-action btn-reset">✖</button>
+                                </form>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                htmlContent += `</div>`;
+                generalBlock.innerHTML = htmlContent;
+                container.appendChild(generalBlock);
+
+            } else {
+                // VISTA INDIVIDUAL DE UN SERVIDOR
+                const svr = modoVista;
                 let serverBlock = document.createElement('div');
                 serverBlock.className = 'server-block';
                 const pcOrigen = ultimosReportes[svr] || 'Sin reportes';
@@ -461,9 +600,11 @@ HTML_TEMPLATE = """
 
                 bossesProcesados.sort((a, b) => a.prioridadOrden - b.prioridadOrden);
 
+                const tagServer = obtenerTagServer(svr);
                 bossesProcesados.forEach(b => {
                     htmlContent += `
                         <div class="boss-card">
+                            <span class="server-badge-top">${tagServer}</span>
                             <div>
                                 <div class="boss-name">${b.bossName}</div>
                                 <div class="boss-respawn">${b.cdMinutos} min</div>
@@ -489,7 +630,7 @@ HTML_TEMPLATE = """
                 htmlContent += `</div>`;
                 serverBlock.innerHTML = htmlContent;
                 container.appendChild(serverBlock);
-            });
+            }
         }
         setInterval(pedirTimers, 1000);
         pedirTimers();
@@ -551,6 +692,11 @@ def api_kill():
     boss = data.get("boss")
     pc_id = data.get("pc_id", "Desconocida")
     pj_name = data.get("pj_name", "Desconocido")
+    
+    # Ignora registros automáticos enviados por el bot para bosses de carga exclusivamente manual
+    if boss in BOSSES_MANUALES and pc_id != "Navegador Web":
+        return jsonify({"status": "ignored_manual_only"}), 200
+
     if svr and boss:
         guardar_boss(svr, boss, pc_id, pj_name)
         return jsonify({"status": "ok"}), 200
