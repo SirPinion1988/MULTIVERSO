@@ -52,7 +52,7 @@ COOLDOWNS = {k: v[0] for k, v in COOLDOWNS_CONFIG.items()}
 SERVIDORES = ["Server 1", "Server 2", "Server 3", "Server 20"]
 
 # Bosses exclusivamente manuales (ocultos por defecto hasta ser ingresados)
-BOSSES_MANUALES = ["Yellow Goblin", "Blue Goblin", "Red Goblin", "Skeleton King 1", "Skeleton King 2", "Red Dragon"]
+BOSSES_MANUALES = ["Yellow Goblin", "Blue Goblin", "Red Goblin", "Skeleton King 1", "Skeleton King 2", "Red Dragon", "Santa 1", "Santa 2"]
 
 GRUPOS_PARES = [
     ["Moltragon 1", "Moltragon 2"],
@@ -329,7 +329,6 @@ HTML_TEMPLATE = """
         .actions-group { display: flex; align-items: center; gap: 4px; }
         form { margin: 0; padding: 0; display: inline; }
 
-        /* TABLA DE DONACIONES Y CARDS DE BOTS */
         .donaciones-table {
             width: 100%;
             border-collapse: collapse;
@@ -390,7 +389,7 @@ HTML_TEMPLATE = """
         let modoVista = 'TODOS';
         let estadoWeb = {};
         let listaDonaciones = [];
-        const BOSSES_MANUALES_LIST = ["Yellow Goblin", "Blue Goblin", "Red Goblin", "Skeleton King 1", "Skeleton King 2", "Red Dragon"];
+        const BOSSES_MANUALES_LIST = ["Yellow Goblin", "Blue Goblin", "Red Goblin", "Skeleton King 1", "Skeleton King 2", "Red Dragon", "Santa 1", "Santa 2"];
 
         function obtenerTagServer(svr) {
             if (svr === "Server 1") return "S1";
@@ -419,7 +418,6 @@ HTML_TEMPLATE = """
                 btn.classList.toggle('active', esActivo);
             });
             
-            // Ocultar panel de kill manual en la pestaña de Donaciones o Bots
             const panelKill = document.getElementById('panelKillManual');
             if (panelKill) {
                 panelKill.style.display = (vista === 'DONACIONES' || vista === 'BOTS') ? 'none' : 'block';
