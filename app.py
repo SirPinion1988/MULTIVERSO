@@ -1,7 +1,7 @@
 import os
 import json
 from datetime import datetime, timedelta, timezone
-from flask import Flask, render_template_string, jsonify, request, redirect, url_for, session
+from flask import Flask, render_template_string, jsonify, request, redirect, url_for, session, send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
 import requests
 
@@ -443,6 +443,11 @@ HTML_TEMPLATE = """
         <button class="view-btn" onclick="setVista('Server 20')">Server 20</button>
         <button class="view-btn" onclick="setVista('BOTS')">🤖 Bots Activos</button>
         <button class="view-btn" onclick="setVista('DONACIONES')">💎 Donaciones</button>
+        
+        <!-- BOTÓN DE DESCARGA DEL BOT CLIENT -->
+        <a href="/download/bot" style="text-decoration:none;">
+            <button class="view-btn" style="background:#7b2cbf; border-color:#9d4edd; color:#fff;">⬇️ Descargar Bot (.exe)</button>
+        </a>
     </div>
 
     <div class="dashboard-container" id="dashboard"></div>
@@ -991,17 +996,19 @@ HTML_TEMPLATE = """
 """
 
 # === RUTAS Y CONTROL DE ACCESO ===
+@app.route('/download/bot')
+def download_bot():
+    return send_from_directory('static', 'bot_local.exe', as_attachment=True)
+
 @app.route('/login', methods=['POST'])
 def login():
     username = request.form.get("username")
     password = request.form.get("password")
 
-    # 1. Login de prueba/emergencia
     if username == "admin" and password == "admin123":
         session['user'] = "admin"
         return redirect(url_for('index') + '#donaciones')
 
-    # 2. Validación con Supabase
     try:
         url = f"{SUPABASE_URL}/rest/v1/usuarios?username=eq.{username}&select=*"
         res = requests.get(url, headers=HEADERS, timeout=5)
