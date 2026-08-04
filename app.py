@@ -51,7 +51,7 @@ COOLDOWNS_CONFIG = {
 COOLDOWNS = {k: v[0] for k, v in COOLDOWNS_CONFIG.items()}
 SERVIDORES = ["Server 1", "Server 2", "Server 3", "Server 20"]
 
-# Bosses exclusivamente manuales (ocultos por defecto hasta ser ingresados)
+# Bosses exclusivamente manuales
 BOSSES_MANUALES = ["Yellow Goblin", "Blue Goblin", "Red Goblin", "Skeleton King 1", "Skeleton King 2", "Red Dragon", "Santa 1", "Santa 2"]
 
 GRUPOS_PARES = [
@@ -329,6 +329,31 @@ HTML_TEMPLATE = """
         .actions-group { display: flex; align-items: center; gap: 4px; }
         form { margin: 0; padding: 0; display: inline; }
 
+        /* VISTA DE DONACIONES POR PERSONAJE */
+        .donacion-pj-card {
+            background: #0d0a1a;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+        .pj-name-tag { font-size: 1.1rem; font-weight: bold; color: #b8acff; min-width: 140px; }
+        .items-donados-container { display: flex; flex-wrap: wrap; gap: 8px; }
+        .item-donado-chip {
+            background: #1a1533;
+            border: 1px solid var(--accent-purple);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
         .donaciones-table {
             width: 100%;
             border-collapse: collapse;
@@ -390,6 +415,19 @@ HTML_TEMPLATE = """
         let estadoWeb = {};
         let listaDonaciones = [];
         const BOSSES_MANUALES_LIST = ["Yellow Goblin", "Blue Goblin", "Red Goblin", "Skeleton King 1", "Skeleton King 2", "Red Dragon", "Santa 1", "Santa 2"];
+
+        function formatearCantidad(num) {
+            if (num >= 1000000000) {
+                return (num / 1000000000).toFixed(1).replace('.0', '') + 'kkk';
+            }
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1).replace('.0', '') + 'kk';
+            }
+            if (num >= 1000) {
+                return (num / 1000).toFixed(1).replace('.0', '') + 'k';
+            }
+            return num.toLocaleString();
+        }
 
         function obtenerTagServer(svr) {
             if (svr === "Server 1") return "S1";
@@ -536,12 +574,57 @@ HTML_TEMPLATE = """
                             <option value="Zen">Zen</option>
                         </select>
 
-                        <input type="number" name="cantidad" placeholder="Cantidad" min="1" value="1" required style="background:#0d0a1a; border:1px solid var(--card-border); color:#fff; padding:8px; border-radius:6px; width:100px;">
+                        <input type="number" name="cantidad" placeholder="Cantidad" min="1" value="1" required style="background:#0d0a1a; border:1px solid var(--card-border); color:#fff; padding:8px; border-radius:6px; width:120px;">
 
                         <button type="submit" class="btn-manual-submit">💎 Registrar Donación</button>
                     </form>
                 </div>
 
+                <h3 style="color:var(--accent-glow); margin-bottom:12px;">📊 Resumen por Personaje</h3>
+            `;
+
+            // AGRUPACIÓN EXPLÍCITA DE DONACIONES POR PJ
+            let resumenPj = {};
+            listaDonaciones.forEach(d => {
+                const pj = d.pj_name;
+                const tipo = d.tipo_donacion;
+                const cant = Number(d.cantidad) || 0;
+
+                if (!resumenPj[pj]) {
+                    resumenPj[pj] = {};
+                }
+                if (!resumenPj[pj][tipo]) {
+                    resumenPj[pj][tipo] = 0;
+                }
+                resumenPj[pj][tipo] += cant;
+            });
+
+            if (Object.keys(resumenPj).length === 0) {
+                htmlForm += `<div style="color:var(--text-secondary); margin-bottom:20px;">No hay donaciones registradas para resumir.</div>`;
+            } else {
+                htmlForm += `<div style="display:flex; flex-direction:column; gap:8px; margin-bottom:25px;">`;
+                for (const [pj, items] of Object.entries(resumenPj)) {
+                    htmlForm += `
+                        <div class="donacion-pj-card">
+                            <div class="pj-name-tag">👤 ${pj}</div>
+                            <div class="items-donados-container">
+                    `;
+                    for (const [tipoItem, totalCant] of Object.entries(items)) {
+                        const cantTexto = formatearCantidad(totalCant);
+                        htmlForm += `
+                            <div class="item-donado-chip">
+                                <span style="color:var(--window-yellow);">${cantTexto}</span> ${tipoItem}
+                            </div>
+                        `;
+                    }
+                    htmlForm += `</div></div>`;
+                }
+                htmlForm += `</div>`;
+            }
+
+            // HISTORIAL COMPLETO DE TABLA
+            htmlForm += `
+                <h3 style="color:var(--accent-glow); margin-bottom:10px;">📜 Historial Detallado</h3>
                 <table class="donaciones-table">
                     <thead>
                         <tr>
@@ -555,7 +638,7 @@ HTML_TEMPLATE = """
             `;
 
             if (listaDonaciones.length === 0) {
-                htmlForm += `<tr><td colspan="4" style="color:var(--text-secondary);">No hay donaciones registradas aún.</td></tr>`;
+                htmlForm += `<tr><td colspan="4" style="color:var(--text-secondary);">No hay donaciones en el historial.</td></tr>`;
             } else {
                 listaDonaciones.forEach(d => {
                     const fechaObj = new Date(d.created_at);
