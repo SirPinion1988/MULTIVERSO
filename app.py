@@ -1,10 +1,12 @@
 import os
 import json
 from datetime import datetime, timedelta, timezone
-from flask import Flask, render_template_string, jsonify, request, redirect, url_for
+from flask import Flask, render_template_string, jsonify, request, redirect, url_for, session
+from werkzeug.security import generate_password_hash, check_password_hash
 import requests
 
 app = Flask(__name__)
+app.secret_key = "clave_secreta_mudream_monitor_key"  # Necesario para sesiones
 
 # === CONFIGURACIÓN DE SUPABASE REST API ===
 SUPABASE_URL = "https://csdwnpkvuymtasxpujza.supabase.co"
@@ -17,16 +19,15 @@ HEADERS = {
     "Prefer": "return=representation"
 }
 
-# === CONFIGURACIÓN DE COOLDOWNS Y VENTANAS (en minutos) ===
-# Formato: "Nombre": (Tiempo_Minimo_Cooldown, Duracion_Ventana_En_Minutos)
+# === COOLDOWNS Y VENTANAS (en minutos) ===
 COOLDOWNS_CONFIG = {
-    "Muggron 1": (180, 60),      # Respawn entre min 180 y 240
+    "Muggron 1": (180, 60),
     "Muggron 2": (180, 60),
-    "Dreadhorn 1": (60, 60),     # Respawn entre min 60 y 120
+    "Dreadhorn 1": (60, 60),
     "Dreadhorn 2": (60, 60),
-    "Moltragon 1": (60, 60),     # Respawn entre min 60 y 120
+    "Moltragon 1": (60, 60),
     "Moltragon 2": (60, 60),
-    "Borgar": (120, 60),         # Respawn entre min 120 y 180
+    "Borgar": (120, 60),
     "Kharzul 1": (420, 60),
     "Kharzul 2": (420, 60),
     "Kharzul 3": (420, 60),
@@ -52,7 +53,7 @@ COOLDOWNS_CONFIG = {
 COOLDOWNS = {k: v[0] for k, v in COOLDOWNS_CONFIG.items()}
 SERVIDORES = ["Server 1", "Server 2", "Server 3", "Server 20"]
 
-# Bosses exclusivamente manuales (Ocultos por defecto hasta ser cargados)
+# Bosses exclusivamente manuales
 BOSSES_MANUALES = ["Yellow Goblin", "Blue Goblin", "Red Goblin", "Skeleton King 1", "Skeleton King 2", "Red Dragon", "Santa 1", "Santa 2"]
 
 GRUPOS_PARES = [
@@ -68,6 +69,7 @@ GRUPOS_PARES = [
     ["Muggron Crywolf 1", "Muggron Crywolf 2"]
 ]
 
+# === FUNCIONES AUXILIARES Y SUPABASE ===
 def parsear_fecha_utc(dt_str):
     if not dt_str: return None
     try:
@@ -205,7 +207,7 @@ def actualizar_heartbeat(server, pc_id, pj_name):
     except Exception:
         pass
 
-# === PLANTILLA WEB ===
+# === PLANTILLA WEB CON LOGIN Y LEYENDA DE MODIFICACIÓN ===
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="es">
@@ -227,8 +229,10 @@ HTML_TEMPLATE = """
             --window-yellow: #f1c40f; 
         }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-dark); color: var(--text-primary); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        header { text-align: center; margin-bottom: 20px; width: 100%; max-width: 1200px; }
+        header { text-align: center; margin-bottom: 20px; width: 100%; max-width: 1200px; display: flex; justify-content: space-between; align-items: center; }
         h1 { font-size: 1.8rem; margin: 0; color: #fff; text-shadow: 0 0 10px rgba(123, 44, 191, 0.5); }
+        .user-info-bar { font-size: 0.85rem; color: var(--accent-glow); background: #100d21; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--card-border); }
+        .logout-btn { color: #ff4757; text-decoration: none; margin-left: 8px; font-weight: bold; }
         
         .manual-panel {
             background: var(--card-bg);
@@ -354,6 +358,14 @@ HTML_TEMPLATE = """
             color: var(--text-primary);
         }
 
+        .leyenda-modificado {
+            font-size: 0.75rem;
+            color: var(--window-yellow);
+            font-style: italic;
+            display: block;
+            margin-top: 2px;
+        }
+
         .donaciones-table {
             width: 100%;
             border-collapse: collapse;
@@ -375,6 +387,10 @@ HTML_TEMPLATE = """
 
     <header>
         <h1>⚔️ MONITOR MUDREAM ⚔️</h1>
+        <div class="user-info-bar">
+            👤 Usuario: <strong>{{ session.get('user', 'Invitado') }}</strong>
+            <a href="/logout" class="logout-btn">Salir ✖</a>
+        </div>
     </header>
 
     <div class="manual-panel" id="panelKillManual">
@@ -630,23 +646,44 @@ HTML_TEMPLATE = """
                             <th>Personaje</th>
                             <th>Item / Donación</th>
                             <th>Cantidad</th>
+                            <th>Registrado Por</th>
+                            <th>Acción</th>
                         </tr>
                     </thead>
                     <tbody>
             `;
 
             if (listaDonaciones.length === 0) {
-                htmlForm += `<tr><td colspan="4" style="color:var(--text-secondary);">No hay donaciones en el historial.</td></tr>`;
+                htmlForm += `<tr><td colspan="6" style="color:var(--text-secondary);">No hay donaciones en el historial.</td></tr>`;
             } else {
                 listaDonaciones.forEach(d => {
                     const fechaObj = new Date(d.created_at);
                     const fechaStr = !isNaN(fechaObj) ? fechaObj.toLocaleString() : 'Reciente';
+                    
+                    let leyendaModificado = '';
+                    if (d.modificado_por) {
+                        const fechaModObj = new Date(d.fecha_modificacion);
+                        const fechaModStr = !isNaN(fechaModObj) ? fechaModObj.toLocaleTimeString() : '';
+                        leyendaModificado = `<span class="leyenda-modificado">✏️ Modificado por <strong>${d.modificado_por}</strong> (${fechaModStr})</span>`;
+                    }
+
                     htmlForm += `
                         <tr>
                             <td style="color:var(--text-secondary);">${fechaStr}</td>
                             <td style="font-weight:bold; color:#b8acff;">${d.pj_name}</td>
-                            <td><strong style="color:var(--window-yellow);">${d.tipo_donacion}</strong></td>
+                            <td>
+                                <strong style="color:var(--window-yellow);">${d.tipo_donacion}</strong>
+                                ${leyendaModificado}
+                            </td>
                             <td style="font-weight:bold; color:var(--alive-green);">${Number(d.cantidad).toLocaleString()}</td>
+                            <td style="color:var(--text-secondary); font-size:0.8rem;">👤 ${d.registrado_por || 'Sistema'}</td>
+                            <td>
+                                <form action="/action/editar_donacion" method="POST" style="display:inline;">
+                                    <input type="hidden" name="id" value="${d.id}">
+                                    <input type="number" name="nueva_cantidad" placeholder="Nueva cant." style="width:70px; background:#000; color:#fff; border:1px solid #444; border-radius:4px; font-size:0.75rem; padding:2px 4px;">
+                                    <button type="submit" class="btn-action" style="font-size:0.7rem;">✏️ Modificar</button>
+                                </form>
+                            </td>
                         </tr>
                     `;
                 });
@@ -721,7 +758,6 @@ HTML_TEMPLATE = """
                                 const m = Math.floor(winSec / 60), s = winSec % 60;
                                 displayTimer = `<div class="timer-badge status-window">🟡 VENTANA (${m}m ${s < 10 ? '0':''}${s}s)</div>`;
                             } else {
-                                // SI EXPIRÓ LA VENTANA Y ES UN BOSS MANUAL EXCLUSIVO, SE OCULTA DE LA PANTALLA
                                 if (BOSSES_MANUALES_LIST.includes(bossName)) {
                                     continue;
                                 }
@@ -731,7 +767,6 @@ HTML_TEMPLATE = """
                                 displayTimer = `<div class="timer-badge status-alive">🟢 VIVO +${h > 0 ? h + 'h ' : ''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
                             }
                         } else {
-                            // SI NO HA SIDO CARGADO Y ES UN BOSS MANUAL EXCLUSIVO, SE OCULTA DE LA PANTALLA
                             if (BOSSES_MANUALES_LIST.includes(bossName)) {
                                 continue;
                             }
@@ -908,14 +943,77 @@ HTML_TEMPLATE = """
 </html>
 """
 
-# === RUTAS API ===
+HTML_LOGIN = """
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>⚔️ Acceso - Monitor MuDream ⚔️</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #0a0814; color: #e6e1ff; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .login-card { background: #141126; border: 1px solid #7b2cbf; border-radius: 12px; padding: 30px; width: 320px; box-shadow: 0 0 20px rgba(123, 44, 191, 0.3); text-align: center; }
+        h2 { margin: 0 0 20px 0; color: #fff; font-size: 1.4rem; }
+        input { width: 100%; padding: 10px; margin-bottom: 15px; background: #0d0a1a; border: 1px solid #2a244d; color: #fff; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #7b2cbf; border: none; color: white; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        button:hover { background: #9d4edd; }
+        .error-msg { color: #ff4757; font-size: 0.85rem; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h2>⚔️ ACCESO MONITOR ⚔️</h2>
+        {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
+        <form action="/login" method="POST">
+            <input type="text" name="username" placeholder="Usuario" required>
+            <input type="password" name="password" placeholder="Contraseña" required>
+            <button type="submit">Ingresar</button>
+        </form>
+    </div>
+</body>
+</html>
+"""
+
+# === RUTAS Y CONTROL DE ACCESO ===
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        # 1. Caso de emergencia/creación por defecto si no existen usuarios en Supabase:
+        if username == "admin" and password == "admin123":
+            session['user'] = "admin"
+            session['rol'] = "admin"
+            return redirect(url_for('index'))
+
+        # 2. Validación normal contra Supabase
+        try:
+            url = f"{SUPABASE_URL}/rest/v1/usuarios?username=eq.{username}&select=*"
+            res = requests.get(url, headers=HEADERS, timeout=5)
+            if res.status_code == 200 and res.json():
+                usr_data = res.json()[0]
+                if check_password_hash(usr_data.get('password_hash', ''), password):
+                    session['user'] = usr_data.get('username')
+                    session['rol'] = usr_data.get('rol', 'encargado')
+                    return redirect(url_for('index'))
+        except Exception:
+            pass
+
+        error = "Usuario o contraseña incorrectos."
+
+    return render_template_string(HTML_LOGIN, error=error)
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
 @app.route('/')
 def index():
+    if 'user' not in session:
+        return redirect(url_for('login'))
     return render_template_string(HTML_TEMPLATE)
-
-@app.route('/ping')
-def ping():
-    return "OK", 200
 
 @app.route('/api/timers', methods=['GET'])
 def get_timers():
@@ -942,6 +1040,9 @@ def get_donaciones():
 
 @app.route('/action/donar', methods=['POST'])
 def action_donar():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
     pj_name = request.form.get("pj_name")
     tipo_donacion = request.form.get("tipo_donacion")
     cantidad = request.form.get("cantidad", 1)
@@ -952,11 +1053,35 @@ def action_donar():
             payload = {
                 "pj_name": pj_name,
                 "tipo_donacion": tipo_donacion,
-                "cantidad": int(cantidad)
+                "cantidad": int(cantidad),
+                "registrado_por": session.get('user', 'Desconocido')
             }
             requests.post(url_post, headers=HEADERS, json=payload, timeout=5)
         except Exception as e:
             print(f"Error registrando donación: {e}")
+
+    return redirect(url_for('index'))
+
+@app.route('/action/editar_donacion', methods=['POST'])
+def action_editar_donacion():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    donacion_id = request.form.get("id")
+    nueva_cantidad = request.form.get("nueva_cantidad")
+
+    if donacion_id and nueva_cantidad:
+        try:
+            ahora_iso = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+            url_patch = f"{SUPABASE_URL}/rest/v1/donaciones?id=eq.{donacion_id}"
+            payload = {
+                "cantidad": int(nueva_cantidad),
+                "modificado_por": session.get('user', 'Desconocido'),
+                "fecha_modificacion": ahora_iso
+            }
+            requests.patch(url_patch, headers=HEADERS, json=payload, timeout=5)
+        except Exception as e:
+            print(f"Error modificando donación: {e}")
 
     return redirect(url_for('index'))
 
@@ -993,7 +1118,6 @@ def api_kill():
     pc_id = data.get("pc_id", "Desconocida")
     pj_name = data.get("pj_name", "Desconocido")
     
-    # Descarta capturas automáticas para los bosses de carga exclusivamente manual
     if boss in BOSSES_MANUALES and pc_id != "Navegador Web":
         return jsonify({"status": "ignored_manual_only"}), 200
 
