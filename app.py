@@ -8,10 +8,8 @@ import requests
 app = Flask(__name__)
 app.secret_key = "clave_secreta_mudream_donaciones_key"
 
-# === ENLACE DE DESCARGA DIRECTO A GOOGLE DRIVE ===
 LINK_DESCARGA_BOT = "https://drive.google.com/drive/folders/1Rx1TZZl5IncOpJPLab4YnRqOEIY6iBrC?usp=sharing"
 
-# === CONFIGURACIÓN DE SUPABASE REST API ===
 SUPABASE_URL = "https://csdwnpkvuymtasxpujza.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzZHducGt2dXltdGFzeHB1anphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3ODU0NDYsImV4cCI6MjEwMTM2MTQ0Nn0.IwgSW7QwoqLArOTfHYT4TyONA_57y1ELCaiQyZ3xyRg"
 
@@ -22,7 +20,6 @@ HEADERS = {
     "Prefer": "return=representation"
 }
 
-# === COOLDOWNS Y VENTANAS (en minutos) ===
 COOLDOWNS_CONFIG = {
     "Muggron 1": (180, 60), "Muggron 2": (180, 60),
     "Dreadhorn 1": (60, 60), "Dreadhorn 2": (60, 60),
@@ -50,7 +47,6 @@ GRUPOS_PARES = [
     ["Muggron Barracks 1", "Muggron Barracks 2"], ["Muggron Crywolf 1", "Muggron Crywolf 2"]
 ]
 
-# === FUNCIONES AUXILIARES Y SUPABASE ===
 def parsear_fecha_utc(dt_str):
     if not dt_str: return None
     try:
@@ -154,7 +150,6 @@ def actualizar_heartbeat(server, pc_id, pj_name):
         requests.patch(f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}", headers=HEADERS, json=payload, timeout=5)
     except Exception: pass
 
-# === PLANTILLA WEB COMPLETA ===
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="es">
@@ -223,6 +218,10 @@ HTML_TEMPLATE = """
 
         .login-box { background: #0d0a1a; border: 1px solid var(--accent-purple); padding: 20px; border-radius: 12px; max-width: 350px; margin: 30px auto; text-align: center; box-shadow: 0 0 15px rgba(123, 44, 191, 0.3); }
         .login-box input { width: 100%; padding: 8px 12px; margin-bottom: 12px; background: #141126; border: 1px solid var(--card-border); color: #fff; border-radius: 6px; box-sizing: border-box; }
+        
+        .alert-box { padding: 10px 15px; border-radius: 6px; font-weight: bold; font-size: 0.9rem; margin-bottom: 15px; text-align: center; }
+        .alert-error { background: rgba(255, 71, 87, 0.2); border: 1px solid #ff4757; color: #ff4757; }
+        .alert-success { background: rgba(46, 204, 113, 0.2); border: 1px solid #2ecc71; color: #2ecc71; }
     </style>
 </head>
 <body>
@@ -236,6 +235,14 @@ HTML_TEMPLATE = """
         </div>
         {% endif %}
     </header>
+
+    {% if msg_error %}
+    <div class="alert-box alert-error">⚠️ {{ msg_error }}</div>
+    {% endif %}
+
+    {% if msg_success %}
+    <div class="alert-box alert-success">✅ {{ msg_success }}</div>
+    {% endif %}
 
     <div class="manual-panel" id="panelKillManual">
         <h3>⚡ Cargar Kill Manual / Timer Especial</h3>
@@ -272,7 +279,7 @@ HTML_TEMPLATE = """
     <div class="dashboard-container" id="dashboard"></div>
 
     <script>
-        let modoVista = 'TODOS';
+        let modoVista = window.location.hash ? window.location.hash.substring(1).toUpperCase() : 'TODOS';
         let estadoWeb = {};
         let listaDonaciones = [];
         const usuarioLogueado = "{{ session.get('user', '') }}";
@@ -306,7 +313,6 @@ HTML_TEMPLATE = """
             }
         }
 
-        // === ACCIONES VIA AJAX (SIN RECARGAR PAGINA) ===
         async function enviarKill(svr, boss, customMin = '') {
             try {
                 const formData = new FormData();
@@ -339,6 +345,7 @@ HTML_TEMPLATE = """
 
         function setVista(vista) {
             modoVista = vista;
+            window.location.hash = vista.toLowerCase();
             document.querySelectorAll('.view-btn').forEach(btn => {
                 const esActivo = (vista === 'TODOS' && btn.innerText.includes('Todos')) || btn.innerText.includes(vista);
                 btn.classList.toggle('active', esActivo);
@@ -760,7 +767,7 @@ HTML_TEMPLATE = """
             }
         }
         setInterval(pedirTimers, 1000);
-        pedirTimers();
+        setVista(modoVista);
     </script>
 </body>
 </html>
@@ -797,11 +804,10 @@ HTML_CAMBIO_CLAVE = """
 </html>
 """
 
-# === RUTAS Y CONTROL DE ACCESO ===
 @app.route('/login', methods=['POST'])
 def login():
-    username = request.form.get("username")
-    password = request.form.get("password")
+    username = request.form.get("username", "").strip()
+    password = request.form.get("password", "").strip()
 
     if username == "admin" and password == "admin123":
         session['user'] = "admin"
@@ -820,10 +826,12 @@ def login():
                     return render_template_string(HTML_CAMBIO_CLAVE)
 
                 return redirect(url_for('index') + '#donaciones')
+            else:
+                return render_template_string(HTML_TEMPLATE, link_descarga=LINK_DESCARGA_BOT, msg_error="Contraseña incorrecta.")
+        else:
+            return render_template_string(HTML_TEMPLATE, link_descarga=LINK_DESCARGA_BOT, msg_error=f"Usuario '{username}' no encontrado.")
     except Exception as e:
-        print(f"Error en login: {e}")
-
-    return redirect(url_for('index'))
+        return render_template_string(HTML_TEMPLATE, link_descarga=LINK_DESCARGA_BOT, msg_error=f"Error en servidor: {e}")
 
 @app.route('/action/cambiar_clave_inicial', methods=['POST'])
 def cambiar_clave_inicial():
@@ -854,24 +862,28 @@ def crear_usuario():
     if session.get('user') != 'admin':
         return redirect(url_for('index'))
 
-    nuevo_usuario = request.form.get("nuevo_usuario")
-    clave_inicial = request.form.get("clave_inicial")
+    nuevo_usuario = request.form.get("nuevo_usuario", "").strip()
+    clave_inicial = request.form.get("clave_inicial", "").strip()
 
     if nuevo_usuario and clave_inicial:
         try:
             pass_hash = generate_password_hash(clave_inicial)
             url_post = f"{SUPABASE_URL}/rest/v1/usuarios"
             payload = {
-                "username": nuevo_usuario.strip(),
+                "username": nuevo_usuario,
                 "password_hash": pass_hash,
                 "rol": "encargado",
                 "requiere_cambio_clave": True,
                 "creado_por": "admin"
             }
             res = requests.post(url_post, headers=HEADERS, json=payload, timeout=5)
-            print(f"[CREAR USUARIO STATUS]: {res.status_code} - {res.text}")
+            
+            if res.status_code in [200, 201]:
+                return render_template_string(HTML_TEMPLATE, link_descarga=LINK_DESCARGA_BOT, msg_success=f"Usuario '{nuevo_usuario}' creado exitosamente con la clave inicial '{clave_inicial}'.")
+            else:
+                return render_template_string(HTML_TEMPLATE, link_descarga=LINK_DESCARGA_BOT, msg_error=f"Error al crear usuario en Supabase ({res.status_code}): {res.text}")
         except Exception as e:
-            print(f"[Error creando usuario]: {e}")
+            return render_template_string(HTML_TEMPLATE, link_descarga=LINK_DESCARGA_BOT, msg_error=f"Excepción al conectar con Supabase: {e}")
 
     return redirect(url_for('index') + '#donaciones')
 
