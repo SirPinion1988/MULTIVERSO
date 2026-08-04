@@ -21,33 +21,18 @@ HEADERS = {
 
 # === COOLDOWNS Y VENTANAS (en minutos) ===
 COOLDOWNS_CONFIG = {
-    "Muggron 1": (180, 60),
-    "Muggron 2": (180, 60),
-    "Dreadhorn 1": (60, 60),
-    "Dreadhorn 2": (60, 60),
-    "Moltragon 1": (60, 60),
-    "Moltragon 2": (60, 60),
+    "Muggron 1": (180, 60), "Muggron 2": (180, 60),
+    "Dreadhorn 1": (60, 60), "Dreadhorn 2": (60, 60),
+    "Moltragon 1": (60, 60), "Moltragon 2": (60, 60),
     "Borgar": (120, 60),
-    "Kharzul 1": (420, 60),
-    "Kharzul 2": (420, 60),
-    "Kharzul 3": (420, 60),
-    "Vescrya 1": (420, 60),
-    "Vescrya 2": (420, 60),
-    "Vescrya 3": (420, 60),
-    "Yellow Goblin": (600, 60),
-    "Blue Goblin": (600, 60),
-    "Red Goblin": (600, 60),
-    "Red Dragon": (360, 60),
-    "Santa 1": (360, 60),
-    "Santa 2": (360, 60),
-    "White Wizard 1": (360, 60),
-    "White Wizard 2": (360, 60),
-    "Skeleton King 1": (360, 60),
-    "Skeleton King 2": (360, 60),
-    "Muggron Barracks 1": (180, 60),
-    "Muggron Barracks 2": (180, 60),
-    "Muggron Crywolf 1": (180, 60),
-    "Muggron Crywolf 2": (180, 60)
+    "Kharzul 1": (420, 60), "Kharzul 2": (420, 60), "Kharzul 3": (420, 60),
+    "Vescrya 1": (420, 60), "Vescrya 2": (420, 60), "Vescrya 3": (420, 60),
+    "Yellow Goblin": (600, 60), "Blue Goblin": (600, 60), "Red Goblin": (600, 60),
+    "Red Dragon": (360, 60), "Santa 1": (360, 60), "Santa 2": (360, 60),
+    "White Wizard 1": (360, 60), "White Wizard 2": (360, 60),
+    "Skeleton King 1": (360, 60), "Skeleton King 2": (360, 60),
+    "Muggron Barracks 1": (180, 60), "Muggron Barracks 2": (180, 60),
+    "Muggron Crywolf 1": (180, 60), "Muggron Crywolf 2": (180, 60)
 }
 
 COOLDOWNS = {k: v[0] for k, v in COOLDOWNS_CONFIG.items()}
@@ -55,16 +40,11 @@ SERVIDORES = ["Server 1", "Server 2", "Server 3", "Server 20"]
 BOSSES_MANUALES = ["Yellow Goblin", "Blue Goblin", "Red Goblin", "Skeleton King 1", "Skeleton King 2", "Red Dragon", "Santa 1", "Santa 2"]
 
 GRUPOS_PARES = [
-    ["Moltragon 1", "Moltragon 2"],
-    ["Dreadhorn 1", "Dreadhorn 2"],
-    ["Muggron 1", "Muggron 2"],
-    ["Santa 1", "Santa 2"],
-    ["White Wizard 1", "White Wizard 2"],
-    ["Skeleton King 1", "Skeleton King 2"],
-    ["Kharzul 1", "Kharzul 2", "Kharzul 3"],
-    ["Vescrya 1", "Vescrya 2", "Vescrya 3"],
-    ["Muggron Barracks 1", "Muggron Barracks 2"],
-    ["Muggron Crywolf 1", "Muggron Crywolf 2"]
+    ["Moltragon 1", "Moltragon 2"], ["Dreadhorn 1", "Dreadhorn 2"],
+    ["Muggron 1", "Muggron 2"], ["Santa 1", "Santa 2"],
+    ["White Wizard 1", "White Wizard 2"], ["Skeleton King 1", "Skeleton King 2"],
+    ["Kharzul 1", "Kharzul 2", "Kharzul 3"], ["Vescrya 1", "Vescrya 2", "Vescrya 3"],
+    ["Muggron Barracks 1", "Muggron Barracks 2"], ["Muggron Crywolf 1", "Muggron Crywolf 2"]
 ]
 
 # === FUNCIONES AUXILIARES Y SUPABASE ===
@@ -81,12 +61,7 @@ def parsear_fecha_utc(dt_str):
 def guardar_backup_supabase_online(server, timers, pc_id, pj_name):
     try:
         url_post = f"{SUPABASE_URL}/rest/v1/timers_backup"
-        payload = {
-            "server": server,
-            "timers": timers,
-            "last_pc": pc_id,
-            "last_pj": pj_name
-        }
+        payload = {"server": server, "timers": timers, "last_pc": pc_id, "last_pj": pj_name}
         requests.post(url_post, headers=HEADERS, json=payload, timeout=3)
     except Exception:
         pass
@@ -113,8 +88,7 @@ def obtener_datos():
                 if isinstance(raw_timers, dict):
                     for boss, dt_str in raw_timers.items():
                         dt_obj = parsear_fecha_utc(dt_str)
-                        if dt_obj:
-                            boss_timers[boss] = int(dt_obj.timestamp())
+                        if dt_obj: boss_timers[boss] = int(dt_obj.timestamp())
 
                 timers_map[svr] = boss_timers
                 pcs_map[svr] = row.get('last_pc') or 'Sin reportes'
@@ -127,21 +101,15 @@ def obtener_datos():
 
 def seleccionar_boss_objetivo(server, boss_recibido, current_timers):
     ahora_utc = datetime.now(timezone.utc)
-
     for grupo in GRUPOS_PARES:
         nombre_base = boss_recibido.split(" ")[0]
         if any(b.startswith(nombre_base) for b in grupo):
-            if boss_recibido in grupo:
-                return boss_recibido
-
+            if boss_recibido in grupo: return boss_recibido
             for b_opcion in grupo:
                 dt_str = current_timers.get(b_opcion)
                 dt_obj = parsear_fecha_utc(dt_str) if dt_str else None
-                if not dt_obj or dt_obj <= ahora_utc:
-                    return b_opcion
-            
+                if not dt_obj or dt_obj <= ahora_utc: return b_opcion
             return grupo[0]
-
     return boss_recibido
 
 def guardar_boss(server, boss_solicitado, pc_id, pj_name, custom_minutes=None):
@@ -149,63 +117,41 @@ def guardar_boss(server, boss_solicitado, pc_id, pj_name, custom_minutes=None):
         url_get = f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}&select=timers"
         res_get = requests.get(url_get, headers=HEADERS, timeout=5)
         current = {}
-        if res_get.status_code == 200 and res_get.json():
-            current = res_get.json()[0].get('timers') or {}
+        if res_get.status_code == 200 and res_get.json(): current = res_get.json()[0].get('timers') or {}
 
         boss_final = seleccionar_boss_objetivo(server, boss_solicitado, current)
-
         minutos = custom_minutes if custom_minutes is not None else COOLDOWNS_CONFIG.get(boss_final, (60, 60))[0]
         nueva_fecha = datetime.now(timezone.utc) + timedelta(minutes=minutos)
         current[boss_final] = nueva_fecha.isoformat()
         ahora_iso = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
 
-        payload = {
-            'timers': current,
-            'last_pc': pc_id,
-            'last_pj': pj_name,
-            'last_heartbeat': ahora_iso
-        }
-        
-        url_patch = f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}"
-        requests.patch(url_patch, headers=HEADERS, json=payload, timeout=5)
-
+        payload = {'timers': current, 'last_pc': pc_id, 'last_pj': pj_name, 'last_heartbeat': ahora_iso}
+        requests.patch(f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}", headers=HEADERS, json=payload, timeout=5)
         guardar_backup_supabase_online(server, current, pc_id, pj_name)
-
-    except Exception as e:
-        print(f"Error guardando: {e}")
+    except Exception as e: print(f"Error guardando: {e}")
 
 def borrar_boss(server, boss):
     try:
         url_get = f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}&select=timers"
         res_get = requests.get(url_get, headers=HEADERS, timeout=5)
         current = {}
-        if res_get.status_code == 200 and res_get.json():
-            current = res_get.json()[0].get('timers') or {}
+        if res_get.status_code == 200 and res_get.json(): current = res_get.json()[0].get('timers') or {}
 
         if boss in current:
             del current[boss]
             payload = {'timers': current}
-            url_patch = f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}"
-            requests.patch(url_patch, headers=HEADERS, json=payload, timeout=5)
-            
+            requests.patch(f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}", headers=HEADERS, json=payload, timeout=5)
             guardar_backup_supabase_online(server, current, "Navegador Web", "Reset")
-    except Exception:
-        pass
+    except Exception: pass
 
 def actualizar_heartbeat(server, pc_id, pj_name):
     try:
         ahora_iso = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
-        payload = {
-            'last_pc': pc_id,
-            'last_pj': pj_name,
-            'last_heartbeat': ahora_iso
-        }
-        url_patch = f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}"
-        requests.patch(url_patch, headers=HEADERS, json=payload, timeout=5)
-    except Exception:
-        pass
+        payload = {'last_pc': pc_id, 'last_pj': pj_name, 'last_heartbeat': ahora_iso}
+        requests.patch(f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}", headers=HEADERS, json=payload, timeout=5)
+    except Exception: pass
 
-# === PLANTILLA WEB ===
+# === PLANTILLA WEB COMPLETA ===
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="es">
@@ -215,16 +161,9 @@ HTML_TEMPLATE = """
     <title>⚔️ Monitor Multi-PC - MuDream ⚔️</title>
     <style>
         :root { 
-            --bg-dark: #0a0814; 
-            --card-bg: #141126; 
-            --card-border: #2a244d; 
-            --accent-purple: #7b2cbf; 
-            --accent-glow: #9d4edd; 
-            --text-primary: #e6e1ff; 
-            --text-secondary: #8e85b8; 
-            --alive-green: #2ecc71; 
-            --cd-red: #ff4757; 
-            --window-yellow: #f1c40f; 
+            --bg-dark: #0a0814; --card-bg: #141126; --card-border: #2a244d; 
+            --accent-purple: #7b2cbf; --accent-glow: #9d4edd; --text-primary: #e6e1ff; 
+            --text-secondary: #8e85b8; --alive-green: #2ecc71; --cd-red: #ff4757; --window-yellow: #f1c40f; 
         }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-dark); color: var(--text-primary); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         header { text-align: center; margin-bottom: 20px; width: 100%; max-width: 1200px; display: flex; justify-content: space-between; align-items: center; }
@@ -232,40 +171,11 @@ HTML_TEMPLATE = """
         .user-info-bar { font-size: 0.85rem; color: var(--accent-glow); background: #100d21; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--card-border); }
         .logout-btn { color: #ff4757; text-decoration: none; margin-left: 8px; font-weight: bold; }
         
-        .manual-panel {
-            background: var(--card-bg);
-            border: 1px solid var(--accent-purple);
-            border-radius: 12px;
-            padding: 15px 20px;
-            margin-bottom: 20px;
-            width: 100%;
-            max-width: 1200px;
-            box-sizing: border-box;
-            box-shadow: 0 0 15px rgba(123, 44, 191, 0.2);
-        }
+        .manual-panel { background: var(--card-bg); border: 1px solid var(--accent-purple); border-radius: 12px; padding: 15px 20px; margin-bottom: 20px; width: 100%; max-width: 1200px; box-sizing: border-box; box-shadow: 0 0 15px rgba(123, 44, 191, 0.2); }
         .manual-panel h3 { margin: 0 0 12px 0; font-size: 1.1rem; color: var(--accent-glow); text-align: center; }
         .manual-form { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: center; }
-        .manual-form select, .manual-form input {
-            background: #0d0a1a;
-            border: 1px solid var(--card-border);
-            color: var(--text-primary);
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            outline: none;
-        }
-        .manual-form select:focus, .manual-form input:focus { border-color: var(--accent-glow); }
-        .btn-manual-submit {
-            background: var(--accent-purple);
-            border: none;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.9rem;
-            transition: background 0.2s;
-        }
+        .manual-form select, .manual-form input { background: #0d0a1a; border: 1px solid var(--card-border); color: var(--text-primary); padding: 8px 12px; border-radius: 6px; font-size: 0.9rem; outline: none; }
+        .btn-manual-submit { background: var(--accent-purple); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
         .btn-manual-submit:hover { background: var(--accent-glow); }
 
         .controls-bar { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 25px; background: #100d21; padding: 12px 20px; border-radius: 12px; border: 1px solid var(--card-border); }
@@ -283,123 +193,36 @@ HTML_TEMPLATE = """
         .pc-badge { font-size: 0.75rem; color: var(--text-secondary); }
         .pj-badge { font-size: 0.8rem; color: #b8acff; font-weight: bold; }
         
-        .boss-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); 
-            gap: 12px; 
-        }
-        .boss-card { 
-            background: #0d0a1a; 
-            border: 1px solid #1f1a3a; 
-            border-radius: 10px; 
-            padding: 12px 10px 10px 10px; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: space-between; 
-            align-items: center; 
-            text-align: center;
-            min-height: 110px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            position: relative;
-        }
-        
-        .server-badge-top {
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            font-size: 0.7rem;
-            background: var(--accent-purple);
-            color: #ffffff;
-            padding: 2px 6px;
-            border-radius: 5px;
-            font-weight: 800;
-            letter-spacing: 0.5px;
-            border: 1px solid var(--accent-glow);
-            box-shadow: 0 0 5px rgba(157, 78, 221, 0.4);
-        }
-
+        .boss-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+        .boss-card { background: #0d0a1a; border: 1px solid #1f1a3a; border-radius: 10px; padding: 12px 10px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; min-height: 110px; position: relative; }
+        .server-badge-top { position: absolute; top: 6px; right: 6px; font-size: 0.7rem; background: var(--accent-purple); color: #fff; padding: 2px 6px; border-radius: 5px; font-weight: 800; }
         .boss-name { font-weight: bold; font-size: 0.9rem; margin-top: 6px; margin-bottom: 8px; width: 100%; word-break: break-word; }
-        
         .timer-badge { font-family: monospace; font-size: 0.85rem; font-weight: bold; padding: 4px 6px; border-radius: 6px; text-align: center; width: 100%; box-sizing: border-box; margin-bottom: 8px; }
         .status-alive { color: var(--alive-green); border: 1px solid var(--alive-green); background: rgba(46, 204, 113, 0.1); }
         .status-cd { color: var(--cd-red); border: 1px solid var(--cd-red); background: rgba(255, 71, 87, 0.1); }
         .status-window { color: var(--window-yellow); border: 1px solid var(--window-yellow); background: rgba(241, 196, 15, 0.1); }
-        
         .btn-action { background: var(--accent-purple); border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.75rem; }
         .btn-action:hover { background: var(--accent-glow); }
         .btn-reset { background: #2a2347; color: #aaa; margin-left: 4px; }
         .btn-reset:hover { background: #ff4757; color: #fff; }
         .actions-group { display: flex; align-items: center; gap: 4px; }
-        form { margin: 0; padding: 0; display: inline; }
 
-        .donacion-pj-card {
-            background: #0d0a1a;
-            border: 1px solid var(--card-border);
-            border-radius: 10px;
-            padding: 14px 18px;
-            margin-bottom: 10px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-        }
+        .donacion-pj-card { background: #0d0a1a; border: 1px solid var(--card-border); border-radius: 10px; padding: 14px 18px; margin-bottom: 10px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
         .pj-name-tag { font-size: 1.1rem; font-weight: bold; color: #b8acff; min-width: 140px; }
         .items-donados-container { display: flex; flex-wrap: wrap; gap: 8px; }
-        .item-donado-chip {
-            background: #1a1533;
-            border: 1px solid var(--accent-purple);
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
+        .item-donado-chip { background: #1a1533; border: 1px solid var(--accent-purple); padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: var(--text-primary); }
+        .leyenda-modificado { font-size: 0.75rem; color: var(--window-yellow); font-style: italic; display: block; margin-top: 2px; }
 
-        .leyenda-modificado {
-            font-size: 0.75rem;
-            color: var(--window-yellow);
-            font-style: italic;
-            display: block;
-            margin-top: 2px;
-        }
-
-        .donaciones-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-            background: #0d0a1a;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .donaciones-table th, .donaciones-table td {
-            padding: 10px 14px;
-            text-align: center;
-            border-bottom: 1px solid var(--card-border);
-        }
+        .donaciones-table { width: 100%; border-collapse: collapse; margin-top: 15px; background: #0d0a1a; border-radius: 8px; overflow: hidden; }
+        .donaciones-table th, .donaciones-table td { padding: 10px 14px; text-align: center; border-bottom: 1px solid var(--card-border); }
         .donaciones-table th { background: #1a1533; color: var(--accent-glow); font-size: 0.9rem; }
         .donaciones-table td { font-size: 0.85rem; }
 
-        .login-box {
-            background: #0d0a1a;
-            border: 1px solid var(--accent-purple);
-            padding: 20px;
-            border-radius: 12px;
-            max-width: 350px;
-            margin: 30px auto;
-            text-align: center;
-            box-shadow: 0 0 15px rgba(123, 44, 191, 0.3);
-        }
-        .login-box input {
-            width: 100%;
-            padding: 8px 12px;
-            margin-bottom: 12px;
-            background: #141126;
-            border: 1px solid var(--card-border);
-            color: #fff;
-            border-radius: 6px;
-            box-sizing: border-box;
-        }
+        .login-box { background: #0d0a1a; border: 1px solid var(--accent-purple); padding: 20px; border-radius: 12px; max-width: 350px; margin: 30px auto; text-align: center; box-shadow: 0 0 15px rgba(123, 44, 191, 0.3); }
+        .login-box input { width: 100%; padding: 8px 12px; margin-bottom: 12px; background: #141126; border: 1px solid var(--card-border); color: #fff; border-radius: 6px; box-sizing: border-box; }
+        .msg-info { padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.85rem; }
+        .msg-success { background: rgba(46, 204, 113, 0.2); border: 1px solid #2ecc71; color: #2ecc71; }
+        .msg-error { background: rgba(255, 71, 87, 0.2); border: 1px solid #ff4757; color: #ff4757; }
     </style>
 </head>
 <body>
@@ -424,13 +247,10 @@ HTML_TEMPLATE = """
                 <option value="Server 3">Server 3</option>
                 <option value="Server 20">Server 20</option>
             </select>
-            
             <select name="boss" id="manualBoss" required>
                 <option value="" disabled selected>Seleccionar Boss</option>
             </select>
-
             <input type="number" name="custom_timer" placeholder="Minutos restantes (Opcional)" min="0">
-
             <button type="submit" class="btn-manual-submit">➕ Registrar Kill</button>
         </form>
     </div>
@@ -443,8 +263,6 @@ HTML_TEMPLATE = """
         <button class="view-btn" onclick="setVista('Server 20')">Server 20</button>
         <button class="view-btn" onclick="setVista('BOTS')">🤖 Bots Activos</button>
         <button class="view-btn" onclick="setVista('DONACIONES')">💎 Donaciones</button>
-        
-        <!-- BOTÓN DE DESCARGA DEL BOT CLIENT -->
         <a href="/download/bot" style="text-decoration:none;">
             <button class="view-btn" style="background:#7b2cbf; border-color:#9d4edd; color:#fff;">⬇️ Descargar Bot (.exe)</button>
         </a>
@@ -457,18 +275,13 @@ HTML_TEMPLATE = """
         let estadoWeb = {};
         let listaDonaciones = [];
         const usuarioLogueado = "{{ session.get('user', '') }}";
+        const esAdmin = "{{ session.get('user', '') }}" === "admin";
         const BOSSES_MANUALES_LIST = ["Yellow Goblin", "Blue Goblin", "Red Goblin", "Skeleton King 1", "Skeleton King 2", "Red Dragon", "Santa 1", "Santa 2"];
 
         function formatearCantidad(num) {
-            if (num >= 1000000000) {
-                return (num / 1000000000).toFixed(1).replace('.0', '') + 'kkk';
-            }
-            if (num >= 1000000) {
-                return (num / 1000000).toFixed(1).replace('.0', '') + 'kk';
-            }
-            if (num >= 1000) {
-                return (num / 1000).toFixed(1).replace('.0', '') + 'k';
-            }
+            if (num >= 1000000000) return (num / 1000000000).toFixed(1).replace('.0', '') + 'kkk';
+            if (num >= 1000000) return (num / 1000000).toFixed(1).replace('.0', '') + 'kk';
+            if (num >= 1000) return (num / 1000).toFixed(1).replace('.0', '') + 'k';
             return num.toLocaleString();
         }
 
@@ -505,14 +318,9 @@ HTML_TEMPLATE = """
             }
 
             if (vista === 'DONACIONES') {
-                if (usuarioLogueado) {
-                    pedirDonaciones();
-                } else {
-                    renderLoginDonaciones();
-                }
-            } else {
-                render();
-            }
+                if (usuarioLogueado) { pedirDonaciones(); } 
+                else { renderLoginDonaciones(); }
+            } else { render(); }
         }
 
         async function pedirTimers() {
@@ -520,9 +328,7 @@ HTML_TEMPLATE = """
                 const res = await fetch('/api/timers');
                 estadoWeb = await res.json();
                 poblarSelectorBosses();
-                if (modoVista !== 'DONACIONES') {
-                    render();
-                }
+                if (modoVista !== 'DONACIONES') { render(); }
             } catch (e) {}
         }
 
@@ -542,7 +348,7 @@ HTML_TEMPLATE = """
                         <h3 style="color:var(--accent-glow); margin:0 0 15px 0;">🔐 Acceso a Donaciones</h3>
                         <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:15px;">Ingresa tus credenciales para administrar las donaciones.</p>
                         <form action="/login" method="POST">
-                            <input type="text" name="username" placeholder="Usuario Encargado" required>
+                            <input type="text" name="username" placeholder="Usuario" required>
                             <input type="password" name="password" placeholder="Contraseña" required>
                             <button type="submit" class="btn-manual-submit" style="width:100%;">Ingresar</button>
                         </form>
@@ -573,7 +379,6 @@ HTML_TEMPLATE = """
             serversDisponibles.forEach(svr => {
                 const pcOrigen = ultimosReportes[svr] || 'Sin reportes';
                 const pjOrigen = ultimosPjs[svr] || 'Desconocido';
-                
                 let esOnline = false;
                 let horaHbStr = 'Sin registros';
 
@@ -583,9 +388,7 @@ HTML_TEMPLATE = """
                     const hbUnix = Math.floor(hbDate.getTime() / 1000);
                     if (!isNaN(hbUnix)) {
                         horaHbStr = hbDate.toLocaleTimeString();
-                        if (Math.abs(ahoraUnix - hbUnix) <= 60) {
-                            esOnline = true;
-                        }
+                        if (Math.abs(ahoraUnix - hbUnix) <= 60) { esOnline = true; }
                     }
                 }
 
@@ -623,7 +426,23 @@ HTML_TEMPLATE = """
                 <div class="server-header">
                     <div class="server-title">💎 REGISTRO Y CONTROL DE DONACIONES</div>
                 </div>
-                
+            `;
+
+            // SI ES ADMIN -> MOSTRAR PANEL PARA CREAR NUEVO ENCARGADO
+            if (esAdmin) {
+                htmlForm += `
+                    <div style="background:#0c091f; padding:15px; border-radius:10px; margin-bottom:20px; border:1px solid var(--accent-purple);">
+                        <h4 style="margin:0 0 10px 0; color:var(--accent-glow);">👥 Panel Admin: Crear Nuevo Encargado</h4>
+                        <form action="/admin/crear_usuario" method="POST" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+                            <input type="text" name="nuevo_usuario" placeholder="Nombre de Usuario" required style="background:#0d0a1a; border:1px solid var(--card-border); color:#fff; padding:8px; border-radius:6px;">
+                            <input type="text" name="clave_inicial" placeholder="Clave Temporal" required style="background:#0d0a1a; border:1px solid var(--card-border); color:#fff; padding:8px; border-radius:6px;">
+                            <button type="submit" class="btn-manual-submit" style="background:#2ecc71;">➕ Crear Encargado</button>
+                        </form>
+                    </div>
+                `;
+            }
+
+            htmlForm += `
                 <div style="background:#0c091f; padding:15px; border-radius:10px; margin-bottom:20px; border:1px solid var(--card-border);">
                     <h4 style="margin:0 0 10px 0; color:var(--accent-glow);">➕ Cargar Nueva Donación</h4>
                     <form action="/action/donar" method="POST" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
@@ -653,12 +472,8 @@ HTML_TEMPLATE = """
                 const tipo = d.tipo_donacion;
                 const cant = Number(d.cantidad) || 0;
 
-                if (!resumenPj[pj]) {
-                    resumenPj[pj] = {};
-                }
-                if (!resumenPj[pj][tipo]) {
-                    resumenPj[pj][tipo] = 0;
-                }
+                if (!resumenPj[pj]) resumenPj[pj] = {};
+                if (!resumenPj[pj][tipo]) resumenPj[pj][tipo] = 0;
                 resumenPj[pj][tipo] += cant;
             });
 
@@ -667,18 +482,10 @@ HTML_TEMPLATE = """
             } else {
                 htmlForm += `<div style="display:flex; flex-direction:column; gap:8px; margin-bottom:25px;">`;
                 for (const [pj, items] of Object.entries(resumenPj)) {
-                    htmlForm += `
-                        <div class="donacion-pj-card">
-                            <div class="pj-name-tag">👤 ${pj}</div>
-                            <div class="items-donados-container">
-                    `;
+                    htmlForm += `<div class="donacion-pj-card"><div class="pj-name-tag">👤 ${pj}</div><div class="items-donados-container">`;
                     for (const [tipoItem, totalCant] of Object.entries(items)) {
                         const cantTexto = formatearCantidad(totalCant);
-                        htmlForm += `
-                            <div class="item-donado-chip">
-                                <span style="color:var(--window-yellow);">${cantTexto}</span> ${tipoItem}
-                            </div>
-                        `;
+                        htmlForm += `<div class="item-donado-chip"><span style="color:var(--window-yellow);">${cantTexto}</span> ${tipoItem}</div>`;
                     }
                     htmlForm += `</div></div>`;
                 }
@@ -719,10 +526,7 @@ HTML_TEMPLATE = """
                         <tr>
                             <td style="color:var(--text-secondary);">${fechaStr}</td>
                             <td style="font-weight:bold; color:#b8acff;">${d.pj_name}</td>
-                            <td>
-                                <strong style="color:var(--window-yellow);">${d.tipo_donacion}</strong>
-                                ${leyendaModificado}
-                            </td>
+                            <td><strong style="color:var(--window-yellow);">${d.tipo_donacion}</strong>${leyendaModificado}</td>
                             <td style="font-weight:bold; color:var(--alive-green);">${Number(d.cantidad).toLocaleString()}</td>
                             <td style="color:var(--text-secondary); font-size:0.8rem;">👤 ${d.registrado_por || 'Sistema'}</td>
                             <td>
@@ -743,16 +547,10 @@ HTML_TEMPLATE = """
         }
 
         function render() {
-            if (modoVista === 'BOTS') {
-                renderBotsActivos();
-                return;
-            }
+            if (modoVista === 'BOTS') { renderBotsActivos(); return; }
             if (modoVista === 'DONACIONES') {
-                if (usuarioLogueado) {
-                    renderDonaciones();
-                } else {
-                    renderLoginDonaciones();
-                }
+                if (usuarioLogueado) { renderDonaciones(); } 
+                else { renderLoginDonaciones(); }
                 return;
             }
 
@@ -769,14 +567,7 @@ HTML_TEMPLATE = """
             if (modoVista === 'TODOS') {
                 let generalBlock = document.createElement('div');
                 generalBlock.className = 'server-block';
-                
-                let htmlContent = `
-                    <div class="server-header">
-                        <div class="server-title">🔥 VISTA GENERAL DE TIMERS (TODOS LOS SERVIDORES)</div>
-                    </div>
-                    <div class="boss-grid">
-                `;
-
+                let htmlContent = `<div class="server-header"><div class="server-title">🔥 VISTA GENERAL DE TIMERS (TODOS LOS SERVIDORES)</div></div><div class="boss-grid">`;
                 let todosLosBosses = [];
 
                 serversDisponibles.forEach(svr => {
@@ -799,40 +590,28 @@ HTML_TEMPLATE = """
                             const finVentanaUnix = targetUnix + 3600;
 
                             if (diffSec > 0) {
-                                statusState = 'cd';
-                                prioridadOrden = diffSec;
+                                statusState = 'cd'; prioridadOrden = diffSec;
                                 const h = Math.floor(diffSec / 3600), m = Math.floor((diffSec % 3600) / 60), s = diffSec % 60;
                                 displayTimer = `<div class="timer-badge status-cd">🔴 ${h > 0 ? h + 'h ' : ''}${m < 10 ? '0':''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
                             } else if (ahoraUnix >= targetUnix && ahoraUnix <= finVentanaUnix) {
-                                statusState = 'window';
-                                prioridadOrden = -500;
+                                statusState = 'window'; prioridadOrden = -500;
                                 const winSec = finVentanaUnix - ahoraUnix;
                                 const m = Math.floor(winSec / 60), s = winSec % 60;
                                 displayTimer = `<div class="timer-badge status-window">🟡 VENTANA (${m}m ${s < 10 ? '0':''}${s}s)</div>`;
                             } else {
-                                if (BOSSES_MANUALES_LIST.includes(bossName)) {
-                                    continue;
-                                }
+                                if (BOSSES_MANUALES_LIST.includes(bossName)) continue;
                                 const vivoSec = ahoraUnix - finVentanaUnix;
                                 prioridadOrden = -1000 - vivoSec;
                                 const h = Math.floor(vivoSec / 3600), m = Math.floor((vivoSec % 3600) / 60), s = vivoSec % 60;
                                 displayTimer = `<div class="timer-badge status-alive">🟢 VIVO +${h > 0 ? h + 'h ' : ''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
                             }
                         } else {
-                            if (BOSSES_MANUALES_LIST.includes(bossName)) {
-                                continue;
-                            }
+                            if (BOSSES_MANUALES_LIST.includes(bossName)) continue;
                             prioridadOrden = -999;
                             displayTimer = `<div class="timer-badge status-alive">🟢 ¡VIVO!</div>`;
                         }
 
-                        todosLosBosses.push({
-                            svr,
-                            bossName,
-                            statusState,
-                            displayTimer,
-                            prioridadOrden
-                        });
+                        todosLosBosses.push({ svr, bossName, statusState, displayTimer, prioridadOrden });
                     }
                 });
 
@@ -843,9 +622,7 @@ HTML_TEMPLATE = """
                     htmlContent += `
                         <div class="boss-card">
                             <span class="server-badge-top">${tagServer}</span>
-                            <div>
-                                <div class="boss-name">${b.bossName}</div>
-                            </div>
+                            <div><div class="boss-name">${b.bossName}</div></div>
                             ${b.displayTimer}
                             <div class="actions-group">
                                 <form action="/action/kill" method="POST">
@@ -874,14 +651,12 @@ HTML_TEMPLATE = """
                 serverBlock.className = 'server-block';
                 const pcOrigen = ultimosReportes[svr] || 'Sin reportes';
                 const pjOrigen = ultimosPjs[svr] || 'Desconocido';
-                
                 let esOnline = false;
+
                 if (heartbeats[svr]) {
                     const fechaLimpia = heartbeats[svr].replace(' ', 'T');
                     const hbUnix = Math.floor(new Date(fechaLimpia).getTime() / 1000);
-                    if (!isNaN(hbUnix) && Math.abs(ahoraUnix - hbUnix) <= 60) { 
-                        esOnline = true; 
-                    }
+                    if (!isNaN(hbUnix) && Math.abs(ahoraUnix - hbUnix) <= 60) esOnline = true;
                 }
 
                 const statusHtml = esOnline 
@@ -889,14 +664,8 @@ HTML_TEMPLATE = """
                     : `<span><span class="status-dot dot-offline"></span><strong style="color:#ff4757;">OFFLINE</strong></span>`;
 
                 let htmlContent = `
-                    <div class="server-header">
-                        <div class="server-title">${svr}</div>
-                        <div>${statusHtml}</div>
-                    </div>
-                    <div class="bot-status-container">
-                        <div class="pj-badge">👤 PJ: ${pjOrigen}</div>
-                        <div class="pc-badge">💻 PC: ${pcOrigen}</div>
-                    </div>
+                    <div class="server-header"><div class="server-title">${svr}</div><div>${statusHtml}</div></div>
+                    <div class="bot-status-container"><div class="pj-badge">👤 PJ: ${pjOrigen}</div><div class="pc-badge">💻 PC: ${pcOrigen}</div></div>
                     <div class="boss-grid">
                 `;
 
@@ -920,39 +689,28 @@ HTML_TEMPLATE = """
                         const finVentanaUnix = targetUnix + 3600;
 
                         if (diffSec > 0) {
-                            statusState = 'cd';
-                            prioridadOrden = diffSec;
+                            statusState = 'cd'; prioridadOrden = diffSec;
                             const h = Math.floor(diffSec / 3600), m = Math.floor((diffSec % 3600) / 60), s = diffSec % 60;
                             displayTimer = `<div class="timer-badge status-cd">🔴 ${h > 0 ? h + 'h ' : ''}${m < 10 ? '0':''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
                         } else if (ahoraUnix >= targetUnix && ahoraUnix <= finVentanaUnix) {
-                            statusState = 'window';
-                            prioridadOrden = -500;
+                            statusState = 'window'; prioridadOrden = -500;
                             const winSec = finVentanaUnix - ahoraUnix;
                             const m = Math.floor(winSec / 60), s = winSec % 60;
                             displayTimer = `<div class="timer-badge status-window">🟡 VENTANA (${m}m ${s < 10 ? '0':''}${s}s)</div>`;
                         } else {
-                            if (BOSSES_MANUALES_LIST.includes(bossName)) {
-                                continue;
-                            }
+                            if (BOSSES_MANUALES_LIST.includes(bossName)) continue;
                             const vivoSec = ahoraUnix - finVentanaUnix;
                             prioridadOrden = -1000 - vivoSec;
                             const h = Math.floor(vivoSec / 3600), m = Math.floor((vivoSec % 3600) / 60), s = vivoSec % 60;
                             displayTimer = `<div class="timer-badge status-alive">🟢 VIVO +${h > 0 ? h + 'h ' : ''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
                         }
                     } else {
-                        if (BOSSES_MANUALES_LIST.includes(bossName)) {
-                            continue;
-                        }
+                        if (BOSSES_MANUALES_LIST.includes(bossName)) continue;
                         prioridadOrden = -999;
                         displayTimer = `<div class="timer-badge status-alive">🟢 ¡VIVO!</div>`;
                     }
 
-                    bossesProcesados.push({
-                        bossName,
-                        statusState,
-                        displayTimer,
-                        prioridadOrden
-                    });
+                    bossesProcesados.push({ bossName, statusState, displayTimer, prioridadOrden });
                 }
 
                 bossesProcesados.sort((a, b) => a.prioridadOrden - b.prioridadOrden);
@@ -962,9 +720,7 @@ HTML_TEMPLATE = """
                     htmlContent += `
                         <div class="boss-card">
                             <span class="server-badge-top">${tagServer}</span>
-                            <div>
-                                <div class="boss-name">${b.bossName}</div>
-                            </div>
+                            <div><div class="boss-name">${b.bossName}</div></div>
                             ${b.displayTimer}
                             <div class="actions-group">
                                 <form action="/action/kill" method="POST">
@@ -995,7 +751,38 @@ HTML_TEMPLATE = """
 </html>
 """
 
-# === RUTAS Y CONTROL DE ACCESO ===
+HTML_CAMBIO_CLAVE = """
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>🔑 Primer Ingreso - Cambiar Contraseña</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #0a0814; color: #e6e1ff; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .box { background: #141126; border: 1px solid #7b2cbf; border-radius: 12px; padding: 30px; width: 340px; box-shadow: 0 0 20px rgba(123, 44, 191, 0.3); text-align: center; }
+        h3 { color: #9d4edd; margin-top: 0; }
+        input { width: 100%; padding: 10px; margin-bottom: 12px; background: #0d0a1a; border: 1px solid #2a244d; color: #fff; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #2ecc71; border: none; color: white; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        button:hover { background: #27ae60; }
+        .error { color: #ff4757; font-size: 0.85rem; margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h3>🔑 Primer Ingreso Detectado</h3>
+        <p style="font-size:0.85rem; color:#8e85b8; margin-bottom:20px;">Por seguridad de la guild, debes establecer tu propia contraseña personal antes de continuar.</p>
+        {% if error %}<div class="error">{{ error }}</div>{% endif %}
+        <form action="/action/cambiar_clave_inicial" method="POST">
+            <input type="password" name="nueva_clave" placeholder="Nueva Contraseña" required minlength="4">
+            <input type="password" name="confirmar_clave" placeholder="Confirmar Nueva Contraseña" required minlength="4">
+            <button type="submit">🔒 Guardar y Continuar</button>
+        </form>
+    </div>
+</body>
+</html>
+"""
+
+# === RUTAS DE CONTROL Y AUTENTICACIÓN ===
 @app.route('/download/bot')
 def download_bot():
     return send_from_directory('static', 'bot_local.exe', as_attachment=True)
@@ -1005,10 +792,12 @@ def login():
     username = request.form.get("username")
     password = request.form.get("password")
 
+    # 1. Login de Admin General
     if username == "admin" and password == "admin123":
         session['user'] = "admin"
         return redirect(url_for('index') + '#donaciones')
 
+    # 2. Login de Encargados desde Supabase
     try:
         url = f"{SUPABASE_URL}/rest/v1/usuarios?username=eq.{username}&select=*"
         res = requests.get(url, headers=HEADERS, timeout=5)
@@ -1016,11 +805,66 @@ def login():
             usr_data = res.json()[0]
             if check_password_hash(usr_data.get('password_hash', ''), password):
                 session['user'] = usr_data.get('username')
+                
+                # SI REQUIERE CAMBIO DE CLAVE EN PRIMER INGRESO:
+                if usr_data.get('requiere_cambio_clave', True):
+                    session['cambio_clave_pendiente'] = True
+                    return render_template_string(HTML_CAMBIO_CLAVE)
+
                 return redirect(url_for('index') + '#donaciones')
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Error en login: {e}")
 
     return redirect(url_for('index'))
+
+@app.route('/action/cambiar_clave_inicial', methods=['POST'])
+def cambiar_clave_inicial():
+    if 'user' not in session or not session.get('cambio_clave_pendiente'):
+        return redirect(url_for('index'))
+
+    nueva_clave = request.form.get("nueva_clave")
+    confirmar_clave = request.form.get("confirmar_clave")
+
+    if nueva_clave != confirmar_clave:
+        return render_template_string(HTML_CAMBIO_CLAVE, error="Las contraseñas no coinciden.")
+
+    try:
+        pass_hash = generate_password_hash(nueva_clave)
+        url_patch = f"{SUPABASE_URL}/rest/v1/usuarios?username=eq.{session['user']}"
+        payload = {
+            "password_hash": pass_hash,
+            "requiere_cambio_clave": False
+        }
+        requests.patch(url_patch, headers=HEADERS, json=payload, timeout=5)
+        session.pop('cambio_clave_pendiente', None)
+        return redirect(url_for('index') + '#donaciones')
+    except Exception as e:
+        return render_template_string(HTML_CAMBIO_CLAVE, error="Error actualizando clave.")
+
+@app.route('/admin/crear_usuario', methods=['POST'])
+def crear_usuario():
+    if session.get('user') != 'admin':
+        return redirect(url_for('index'))
+
+    nuevo_usuario = request.form.get("nuevo_usuario")
+    clave_inicial = request.form.get("clave_inicial")
+
+    if nuevo_usuario and clave_inicial:
+        try:
+            pass_hash = generate_password_hash(clave_inicial)
+            url_post = f"{SUPABASE_URL}/rest/v1/usuarios"
+            payload = {
+                "username": nuevo_usuario,
+                "password_hash": pass_hash,
+                "rol": "encargado",
+                "requiere_cambio_clave": True,
+                "creado_por": "admin"
+            }
+            requests.post(url_post, headers=HEADERS, json=payload, timeout=5)
+        except Exception as e:
+            print(f"Error creando usuario: {e}")
+
+    return redirect(url_for('index') + '#donaciones')
 
 @app.route('/logout')
 def logout():
@@ -1035,12 +879,9 @@ def index():
 def get_timers():
     timers_map, pcs_map, pj_map, hb_map = obtener_datos()
     return jsonify({
-        "timers": timers_map, 
-        "cooldowns": COOLDOWNS, 
-        "servers": SERVIDORES, 
-        "ultimas_pcs": pcs_map, 
-        "ultimos_pjs": pj_map, 
-        "heartbeats": hb_map
+        "timers": timers_map, "cooldowns": COOLDOWNS, 
+        "servers": SERVIDORES, "ultimas_pcs": pcs_map, 
+        "ultimos_pjs": pj_map, "heartbeats": hb_map
     })
 
 @app.route('/api/donaciones', methods=['GET'])
@@ -1048,16 +889,13 @@ def get_donaciones():
     try:
         url = f"{SUPABASE_URL}/rest/v1/donaciones?select=*&order=created_at.desc"
         res = requests.get(url, headers=HEADERS, timeout=5)
-        if res.status_code == 200:
-            return jsonify(res.json()), 200
-    except Exception:
-        pass
+        if res.status_code == 200: return jsonify(res.json()), 200
+    except Exception: pass
     return jsonify([]), 200
 
 @app.route('/action/donar', methods=['POST'])
 def action_donar():
-    if 'user' not in session:
-        return redirect(url_for('index'))
+    if 'user' not in session: return redirect(url_for('index'))
 
     pj_name = request.form.get("pj_name")
     tipo_donacion = request.form.get("tipo_donacion")
@@ -1067,21 +905,17 @@ def action_donar():
         try:
             url_post = f"{SUPABASE_URL}/rest/v1/donaciones"
             payload = {
-                "pj_name": pj_name,
-                "tipo_donacion": tipo_donacion,
-                "cantidad": int(cantidad),
-                "registrado_por": session.get('user', 'Encargado')
+                "pj_name": pj_name, "tipo_donacion": tipo_donacion,
+                "cantidad": int(cantidad), "registrado_por": session.get('user', 'Encargado')
             }
             requests.post(url_post, headers=HEADERS, json=payload, timeout=5)
-        except Exception as e:
-            print(f"Error registrando donación: {e}")
+        except Exception as e: print(f"Error registrando donación: {e}")
 
-    return redirect(url_for('index'))
+    return redirect(url_for('index') + '#donaciones')
 
 @app.route('/action/editar_donacion', methods=['POST'])
 def action_editar_donacion():
-    if 'user' not in session:
-        return redirect(url_for('index'))
+    if 'user' not in session: return redirect(url_for('index'))
 
     donacion_id = request.form.get("id")
     nueva_cantidad = request.form.get("nueva_cantidad")
@@ -1096,61 +930,40 @@ def action_editar_donacion():
                 "fecha_modificacion": ahora_iso
             }
             requests.patch(url_patch, headers=HEADERS, json=payload, timeout=5)
-        except Exception as e:
-            print(f"Error modificando donación: {e}")
+        except Exception as e: print(f"Error modificando donación: {e}")
 
-    return redirect(url_for('index'))
+    return redirect(url_for('index') + '#donaciones')
 
 @app.route('/action/kill', methods=['GET', 'POST'])
 def action_kill():
     svr = request.form.get("server") or request.args.get("server")
     boss = request.form.get("boss") or request.args.get("boss")
     custom_timer = request.form.get("custom_timer") or request.args.get("custom_timer")
-    
-    custom_min = None
-    if custom_timer:
-        try:
-            custom_min = int(custom_timer)
-        except ValueError:
-            pass
+    custom_min = int(custom_timer) if custom_timer else None
 
-    if svr and boss:
-        guardar_boss(svr, boss, "Navegador Web", "Web", custom_minutes=custom_min)
+    if svr and boss: guardar_boss(svr, boss, "Navegador Web", "Web", custom_minutes=custom_min)
     return redirect(url_for('index'))
 
 @app.route('/action/reset', methods=['GET', 'POST'])
 def action_reset():
     svr = request.form.get("server") or request.args.get("server")
     boss = request.form.get("boss") or request.args.get("boss")
-    if svr and boss:
-        borrar_boss(svr, boss)
+    if svr and boss: borrar_boss(svr, boss)
     return redirect(url_for('index'))
 
 @app.route('/api/kill', methods=['POST'])
 def api_kill():
     data = request.get_json(silent=True) or {}
-    svr = data.get("server")
-    boss = data.get("boss")
-    pc_id = data.get("pc_id", "Desconocida")
-    pj_name = data.get("pj_name", "Desconocido")
-    
-    if boss in BOSSES_MANUALES and pc_id != "Navegador Web":
-        return jsonify({"status": "ignored_manual_only"}), 200
-
-    if svr and boss:
-        guardar_boss(svr, boss, pc_id, pj_name)
-        return jsonify({"status": "ok"}), 200
+    svr, boss, pc_id, pj_name = data.get("server"), data.get("boss"), data.get("pc_id", "Desconocida"), data.get("pj_name", "Desconocido")
+    if boss in BOSSES_MANUALES and pc_id != "Navegador Web": return jsonify({"status": "ignored_manual_only"}), 200
+    if svr and boss: guardar_boss(svr, boss, pc_id, pj_name); return jsonify({"status": "ok"}), 200
     return jsonify({"status": "error"}), 400
 
 @app.route('/api/heartbeat', methods=['POST'])
 def api_heartbeat():
     data = request.get_json(silent=True) or {}
-    svr = data.get("server")
-    pc_id = data.get("pc_id", "Desconocida")
-    pj_name = data.get("pj_name", "Desconocido")
-    if svr:
-        actualizar_heartbeat(svr, pc_id, pj_name)
-        return jsonify({"status": "ok"}), 200
+    svr, pc_id, pj_name = data.get("server"), data.get("pc_id", "Desconocida"), data.get("pj_name", "Desconocido")
+    if svr: actualizar_heartbeat(svr, pc_id, pj_name); return jsonify({"status": "ok"}), 200
     return jsonify({"status": "error"}), 400
 
 if __name__ == '__main__':
