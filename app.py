@@ -6,7 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import requests
 
 app = Flask(__name__)
-app.secret_key = "clave_secreta_mudream_monitor_key"  # Necesario para sesiones
+app.secret_key = "clave_secreta_mudream_donaciones_key"
 
 # === CONFIGURACIÓN DE SUPABASE REST API ===
 SUPABASE_URL = "https://csdwnpkvuymtasxpujza.supabase.co"
@@ -52,8 +52,6 @@ COOLDOWNS_CONFIG = {
 
 COOLDOWNS = {k: v[0] for k, v in COOLDOWNS_CONFIG.items()}
 SERVIDORES = ["Server 1", "Server 2", "Server 3", "Server 20"]
-
-# Bosses exclusivamente manuales
 BOSSES_MANUALES = ["Yellow Goblin", "Blue Goblin", "Red Goblin", "Skeleton King 1", "Skeleton King 2", "Red Dragon", "Santa 1", "Santa 2"]
 
 GRUPOS_PARES = [
@@ -207,7 +205,7 @@ def actualizar_heartbeat(server, pc_id, pj_name):
     except Exception:
         pass
 
-# === PLANTILLA WEB CON LOGIN Y LEYENDA DE MODIFICACIÓN ===
+# === PLANTILLA WEB ===
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="es">
@@ -381,16 +379,39 @@ HTML_TEMPLATE = """
         }
         .donaciones-table th { background: #1a1533; color: var(--accent-glow); font-size: 0.9rem; }
         .donaciones-table td { font-size: 0.85rem; }
+
+        .login-box {
+            background: #0d0a1a;
+            border: 1px solid var(--accent-purple);
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 350px;
+            margin: 30px auto;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(123, 44, 191, 0.3);
+        }
+        .login-box input {
+            width: 100%;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            background: #141126;
+            border: 1px solid var(--card-border);
+            color: #fff;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
 
     <header>
         <h1>⚔️ MONITOR MUDREAM ⚔️</h1>
+        {% if session.get('user') %}
         <div class="user-info-bar">
-            👤 Usuario: <strong>{{ session.get('user', 'Invitado') }}</strong>
+            👤 Encargado: <strong>{{ session.get('user') }}</strong>
             <a href="/logout" class="logout-btn">Salir ✖</a>
         </div>
+        {% endif %}
     </header>
 
     <div class="manual-panel" id="panelKillManual">
@@ -430,6 +451,7 @@ HTML_TEMPLATE = """
         let modoVista = 'TODOS';
         let estadoWeb = {};
         let listaDonaciones = [];
+        const usuarioLogueado = "{{ session.get('user', '') }}";
         const BOSSES_MANUALES_LIST = ["Yellow Goblin", "Blue Goblin", "Red Goblin", "Skeleton King 1", "Skeleton King 2", "Red Dragon", "Santa 1", "Santa 2"];
 
         function formatearCantidad(num) {
@@ -478,7 +500,11 @@ HTML_TEMPLATE = """
             }
 
             if (vista === 'DONACIONES') {
-                pedirDonaciones();
+                if (usuarioLogueado) {
+                    pedirDonaciones();
+                } else {
+                    renderLoginDonaciones();
+                }
             } else {
                 render();
             }
@@ -501,6 +527,23 @@ HTML_TEMPLATE = """
                 listaDonaciones = await res.json();
                 renderDonaciones();
             } catch (e) {}
+        }
+
+        function renderLoginDonaciones() {
+            const container = document.getElementById('dashboard');
+            container.innerHTML = `
+                <div class="server-block">
+                    <div class="login-box">
+                        <h3 style="color:var(--accent-glow); margin:0 0 15px 0;">🔐 Acceso a Donaciones</h3>
+                        <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:15px;">Ingresa tus credenciales para administrar las donaciones.</p>
+                        <form action="/login" method="POST">
+                            <input type="text" name="username" placeholder="Usuario Encargado" required>
+                            <input type="password" name="password" placeholder="Contraseña" required>
+                            <button type="submit" class="btn-manual-submit" style="width:100%;">Ingresar</button>
+                        </form>
+                    </div>
+                </div>
+            `;
         }
 
         function renderBotsActivos() {
@@ -700,7 +743,11 @@ HTML_TEMPLATE = """
                 return;
             }
             if (modoVista === 'DONACIONES') {
-                renderDonaciones();
+                if (usuarioLogueado) {
+                    renderDonaciones();
+                } else {
+                    renderLoginDonaciones();
+                }
                 return;
             }
 
@@ -943,76 +990,38 @@ HTML_TEMPLATE = """
 </html>
 """
 
-HTML_LOGIN = """
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>⚔️ Acceso - Monitor MuDream ⚔️</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #0a0814; color: #e6e1ff; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .login-card { background: #141126; border: 1px solid #7b2cbf; border-radius: 12px; padding: 30px; width: 320px; box-shadow: 0 0 20px rgba(123, 44, 191, 0.3); text-align: center; }
-        h2 { margin: 0 0 20px 0; color: #fff; font-size: 1.4rem; }
-        input { width: 100%; padding: 10px; margin-bottom: 15px; background: #0d0a1a; border: 1px solid #2a244d; color: #fff; border-radius: 6px; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; background: #7b2cbf; border: none; color: white; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        button:hover { background: #9d4edd; }
-        .error-msg { color: #ff4757; font-size: 0.85rem; margin-bottom: 15px; }
-    </style>
-</head>
-<body>
-    <div class="login-card">
-        <h2>⚔️ ACCESO MONITOR ⚔️</h2>
-        {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
-        <form action="/login" method="POST">
-            <input type="text" name="username" placeholder="Usuario" required>
-            <input type="password" name="password" placeholder="Contraseña" required>
-            <button type="submit">Ingresar</button>
-        </form>
-    </div>
-</body>
-</html>
-"""
-
 # === RUTAS Y CONTROL DE ACCESO ===
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/login', methods=['POST'])
 def login():
-    error = None
-    if request.method == 'POST':
-        username = request.form.get("username")
-        password = request.form.get("password")
+    username = request.form.get("username")
+    password = request.form.get("password")
 
-        # 1. Caso de emergencia/creación por defecto si no existen usuarios en Supabase:
-        if username == "admin" and password == "admin123":
-            session['user'] = "admin"
-            session['rol'] = "admin"
-            return redirect(url_for('index'))
+    # 1. Login de prueba/emergencia
+    if username == "admin" and password == "admin123":
+        session['user'] = "admin"
+        return redirect(url_for('index') + '#donaciones')
 
-        # 2. Validación normal contra Supabase
-        try:
-            url = f"{SUPABASE_URL}/rest/v1/usuarios?username=eq.{username}&select=*"
-            res = requests.get(url, headers=HEADERS, timeout=5)
-            if res.status_code == 200 and res.json():
-                usr_data = res.json()[0]
-                if check_password_hash(usr_data.get('password_hash', ''), password):
-                    session['user'] = usr_data.get('username')
-                    session['rol'] = usr_data.get('rol', 'encargado')
-                    return redirect(url_for('index'))
-        except Exception:
-            pass
+    # 2. Validación con Supabase
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/usuarios?username=eq.{username}&select=*"
+        res = requests.get(url, headers=HEADERS, timeout=5)
+        if res.status_code == 200 and res.json():
+            usr_data = res.json()[0]
+            if check_password_hash(usr_data.get('password_hash', ''), password):
+                session['user'] = usr_data.get('username')
+                return redirect(url_for('index') + '#donaciones')
+    except Exception:
+        pass
 
-        error = "Usuario o contraseña incorrectos."
-
-    return render_template_string(HTML_LOGIN, error=error)
+    return redirect(url_for('index'))
 
 @app.route('/logout')
 def logout():
     session.clear()
-    return redirect(url_for('login'))
+    return redirect(url_for('index'))
 
 @app.route('/')
 def index():
-    if 'user' not in session:
-        return redirect(url_for('login'))
     return render_template_string(HTML_TEMPLATE)
 
 @app.route('/api/timers', methods=['GET'])
@@ -1041,7 +1050,7 @@ def get_donaciones():
 @app.route('/action/donar', methods=['POST'])
 def action_donar():
     if 'user' not in session:
-        return redirect(url_for('login'))
+        return redirect(url_for('index'))
 
     pj_name = request.form.get("pj_name")
     tipo_donacion = request.form.get("tipo_donacion")
@@ -1054,7 +1063,7 @@ def action_donar():
                 "pj_name": pj_name,
                 "tipo_donacion": tipo_donacion,
                 "cantidad": int(cantidad),
-                "registrado_por": session.get('user', 'Desconocido')
+                "registrado_por": session.get('user', 'Encargado')
             }
             requests.post(url_post, headers=HEADERS, json=payload, timeout=5)
         except Exception as e:
@@ -1065,7 +1074,7 @@ def action_donar():
 @app.route('/action/editar_donacion', methods=['POST'])
 def action_editar_donacion():
     if 'user' not in session:
-        return redirect(url_for('login'))
+        return redirect(url_for('index'))
 
     donacion_id = request.form.get("id")
     nueva_cantidad = request.form.get("nueva_cantidad")
@@ -1076,7 +1085,7 @@ def action_editar_donacion():
             url_patch = f"{SUPABASE_URL}/rest/v1/donaciones?id=eq.{donacion_id}"
             payload = {
                 "cantidad": int(nueva_cantidad),
-                "modificado_por": session.get('user', 'Desconocido'),
+                "modificado_por": session.get('user', 'Encargado'),
                 "fecha_modificacion": ahora_iso
             }
             requests.patch(url_patch, headers=HEADERS, json=payload, timeout=5)
