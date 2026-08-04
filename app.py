@@ -8,10 +8,8 @@ import requests
 app = Flask(__name__)
 app.secret_key = "clave_secreta_mudream_donaciones_key"
 
-# === ENLACE DE DESCARGA DIRECTO A GOOGLE DRIVE ===
 LINK_DESCARGA_BOT = "https://drive.google.com/drive/folders/1Rx1TZZl5IncOpJPLab4YnRqOEIY6iBrC?usp=sharing"
 
-# === CONFIGURACIÓN DE SUPABASE REST API ===
 SUPABASE_URL = "https://csdwnpkvuymtasxpujza.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzZHducGt2dXltdGFzeHB1anphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3ODU0NDYsImV4cCI6MjEwMTM2MTQ0Nn0.IwgSW7QwoqLArOTfHYT4TyONA_57y1ELCaiQyZ3xyRg"
 
@@ -22,7 +20,6 @@ HEADERS = {
     "Prefer": "return=representation"
 }
 
-# === COOLDOWNS Y VENTANAS (en minutos) ===
 COOLDOWNS_CONFIG = {
     "Muggron 1": (180, 60), "Muggron 2": (180, 60),
     "Dreadhorn 1": (60, 60), "Dreadhorn 2": (60, 60),
@@ -40,7 +37,15 @@ COOLDOWNS_CONFIG = {
 
 COOLDOWNS = {k: v[0] for k, v in COOLDOWNS_CONFIG.items()}
 SERVIDORES = ["Server 1", "Server 2", "Server 3", "Server 20"]
-BOSSES_MANUALES = ["Yellow Goblin", "Blue Goblin", "Red Goblin", "Skeleton King 1", "Skeleton King 2", "Red Dragon", "Santa 1", "Santa 2"]
+
+# === INCLUSIÓN DE SANTAS Y WHITE WIZARD COMO MANUALES ===
+BOSSES_MANUALES = [
+    "Yellow Goblin", "Blue Goblin", "Red Goblin", 
+    "Skeleton King 1", "Skeleton King 2", 
+    "Red Dragon", 
+    "Santa 1", "Santa 2", 
+    "White Wizard 1", "White Wizard 2"
+]
 
 GRUPOS_PARES = [
     ["Moltragon 1", "Moltragon 2"], ["Dreadhorn 1", "Dreadhorn 2"],
@@ -50,7 +55,6 @@ GRUPOS_PARES = [
     ["Muggron Barracks 1", "Muggron Barracks 2"], ["Muggron Crywolf 1", "Muggron Crywolf 2"]
 ]
 
-# === FUNCIONES AUXILIARES Y SUPABASE ===
 def parsear_fecha_utc(dt_str):
     if not dt_str: return None
     try:
@@ -117,10 +121,13 @@ def seleccionar_boss_objetivo(server, boss_recibido, current_timers):
 
 def guardar_boss(server, boss_solicitado, pc_id, pj_name, custom_minutes=None):
     try:
-        url_get = f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}&select=timers"
-        res_get = requests.get(url_get, headers=HEADERS, timeout=5)
+        url_get = f"{SUPABASE_URL}/rest/v1/timers_bosses"
+        params_get = {"server": f"eq.{server}", "select": "timers"}
+        res_get = requests.get(url_get, headers=HEADERS, params=params_get, timeout=5)
+        
         current = {}
-        if res_get.status_code == 200 and res_get.json(): current = res_get.json()[0].get('timers') or {}
+        if res_get.status_code == 200 and res_get.json(): 
+            current = res_get.json()[0].get('timers') or {}
 
         boss_final = seleccionar_boss_objetivo(server, boss_solicitado, current)
         minutos = custom_minutes if custom_minutes is not None else COOLDOWNS_CONFIG.get(boss_final, (60, 60))[0]
@@ -129,23 +136,29 @@ def guardar_boss(server, boss_solicitado, pc_id, pj_name, custom_minutes=None):
         ahora_iso = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
 
         payload = {'timers': current, 'last_pc': pc_id, 'last_pj': pj_name, 'last_heartbeat': ahora_iso}
-        requests.patch(f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}", headers=HEADERS, json=payload, timeout=5)
+        
+        requests.patch(url_get, headers=HEADERS, params={"server": f"eq.{server}"}, json=payload, timeout=5)
         guardar_backup_supabase_online(server, current, pc_id, pj_name)
-    except Exception as e: print(f"Error guardando: {e}")
+    except Exception as e:
+        print(f"[Error guardando boss]: {e}")
 
 def borrar_boss(server, boss):
     try:
-        url_get = f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}&select=timers"
-        res_get = requests.get(url_get, headers=HEADERS, timeout=5)
+        url_get = f"{SUPABASE_URL}/rest/v1/timers_bosses"
+        params = {"server": f"eq.{server}"}
+        res_get = requests.get(url_get, headers=HEADERS, params={"server": f"eq.{server}", "select": "timers"}, timeout=5)
+        
         current = {}
-        if res_get.status_code == 200 and res_get.json(): current = res_get.json()[0].get('timers') or {}
+        if res_get.status_code == 200 and res_get.json(): 
+            current = res_get.json()[0].get('timers') or {}
 
         if boss in current:
             del current[boss]
             payload = {'timers': current}
-            requests.patch(f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}", headers=HEADERS, json=payload, timeout=5)
+            requests.patch(url_get, headers=HEADERS, params=params, json=payload, timeout=5)
             guardar_backup_supabase_online(server, current, "Navegador Web", "Reset")
-    except Exception: pass
+    except Exception as e:
+        print(f"[Error borrando boss]: {e}")
 
 def actualizar_heartbeat(server, pc_id, pj_name):
     try:
@@ -154,7 +167,6 @@ def actualizar_heartbeat(server, pc_id, pj_name):
         requests.patch(f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}", headers=HEADERS, json=payload, timeout=5)
     except Exception: pass
 
-# === PLANTILLA WEB COMPLETA ===
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="es">
@@ -289,7 +301,14 @@ HTML_TEMPLATE = """
         let listaDonaciones = [];
         const usuarioLogueado = "{{ session.get('user', '') }}";
         const esAdmin = "{{ session.get('user', '') }}" === "admin";
-        const BOSSES_MANUALES_LIST = ["Yellow Goblin", "Blue Goblin", "Red Goblin", "Skeleton King 1", "Skeleton King 2", "Red Dragon", "Santa 1", "Santa 2"];
+        
+        const BOSSES_MANUALES_LIST = [
+            "Yellow Goblin", "Blue Goblin", "Red Goblin", 
+            "Skeleton King 1", "Skeleton King 2", 
+            "Red Dragon", 
+            "Santa 1", "Santa 2", 
+            "White Wizard 1", "White Wizard 2"
+        ];
 
         function formatearCantidad(num) {
             if (num >= 1000000000) return (num / 1000000000).toFixed(1).replace('.0', '') + 'kkk';
@@ -627,7 +646,7 @@ HTML_TEMPLATE = """
 
                     for (const [bossName, cdMinutos] of Object.entries(cooldowns)) {
                         if (svr === "Server 20") {
-                            if (["Borgar", "Yellow Goblin", "Blue Goblin", "Red Goblin", "Red Dragon", "Santa 1", "Santa 2", "White Wizard 1", "White Wizard 2", "Skeleton King 1", "Skeleton King 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Muggron 1", "Muggron 2"].includes(bossName)) continue;
+                            if (["Borgar", "Yellow Goblin", "Blue Goblin", "Red Goblin", "Red Dragon", "Santa 1", "Santa 2", "White Wizard 1", "White Wizard 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Muggron 1", "Muggron 2"].includes(bossName)) continue;
                         } else {
                             if (["Muggron Barracks 1", "Muggron Barracks 2", "Muggron Crywolf 1", "Muggron Crywolf 2", "Kharzul 2", "Kharzul 3", "Vescrya 2", "Vescrya 3"].includes(bossName)) continue;
                         }
@@ -718,7 +737,7 @@ HTML_TEMPLATE = """
 
                 for (const [bossName, cdMinutos] of Object.entries(cooldowns)) {
                     if (svr === "Server 20") {
-                        if (["Borgar", "Yellow Goblin", "Blue Goblin", "Red Goblin", "Red Dragon", "Santa 1", "Santa 2", "White Wizard 1", "White Wizard 2", "Skeleton King 1", "Skeleton King 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Muggron 1", "Muggron 2"].includes(bossName)) continue;
+                        if (["Borgar", "Yellow Goblin", "Blue Goblin", "Red Goblin", "Red Dragon", "Santa 1", "Santa 2", "White Wizard 1", "White Wizard 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Muggron 1", "Muggron 2"].includes(bossName)) continue;
                     } else {
                         if (["Muggron Barracks 1", "Muggron Barracks 2", "Muggron Crywolf 1", "Muggron Crywolf 2", "Kharzul 2", "Kharzul 3", "Vescrya 2", "Vescrya 3"].includes(bossName)) continue;
                     }
@@ -818,7 +837,6 @@ HTML_CAMBIO_CLAVE = """
 </html>
 """
 
-# === RUTAS Y CONTROL DE ACCESO ===
 @app.route('/login', methods=['POST'])
 def login():
     username = request.form.get("username", "").strip()
