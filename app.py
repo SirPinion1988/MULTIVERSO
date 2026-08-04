@@ -18,13 +18,12 @@ HEADERS = {
 }
 
 # === CONFIGURACIÓN DE COOLDOWNS Y VENTANAS (en minutos) ===
-# Formato: "Nombre": (Tiempo_Minimo_Cooldown, Duracion_Ventana_En_Minutos)
 COOLDOWNS_CONFIG = {
     "Muggron 1": (180, 60),
     "Muggron 2": (180, 60),
     "Dreadhorn 1": (60, 60),
     "Dreadhorn 2": (60, 60),
-    "Moltragon 1": (60, 60),    # Sale entre min 60 y min 120 (60 + 60)
+    "Moltragon 1": (60, 60),
     "Moltragon 2": (60, 60),
     "Borgar": (120, 60),
     "Kharzul 1": (420, 60),
@@ -49,15 +48,10 @@ COOLDOWNS_CONFIG = {
     "Muggron Crywolf 2": (180, 60)
 }
 
-# Mapeo simple de cooldowns para compatibilidad
 COOLDOWNS = {k: v[0] for k, v in COOLDOWNS_CONFIG.items()}
-
 SERVIDORES = ["Server 1", "Server 2", "Server 3", "Server 20"]
-
-# Bosses exclusivamente manuales
 BOSSES_MANUALES = ["Yellow Goblin", "Blue Goblin", "Red Goblin", "Skeleton King 1", "Skeleton King 2"]
 
-# Grupos de bosses dobles para rotar en lugar de activar ambos a la vez
 GRUPOS_PARES = [
     ["Moltragon 1", "Moltragon 2"],
     ["Dreadhorn 1", "Dreadhorn 2"],
@@ -129,29 +123,20 @@ def obtener_datos():
         return timers_map, pcs_map, pj_map, hb_map
 
 def seleccionar_boss_objetivo(server, boss_recibido, current_timers):
-    """
-    Si el reporte llega como 'Moltragon', determina automáticamente si debe aplicar a
-    'Moltragon 1' o a 'Moltragon 2' dependiendo de cuál está libre.
-    """
     ahora_utc = datetime.now(timezone.utc)
 
     for grupo in GRUPOS_PARES:
-        # Verifica si el boss recibido pertenece a un grupo (ej. 'Moltragon' o 'Moltragon 1')
         nombre_base = boss_recibido.split(" ")[0]
         if any(b.startswith(nombre_base) for b in grupo):
-            # Si se especificó el número exacto y está libre, usar ese
             if boss_recibido in grupo:
                 return boss_recibido
 
-            # Buscar el primer boss del grupo que esté disponible/libre
             for b_opcion in grupo:
                 dt_str = current_timers.get(b_opcion)
                 dt_obj = parsear_fecha_utc(dt_str) if dt_str else None
-                # Si no tiene timer o ya expiró (ya nació), elegimos este
                 if not dt_obj or dt_obj <= ahora_utc:
                     return b_opcion
             
-            # Si todos están en cooldown, reiniciamos el primero del grupo
             return grupo[0]
 
     return boss_recibido
@@ -164,7 +149,6 @@ def guardar_boss(server, boss_solicitado, pc_id, pj_name, custom_minutes=None):
         if res_get.status_code == 200 and res_get.json():
             current = res_get.json()[0].get('timers') or {}
 
-        # Determina cuál de los dos (o tres) bosses del grupo debe marcarse
         boss_final = seleccionar_boss_objetivo(server, boss_solicitado, current)
 
         minutos = custom_minutes if custom_minutes is not None else COOLDOWNS_CONFIG.get(boss_final, (60, 60))[0]
@@ -309,7 +293,7 @@ HTML_TEMPLATE = """
             justify-content: space-between; 
             align-items: center; 
             text-align: center;
-            min-height: 125px;
+            min-height: 110px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
             position: relative;
         }
@@ -329,8 +313,7 @@ HTML_TEMPLATE = """
             box-shadow: 0 0 5px rgba(157, 78, 221, 0.4);
         }
 
-        .boss-name { font-weight: bold; font-size: 0.85rem; margin-top: 6px; margin-bottom: 2px; width: 100%; word-break: break-word; }
-        .boss-respawn { font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 6px; }
+        .boss-name { font-weight: bold; font-size: 0.9rem; margin-top: 6px; margin-bottom: 8px; width: 100%; word-break: break-word; }
         
         .timer-badge { font-family: monospace; font-size: 0.85rem; font-weight: bold; padding: 4px 6px; border-radius: 6px; text-align: center; width: 100%; box-sizing: border-box; margin-bottom: 8px; }
         .status-alive { color: var(--alive-green); border: 1px solid var(--alive-green); background: rgba(46, 204, 113, 0.1); }
@@ -465,8 +448,6 @@ HTML_TEMPLATE = """
                         if (bossName in bossesServidor) {
                             const targetUnix = bossesServidor[bossName];
                             const diffSec = targetUnix - ahoraUnix;
-
-                            // Ventana configurada de 60 min adicionales tras cumplir el cd mínimo
                             const finVentanaUnix = targetUnix + 3600;
 
                             if (diffSec > 0) {
@@ -494,7 +475,6 @@ HTML_TEMPLATE = """
                         todosLosBosses.push({
                             svr,
                             bossName,
-                            cdMinutos,
                             statusState,
                             displayTimer,
                             prioridadOrden
@@ -511,7 +491,6 @@ HTML_TEMPLATE = """
                             <span class="server-badge-top">${tagServer}</span>
                             <div>
                                 <div class="boss-name">${b.bossName}</div>
-                                <div class="boss-respawn">${b.cdMinutos} min</div>
                             </div>
                             ${b.displayTimer}
                             <div class="actions-group">
@@ -610,7 +589,6 @@ HTML_TEMPLATE = """
 
                     bossesProcesados.push({
                         bossName,
-                        cdMinutos,
                         statusState,
                         displayTimer,
                         prioridadOrden
@@ -626,7 +604,6 @@ HTML_TEMPLATE = """
                             <span class="server-badge-top">${tagServer}</span>
                             <div>
                                 <div class="boss-name">${b.bossName}</div>
-                                <div class="boss-respawn">${b.cdMinutos} min</div>
                             </div>
                             ${b.displayTimer}
                             <div class="actions-group">
