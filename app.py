@@ -60,6 +60,20 @@ def parsear_fecha_utc(dt_str):
     except Exception:
         return None
 
+def guardar_backup_supabase_online(server, timers, pc_id, pj_name):
+    """Guarda un historial/backup directamente en la tabla secundaria timers_backup de Supabase."""
+    try:
+        url_post = f"{SUPABASE_URL}/rest/v1/timers_backup"
+        payload = {
+            "server": server,
+            "timers": timers,
+            "last_pc": pc_id,
+            "last_pj": pj_name
+        }
+        requests.post(url_post, headers=HEADERS, json=payload, timeout=3)
+    except Exception:
+        pass
+
 def obtener_datos():
     timers_map = {svr: {} for svr in SERVIDORES}
     pcs_map = {svr: "Sin reportes" for svr in SERVIDORES}
@@ -69,7 +83,6 @@ def obtener_datos():
     try:
         url = f"{SUPABASE_URL}/rest/v1/timers_bosses?select=*"
         res = requests.get(url, headers=HEADERS, timeout=5)
-        ahora_utc = datetime.now(timezone.utc)
 
         if res.status_code == 200:
             data = res.json()
@@ -83,7 +96,7 @@ def obtener_datos():
                 if isinstance(raw_timers, dict):
                     for boss, dt_str in raw_timers.items():
                         dt_obj = parsear_fecha_utc(dt_str)
-                        if dt_obj and dt_obj > ahora_utc:
+                        if dt_obj:
                             boss_timers[boss] = int(dt_obj.timestamp())
 
                 timers_map[svr] = boss_timers
@@ -95,7 +108,7 @@ def obtener_datos():
     except Exception:
         return timers_map, pcs_map, pj_map, hb_map
 
-def guardar_boss(server, boss, pc_id, pj_name):
+def guardar_boss(server, boss, pc_id, pj_name, custom_minutes=None):
     try:
         url_get = f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}&select=timers"
         res_get = requests.get(url_get, headers=HEADERS, timeout=5)
@@ -103,7 +116,8 @@ def guardar_boss(server, boss, pc_id, pj_name):
         if res_get.status_code == 200 and res_get.json():
             current = res_get.json()[0].get('timers') or {}
 
-        nueva_fecha = datetime.now(timezone.utc) + timedelta(minutes=COOLDOWNS[boss])
+        minutos = custom_minutes if custom_minutes is not None else COOLDOWNS.get(boss, 60)
+        nueva_fecha = datetime.now(timezone.utc) + timedelta(minutes=minutos)
         current[boss] = nueva_fecha.isoformat()
         ahora_iso = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
 
@@ -113,8 +127,14 @@ def guardar_boss(server, boss, pc_id, pj_name):
             'last_pj': pj_name,
             'last_heartbeat': ahora_iso
         }
+        
+        # Guardado en tabla principal
         url_patch = f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}"
         requests.patch(url_patch, headers=HEADERS, json=payload, timeout=5)
+
+        # Resguardo secundario online en Supabase
+        guardar_backup_supabase_online(server, current, pc_id, pj_name)
+
     except Exception as e:
         print(f"Error guardando: {e}")
 
@@ -131,6 +151,9 @@ def borrar_boss(server, boss):
             payload = {'timers': current}
             url_patch = f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}"
             requests.patch(url_patch, headers=HEADERS, json=payload, timeout=5)
+            
+            # Resguardo secundario online en Supabase
+            guardar_backup_supabase_online(server, current, "Navegador Web", "Reset")
     except Exception:
         pass
 
@@ -156,10 +179,58 @@ HTML_TEMPLATE = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>⚔️ Monitor Multi-PC - MuDream ⚔️</title>
     <style>
-        :root { --bg-dark: #0a0814; --card-bg: #141126; --card-border: #2a244d; --accent-purple: #7b2cbf; --accent-glow: #9d4edd; --text-primary: #e6e1ff; --text-secondary: #8e85b8; --alive-green: #2ecc71; --cd-red: #ff4757; --window-yellow: #f1c40f; }
+        :root { 
+            --bg-dark: #0a0814; 
+            --card-bg: #141126; 
+            --card-border: #2a244d; 
+            --accent-purple: #7b2cbf; 
+            --accent-glow: #9d4edd; 
+            --text-primary: #e6e1ff; 
+            --text-secondary: #8e85b8; 
+            --alive-green: #2ecc71; 
+            --cd-red: #ff4757; 
+            --window-yellow: #f1c40f; 
+        }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-dark); color: var(--text-primary); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         header { text-align: center; margin-bottom: 20px; width: 100%; max-width: 1200px; }
         h1 { font-size: 1.8rem; margin: 0; color: #fff; text-shadow: 0 0 10px rgba(123, 44, 191, 0.5); }
+        
+        .manual-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--accent-purple);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 1200px;
+            box-sizing: border-box;
+            box-shadow: 0 0 15px rgba(123, 44, 191, 0.2);
+        }
+        .manual-panel h3 { margin: 0 0 12px 0; font-size: 1.1rem; color: var(--accent-glow); text-align: center; }
+        .manual-form { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: center; }
+        .manual-form select, .manual-form input {
+            background: #0d0a1a;
+            border: 1px solid var(--card-border);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        .manual-form select:focus, .manual-form input:focus { border-color: var(--accent-glow); }
+        .btn-manual-submit {
+            background: var(--accent-purple);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        .btn-manual-submit:hover { background: var(--accent-glow); }
+
         .controls-bar { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 25px; background: #100d21; padding: 12px 20px; border-radius: 12px; border: 1px solid var(--card-border); }
         .view-btn { background: #1e1938; border: 1px solid var(--card-border); color: var(--text-primary); padding: 10px 18px; font-size: 0.95rem; font-weight: 600; border-radius: 8px; cursor: pointer; }
         .view-btn.active { background: var(--accent-purple); border-color: var(--accent-glow); color: #fff; }
@@ -174,15 +245,34 @@ HTML_TEMPLATE = """
         .dot-offline { background-color: var(--cd-red); }
         .pc-badge { font-size: 0.75rem; color: var(--text-secondary); }
         .pj-badge { font-size: 0.8rem; color: #b8acff; font-weight: bold; }
-        .boss-list { display: flex; flex-direction: column; gap: 10px; }
-        .boss-row { background: #0d0a1a; border: 1px solid #1f1a3a; border-radius: 8px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; }
-        .boss-name { font-weight: bold; font-size: 0.95rem; }
-        .boss-respawn { font-size: 0.75rem; color: var(--text-secondary); }
-        .timer-badge { font-family: monospace; font-size: 1rem; font-weight: bold; padding: 4px 8px; border-radius: 6px; text-align: center; min-width: 110px; }
-        .status-alive { color: var(--alive-green); border: 1px solid var(--alive-green); }
-        .status-cd { color: var(--cd-red); border: 1px solid var(--cd-red); }
-        .status-window { color: var(--window-yellow); border: 1px solid var(--window-yellow); }
-        .btn-action { background: var(--accent-purple); border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem; }
+        
+        .boss-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
+            gap: 10px; 
+        }
+        .boss-card { 
+            background: #0d0a1a; 
+            border: 1px solid #1f1a3a; 
+            border-radius: 10px; 
+            padding: 10px; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between; 
+            align-items: center; 
+            text-align: center;
+            min-height: 120px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        .boss-name { font-weight: bold; font-size: 0.85rem; margin-bottom: 2px; }
+        .boss-respawn { font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 6px; }
+        
+        .timer-badge { font-family: monospace; font-size: 0.85rem; font-weight: bold; padding: 4px 6px; border-radius: 6px; text-align: center; width: 100%; box-sizing: border-box; margin-bottom: 8px; }
+        .status-alive { color: var(--alive-green); border: 1px solid var(--alive-green); background: rgba(46, 204, 113, 0.1); }
+        .status-cd { color: var(--cd-red); border: 1px solid var(--cd-red); background: rgba(255, 71, 87, 0.1); }
+        .status-window { color: var(--window-yellow); border: 1px solid var(--window-yellow); background: rgba(241, 196, 15, 0.1); }
+        
+        .btn-action { background: var(--accent-purple); border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.75rem; }
         .btn-action:hover { background: var(--accent-glow); }
         .btn-reset { background: #2a2347; color: #aaa; margin-left: 4px; }
         .btn-reset:hover { background: #ff4757; color: #fff; }
@@ -195,6 +285,27 @@ HTML_TEMPLATE = """
     <header>
         <h1>⚔️ MONITOR MUDREAM ⚔️</h1>
     </header>
+
+    <div class="manual-panel">
+        <h3>⚡ Cargar Kill Manual / Timer Especial</h3>
+        <form action="/action/kill" method="POST" class="manual-form">
+            <select name="server" id="manualServer" required>
+                <option value="" disabled selected>Seleccionar Server</option>
+                <option value="Server 1">Server 1</option>
+                <option value="Server 2">Server 2</option>
+                <option value="Server 3">Server 3</option>
+                <option value="Server 20">Server 20</option>
+            </select>
+            
+            <select name="boss" id="manualBoss" required>
+                <option value="" disabled selected>Seleccionar Boss</option>
+            </select>
+
+            <input type="number" name="custom_timer" placeholder="Minutos restantes (Opcional)" min="0">
+
+            <button type="submit" class="btn-manual-submit">➕ Registrar Kill</button>
+        </form>
+    </div>
 
     <div class="controls-bar">
         <button class="view-btn active" onclick="setVista('TODOS')">👁️ Ver Todos Juntos</button>
@@ -210,6 +321,18 @@ HTML_TEMPLATE = """
         let modoVista = 'TODOS';
         let estadoWeb = {};
 
+        function poblarSelectorBosses() {
+            const selectBoss = document.getElementById('manualBoss');
+            if (!selectBoss || selectBoss.options.length > 1) return;
+            const cooldowns = estadoWeb.cooldowns || {};
+            for (const boss of Object.keys(cooldowns)) {
+                let opt = document.createElement('option');
+                opt.value = boss;
+                opt.textContent = `${boss} (${cooldowns[boss]}m)`;
+                selectBoss.appendChild(opt);
+            }
+        }
+
         function setVista(vista) {
             modoVista = vista;
             document.querySelectorAll('.view-btn').forEach(btn => {
@@ -223,6 +346,7 @@ HTML_TEMPLATE = """
             try {
                 const res = await fetch('/api/timers');
                 estadoWeb = await res.json();
+                poblarSelectorBosses();
                 render();
             } catch (e) {}
         }
@@ -268,10 +392,12 @@ HTML_TEMPLATE = """
                         <div class="pj-badge">👤 PJ: ${pjOrigen}</div>
                         <div class="pc-badge">💻 PC: ${pcOrigen}</div>
                     </div>
-                    <div class="boss-list">
+                    <div class="boss-grid">
                 `;
 
                 const bossesServidor = timers[svr] || {};
+                let bossesProcesados = [];
+
                 for (const [bossName, cdMinutos] of Object.entries(cooldowns)) {
                     if (svr === "Server 20") {
                         if (["Borgar", "Yellow Goblin", "Blue Goblin", "Red Goblin", "Red Dragon", "Santa 1", "Santa 2", "White Wizard 1", "White Wizard 2", "Skeleton King 1", "Skeleton King 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Muggron 1", "Muggron 2"].includes(bossName)) continue;
@@ -281,56 +407,85 @@ HTML_TEMPLATE = """
 
                     let statusState = 'alive';
                     let displayTimer = '';
+                    let prioridadOrden = 0;
 
                     if (bossName in bossesServidor) {
                         const targetUnix = bossesServidor[bossName];
                         const diffSec = targetUnix - ahoraUnix;
+
                         if (["Yellow Goblin", "Blue Goblin", "Red Goblin"].includes(bossName)) {
                             const inicioVentanaUnix = targetUnix;
                             const finVentanaUnix = targetUnix + 3600;
                             if (ahoraUnix < inicioVentanaUnix) {
                                 statusState = 'cd';
                                 const cdSec = inicioVentanaUnix - ahoraUnix;
+                                prioridadOrden = cdSec; 
                                 const h = Math.floor(cdSec / 3600), m = Math.floor((cdSec % 3600) / 60), s = cdSec % 60;
                                 displayTimer = `<div class="timer-badge status-cd">🔴 ${h}h ${m < 10 ? '0':''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
                             } else if (ahoraUnix >= inicioVentanaUnix && ahoraUnix <= finVentanaUnix) {
                                 statusState = 'window';
+                                prioridadOrden = -500;
                                 const winSec = finVentanaUnix - ahoraUnix;
                                 const m = Math.floor(winSec / 60), s = winSec % 60;
                                 displayTimer = `<div class="timer-badge status-window">🟡 VENTANA (${m}m ${s < 10 ? '0':''}${s}s)</div>`;
+                            } else {
+                                const vivoSec = ahoraUnix - finVentanaUnix;
+                                prioridadOrden = -1000 - vivoSec; 
+                                const h = Math.floor(vivoSec / 3600), m = Math.floor((vivoSec % 3600) / 60), s = vivoSec % 60;
+                                displayTimer = `<div class="timer-badge status-alive">🟢 VIVO +${h > 0 ? h + 'h ' : ''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
                             }
                         } else if (diffSec > 0) {
                             statusState = 'cd';
+                            prioridadOrden = diffSec;
                             const h = Math.floor(diffSec / 3600), m = Math.floor((diffSec % 3600) / 60), s = diffSec % 60;
                             displayTimer = `<div class="timer-badge status-cd">🔴 ${h > 0 ? h + 'h ' : ''}${m < 10 ? '0':''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
+                        } else {
+                            const vivoSec = Math.abs(diffSec);
+                            prioridadOrden = -1000 - vivoSec;
+                            const h = Math.floor(vivoSec / 3600), m = Math.floor((vivoSec % 3600) / 60), s = vivoSec % 60;
+                            displayTimer = `<div class="timer-badge status-alive">🟢 VIVO +${h > 0 ? h + 'h ' : ''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
                         }
+                    } else {
+                        prioridadOrden = -999;
+                        displayTimer = `<div class="timer-badge status-alive">🟢 ¡VIVO!</div>`;
                     }
 
-                    if (statusState === 'alive') displayTimer = `<div class="timer-badge status-alive">🟢 ¡VIVO!</div>`;
+                    bossesProcesados.push({
+                        bossName,
+                        cdMinutos,
+                        statusState,
+                        displayTimer,
+                        prioridadOrden
+                    });
+                }
 
+                bossesProcesados.sort((a, b) => a.prioridadOrden - b.prioridadOrden);
+
+                bossesProcesados.forEach(b => {
                     htmlContent += `
-                        <div class="boss-row">
+                        <div class="boss-card">
                             <div>
-                                <div class="boss-name">${bossName}</div>
-                                <div class="boss-respawn">${cdMinutos} min</div>
+                                <div class="boss-name">${b.bossName}</div>
+                                <div class="boss-respawn">${b.cdMinutos} min</div>
                             </div>
-                            ${displayTimer}
+                            ${b.displayTimer}
                             <div class="actions-group">
                                 <form action="/action/kill" method="POST">
                                     <input type="hidden" name="server" value="${svr}">
-                                    <input type="hidden" name="boss" value="${bossName}">
+                                    <input type="hidden" name="boss" value="${b.bossName}">
                                     <button type="submit" class="btn-action">⚔️ Kill</button>
                                 </form>
-                                ${statusState !== 'alive' ? `
+                                ${b.statusState !== 'alive' ? `
                                 <form action="/action/reset" method="POST">
                                     <input type="hidden" name="server" value="${svr}">
-                                    <input type="hidden" name="boss" value="${bossName}">
+                                    <input type="hidden" name="boss" value="${b.bossName}">
                                     <button type="submit" class="btn-action btn-reset">✖</button>
                                 </form>` : ''}
                             </div>
                         </div>
                     `;
-                }
+                });
+
                 htmlContent += `</div>`;
                 serverBlock.innerHTML = htmlContent;
                 container.appendChild(serverBlock);
@@ -364,13 +519,21 @@ def get_timers():
         "heartbeats": hb_map
     })
 
-# ACCIONES DE KILL/RESET ADAPTADAS A GET Y POST
 @app.route('/action/kill', methods=['GET', 'POST'])
 def action_kill():
     svr = request.form.get("server") or request.args.get("server")
     boss = request.form.get("boss") or request.args.get("boss")
+    custom_timer = request.form.get("custom_timer") or request.args.get("custom_timer")
+    
+    custom_min = None
+    if custom_timer:
+        try:
+            custom_min = int(custom_timer)
+        except ValueError:
+            pass
+
     if svr and boss:
-        guardar_boss(svr, boss, "Navegador Web", "Web")
+        guardar_boss(svr, boss, "Navegador Web", "Web", custom_minutes=custom_min)
     return redirect(url_for('index'))
 
 @app.route('/action/reset', methods=['GET', 'POST'])
@@ -381,7 +544,6 @@ def action_reset():
         borrar_boss(svr, boss)
     return redirect(url_for('index'))
 
-# ENDPOINTS API PARA EL BOT LOCAL
 @app.route('/api/kill', methods=['POST'])
 def api_kill():
     data = request.get_json(silent=True) or {}
