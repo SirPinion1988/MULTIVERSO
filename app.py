@@ -1,12 +1,15 @@
 import os
 import json
 from datetime import datetime, timedelta, timezone
-from flask import Flask, render_template_string, jsonify, request, redirect, url_for, session, send_from_directory
+from flask import Flask, render_template_string, jsonify, request, redirect, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
 import requests
 
 app = Flask(__name__)
 app.secret_key = "clave_secreta_mudream_donaciones_key"
+
+# === ENLACE DE DESCARGA DIRECTO A GOOGLE DRIVE ===
+LINK_DESCARGA_BOT = "https://drive.google.com/drive/folders/1Rx1TZZl5IncOpJPLab4YnRqOEIY6iBrC?usp=sharing"
 
 # === CONFIGURACIÓN DE SUPABASE REST API ===
 SUPABASE_URL = "https://csdwnpkvuymtasxpujza.supabase.co"
@@ -220,9 +223,6 @@ HTML_TEMPLATE = """
 
         .login-box { background: #0d0a1a; border: 1px solid var(--accent-purple); padding: 20px; border-radius: 12px; max-width: 350px; margin: 30px auto; text-align: center; box-shadow: 0 0 15px rgba(123, 44, 191, 0.3); }
         .login-box input { width: 100%; padding: 8px 12px; margin-bottom: 12px; background: #141126; border: 1px solid var(--card-border); color: #fff; border-radius: 6px; box-sizing: border-box; }
-        .msg-info { padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.85rem; }
-        .msg-success { background: rgba(46, 204, 113, 0.2); border: 1px solid #2ecc71; color: #2ecc71; }
-        .msg-error { background: rgba(255, 71, 87, 0.2); border: 1px solid #ff4757; color: #ff4757; }
     </style>
 </head>
 <body>
@@ -263,7 +263,9 @@ HTML_TEMPLATE = """
         <button class="view-btn" onclick="setVista('Server 20')">Server 20</button>
         <button class="view-btn" onclick="setVista('BOTS')">🤖 Bots Activos</button>
         <button class="view-btn" onclick="setVista('DONACIONES')">💎 Donaciones</button>
-        <a href="/download/bot" style="text-decoration:none;">
+        
+        <!-- BOTÓN DE DESCARGA VINCULADO A GOOGLE DRIVE -->
+        <a href="{{ link_descarga }}" target="_blank" style="text-decoration:none;">
             <button class="view-btn" style="background:#7b2cbf; border-color:#9d4edd; color:#fff;">⬇️ Descargar Bot (.exe)</button>
         </a>
     </div>
@@ -428,7 +430,6 @@ HTML_TEMPLATE = """
                 </div>
             `;
 
-            // SI ES ADMIN -> MOSTRAR PANEL PARA CREAR NUEVO ENCARGADO
             if (esAdmin) {
                 htmlForm += `
                     <div style="background:#0c091f; padding:15px; border-radius:10px; margin-bottom:20px; border:1px solid var(--accent-purple);">
@@ -782,22 +783,16 @@ HTML_CAMBIO_CLAVE = """
 </html>
 """
 
-# === RUTAS DE CONTROL Y AUTENTICACIÓN ===
-@app.route('/download/bot')
-def download_bot():
-    return send_from_directory('static', 'bot_local.exe', as_attachment=True)
-
+# === RUTAS Y CONTROL DE ACCESO ===
 @app.route('/login', methods=['POST'])
 def login():
     username = request.form.get("username")
     password = request.form.get("password")
 
-    # 1. Login de Admin General
     if username == "admin" and password == "admin123":
         session['user'] = "admin"
         return redirect(url_for('index') + '#donaciones')
 
-    # 2. Login de Encargados desde Supabase
     try:
         url = f"{SUPABASE_URL}/rest/v1/usuarios?username=eq.{username}&select=*"
         res = requests.get(url, headers=HEADERS, timeout=5)
@@ -806,7 +801,6 @@ def login():
             if check_password_hash(usr_data.get('password_hash', ''), password):
                 session['user'] = usr_data.get('username')
                 
-                # SI REQUIERE CAMBIO DE CLAVE EN PRIMER INGRESO:
                 if usr_data.get('requiere_cambio_clave', True):
                     session['cambio_clave_pendiente'] = True
                     return render_template_string(HTML_CAMBIO_CLAVE)
@@ -873,7 +867,7 @@ def logout():
 
 @app.route('/')
 def index():
-    return render_template_string(HTML_TEMPLATE)
+    return render_template_string(HTML_TEMPLATE, link_descarga=LINK_DESCARGA_BOT)
 
 @app.route('/api/timers', methods=['GET'])
 def get_timers():
