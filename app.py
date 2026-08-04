@@ -8,8 +8,10 @@ import requests
 app = Flask(__name__)
 app.secret_key = "clave_secreta_mudream_donaciones_key"
 
+# === ENLACE DE DESCARGA DIRECTO A GOOGLE DRIVE ===
 LINK_DESCARGA_BOT = "https://drive.google.com/drive/folders/1Rx1TZZl5IncOpJPLab4YnRqOEIY6iBrC?usp=sharing"
 
+# === CONFIGURACIÓN DE SUPABASE REST API ===
 SUPABASE_URL = "https://csdwnpkvuymtasxpujza.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzZHducGt2dXltdGFzeHB1anphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3ODU0NDYsImV4cCI6MjEwMTM2MTQ0Nn0.IwgSW7QwoqLArOTfHYT4TyONA_57y1ELCaiQyZ3xyRg"
 
@@ -20,6 +22,7 @@ HEADERS = {
     "Prefer": "return=representation"
 }
 
+# === COOLDOWNS Y VENTANAS (en minutos) ===
 COOLDOWNS_CONFIG = {
     "Muggron 1": (180, 60), "Muggron 2": (180, 60),
     "Dreadhorn 1": (60, 60), "Dreadhorn 2": (60, 60),
@@ -47,6 +50,7 @@ GRUPOS_PARES = [
     ["Muggron Barracks 1", "Muggron Barracks 2"], ["Muggron Crywolf 1", "Muggron Crywolf 2"]
 ]
 
+# === FUNCIONES AUXILIARES Y SUPABASE ===
 def parsear_fecha_utc(dt_str):
     if not dt_str: return None
     try:
@@ -150,6 +154,7 @@ def actualizar_heartbeat(server, pc_id, pj_name):
         requests.patch(f"{SUPABASE_URL}/rest/v1/timers_bosses?server=eq.{server}", headers=HEADERS, json=payload, timeout=5)
     except Exception: pass
 
+# === PLANTILLA WEB COMPLETA ===
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="es">
@@ -315,23 +320,30 @@ HTML_TEMPLATE = """
 
         async function enviarKill(svr, boss, customMin = '') {
             try {
-                const formData = new FormData();
-                formData.append('server', svr);
-                formData.append('boss', boss);
-                if (customMin) formData.append('custom_timer', customMin);
-                await fetch('/action/kill', { method: 'POST', body: formData });
-                pedirTimers();
-            } catch (e) {}
+                const payload = { server: svr, boss: boss, custom_timer: customMin };
+                const res = await fetch('/action/kill', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) { pedirTimers(); }
+            } catch (e) {
+                console.error("Error al enviar Kill:", e);
+            }
         }
 
         async function enviarReset(svr, boss) {
             try {
-                const formData = new FormData();
-                formData.append('server', svr);
-                formData.append('boss', boss);
-                await fetch('/action/reset', { method: 'POST', body: formData });
-                pedirTimers();
-            } catch (e) {}
+                const payload = { server: svr, boss: boss };
+                const res = await fetch('/action/reset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) { pedirTimers(); }
+            } catch (e) {
+                console.error("Error al resetear timer:", e);
+            }
         }
 
         function ejecutarKillForm() {
@@ -340,6 +352,8 @@ HTML_TEMPLATE = """
             const customTimer = document.getElementById('manualTimer').value;
             if (svr && boss) {
                 enviarKill(svr, boss, customTimer);
+            } else {
+                alert("Por favor selecciona un Servidor y un Boss.");
             }
         }
 
@@ -804,6 +818,7 @@ HTML_CAMBIO_CLAVE = """
 </html>
 """
 
+# === RUTAS Y CONTROL DE ACCESO ===
 @app.route('/login', methods=['POST'])
 def login():
     username = request.form.get("username", "").strip()
@@ -955,22 +970,31 @@ def action_editar_donacion():
 
     return redirect(url_for('index') + '#donaciones')
 
-@app.route('/action/kill', methods=['POST'])
+@app.route('/action/kill', methods=['GET', 'POST'])
 def action_kill():
-    svr = request.form.get("server") or request.args.get("server")
-    boss = request.form.get("boss") or request.args.get("boss")
-    custom_timer = request.form.get("custom_timer") or request.args.get("custom_timer")
-    custom_min = int(custom_timer) if custom_timer else None
+    data = request.get_json(silent=True) if request.is_json else request.form
+    svr = data.get("server") or request.args.get("server")
+    boss = data.get("boss") or request.args.get("boss")
+    custom_timer = data.get("custom_timer") or request.args.get("custom_timer")
+    custom_min = int(custom_timer) if custom_timer and str(custom_timer).isdigit() else None
 
-    if svr and boss: guardar_boss(svr, boss, "Navegador Web", "Web", custom_minutes=custom_min)
-    return jsonify({"status": "ok"}), 200
+    if svr and boss:
+        guardar_boss(svr, boss, "Navegador Web", "Manual Web", custom_minutes=custom_min)
+        return jsonify({"status": "ok", "message": f"Kill guardado para {boss} en {svr}"}), 200
 
-@app.route('/action/reset', methods=['POST'])
+    return jsonify({"status": "error", "message": "Faltan parametros"}), 400
+
+@app.route('/action/reset', methods=['GET', 'POST'])
 def action_reset():
-    svr = request.form.get("server") or request.args.get("server")
-    boss = request.form.get("boss") or request.args.get("boss")
-    if svr and boss: borrar_boss(svr, boss)
-    return jsonify({"status": "ok"}), 200
+    data = request.get_json(silent=True) if request.is_json else request.form
+    svr = data.get("server") or request.args.get("server")
+    boss = data.get("boss") or request.args.get("boss")
+
+    if svr and boss:
+        borrar_boss(svr, boss)
+        return jsonify({"status": "ok", "message": f"Timer reseteado para {boss} en {svr}"}), 200
+
+    return jsonify({"status": "error", "message": "Faltan parametros"}), 400
 
 @app.route('/api/kill', methods=['POST'])
 def api_kill():
