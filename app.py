@@ -328,6 +328,23 @@ HTML_TEMPLATE = """
         .btn-reset:hover { background: #ff4757; color: #fff; }
         .actions-group { display: flex; align-items: center; gap: 4px; }
         form { margin: 0; padding: 0; display: inline; }
+
+        /* TABLA DE DONACIONES Y CARDS DE BOTS */
+        .donaciones-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: #0d0a1a;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .donaciones-table th, .donaciones-table td {
+            padding: 10px 14px;
+            text-align: center;
+            border-bottom: 1px solid var(--card-border);
+        }
+        .donaciones-table th { background: #1a1533; color: var(--accent-glow); font-size: 0.9rem; }
+        .donaciones-table td { font-size: 0.85rem; }
     </style>
 </head>
 <body>
@@ -336,7 +353,7 @@ HTML_TEMPLATE = """
         <h1>⚔️ MONITOR MUDREAM ⚔️</h1>
     </header>
 
-    <div class="manual-panel">
+    <div class="manual-panel" id="panelKillManual">
         <h3>⚡ Cargar Kill Manual / Timer Especial</h3>
         <form action="/action/kill" method="POST" class="manual-form">
             <select name="server" id="manualServer" required>
@@ -363,6 +380,8 @@ HTML_TEMPLATE = """
         <button class="view-btn" onclick="setVista('Server 2')">Server 2</button>
         <button class="view-btn" onclick="setVista('Server 3')">Server 3</button>
         <button class="view-btn" onclick="setVista('Server 20')">Server 20</button>
+        <button class="view-btn" onclick="setVista('BOTS')">🤖 Bots Activos</button>
+        <button class="view-btn" onclick="setVista('DONACIONES')">💎 Donaciones</button>
     </div>
 
     <div class="dashboard-container" id="dashboard"></div>
@@ -370,6 +389,7 @@ HTML_TEMPLATE = """
     <script>
         let modoVista = 'TODOS';
         let estadoWeb = {};
+        let listaDonaciones = [];
         const BOSSES_MANUALES_LIST = ["Yellow Goblin", "Blue Goblin", "Red Goblin", "Skeleton King 1", "Skeleton King 2", "Red Dragon"];
 
         function obtenerTagServer(svr) {
@@ -395,10 +415,21 @@ HTML_TEMPLATE = """
         function setVista(vista) {
             modoVista = vista;
             document.querySelectorAll('.view-btn').forEach(btn => {
-                const esActivo = (vista === 'TODOS' && btn.innerText.includes('Todos')) || btn.innerText === vista;
+                const esActivo = (vista === 'TODOS' && btn.innerText.includes('Todos')) || btn.innerText.includes(vista);
                 btn.classList.toggle('active', esActivo);
             });
-            render();
+            
+            // Ocultar panel de kill manual en la pestaña de Donaciones o Bots
+            const panelKill = document.getElementById('panelKillManual');
+            if (panelKill) {
+                panelKill.style.display = (vista === 'DONACIONES' || vista === 'BOTS') ? 'none' : 'block';
+            }
+
+            if (vista === 'DONACIONES') {
+                pedirDonaciones();
+            } else {
+                render();
+            }
         }
 
         async function pedirTimers() {
@@ -406,11 +437,157 @@ HTML_TEMPLATE = """
                 const res = await fetch('/api/timers');
                 estadoWeb = await res.json();
                 poblarSelectorBosses();
-                render();
+                if (modoVista !== 'DONACIONES') {
+                    render();
+                }
             } catch (e) {}
         }
 
+        async function pedirDonaciones() {
+            try {
+                const res = await fetch('/api/donaciones');
+                listaDonaciones = await res.json();
+                renderDonaciones();
+            } catch (e) {}
+        }
+
+        function renderBotsActivos() {
+            const container = document.getElementById('dashboard');
+            container.innerHTML = '';
+            const serversDisponibles = estadoWeb.servers || ["Server 1", "Server 2", "Server 3", "Server 20"];
+            const ultimosReportes = estadoWeb.ultimas_pcs || {};
+            const ultimosPjs = estadoWeb.ultimos_pjs || {};
+            const heartbeats = estadoWeb.heartbeats || {};
+            const ahoraUnix = Math.floor(Date.now() / 1000);
+
+            let block = document.createElement('div');
+            block.className = 'server-block';
+
+            let htmlContent = `
+                <div class="server-header">
+                    <div class="server-title">🤖 ESTADO DE BOTS Y CUENTAS CONECTADAS</div>
+                </div>
+                <div class="boss-grid" style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));">
+            `;
+
+            serversDisponibles.forEach(svr => {
+                const pcOrigen = ultimosReportes[svr] || 'Sin reportes';
+                const pjOrigen = ultimosPjs[svr] || 'Desconocido';
+                
+                let esOnline = false;
+                let horaHbStr = 'Sin registros';
+
+                if (heartbeats[svr]) {
+                    const fechaLimpia = heartbeats[svr].replace(' ', 'T');
+                    const hbDate = new Date(fechaLimpia);
+                    const hbUnix = Math.floor(hbDate.getTime() / 1000);
+                    if (!isNaN(hbUnix)) {
+                        horaHbStr = hbDate.toLocaleTimeString();
+                        if (Math.abs(ahoraUnix - hbUnix) <= 60) {
+                            esOnline = true;
+                        }
+                    }
+                }
+
+                const tagServer = obtenerTagServer(svr);
+                const statusBadge = esOnline 
+                    ? `<div class="timer-badge status-alive">🟢 ONLINE</div>`
+                    : `<div class="timer-badge status-cd">🔴 OFFLINE</div>`;
+
+                htmlContent += `
+                    <div class="boss-card">
+                        <span class="server-badge-top">${tagServer}</span>
+                        <div style="margin-top:8px;">
+                            <div class="boss-name" style="font-size:1.05rem; color:#b8acff;">👤 Character: ${pjOrigen}</div>
+                            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:6px;">💻 PC: ${pcOrigen}</div>
+                        </div>
+                        ${statusBadge}
+                        <div style="font-size:0.7rem; color:#8e85b8; margin-top:4px;">Última señal: ${horaHbStr}</div>
+                    </div>
+                `;
+            });
+
+            htmlContent += `</div>`;
+            block.innerHTML = htmlContent;
+            container.appendChild(block);
+        }
+
+        function renderDonaciones() {
+            const container = document.getElementById('dashboard');
+            container.innerHTML = '';
+
+            let block = document.createElement('div');
+            block.className = 'server-block';
+
+            let htmlForm = `
+                <div class="server-header">
+                    <div class="server-title">💎 REGISTRO Y CONTROL DE DONACIONES</div>
+                </div>
+                
+                <div style="background:#0c091f; padding:15px; border-radius:10px; margin-bottom:20px; border:1px solid var(--card-border);">
+                    <h4 style="margin:0 0 10px 0; color:var(--accent-glow);">➕ Cargar Nueva Donación</h4>
+                    <form action="/action/donar" method="POST" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+                        <input type="text" name="pj_name" placeholder="Nick del Personaje" required style="background:#0d0a1a; border:1px solid var(--card-border); color:#fff; padding:8px; border-radius:6px;">
+                        
+                        <select name="tipo_donacion" required style="background:#0d0a1a; border:1px solid var(--card-border); color:#fff; padding:8px; border-radius:6px;">
+                            <option value="Bless">Jewel of Bless</option>
+                            <option value="Soul">Jewel of Soul</option>
+                            <option value="Chaos">Jewel of Chaos</option>
+                            <option value="Life">Jewel of Life</option>
+                            <option value="Creation">Jewel of Creation</option>
+                            <option value="Zen">Zen</option>
+                        </select>
+
+                        <input type="number" name="cantidad" placeholder="Cantidad" min="1" value="1" required style="background:#0d0a1a; border:1px solid var(--card-border); color:#fff; padding:8px; border-radius:6px; width:100px;">
+
+                        <button type="submit" class="btn-manual-submit">💎 Registrar Donación</button>
+                    </form>
+                </div>
+
+                <table class="donaciones-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Personaje</th>
+                            <th>Item / Donación</th>
+                            <th>Cantidad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            if (listaDonaciones.length === 0) {
+                htmlForm += `<tr><td colspan="4" style="color:var(--text-secondary);">No hay donaciones registradas aún.</td></tr>`;
+            } else {
+                listaDonaciones.forEach(d => {
+                    const fechaObj = new Date(d.created_at);
+                    const fechaStr = !isNaN(fechaObj) ? fechaObj.toLocaleString() : 'Reciente';
+                    htmlForm += `
+                        <tr>
+                            <td style="color:var(--text-secondary);">${fechaStr}</td>
+                            <td style="font-weight:bold; color:#b8acff;">${d.pj_name}</td>
+                            <td><strong style="color:var(--window-yellow);">${d.tipo_donacion}</strong></td>
+                            <td style="font-weight:bold; color:var(--alive-green);">${Number(d.cantidad).toLocaleString()}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            htmlForm += `</tbody></table>`;
+            block.innerHTML = htmlForm;
+            container.appendChild(block);
+        }
+
         function render() {
+            if (modoVista === 'BOTS') {
+                renderBotsActivos();
+                return;
+            }
+            if (modoVista === 'DONACIONES') {
+                renderDonaciones();
+                return;
+            }
+
             const container = document.getElementById('dashboard');
             container.innerHTML = '';
             const serversDisponibles = estadoWeb.servers || ["Server 1", "Server 2", "Server 3", "Server 20"];
@@ -670,6 +847,37 @@ def get_timers():
         "ultimos_pjs": pj_map, 
         "heartbeats": hb_map
     })
+
+@app.route('/api/donaciones', methods=['GET'])
+def get_donaciones():
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/donaciones?select=*&order=created_at.desc"
+        res = requests.get(url, headers=HEADERS, timeout=5)
+        if res.status_code == 200:
+            return jsonify(res.json()), 200
+    except Exception:
+        pass
+    return jsonify([]), 200
+
+@app.route('/action/donar', methods=['POST'])
+def action_donar():
+    pj_name = request.form.get("pj_name")
+    tipo_donacion = request.form.get("tipo_donacion")
+    cantidad = request.form.get("cantidad", 1)
+
+    if pj_name and tipo_donacion:
+        try:
+            url_post = f"{SUPABASE_URL}/rest/v1/donaciones"
+            payload = {
+                "pj_name": pj_name,
+                "tipo_donacion": tipo_donacion,
+                "cantidad": int(cantidad)
+            }
+            requests.post(url_post, headers=HEADERS, json=payload, timeout=5)
+        except Exception as e:
+            print(f"Error registrando donación: {e}")
+
+    return redirect(url_for('index'))
 
 @app.route('/action/kill', methods=['GET', 'POST'])
 def action_kill():
