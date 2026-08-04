@@ -18,14 +18,15 @@ HEADERS = {
 }
 
 # === CONFIGURACIÓN DE COOLDOWNS Y VENTANAS (en minutos) ===
+# Formato: "Nombre": (Tiempo_Minimo_Cooldown, Duracion_Ventana_En_Minutos)
 COOLDOWNS_CONFIG = {
-    "Muggron 1": (180, 60),
+    "Muggron 1": (180, 60),      # Respawn entre min 180 y 240
     "Muggron 2": (180, 60),
-    "Dreadhorn 1": (60, 60),
+    "Dreadhorn 1": (60, 60),     # Respawn entre min 60 y 120
     "Dreadhorn 2": (60, 60),
-    "Moltragon 1": (60, 60),
+    "Moltragon 1": (60, 60),     # Respawn entre min 60 y 120
     "Moltragon 2": (60, 60),
-    "Borgar": (120, 60),
+    "Borgar": (120, 60),         # Respawn entre min 120 y 180
     "Kharzul 1": (420, 60),
     "Kharzul 2": (420, 60),
     "Kharzul 3": (420, 60),
@@ -51,7 +52,7 @@ COOLDOWNS_CONFIG = {
 COOLDOWNS = {k: v[0] for k, v in COOLDOWNS_CONFIG.items()}
 SERVIDORES = ["Server 1", "Server 2", "Server 3", "Server 20"]
 
-# Bosses exclusivamente manuales
+# Bosses exclusivamente manuales (ocultos por defecto hasta ser ingresados)
 BOSSES_MANUALES = ["Yellow Goblin", "Blue Goblin", "Red Goblin", "Skeleton King 1", "Skeleton King 2", "Red Dragon", "Santa 1", "Santa 2"]
 
 GRUPOS_PARES = [
@@ -329,7 +330,6 @@ HTML_TEMPLATE = """
         .actions-group { display: flex; align-items: center; gap: 4px; }
         form { margin: 0; padding: 0; display: inline; }
 
-        /* VISTA DE DONACIONES POR PERSONAJE */
         .donacion-pj-card {
             background: #0d0a1a;
             border: 1px solid var(--card-border);
@@ -583,7 +583,6 @@ HTML_TEMPLATE = """
                 <h3 style="color:var(--accent-glow); margin-bottom:12px;">📊 Resumen por Personaje</h3>
             `;
 
-            // AGRUPACIÓN EXPLÍCITA DE DONACIONES POR PJ
             let resumenPj = {};
             listaDonaciones.forEach(d => {
                 const pj = d.pj_name;
@@ -622,7 +621,6 @@ HTML_TEMPLATE = """
                 htmlForm += `</div>`;
             }
 
-            // HISTORIAL COMPLETO DE TABLA
             htmlForm += `
                 <h3 style="color:var(--accent-glow); margin-bottom:10px;">📜 Historial Detallado</h3>
                 <table class="donaciones-table">
