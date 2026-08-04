@@ -239,20 +239,20 @@ HTML_TEMPLATE = """
 
     <div class="manual-panel" id="panelKillManual">
         <h3>⚡ Cargar Kill Manual / Timer Especial</h3>
-        <form action="/action/kill" method="POST" class="manual-form">
-            <select name="server" id="manualServer" required>
+        <div class="manual-form">
+            <select id="manualServer" required>
                 <option value="" disabled selected>Seleccionar Server</option>
                 <option value="Server 1">Server 1</option>
                 <option value="Server 2">Server 2</option>
                 <option value="Server 3">Server 3</option>
                 <option value="Server 20">Server 20</option>
             </select>
-            <select name="boss" id="manualBoss" required>
+            <select id="manualBoss" required>
                 <option value="" disabled selected>Seleccionar Boss</option>
             </select>
-            <input type="number" name="custom_timer" placeholder="Minutos restantes (Opcional)" min="0">
-            <button type="submit" class="btn-manual-submit">➕ Registrar Kill</button>
-        </form>
+            <input type="number" id="manualTimer" placeholder="Minutos restantes (Opcional)" min="0">
+            <button type="button" class="btn-manual-submit" onclick="ejecutarKillForm()">➕ Registrar Kill</button>
+        </div>
     </div>
 
     <div class="controls-bar">
@@ -264,7 +264,6 @@ HTML_TEMPLATE = """
         <button class="view-btn" onclick="setVista('BOTS')">🤖 Bots Activos</button>
         <button class="view-btn" onclick="setVista('DONACIONES')">💎 Donaciones</button>
         
-        <!-- BOTÓN DE DESCARGA VINCULADO A GOOGLE DRIVE -->
         <a href="{{ link_descarga }}" target="_blank" style="text-decoration:none;">
             <button class="view-btn" style="background:#7b2cbf; border-color:#9d4edd; color:#fff;">⬇️ Descargar Bot (.exe)</button>
         </a>
@@ -304,6 +303,37 @@ HTML_TEMPLATE = """
                 opt.value = boss;
                 opt.textContent = `${boss} (${cooldowns[boss]}m)`;
                 selectBoss.appendChild(opt);
+            }
+        }
+
+        // === ACCIONES VIA AJAX (SIN RECARGAR PAGINA) ===
+        async function enviarKill(svr, boss, customMin = '') {
+            try {
+                const formData = new FormData();
+                formData.append('server', svr);
+                formData.append('boss', boss);
+                if (customMin) formData.append('custom_timer', customMin);
+                await fetch('/action/kill', { method: 'POST', body: formData });
+                pedirTimers();
+            } catch (e) {}
+        }
+
+        async function enviarReset(svr, boss) {
+            try {
+                const formData = new FormData();
+                formData.append('server', svr);
+                formData.append('boss', boss);
+                await fetch('/action/reset', { method: 'POST', body: formData });
+                pedirTimers();
+            } catch (e) {}
+        }
+
+        function ejecutarKillForm() {
+            const svr = document.getElementById('manualServer').value;
+            const boss = document.getElementById('manualBoss').value;
+            const customTimer = document.getElementById('manualTimer').value;
+            if (svr && boss) {
+                enviarKill(svr, boss, customTimer);
             }
         }
 
@@ -436,7 +466,7 @@ HTML_TEMPLATE = """
                         <h4 style="margin:0 0 10px 0; color:var(--accent-glow);">👥 Panel Admin: Crear Nuevo Encargado</h4>
                         <form action="/admin/crear_usuario" method="POST" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
                             <input type="text" name="nuevo_usuario" placeholder="Nombre de Usuario" required style="background:#0d0a1a; border:1px solid var(--card-border); color:#fff; padding:8px; border-radius:6px;">
-                            <input type="text" name="clave_inicial" placeholder="Clave Temporal" required style="background:#0d0a1a; border:1px solid var(--card-border); color:#fff; padding:8px; border-radius:6px;">
+                            <input type="password" name="clave_inicial" placeholder="Clave Temporal" required style="background:#0d0a1a; border:1px solid var(--card-border); color:#fff; padding:8px; border-radius:6px;">
                             <button type="submit" class="btn-manual-submit" style="background:#2ecc71;">➕ Crear Encargado</button>
                         </form>
                     </div>
@@ -626,17 +656,9 @@ HTML_TEMPLATE = """
                             <div><div class="boss-name">${b.bossName}</div></div>
                             ${b.displayTimer}
                             <div class="actions-group">
-                                <form action="/action/kill" method="POST">
-                                    <input type="hidden" name="server" value="${b.svr}">
-                                    <input type="hidden" name="boss" value="${b.bossName}">
-                                    <button type="submit" class="btn-action">⚔️ Kill</button>
-                                </form>
+                                <button type="button" class="btn-action" onclick="enviarKill('${b.svr}', '${b.bossName}')">⚔️ Kill</button>
                                 ${b.statusState !== 'alive' ? `
-                                <form action="/action/reset" method="POST">
-                                    <input type="hidden" name="server" value="${b.svr}">
-                                    <input type="hidden" name="boss" value="${b.bossName}">
-                                    <button type="submit" class="btn-action btn-reset">✖</button>
-                                </form>` : ''}
+                                <button type="button" class="btn-action btn-reset" onclick="enviarReset('${b.svr}', '${b.bossName}')">✖</button>` : ''}
                             </div>
                         </div>
                     `;
@@ -724,17 +746,9 @@ HTML_TEMPLATE = """
                             <div><div class="boss-name">${b.bossName}</div></div>
                             ${b.displayTimer}
                             <div class="actions-group">
-                                <form action="/action/kill" method="POST">
-                                    <input type="hidden" name="server" value="${svr}">
-                                    <input type="hidden" name="boss" value="${b.bossName}">
-                                    <button type="submit" class="btn-action">⚔️ Kill</button>
-                                </form>
+                                <button type="button" class="btn-action" onclick="enviarKill('${svr}', '${b.bossName}')">⚔️ Kill</button>
                                 ${b.statusState !== 'alive' ? `
-                                <form action="/action/reset" method="POST">
-                                    <input type="hidden" name="server" value="${svr}">
-                                    <input type="hidden" name="boss" value="${b.bossName}">
-                                    <button type="submit" class="btn-action btn-reset">✖</button>
-                                </form>` : ''}
+                                <button type="button" class="btn-action btn-reset" onclick="enviarReset('${svr}', '${b.bossName}')">✖</button>` : ''}
                             </div>
                         </div>
                     `;
@@ -848,15 +862,16 @@ def crear_usuario():
             pass_hash = generate_password_hash(clave_inicial)
             url_post = f"{SUPABASE_URL}/rest/v1/usuarios"
             payload = {
-                "username": nuevo_usuario,
+                "username": nuevo_usuario.strip(),
                 "password_hash": pass_hash,
                 "rol": "encargado",
                 "requiere_cambio_clave": True,
                 "creado_por": "admin"
             }
-            requests.post(url_post, headers=HEADERS, json=payload, timeout=5)
+            res = requests.post(url_post, headers=HEADERS, json=payload, timeout=5)
+            print(f"[CREAR USUARIO STATUS]: {res.status_code} - {res.text}")
         except Exception as e:
-            print(f"Error creando usuario: {e}")
+            print(f"[Error creando usuario]: {e}")
 
     return redirect(url_for('index') + '#donaciones')
 
@@ -928,7 +943,7 @@ def action_editar_donacion():
 
     return redirect(url_for('index') + '#donaciones')
 
-@app.route('/action/kill', methods=['GET', 'POST'])
+@app.route('/action/kill', methods=['POST'])
 def action_kill():
     svr = request.form.get("server") or request.args.get("server")
     boss = request.form.get("boss") or request.args.get("boss")
@@ -936,14 +951,14 @@ def action_kill():
     custom_min = int(custom_timer) if custom_timer else None
 
     if svr and boss: guardar_boss(svr, boss, "Navegador Web", "Web", custom_minutes=custom_min)
-    return redirect(url_for('index'))
+    return jsonify({"status": "ok"}), 200
 
-@app.route('/action/reset', methods=['GET', 'POST'])
+@app.route('/action/reset', methods=['POST'])
 def action_reset():
     svr = request.form.get("server") or request.args.get("server")
     boss = request.form.get("boss") or request.args.get("boss")
     if svr and boss: borrar_boss(svr, boss)
-    return redirect(url_for('index'))
+    return jsonify({"status": "ok"}), 200
 
 @app.route('/api/kill', methods=['POST'])
 def api_kill():
