@@ -38,7 +38,6 @@ COOLDOWNS_CONFIG = {
 COOLDOWNS = {k: v[0] for k, v in COOLDOWNS_CONFIG.items()}
 SERVIDORES = ["Server 1", "Server 2", "Server 3", "Server 20"]
 
-# === INCLUSIÓN DE SANTAS Y WHITE WIZARD COMO MANUALES ===
 BOSSES_MANUALES = [
     "Yellow Goblin", "Blue Goblin", "Red Goblin", 
     "Skeleton King 1", "Skeleton King 2", 
@@ -398,10 +397,16 @@ HTML_TEMPLATE = """
         async function pedirTimers() {
             try {
                 const res = await fetch('/api/timers');
-                estadoWeb = await res.json();
-                poblarSelectorBosses();
-                if (modoVista !== 'DONACIONES') { render(); }
-            } catch (e) {}
+                if (res.ok) {
+                    estadoWeb = await res.json();
+                    poblarSelectorBosses();
+                    if (modoVista !== 'DONACIONES') { 
+                        render(); 
+                    }
+                }
+            } catch (e) {
+                console.error("Error al consultar timers:", e);
+            }
         }
 
         async function pedirDonaciones() {
@@ -799,8 +804,13 @@ HTML_TEMPLATE = """
                 container.appendChild(serverBlock);
             }
         }
+
         setInterval(pedirTimers, 1000);
-        setVista(modoVista);
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            setVista(modoVista);
+            pedirTimers();
+        });
     </script>
 </body>
 </html>
