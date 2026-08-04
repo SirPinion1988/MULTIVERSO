@@ -50,7 +50,9 @@ COOLDOWNS_CONFIG = {
 
 COOLDOWNS = {k: v[0] for k, v in COOLDOWNS_CONFIG.items()}
 SERVIDORES = ["Server 1", "Server 2", "Server 3", "Server 20"]
-BOSSES_MANUALES = ["Yellow Goblin", "Blue Goblin", "Red Goblin", "Skeleton King 1", "Skeleton King 2"]
+
+# Bosses exclusivamente manuales (ocultos por defecto hasta ser ingresados)
+BOSSES_MANUALES = ["Yellow Goblin", "Blue Goblin", "Red Goblin", "Skeleton King 1", "Skeleton King 2", "Red Dragon"]
 
 GRUPOS_PARES = [
     ["Moltragon 1", "Moltragon 2"],
@@ -368,6 +370,7 @@ HTML_TEMPLATE = """
     <script>
         let modoVista = 'TODOS';
         let estadoWeb = {};
+        const BOSSES_MANUALES_LIST = ["Yellow Goblin", "Blue Goblin", "Red Goblin", "Skeleton King 1", "Skeleton King 2", "Red Dragon"];
 
         function obtenerTagServer(svr) {
             if (svr === "Server 1") return "S1";
@@ -462,12 +465,18 @@ HTML_TEMPLATE = """
                                 const m = Math.floor(winSec / 60), s = winSec % 60;
                                 displayTimer = `<div class="timer-badge status-window">🟡 VENTANA (${m}m ${s < 10 ? '0':''}${s}s)</div>`;
                             } else {
+                                if (BOSSES_MANUALES_LIST.includes(bossName)) {
+                                    continue;
+                                }
                                 const vivoSec = ahoraUnix - finVentanaUnix;
                                 prioridadOrden = -1000 - vivoSec;
                                 const h = Math.floor(vivoSec / 3600), m = Math.floor((vivoSec % 3600) / 60), s = vivoSec % 60;
                                 displayTimer = `<div class="timer-badge status-alive">🟢 VIVO +${h > 0 ? h + 'h ' : ''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
                             }
                         } else {
+                            if (BOSSES_MANUALES_LIST.includes(bossName)) {
+                                continue;
+                            }
                             prioridadOrden = -999;
                             displayTimer = `<div class="timer-badge status-alive">🟢 ¡VIVO!</div>`;
                         }
@@ -577,12 +586,18 @@ HTML_TEMPLATE = """
                             const m = Math.floor(winSec / 60), s = winSec % 60;
                             displayTimer = `<div class="timer-badge status-window">🟡 VENTANA (${m}m ${s < 10 ? '0':''}${s}s)</div>`;
                         } else {
+                            if (BOSSES_MANUALES_LIST.includes(bossName)) {
+                                continue;
+                            }
                             const vivoSec = ahoraUnix - finVentanaUnix;
                             prioridadOrden = -1000 - vivoSec;
                             const h = Math.floor(vivoSec / 3600), m = Math.floor((vivoSec % 3600) / 60), s = vivoSec % 60;
                             displayTimer = `<div class="timer-badge status-alive">🟢 VIVO +${h > 0 ? h + 'h ' : ''}${m}m ${s < 10 ? '0':''}${s}s</div>`;
                         }
                     } else {
+                        if (BOSSES_MANUALES_LIST.includes(bossName)) {
+                            continue;
+                        }
                         prioridadOrden = -999;
                         displayTimer = `<div class="timer-badge status-alive">🟢 ¡VIVO!</div>`;
                     }
