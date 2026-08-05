@@ -218,6 +218,13 @@
             "Skeleton King 1": 120, "Skeleton King 2": 120
         };
 
+        // EVENTOS/INVASIONES QUE TIENEN 1 VENTANA Y LUEGO DESAPARECEN HASTA NUEVO KILL
+        const BOSSES_SOLO_MANUALES = [
+            "Red Dragon", "Yellow Goblin", "Blue Goblin", "Red Goblin",
+            "Santa 1", "Santa 2", "White Wizard 1", "White Wizard 2",
+            "Skeleton King 1", "Skeleton King 2"
+        ];
+
         async function verificarSesion() {
             try {
                 const res = await fetch('/api/session');
@@ -257,6 +264,7 @@
                 if (res.ok) {
                     alert("Contraseña actualizada con éxito.");
                     document.getElementById('modal-cambio-clave').classList.add('hidden');
+                    location.reload();
                 } else {
                     alert("Error cambiando contraseña.");
                 }
@@ -398,8 +406,9 @@
                 listaBossesAMostrar.forEach(bossName => {
                     const cdMinutos = COOLDOWNS_LOCAL[bossName] || 60;
                     const cdSegundos = cdMinutos * 60;
-                    const ventanaSegundos = 3600;
+                    const ventanaSegundos = 3600; // 1 hora de ventana
                     const cicloTotalSegundos = cdSegundos + ventanaSegundos;
+                    const esEventoManual = BOSSES_SOLO_MANUALES.includes(bossName);
 
                     let ordenTiempo = 99999999;
                     let cardHTML = '';
@@ -409,7 +418,8 @@
                     if (killUnix) {
                         let transcurridoTotal = ahoraUnix - killUnix;
 
-                        if (transcurridoTotal >= cicloTotalSegundos) {
+                        // SI ES AUTOMÁTICO -> Permite reciclar indefinidamente
+                        if (!esEventoManual && transcurridoTotal >= cicloTotalSegundos) {
                             const ciclosPasados = Math.floor(transcurridoTotal / cicloTotalSegundos);
                             killUnix += (ciclosPasados * cicloTotalSegundos);
                             transcurridoTotal = ahoraUnix - killUnix;
@@ -418,7 +428,7 @@
                         const targetRespawnUnix = killUnix + cdSegundos;
                         const finVentanaUnix = targetRespawnUnix + ventanaSegundos;
 
-                        // 🔴 ROJO
+                        // 🔴 ROJO: Durante el tiempo de Cooldown
                         if (ahoraUnix < targetRespawnUnix) {
                             const restoSec = targetRespawnUnix - ahoraUnix;
                             ordenTiempo = restoSec;
@@ -436,7 +446,7 @@
                                 </div>
                             `;
                         } 
-                        // 🟡 AMARILLO
+                        // 🟡 AMARILLO: Durante la Ventana de Cacería (Se muestra tanto para autos como para manuales dentro del rango)
                         else if (ahoraUnix >= targetRespawnUnix && ahoraUnix <= finVentanaUnix) {
                             const transcurridoVentana = ahoraUnix - targetRespawnUnix;
                             ordenTiempo = -1000 + transcurridoVentana;
@@ -454,9 +464,11 @@
                                 </div>
                             `;
                         }
+                        // 💜 SI ES MANUAL Y SE LE PASÓ LA VENTANA -> NO RE-CICLA Y VUELVE A DISPONIBLE
                     }
 
-                    if (!cardHTML && listaFijaServidor.includes(bossName)) {
+                    // 💜 SI NO HAY CARD (Porque venció la ventana manual o es la primera vez) -> ESPERANDO KILL
+                    if (!cardHTML) {
                         ordenTiempo = 88888888;
                         cardHTML = `
                             <div class="card p-4 rounded-xl bg-purple-950/40 border border-purple-700 shadow-lg flex flex-col justify-between text-center min-h-[140px]">
@@ -488,7 +500,7 @@
             }
         }
 
-        // USUARIOS Y DONACIONES (CON EDICIÓN Y AUDITORÍA)
+        // USUARIOS Y DONACIONES
         async function cargarUsuarios() {
             try {
                 const res = await fetch('/api/usuarios');
