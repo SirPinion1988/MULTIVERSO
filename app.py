@@ -1,331 +1,291 @@
 import os
+import time
 import json
-from datetime import datetime, timezone
-from flask import Flask, render_template, jsonify, request, session, redirect, url_for
-from flask_cors import CORS
+from datetime import datetime
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
-from supabase import create_client, Client
 
 app = Flask(__name__)
-CORS(app)
-app.secret_key = "clave_secreta_mudream_donaciones_key_multiverso"
+app.secret_key = os.environ.get("SECRET_KEY", "multiverso_secret_key_mu_dream_2026")
 
-LINK_DESCARGA_BOT = "https://drive.google.com/drive/folders/1Rx1TZZl5IncOpJPLab4YnRqOEIY6iBrC?usp=sharing"
+# ARCHIVOS DE PERSISTENCIA
+DATA_FILE = "timers_data.json"
+USERS_FILE = "users_data.json"
+DONACIONES_FILE = "donaciones_data.json"
 
-# === CREDENCIALES DE SUPABASE ===
-SUPABASE_URL = "https://csdwnpkvuymtasxpujza.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzZHducGt2dXltdGFzeHB1anphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3ODU0NDYsImV4cCI6MjEwMTM2MTQ0Nn0.IwgSW7QwoqLArOTfHYT4TyONA_57y1ELCaiQyZ3xyRg"
+LINK_DESCARGA_BOT = "https://drive.google.com/uc?export=download&id=TU_ID_DE_GOOGLE_DRIVE"
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-SERVIDORES_VALIDOS = ["Server 1", "Server 2", "Server 3", "Server 20"]
-
-COOLDOWNS_CONFIG = {
-    "Muggron 1": 180, "Muggron 2": 180,
-    "Dreadhorn 1": 60, "Dreadhorn 2": 60,
-    "Moltragon 1": 60, "Moltragon 2": 60,
-    "Borgar": 120,
-    "Kharzul 1": 420, "Kharzul 2": 420, "Kharzul 3": 420,
-    "Vescrya 1": 420, "Vescrya 2": 420, "Vescrya 3": 420,
-    "Muggron Barracks 1": 180, "Muggron Barracks 2": 180,
-    "Muggron Crywolf 1": 180, "Muggron Crywolf 2": 180,
-    "Yellow Goblin": 120, "Blue Goblin": 120, "Red Goblin": 120,
-    "Red Dragon": 240, "Santa 1": 120, "Santa 2": 120,
-    "White Wizard 1": 120, "White Wizard 2": 120,
-    "Skeleton King 1": 120, "Skeleton King 2": 120
+# ESTADO EN MEMORIA
+status_timers = {
+    "Server 1": {},
+    "Server 2": {},
+    "Server 3": {},
+    "Server 20": {}
 }
 
-# === RUTAS PRINCIPALES Y AUTENTICACIÓN ===
+heartbeats = {}
+ultimas_pcs = {}
+ultimos_pjs = {}
+
+# --- FUNCIONES DE PERSISTENCIA ---
+def cargar_json(filepath, default_val):
+    if os.path.exists(filepath):
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Error cargando {filepath}: {e}")
+    return default_val
+
+def guardar_json(filepath, data):
+    try:
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
+    except Exception as e:
+        print(f"Error guardando {filepath}: {e}")
+
+# Cargar datos iniciales
+status_timers = cargar_json(DATA_FILE, status_timers)
+usuarios_db = cargar_json(USERS_FILE, {})
+donaciones_db = cargar_json(DONACIONES_FILE, [])
+
+# Crear usuario Administrador por defecto si no existe ninguno
+if not usuarios_db:
+    usuarios_db["admin"] = {
+        "password": generate_password_hash("admin123"),
+        "rol": "admin",
+        "requiere_cambio": False,
+        "creado_por": "Sistema"
+    }
+    guardar_json(USERS_FILE, usuarios_db)
+
+
+# --- RUTAS PRINCIPALES DE LA WEB ---
 
 @app.route('/')
 def index():
     return render_template('index.html', link_descarga=LINK_DESCARGA_BOT)
 
+
+# --- RUTAS DE AUTENTICACIÓN ---
+
 @app.route('/login', methods=['POST'])
 def login():
-    data = request.get_json() or {}
-    username = data.get('username')
-    password = data.get('password')
+    data = request.json or {}
+    username = data.get('username', '').strip().lower()
+    password = data.get('password', '')
+
+    if username in usuarios_db and check_password_hash(usuarios_db[username]["password"], password):
+        session['user'] = username
+        session['rol'] = usuarios_db[username]["rol"]
+        return jsonify({
+            "status": "ok", 
+            "user": username, 
+            "rol": usuarios_db[username]["rol"],
+            "requiere_cambio": usuarios_db[username].get("requiere_cambio", False)
+        }), 200
     
-    if not username or not password:
-        return jsonify({"error": "Faltan datos"}), 400
-
-    try:
-        res = supabase.table('usuarios').select('*').eq('username', username).execute()
-        if res.data and len(res.data) > 0:
-            user = res.data[0]
-            pwd_hash = user.get('password_hash', '')
-            
-            es_valido = False
-            try:
-                if pwd_hash.startswith('pbkdf2:') or pwd_hash.startswith('scrypt:'):
-                    es_valido = check_password_hash(pwd_hash, password)
-                else:
-                    es_valido = (pwd_hash == password)
-            except Exception:
-                es_valido = (pwd_hash == password)
-
-            if es_valido:
-                session['user'] = user['username']
-                session['rol'] = user.get('rol', 'encargado')
-                requiere_cambio = user.get('requiere_cambio_clave', False)
-
-                return jsonify({
-                    "status": "SUCCESS", 
-                    "user": user['username'], 
-                    "rol": user.get('rol'),
-                    "requiere_cambio": requiere_cambio
-                }), 200
-
-        return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
-    except Exception as e:
-        print(f"Error en login: {e}")
-        return jsonify({"error": str(e)}), 500
+    return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('index'))
 
-@app.route('/api/session', methods=['GET'])
-def check_session():
-    user_name = session.get('user', None)
-    requiere_cambio = False
-    if user_name:
-        res = supabase.table('usuarios').select('requiere_cambio_clave').eq('username', user_name).execute()
-        if res.data and len(res.data) > 0:
-            requiere_cambio = res.data[0].get('requiere_cambio_clave', False)
-
-    return jsonify({
-        "logged_in": 'user' in session,
-        "user": user_name,
-        "rol": session.get('rol', None),
-        "requiere_cambio": requiere_cambio
-    })
+@app.route('/api/session')
+def api_session():
+    if 'user' in session:
+        user_info = usuarios_db.get(session['user'], {})
+        return jsonify({
+            "logged_in": True,
+            "user": session['user'],
+            "rol": session.get('rol', 'encargado'),
+            "requiere_cambio": user_info.get("requiere_cambio", False)
+        })
+    return jsonify({"logged_in": False})
 
 @app.route('/api/cambiar_clave', methods=['POST'])
 def cambiar_clave():
     if 'user' not in session:
-        return jsonify({"error": "No has iniciado sesión"}), 401
-
-    data = request.get_json() or {}
+        return jsonify({"error": "No autorizado"}), 401
+    
+    data = request.json or {}
     nueva_clave = data.get('nueva_clave')
-
+    
     if not nueva_clave or len(nueva_clave) < 4:
         return jsonify({"error": "La contraseña debe tener al menos 4 caracteres"}), 400
+    
+    username = session['user']
+    usuarios_db[username]["password"] = generate_password_hash(nueva_clave)
+    usuarios_db[username]["requiere_cambio"] = False
+    guardar_json(USERS_FILE, usuarios_db)
+    
+    return jsonify({"status": "ok", "message": "Contraseña actualizada"}), 200
 
-    try:
-        nueva_hash = generate_password_hash(nueva_clave)
-        supabase.table('usuarios').update({
-            'password_hash': nueva_hash,
-            'requiere_cambio_clave': False
-        }).eq('username', session['user']).execute()
 
-        return jsonify({"status": "SUCCESS"}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+# --- RUTAS DE GESTIÓN DE TIMERS Y BOTS ---
 
-# === GESTIÓN DE USUARIOS ===
-
-@app.route('/api/usuarios', methods=['GET', 'POST'])
-def usuarios_admin():
-    if 'user' not in session or session.get('rol') != 'admin':
-        return jsonify({"error": "Acceso denegado. Solo Administrador."}), 403
-
-    if request.method == 'GET':
-        try:
-            res = supabase.table('usuarios').select('id, username, rol, requiere_cambio_clave, creado_por, created_at').order('created_at', desc=True).execute()
-            return jsonify(res.data if res.data else []), 200
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
-
-    if request.method == 'POST':
-        data = request.get_json() or {}
-        username = data.get('username')
-        password = data.get('password')
-        rol = data.get('rol', 'encargado')
-
-        if not username or not password:
-            return jsonify({"error": "Faltan datos obligatorios"}), 400
-
-        try:
-            pwd_hash = generate_password_hash(password)
-            supabase.table('usuarios').insert({
-                'username': username,
-                'password_hash': pwd_hash,
-                'rol': rol,
-                'requiere_cambio_clave': True,
-                'creado_por': session['user']
-            }).execute()
-
-            return jsonify({"status": "SUCCESS"}), 200
-        except Exception as e:
-            return jsonify({"error": f"Error o usuario ya existente: {str(e)}"}), 500
-
-# === API STATUS Y TIMERS ===
-
-@app.route('/api/status_timers', methods=['GET'])
-def status_timers():
-    try:
-        res = supabase.table('timers_bosses').select('*').execute()
-        timers_map = {svr: {} for svr in SERVIDORES_VALIDOS}
-        pcs_map = {svr: "Sin reportes" for svr in SERVIDORES_VALIDOS}
-        pj_map = {svr: "Desconocido" for svr in SERVIDORES_VALIDOS}
-        hb_map = {svr: None for svr in SERVIDORES_VALIDOS}
-
-        if res.data:
-            for row in res.data:
-                svr = row.get('server')
-                if svr in SERVIDORES_VALIDOS:
-                    timers_map[svr] = row.get('timers') or {}
-                    pcs_map[svr] = row.get('last_pc') or 'Sin reportes'
-                    pj_map[svr] = row.get('last_pj') or 'Desconocido'
-                    hb_map[svr] = row.get('last_heartbeat')
-
-        return jsonify({
-            "timers": timers_map,
-            "cooldowns": COOLDOWNS_CONFIG,
-            "servers": SERVIDORES_VALIDOS,
-            "ultimas_pcs": pcs_map,
-            "ultimos_pjs": pj_map,
-            "heartbeats": hb_map
-        }), 200
-    except Exception as e:
-        print(f"Error en status_timers: {e}")
-        return jsonify({"error": str(e)}), 500
-
-# === API KILL ===
+@app.route('/api/status_timers')
+def get_status_timers():
+    return jsonify({
+        "timers": status_timers,
+        "heartbeats": heartbeats,
+        "ultimas_pcs": ultimas_pcs,
+        "ultimos_pjs": ultimos_pjs
+    })
 
 @app.route('/api/kill', methods=['POST'])
-def kill():
-    data = request.get_json() or {}
+def registrar_kill():
+    data = request.json or {}
     server = data.get('server')
     boss = data.get('boss')
-    pc_id = data.get('pc_id', 'Navegador Web')
-    pj_name = session.get('user', data.get('pj_name', 'Manual Web'))
+    pc_id = data.get('pc_id', 'Manual Web')
+    pj_name = data.get('pj_name', 'Manual Web')
 
-    if not server or server not in SERVIDORES_VALIDOS or not boss:
-        return jsonify({"error": "Datos incompletos"}), 400
+    if not server or not boss:
+        return jsonify({"error": "Faltan datos"}), 400
 
-    try:
-        res = supabase.table('timers_bosses').select('timers').eq('server', server).execute()
-        current_timers = {}
-        if res.data and len(res.data) > 0:
-            current_timers = res.data[0].get('timers') or {}
+    if server not in status_timers:
+        status_timers[server] = {}
 
-        ahora_unix = int(datetime.now(timezone.utc).timestamp())
-        current_timers[boss] = ahora_unix
+    status_timers[server][boss] = int(time.time())
+    guardar_json(DATA_FILE, status_timers)
 
-        supabase.table('timers_bosses').update({
-            'timers': current_timers,
-            'last_pc': pc_id,
-            'last_pj': pj_name,
-            'last_heartbeat': datetime.now(timezone.utc).isoformat()
-        }).eq('server', server).execute()
+    # Actualizar heartbeat si viene del bot local
+    if pc_id != 'Manual Web':
+        heartbeats[server] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        ultimas_pcs[server] = pc_id
+        ultimos_pjs[server] = pj_name
 
-        return jsonify({"status": "SUCCESS", "boss": boss, "server": server, "timestamp": ahora_unix}), 200
-    except Exception as e:
-        print(f"Error registrando kill: {e}")
-        return jsonify({"error": str(e)}), 500
+    return jsonify({"status": "ok", "server": server, "boss": boss}), 200
 
-# === API HEARTBEAT ===
+@app.route('/api/reset_boss', methods=['POST'])
+def reset_boss():
+    """Elimina el registro de un boss de la pantalla para toda la guild (botón ✕)"""
+    data = request.json or {}
+    server = data.get('server')
+    boss = data.get('boss')
+
+    if server and boss and server in status_timers:
+        if boss in status_timers[server]:
+            del status_timers[server][boss]
+            guardar_json(DATA_FILE, status_timers)
+            return jsonify({"status": "ok", "message": f"{boss} borrado de {server}"}), 200
+
+    return jsonify({"error": "Datos inválidos o boss no encontrado"}), 400
 
 @app.route('/api/heartbeat', methods=['POST'])
-def heartbeat():
-    data = request.get_json() or {}
+def registrar_heartbeat():
+    data = request.json or {}
     server = data.get('server')
     pc_id = data.get('pc_id', 'Desconocido')
     pj_name = data.get('pj_name', 'Desconocido')
 
-    if not server or server not in SERVIDORES_VALIDOS:
-        return jsonify({"error": "Servidor no válido"}), 400
+    if server:
+        heartbeats[server] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        ultimas_pcs[server] = pc_id
+        ultimos_pjs[server] = pj_name
+        return jsonify({"status": "ok"}), 200
 
-    try:
-        ahora = datetime.now(timezone.utc).isoformat()
-        supabase.table('timers_bosses').update({
-            'last_pc': pc_id,
-            'last_pj': pj_name,
-            'last_heartbeat': ahora
-        }).eq('server', server).execute()
+    return jsonify({"error": "Servidor requerido"}), 400
 
-        return jsonify({"status": "OK"}), 200
-    except Exception as e:
-        print(f"Error en heartbeat: {e}")
-        return jsonify({"error": str(e)}), 500
 
-# === API DONACIONES (CON AUDITORÍA DE MODIFICACIÓN) ===
+# --- RUTAS DE GESTIÓN DE DONACIONES ---
 
 @app.route('/api/donaciones', methods=['GET', 'POST'])
 def donaciones():
+    global donaciones_db
+
     if request.method == 'GET':
-        try:
-            res = supabase.table('donaciones').select('*').order('created_at', desc=True).execute()
-            return jsonify(res.data if res.data else []), 200
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
+        return jsonify(donaciones_db)
 
     if request.method == 'POST':
         if 'user' not in session:
-            return jsonify({"error": "Debes iniciar sesión para registrar donaciones"}), 401
+            return jsonify({"error": "No autorizado"}), 401
 
-        data = request.get_json() or {}
+        data = request.json or {}
         pj_name = data.get('pj_name')
         tipo_donacion = data.get('tipo_donacion')
         cantidad = data.get('cantidad', 1)
-        registrado_por = session.get('user', 'Encargado')
 
         if not pj_name or not tipo_donacion:
-            return jsonify({"error": "Faltan campos"}), 400
+            return jsonify({"error": "Faltan datos de donación"}), 400
 
-        try:
-            supabase.table('donaciones').insert({
-                'pj_name': pj_name,
-                'tipo_donacion': tipo_donacion,
-                'cantidad': cantidad,
-                'registrado_por': registrado_por
-            }).execute()
-            return jsonify({"status": "SUCCESS"}), 200
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
+        nueva_donacion = {
+            "id": int(time.time() * 1000),
+            "pj_name": pj_name,
+            "tipo_donacion": tipo_donacion,
+            "cantidad": int(cantidad),
+            "registrado_por": session['user'],
+            "fecha_registro": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "modificado_por": None,
+            "fecha_modificacion": None
+        }
+
+        donaciones_db.insert(0, nueva_donacion)
+        guardar_json(DONACIONES_FILE, donaciones_db)
+        return jsonify({"status": "ok", "donacion": nueva_donacion}), 201
 
 @app.route('/api/donaciones/<int:donacion_id>', methods=['PUT'])
 def editar_donacion(donacion_id):
     if 'user' not in session:
-        return jsonify({"error": "Debes iniciar sesión como encargado para modificar donaciones"}), 401
+        return jsonify({"error": "No autorizado"}), 401
 
-    data = request.get_json() or {}
-    nuevo_pj = data.get('pj_name')
-    nuevo_tipo = data.get('tipo_donacion')
-    nueva_cantidad = data.get('cantidad')
+    data = request.json or {}
+    for don in donaciones_db:
+        if don['id'] == donacion_id:
+            don['pj_name'] = data.get('pj_name', don['pj_name'])
+            don['tipo_donacion'] = data.get('tipo_donacion', don['tipo_donacion'])
+            don['cantidad'] = int(data.get('cantidad', don['cantidad']))
+            don['modificado_por'] = session['user']
+            don['fecha_modificacion'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    if not nuevo_pj or not nuevo_tipo or nueva_cantidad is None:
-        return jsonify({"error": "Datos incompletos"}), 400
+            guardar_json(DONACIONES_FILE, donaciones_db)
+            return jsonify({"status": "ok", "donacion": don}), 200
 
-    try:
-        # Obtener registro actual para auditoría
-        res_actual = supabase.table('donaciones').select('*').eq('id', donacion_id).execute()
-        if not res_actual.data or len(res_actual.data) == 0:
-            return jsonify({"error": "Donación no encontrada"}), 404
+    return jsonify({"error": "Donación no encontrada"}), 404
 
-        reg_actual = res_actual.data[0]
-        ahora = datetime.now(timezone.utc).isoformat()
 
-        # Actualizar registrando auditoría
-        supabase.table('donaciones').update({
-            'pj_name': nuevo_pj,
-            'tipo_donacion': nuevo_tipo,
-            'cantidad': nueva_cantidad,
-            'modificado_por': session['user'],
-            'fecha_modificacion': ahora,
-            'pj_name_anterior': reg_actual.get('pj_name'),
-            'cantidad_anterior': reg_actual.get('cantidad')
-        }).eq('id', donacion_id).execute()
+# --- RUTAS DE GESTIÓN DE USUARIOS (SÓLO ADMIN) ---
 
-        return jsonify({"status": "SUCCESS"}), 200
-    except Exception as e:
-        print(f"Error modificando donación: {e}")
-        return jsonify({"error": str(e)}), 500
+@app.route('/api/usuarios', methods=['GET', 'POST'])
+def usuarios():
+    if 'user' not in session or session.get('rol') != 'admin':
+        return jsonify({"error": "Acceso denegado: requiere rol Admin"}), 403
+
+    if request.method == 'GET':
+        lista_u = []
+        for u, val in usuarios_db.items():
+            lista_u.append({
+                "username": u,
+                "rol": val.get("rol", "encargado"),
+                "requiere_cambio_clave": val.get("requiere_cambio", False),
+                "creado_por": val.get("creado_por", "Sistema")
+            })
+        return jsonify(lista_u)
+
+    if request.method == 'POST':
+        data = request.json or {}
+        new_user = data.get('username', '').strip().lower()
+        new_pass = data.get('password', '')
+        new_rol = data.get('rol', 'encargado')
+
+        if not new_user or not new_pass:
+            return jsonify({"error": "Faltan campos obligatorios"}), 400
+
+        if new_user in usuarios_db:
+            return jsonify({"error": "El usuario ya existe"}), 400
+
+        usuarios_db[new_user] = {
+            "password": generate_password_hash(new_pass),
+            "rol": new_rol,
+            "requiere_cambio": True,
+            "creado_por": session['user']
+        }
+        guardar_json(USERS_FILE, usuarios_db)
+        return jsonify({"status": "ok", "message": f"Usuario {new_user} creado"}), 201
+
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
