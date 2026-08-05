@@ -54,9 +54,9 @@
 
     <script>
         let servidorActual = "Server 1";
-        let estadoWeb = { timers: {}, heartbeats: {}, cooldowns: {} };
+        let estadoWeb = { timers: {}, heartbeats: {}, cooldowns: {}, ultimas_pcs: {}, ultimos_pjs: {} };
 
-        // BOSSES FIJOS QUE SIEMPRE DEBEN APARECER EN PANTALLA
+        // BOSSES FIJOS QUE SIEMPRE DEBEN MOSTRARSE
         const BOSSES_FIJOS = {
             "Server 1": ["Muggron 1", "Muggron 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Borgar", "Kharzul 1", "Vescrya 1"],
             "Server 2": ["Muggron 1", "Muggron 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Borgar", "Kharzul 1", "Vescrya 1"],
@@ -144,11 +144,9 @@
             const ahoraUnix = Math.floor(Date.now() / 1000);
             const timersSvr = (estadoWeb.timers || {})[servidorActual] || {};
 
-            // Lista combinada: Bosses fijos obligatorios + Bosses manuales que tengan un kill activo
             const listaFijaServidor = BOSSES_FIJOS[servidorActual] || [];
             const listaBossesAMostrar = new Set([...listaFijaServidor]);
 
-            // Añadir bosses manuales solo si tienen registro de kill activo
             Object.keys(timersSvr).forEach(b => listaBossesAMostrar.add(b));
 
             listaBossesAMostrar.forEach(bossName => {
@@ -159,7 +157,7 @@
 
                 if (killUnix) {
                     const targetRespawnUnix = killUnix + (cdMinutos * 60);
-                    const finVentanaUnix = targetRespawnUnix + 3600; // 60 min ventana
+                    const finVentanaUnix = targetRespawnUnix + 3600;
 
                     // 1. 🔴 ROJO: COOLDOWN (De más a menos)
                     if (ahoraUnix < targetRespawnUnix) {
@@ -189,7 +187,7 @@
                     }
                 }
 
-                // 3. 🟢 DISPONIBLE / VIVO (Si es un boss fijo y no tiene kill reciente o ya pasó la ventana)
+                // 3. 🟢 DISPONIBLE / VIVO (Bosses fijos sin kill o fuera de ventana)
                 if (!cardContent && listaFijaServidor.includes(bossName)) {
                     cardContent = `
                         <div class="card p-4 rounded-xl bg-emerald-950/70 border border-emerald-500 shadow-lg flex flex-col justify-between text-center min-h-[120px]">
@@ -207,7 +205,7 @@
                 }
             });
 
-            // Estado de Pings (Bots Activos)
+            // Estado de Pings
             const pingBox = document.getElementById('status-pings');
             pingBox.innerHTML = '';
             const hbMap = estadoWeb.heartbeats || {};
@@ -217,7 +215,7 @@
 
             let esOnline = false;
             if (lastPing) {
-                const hbUnix = Math.floor(new Date(lastPing.replace(' ', 'T')).getTime() / 1000);
+                const hbUnix = Math.floor(new Date(lastPing).getTime() / 1000);
                 if (!isNaN(hbUnix) && Math.abs(ahoraUnix - hbUnix) <= 60) esOnline = true;
             }
 
