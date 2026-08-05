@@ -195,7 +195,9 @@
         let estaLogueado = false;
         let esAdmin = false;
         let listaDonacionesCache = [];
-        let tarjetasOcultas = new Set();
+
+        // PERSISTENCIA EN LOCALSTORAGE PARA EVITAR QUE REAPAREZCAN AL REFRESCAR LOS DATOS
+        let tarjetasOcultas = new Set(JSON.parse(localStorage.getItem('tarjetasOcultas') || '[]'));
 
         const BOSSES_FIJOS = {
             "Server 1": ["Muggron 1", "Muggron 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Borgar", "Kharzul 1", "Vescrya 1"],
@@ -232,6 +234,7 @@
 
         function ocultarTarjeta(svr, boss) {
             tarjetasOcultas.add(`${svr}_${boss}`);
+            localStorage.setItem('tarjetasOcultas', JSON.stringify(Array.from(tarjetasOcultas)));
             renderizarUI();
         }
 
@@ -349,7 +352,10 @@
 
         async function enviarKill(svr, boss) {
             try {
+                // Al registrar kill, vuelve a ser visible si estaba oculto
                 tarjetasOcultas.delete(`${svr}_${boss}`);
+                localStorage.setItem('tarjetasOcultas', JSON.stringify(Array.from(tarjetasOcultas)));
+
                 const res = await fetch('/api/kill', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
