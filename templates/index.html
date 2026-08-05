@@ -195,6 +195,7 @@
         let estaLogueado = false;
         let esAdmin = false;
         let listaDonacionesCache = [];
+        let tarjetasOcultas = new Set();
 
         const BOSSES_FIJOS = {
             "Server 1": ["Muggron 1", "Muggron 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Borgar", "Kharzul 1", "Vescrya 1"],
@@ -212,18 +213,27 @@
             "Vescrya 1": 420, "Vescrya 2": 420, "Vescrya 3": 420,
             "Muggron Barracks 1": 180, "Muggron Barracks 2": 180,
             "Muggron Crywolf 1": 180, "Muggron Crywolf 2": 180,
-            "Yellow Goblin": 120, "Blue Goblin": 120, "Red Goblin": 120,
-            "Red Dragon": 240, "Santa 1": 120, "Santa 2": 120,
-            "White Wizard 1": 120, "White Wizard 2": 120,
-            "Skeleton King 1": 120, "Skeleton King 2": 120
+            
+            // Goblins: 10 Horas (600 Minutos)
+            "Yellow Goblin": 600, "Blue Goblin": 600, "Red Goblin": 600,
+            
+            // Resto de Eventos Manuales: 6 Horas (360 Minutos)
+            "Red Dragon": 360, 
+            "Santa 1": 360, "Santa 2": 360,
+            "White Wizard 1": 360, "White Wizard 2": 360,
+            "Skeleton King 1": 360, "Skeleton King 2": 360
         };
 
-        // EVENTOS/INVASIONES QUE TIENEN 1 VENTANA Y LUEGO DESAPARECEN HASTA NUEVO KILL
         const BOSSES_SOLO_MANUALES = [
             "Red Dragon", "Yellow Goblin", "Blue Goblin", "Red Goblin",
             "Santa 1", "Santa 2", "White Wizard 1", "White Wizard 2",
             "Skeleton King 1", "Skeleton King 2"
         ];
+
+        function ocultarTarjeta(svr, boss) {
+            tarjetasOcultas.add(`${svr}_${boss}`);
+            renderizarUI();
+        }
 
         async function verificarSesion() {
             try {
@@ -339,6 +349,7 @@
 
         async function enviarKill(svr, boss) {
             try {
+                tarjetasOcultas.delete(`${svr}_${boss}`);
                 const res = await fetch('/api/kill', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -404,9 +415,13 @@
                 Object.keys(timersSvr).forEach(b => listaBossesAMostrar.add(b));
 
                 listaBossesAMostrar.forEach(bossName => {
+                    const claveCard = `${svr}_${bossName}`;
+                    
+                    if (tarjetasOcultas.has(claveCard)) return;
+
                     const cdMinutos = COOLDOWNS_LOCAL[bossName] || 60;
                     const cdSegundos = cdMinutos * 60;
-                    const ventanaSegundos = 3600; // 1 hora de ventana
+                    const ventanaSegundos = 3600;
                     const cicloTotalSegundos = cdSegundos + ventanaSegundos;
                     const esEventoManual = BOSSES_SOLO_MANUALES.includes(bossName);
 
@@ -418,7 +433,6 @@
                     if (killUnix) {
                         let transcurridoTotal = ahoraUnix - killUnix;
 
-                        // SI ES AUTOMÁTICO -> Permite reciclar indefinidamente
                         if (!esEventoManual && transcurridoTotal >= cicloTotalSegundos) {
                             const ciclosPasados = Math.floor(transcurridoTotal / cicloTotalSegundos);
                             killUnix += (ciclosPasados * cicloTotalSegundos);
@@ -428,13 +442,14 @@
                         const targetRespawnUnix = killUnix + cdSegundos;
                         const finVentanaUnix = targetRespawnUnix + ventanaSegundos;
 
-                        // 🔴 ROJO: Durante el tiempo de Cooldown
+                        // 🔴 ROJO: Durante el Cooldown
                         if (ahoraUnix < targetRespawnUnix) {
                             const restoSec = targetRespawnUnix - ahoraUnix;
                             ordenTiempo = restoSec;
                             cardHTML = `
-                                <div class="card p-4 rounded-xl bg-red-950/70 border border-red-500 shadow-lg flex flex-col justify-between text-center min-h-[140px]">
-                                    <div class="flex justify-between items-center mb-1">
+                                <div class="card p-4 rounded-xl bg-red-950/70 border border-red-500 shadow-lg flex flex-col justify-between text-center min-h-[140px] relative">
+                                    <button onclick="ocultarTarjeta('${svr}', '${bossName}')" title="Quitar de pantalla" class="absolute top-2 right-2 text-red-400 hover:text-white font-bold text-xs bg-red-900/60 w-5 h-5 rounded-full flex items-center justify-center transition">✕</button>
+                                    <div class="flex justify-between items-center mb-1 pr-6">
                                         <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-purple-900 text-purple-200">${svr}</span>
                                         <span class="text-[10px] font-bold text-red-400">COOLDOWN</span>
                                     </div>
@@ -446,33 +461,34 @@
                                 </div>
                             `;
                         } 
-                        // 🟡 AMARILLO: Durante la Ventana de Cacería (Se muestra tanto para autos como para manuales dentro del rango)
+                        // 🟢 VERDE: Durante la Ventana de Cacería
                         else if (ahoraUnix >= targetRespawnUnix && ahoraUnix <= finVentanaUnix) {
                             const transcurridoVentana = ahoraUnix - targetRespawnUnix;
                             ordenTiempo = -1000 + transcurridoVentana;
                             cardHTML = `
-                                <div class="card p-4 rounded-xl bg-yellow-950/70 border border-yellow-500 shadow-lg flex flex-col justify-between text-center min-h-[140px]">
-                                    <div class="flex justify-between items-center mb-1">
+                                <div class="card p-4 rounded-xl bg-emerald-950/70 border border-emerald-500 shadow-lg flex flex-col justify-between text-center min-h-[140px] relative">
+                                    <button onclick="ocultarTarjeta('${svr}', '${bossName}')" title="Quitar de pantalla" class="absolute top-2 right-2 text-emerald-400 hover:text-white font-bold text-xs bg-emerald-900/60 w-5 h-5 rounded-full flex items-center justify-center transition">✕</button>
+                                    <div class="flex justify-between items-center mb-1 pr-6">
                                         <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-purple-900 text-purple-200">${svr}</span>
-                                        <span class="text-[10px] font-bold text-yellow-400 animate-pulse">CACERÍA EN CURSO</span>
+                                        <span class="text-[10px] font-bold text-emerald-400 animate-pulse">CACERÍA EN CURSO</span>
                                     </div>
-                                    <h3 class="font-bold text-yellow-100 text-base my-1">${bossName}</h3>
-                                    <div class="my-2 py-1.5 px-2 rounded bg-yellow-900/60 border border-yellow-500 text-yellow-200 font-mono text-lg font-bold">
-                                        🟡 VENTANA (${formatearTiempo(transcurridoVentana)})
+                                    <h3 class="font-bold text-emerald-100 text-base my-1">${bossName}</h3>
+                                    <div class="my-2 py-1.5 px-2 rounded bg-emerald-900/60 border border-emerald-500 text-emerald-200 font-mono text-lg font-bold">
+                                        🟢 VENTANA (${formatearTiempo(transcurridoVentana)})
                                     </div>
                                     <button type="button" onclick="enviarKill('${svr}', '${bossName}')" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold text-xs py-2 rounded transition shadow">⚔️ REGISTRAR KILL</button>
                                 </div>
                             `;
                         }
-                        // 💜 SI ES MANUAL Y SE LE PASÓ LA VENTANA -> NO RE-CICLA Y VUELVE A DISPONIBLE
                     }
 
-                    // 💜 SI NO HAY CARD (Porque venció la ventana manual o es la primera vez) -> ESPERANDO KILL
+                    // 💜 DISPONIBLE / ESPERANDO KILL
                     if (!cardHTML) {
                         ordenTiempo = 88888888;
                         cardHTML = `
-                            <div class="card p-4 rounded-xl bg-purple-950/40 border border-purple-700 shadow-lg flex flex-col justify-between text-center min-h-[140px]">
-                                <div class="flex justify-between items-center mb-1">
+                            <div class="card p-4 rounded-xl bg-purple-950/40 border border-purple-700 shadow-lg flex flex-col justify-between text-center min-h-[140px] relative">
+                                <button onclick="ocultarTarjeta('${svr}', '${bossName}')" title="Quitar de pantalla" class="absolute top-2 right-2 text-purple-400 hover:text-white font-bold text-xs bg-purple-900/60 w-5 h-5 rounded-full flex items-center justify-center transition">✕</button>
+                                <div class="flex justify-between items-center mb-1 pr-6">
                                     <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-purple-900 text-purple-200">${svr}</span>
                                     <span class="text-[10px] font-bold text-purple-300">DISPONIBLE</span>
                                 </div>
@@ -494,7 +510,7 @@
             listaCards.sort((a, b) => a.orden - b.orden);
 
             if (listaCards.length === 0) {
-                contenedor.innerHTML = `<div class="text-gray-500 italic text-center col-span-full py-12">Sin bosses activos.</div>`;
+                contenedor.innerHTML = `<div class="text-gray-500 italic text-center col-span-full py-12">Sin bosses activos en pantalla.</div>`;
             } else {
                 listaCards.forEach(c => contenedor.innerHTML += c.html);
             }
