@@ -124,7 +124,6 @@
                 </select>
                 <button onclick="crearUsuario()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-6 py-2.5 rounded-lg text-sm transition">➕ Crear Usuario</button>
             </div>
-            <p class="text-xs text-indigo-300 mt-2">💡 Nota: El usuario deberá cambiar su clave obligatoriamente en su primer ingreso.</p>
         </div>
 
         <div class="bg-[#141126] border border-purple-900 rounded-xl p-6 shadow-lg">
@@ -234,9 +233,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ server: svr, boss: boss })
                 });
-                if (res.ok) {
-                    await cargarDatos();
-                }
+                if (res.ok) { await cargarDatos(); }
             } catch (e) {}
         }
 
@@ -250,13 +247,11 @@
                 if (data.logged_in) {
                     document.getElementById('user-display').innerHTML = `👤 User: <strong class="text-white">${data.user}</strong> (${data.rol})`;
                     document.getElementById('login-btn-container').innerHTML = `<a href="/logout" class="bg-red-700 hover:bg-red-600 text-white px-3 py-1 rounded font-bold transition">Salir</a>`;
-                    
                     document.getElementById('btn-descarga-bot').classList.remove('hidden');
 
                     if (esAdmin) {
                         document.getElementById('tab-USUARIOS').classList.remove('hidden');
                     }
-
                     if (data.requiere_cambio) {
                         document.getElementById('modal-cambio-clave').classList.remove('hidden');
                     }
@@ -277,7 +272,7 @@
                     body: JSON.stringify({ nueva_clave: p1 })
                 });
                 if (res.ok) {
-                    alert("Contraseña actualizada con éxito.");
+                    alert("Contraseña actualizada.");
                     document.getElementById('modal-cambio-clave').classList.add('hidden');
                     location.reload();
                 } else {
@@ -383,7 +378,7 @@
 
                 if (lastPing) {
                     const hbUnix = Math.floor(new Date(lastPing).getTime() / 1000);
-                    if (!isNaN(hbUnix) && Math.abs(ahoraUnix - hbUnix) <= 60) esOnline = true;
+                    if (!isNaN(hbUnix) && Math.abs(ahoraUnix - hbUnix) <= 120) esOnline = true;
                 }
 
                 container.innerHTML += `
@@ -421,8 +416,6 @@
 
                 listaBossesAMostrar.forEach(bossName => {
                     const claveCard = `${svr}_${bossName}`;
-                    
-                    // SI FUE REMOVIDO CON LA "X", SE IGNORA PARA TODA LA GUILD
                     if (listaOcultosGlobales.includes(claveCard)) return;
 
                     const cdMinutos = COOLDOWNS_LOCAL[bossName] || 60;
@@ -521,7 +514,6 @@
             }
         }
 
-        // USUARIOS Y DONACIONES
         async function cargarUsuarios() {
             try {
                 const res = await fetch('/api/usuarios');
