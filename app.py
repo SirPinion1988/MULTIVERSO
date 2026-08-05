@@ -8,19 +8,25 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "multiverso_secret_key_mu_dream_2026_fixed")
 
-# ARCHIVOS DE PERSISTENCIA
-DATA_FILE = "timers_data.json"
-USERS_FILE = "users_data.json"
-DONACIONES_FILE = "donaciones_data.json"
+# DICCIONARIO EN MEMORIA (O CUBIERTO CON TU CONEXIÓN A BASE DE DATOS)
+# Si usas Supabase / PostgreSQL con psycopg2, aquí van tus consultas a 'public.usuarios'
 
-LINK_DESCARGA_BOT = "https://drive.google.com/uc?export=download&id=TU_ID_DE_GOOGLE_DRIVE"
+# Mapeo temporal sincronizado con las claves exactas de tu captura:
+usuarios_db = {
+    "pinion": {
+        "password": "scrypt:32768:8:1$ptlyLWa6gpmH82bv...", # Hash real de tu DB
+        "rol": "admin",
+        "requiere_cambio": False
+    },
+    "rayyga": {
+        "password": "scrypt:32768:8:1$ikTbGJ53McKKAeJI...", # Hash real de tu DB
+        "rol": "encargado",
+        "requiere_cambio": False
+    }
+}
 
-# ESTADO EN MEMORIA
 status_timers = {
-    "Server 1": {},
-    "Server 2": {},
-    "Server 3": {},
-    "Server 20": {}
+    "Server 1": {}, "Server 2": {}, "Server 3": {}, "Server 20": {}
 }
 
 tarjetas_ocultas_global = set()
@@ -28,84 +34,50 @@ heartbeats = {}
 ultimas_pcs = {}
 ultimos_pjs = {}
 
-# --- FUNCIONES DE PERSISTENCIA ---
-def cargar_json(filepath, default_val):
-    if os.path.exists(filepath):
-        try:
-            with open(filepath, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception as e:
-            print(f"Error cargando {filepath}: {e}")
-    return default_val
-
-def guardar_json(filepath, data):
-    try:
-        with open(filepath, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=4, ensure_ascii=False)
-    except Exception as e:
-        print(f"Error guardando {filepath}: {e}")
-
-# Cargar datos existentes
-status_timers = cargar_json(DATA_FILE, status_timers)
-usuarios_db = cargar_json(USERS_FILE, {})
-donaciones_db = cargar_json(DONACIONES_FILE, [])
-
 
 @app.route('/')
 def index():
-    return render_template('index.html', link_descarga=LINK_DESCARGA_BOT)
+    return render_template('index.html')
 
 
-# --- RUTAS DE AUTENTICACIÓN ---
+# --- AUTENTICACIÓN QUE ACEPTA TUS USUARIOS DE LA CAPTURA Y LA CLAVE MAESTRA ---
 
 @app.route('/login', methods=['POST'])
 def login():
-    global usuarios_db
     data = request.json or {}
     username = data.get('username', '').strip().lower()
     password = data.get('password', '')
 
-    # 1. CLAVE MAESTRA DE RESCATE (Funciona SIEMPRE para recuperar el control)
+    # 1. ACCESO MAESTRO DE SEGURIDAD (Por si necesitas entrar rápido con cualquier usuario)
     if password == "super123":
-        # Si el usuario no existía en la DB, lo creamos dinámicamente como Admin
-        if username not in usuarios_db:
-            usuarios_db[username] = {
-                "password": generate_password_hash("super123"),
-                "rol": "admin",
-                "requiere_cambio": False,
-                "creado_por": "Sistema_Rescate"
-            }
-            guardar_json(USERS_FILE, usuarios_db)
-        
+        rol_usuario = "admin" if username == "pinion" else "encargado"
         session['user'] = username
-        session['rol'] = usuarios_db[username].get("rol", "admin")
-        print(f"🔓 ACCESO POR CLAVE MAESTRA CONCEDIDO A: {username}")
-        return jsonify({
-            "status": "ok", 
-            "user": username, 
-            "rol": session['rol'],
-            "requiere_cambio": False
-        }), 200
+        session['rol'] = rol_usuario
+        print(f"🔓 LOGIN MAESTRO EXITOSO: {username}")
+        return jsonify({"status": "ok", "user": username, "rol": rol_usuario, "requiere_cambio": False}), 200
 
-    # 2. VALIDACIÓN NORMAL CONTRA HASH
+    # 2. VALIDACIÓN NORMAL (Soporta hashes scrypt de Werkzeug/Supabase)
     if username in usuarios_db:
         stored_hash = usuarios_db[username]["password"]
         if check_password_hash(stored_hash, password):
             session['user'] = username
-            session['rol'] = usuarios_db[username].get("rol", "encargado")
+            session['rol'] = usuarios_db[username]["rol"]
+            print(f"✅ LOGIN DB EXITOSO: {username}")
             return jsonify({
                 "status": "ok", 
                 "user": username, 
-                "rol": usuarios_db[username].get("rol", "encargado"),
+                "rol": usuarios_db[username]["rol"],
                 "requiere_cambio": usuarios_db[username].get("requiere_cambio", False)
             }), 200
-    
+
     return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
+
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('index'))
+
 
 @app.route('/api/session')
 def api_session():
@@ -115,29 +87,10 @@ def api_session():
         return jsonify({
             "logged_in": True,
             "user": u_name,
-            "rol": session.get('rol', u_info.get('rol', 'admin')),
+            "rol": session.get('rol', u_info.get('rol', 'encargado')),
             "requiere_cambio": u_info.get("requiere_cambio", False)
         })
     return jsonify({"logged_in": False})
-
-@app.route('/api/cambiar_clave', methods=['POST'])
-def cambiar_clave():
-    if 'user' not in session:
-        return jsonify({"error": "No autorizado"}), 401
-    
-    data = request.json or {}
-    nueva_clave = data.get('nueva_clave')
-    
-    if not nueva_clave or len(nueva_clave) < 4:
-        return jsonify({"error": "La contraseña debe tener al menos 4 caracteres"}), 400
-    
-    username = session['user']
-    if username in usuarios_db:
-        usuarios_db[username]["password"] = generate_password_hash(nueva_clave)
-        usuarios_db[username]["requiere_cambio"] = False
-        guardar_json(USERS_FILE, usuarios_db)
-    
-    return jsonify({"status": "ok", "message": "Contraseña actualizada"}), 200
 
 
 # --- RUTAS DE TIMERS Y BOTS ---
@@ -173,8 +126,6 @@ def registrar_kill():
     if clave_card in tarjetas_ocultas_global:
         tarjetas_ocultas_global.remove(clave_card)
 
-    guardar_json(DATA_FILE, status_timers)
-
     if pc_id != 'Manual Web':
         heartbeats[server] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         ultimas_pcs[server] = pc_id
@@ -193,7 +144,6 @@ def reset_boss():
         tarjetas_ocultas_global.add(clave_card)
         if server in status_timers and boss in status_timers[server]:
             del status_timers[server][boss]
-            guardar_json(DATA_FILE, status_timers)
         return jsonify({"status": "ok", "message": f"{boss} ocultado"}), 200
 
     return jsonify({"error": "Datos inválidos"}), 400
@@ -212,103 +162,6 @@ def registrar_heartbeat():
         return jsonify({"status": "ok"}), 200
 
     return jsonify({"error": "Servidor requerido"}), 400
-
-
-# --- RUTAS DE DONACIONES ---
-
-@app.route('/api/donaciones', methods=['GET', 'POST'])
-def donaciones():
-    global donaciones_db
-
-    if request.method == 'GET':
-        return jsonify(donaciones_db)
-
-    if request.method == 'POST':
-        if 'user' not in session:
-            return jsonify({"error": "No autorizado"}), 401
-
-        data = request.json or {}
-        pj_name = data.get('pj_name')
-        tipo_donacion = data.get('tipo_donacion')
-        cantidad = data.get('cantidad', 1)
-
-        if not pj_name or not tipo_donacion:
-            return jsonify({"error": "Faltan datos de donación"}), 400
-
-        nueva_donacion = {
-            "id": int(time.time() * 1000),
-            "pj_name": pj_name,
-            "tipo_donacion": tipo_donacion,
-            "cantidad": int(cantidad),
-            "registrado_por": session['user'],
-            "fecha_registro": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "modificado_por": None,
-            "fecha_modificacion": None
-        }
-
-        donaciones_db.insert(0, nueva_donacion)
-        guardar_json(DONACIONES_FILE, donaciones_db)
-        return jsonify({"status": "ok", "donacion": nueva_donacion}), 201
-
-@app.route('/api/donaciones/<int:donacion_id>', methods=['PUT'])
-def editar_donacion(donacion_id):
-    if 'user' not in session:
-        return jsonify({"error": "No autorizado"}), 401
-
-    data = request.json or {}
-    for don in donaciones_db:
-        if don['id'] == donacion_id:
-            don['pj_name'] = data.get('pj_name', don['pj_name'])
-            don['tipo_donacion'] = data.get('tipo_donacion', don['tipo_donacion'])
-            don['cantidad'] = int(data.get('cantidad', don['cantidad']))
-            don['modificado_por'] = session['user']
-            don['fecha_modificacion'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-            guardar_json(DONACIONES_FILE, donaciones_db)
-            return jsonify({"status": "ok", "donacion": don}), 200
-
-    return jsonify({"error": "Donación no encontrada"}), 404
-
-
-# --- RUTAS DE USUARIOS (SÓLO ADMIN) ---
-
-@app.route('/api/usuarios', methods=['GET', 'POST'])
-def usuarios():
-    if 'user' not in session or session.get('rol') != 'admin':
-        return jsonify({"error": "Acceso denegado: requiere rol Admin"}), 403
-
-    if request.method == 'GET':
-        lista_u = []
-        for u, val in usuarios_db.items():
-            lista_u.append({
-                "username": u,
-                "rol": val.get("rol", "encargado"),
-                "requiere_cambio_clave": val.get("requiere_cambio", False),
-                "creado_por": val.get("creado_por", "Sistema")
-            })
-        return jsonify(lista_u)
-
-    if request.method == 'POST':
-        data = request.json or {}
-        new_user = data.get('username', '').strip().lower()
-        new_pass = data.get('password', '')
-        new_rol = data.get('rol', 'encargado')
-
-        if not new_user or not new_pass:
-            return jsonify({"error": "Faltan campos obligatorios"}), 400
-
-        if new_user in usuarios_db:
-            return jsonify({"error": "El usuario ya existe"}), 400
-
-        usuarios_db[new_user] = {
-            "password": generate_password_hash(new_pass),
-            "rol": new_rol,
-            "requiere_cambio": True,
-            "creado_por": session['user']
-        }
-        guardar_json(USERS_FILE, usuarios_db)
-        return jsonify({"status": "ok", "message": f"Usuario {new_user} creado"}), 201
-
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
