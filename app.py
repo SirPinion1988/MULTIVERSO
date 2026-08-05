@@ -23,11 +23,13 @@ status_timers = {
     "Server 20": {}
 }
 
+# Lista de tarjetas ocultas globalmente (Sincronizado para toda la guild)
+tarjetas_ocultas_global = set()
+
 heartbeats = {}
 ultimas_pcs = {}
 ultimos_pjs = {}
 
-# --- FUNCIONES DE PERSISTENCIA ---
 def cargar_json(filepath, default_val):
     if os.path.exists(filepath):
         try:
@@ -44,31 +46,27 @@ def guardar_json(filepath, data):
     except Exception as e:
         print(f"Error guardando {filepath}: {e}")
 
-# Cargar tus datos existentes intactos
+# Cargar datos existentes
 status_timers = cargar_json(DATA_FILE, status_timers)
 usuarios_db = cargar_json(USERS_FILE, {})
 donaciones_db = cargar_json(DONACIONES_FILE, [])
 
-
-# --- RUTAS PRINCIPALES DE LA WEB ---
 
 @app.route('/')
 def index():
     return render_template('index.html', link_descarga=LINK_DESCARGA_BOT)
 
 
-# --- RUTAS DE AUTENTICACIÓN ---
+# --- AUTENTICACIÓN ---
 
 @app.route('/login', methods=['POST'])
 def login():
+    global usuarios_db
+    usuarios_db = cargar_json(USERS_FILE, usuarios_db)
+    
     data = request.json or {}
     username = data.get('username', '').strip().lower()
     password = data.get('password', '')
-
-    # Si por alguna razón la DB estaba vacía, recargarla
-    global usuarios_db
-    if not usuarios_db:
-        usuarios_db = cargar_json(USERS_FILE, {})
 
     if username in usuarios_db and check_password_hash(usuarios_db[username]["password"], password):
         session['user'] = username
@@ -89,7 +87,6 @@ def logout():
 
 @app.route('/api/session')
 def api_session():
-    # Validación flexible basada en la cookie activa de la sesión
     if 'user' in session:
         u_name = session['user']
         u_info = usuarios_db.get(u_name, {})
@@ -121,12 +118,13 @@ def cambiar_clave():
     return jsonify({"status": "ok", "message": "Contraseña actualizada"}), 200
 
 
-# --- RUTAS DE GESTIÓN DE TIMERS Y BOTS ---
+# --- TIMERS Y BOTS ---
 
 @app.route('/api/status_timers')
 def get_status_timers():
     return jsonify({
         "timers": status_timers,
+        "ocultos": list(tarjetas_ocultas_global),
         "heartbeats": heartbeats,
         "ultimas_pcs": ultimas_pcs,
         "ultimos_pjs": ultimos_pjs
@@ -147,6 +145,12 @@ def registrar_kill():
         status_timers[server] = {}
 
     status_timers[server][boss] = int(time.time())
+    
+    # Al registrar un Kill nuevo, reaparece la tarjeta si estaba ocultada con la X
+    clave_card = f"{server}_{boss}"
+    if clave_card in tarjetas_ocultas_global:
+        tarjetas_ocultas_global.remove(clave_card)
+
     guardar_json(DATA_FILE, status_timers)
 
     if pc_id != 'Manual Web':
@@ -158,17 +162,20 @@ def registrar_kill():
 
 @app.route('/api/reset_boss', methods=['POST'])
 def reset_boss():
+    """Oculta la tarjeta para TODOS los usuarios que estén viendo la web"""
     data = request.json or {}
     server = data.get('server')
     boss = data.get('boss')
 
-    if server and boss and server in status_timers:
-        if boss in status_timers[server]:
+    if server and boss:
+        clave_card = f"{server}_{boss}"
+        tarjetas_ocultas_global.add(clave_card)
+        if server in status_timers and boss in status_timers[server]:
             del status_timers[server][boss]
             guardar_json(DATA_FILE, status_timers)
-            return jsonify({"status": "ok", "message": f"{boss} borrado de {server}"}), 200
+        return jsonify({"status": "ok", "message": f"{boss} ocultado"}), 200
 
-    return jsonify({"error": "Datos inválidos o boss no encontrado"}), 400
+    return jsonify({"error": "Datos inválidos"}), 400
 
 @app.route('/api/heartbeat', methods=['POST'])
 def registrar_heartbeat():
@@ -186,7 +193,7 @@ def registrar_heartbeat():
     return jsonify({"error": "Servidor requerido"}), 400
 
 
-# --- RUTAS DE GESTIÓN DE DONACIONES ---
+# --- DONACIONES ---
 
 @app.route('/api/donaciones', methods=['GET', 'POST'])
 def donaciones():
@@ -242,7 +249,7 @@ def editar_donacion(donacion_id):
     return jsonify({"error": "Donación no encontrada"}), 404
 
 
-# --- RUTAS DE GESTIÓN DE USUARIOS (SÓLO ADMIN) ---
+# --- USUARIOS (ADMIN) ---
 
 @app.route('/api/usuarios', methods=['GET', 'POST'])
 def usuarios():
