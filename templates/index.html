@@ -193,7 +193,7 @@
 
     <script>
         let modoVista = 'TODOS';
-        let estadoWeb = { timers: {}, heartbeats: {}, cooldowns: {} };
+        let estadoWeb = { timers: {}, ocultos: [], heartbeats: {}, cooldowns: {} };
         let estaLogueado = false;
         let esAdmin = false;
         let listaDonacionesCache = [];
@@ -409,6 +409,7 @@
             contenedor.innerHTML = '';
             const ahoraUnix = Math.floor(Date.now() / 1000);
             const serversAMostrar = modoVista === 'TODOS' ? ["Server 1", "Server 2", "Server 3", "Server 20"] : [modoVista];
+            const listaOcultosGlobales = estadoWeb.ocultos || [];
 
             let listaCards = [];
 
@@ -419,6 +420,11 @@
                 Object.keys(timersSvr).forEach(b => listaBossesAMostrar.add(b));
 
                 listaBossesAMostrar.forEach(bossName => {
+                    const claveCard = `${svr}_${bossName}`;
+                    
+                    // SI FUE REMOVIDO CON LA "X", SE IGNORA PARA TODA LA GUILD
+                    if (listaOcultosGlobales.includes(claveCard)) return;
+
                     const cdMinutos = COOLDOWNS_LOCAL[bossName] || 60;
                     const cdSegundos = cdMinutos * 60;
                     const ventanaSegundos = 3600;
