@@ -7,19 +7,18 @@ from supabase import create_client, Client
 app = Flask(__name__)
 CORS(app)
 
-# === CONFIGURACIÓN DE SUPABASE ===
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "TU_SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "TU_SUPABASE_ANON_KEY")
+# === CREDENCIALES DIRECTAS DE SUPABASE ===
+SUPABASE_URL = "https://csdwnpkvuymtasxpujza.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzZHducGt2dXltdGFzeHB1anphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3ODU0NDYsImV4cCI6MjEwMTM2MTQ0Nn0.IwgSW7QwoqLArOTfHYT4TyONA_57y1ELCaiQyZ3xyRg"
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# Servidores válidos permitidos
+# Servidores válidos
 SERVIDORES_VALIDOS = ["Server 1", "Server 2", "Server 3", "Server 20"]
 
 # === RUTA PRINCIPAL (PÁGINA WEB) ===
 @app.route('/')
 def index():
-    # Busca automáticamente el archivo index.html dentro de la carpeta /templates
     return render_template('index.html')
 
 # === API: RECEPCIÓN DE HEARTBEAT DEL BOT LOCAL ===
