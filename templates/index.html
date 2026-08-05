@@ -35,7 +35,8 @@
         <button onclick="setVista('DONACIONES')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-yellow-900/80 border border-yellow-600 text-yellow-300 hover:bg-yellow-800" id="tab-DONACIONES">💎 Donaciones</button>
         <button onclick="setVista('USUARIOS')" id="tab-USUARIOS" class="btn-tab px-4 py-2 rounded-lg font-bold bg-indigo-900 border border-indigo-500 text-indigo-200 hidden">👥 Crear Encargados</button>
         
-        <a href="{{ link_descarga }}" target="_blank" class="px-4 py-2 rounded-lg font-bold bg-purple-900 border border-purple-500 text-purple-200 hover:bg-purple-800 transition flex items-center gap-1">
+        <!-- BOTÓN DE DESCARGA: OCULTO POR DEFECTO (SÓLO VISIBLE AL LOGUEARSE) -->
+        <a id="btn-descarga-bot" href="{{ link_descarga }}" target="_blank" class="px-4 py-2 rounded-lg font-bold bg-purple-900 border border-purple-500 text-purple-200 hover:bg-purple-800 transition flex items-center gap-1 hidden">
             ⬇️ Descargar Bot (.exe)
         </a>
     </div>
@@ -205,6 +206,10 @@
                     document.getElementById('user-display').innerHTML = `👤 User: <strong class="text-white">${data.user}</strong> (${data.rol})`;
                     document.getElementById('btn-login-trigger').outerHTML = `<a href="/logout" class="bg-red-700 hover:bg-red-600 text-white px-3 py-1 rounded font-bold transition">Salir</a>`;
                     
+                    // Mostrar botón de descarga SOLO a usuarios logueados
+                    document.getElementById('btn-descarga-bot').classList.remove('hidden');
+
+                    // Mostrar pestaña de encargados SOLO a admins
                     if (esAdmin) {
                         document.getElementById('tab-USUARIOS').classList.remove('hidden');
                     }
@@ -464,7 +469,7 @@
             }
         }
 
-        // FUNCIONALIDAD USUARIOS Y DONACIONES
+        // USUARIOS Y DONACIONES
         async function cargarUsuarios() {
             try {
                 const res = await fetch('/api/usuarios');
