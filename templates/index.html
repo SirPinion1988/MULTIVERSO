@@ -3,57 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚔️ MuDream Boss Timers - Multiverso ⚔️</title>
+    <title>⚔️ Monitor MuDream Multiverso ⚔️</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #0a0814; color: #e6e1ff; font-family: 'Segoe UI', system-ui, sans-serif; }
-        .grid-bosses { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+        body { background-color: #0d0b18; color: #e6e1ff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .tab-btn.active { border-bottom: 3px solid #a855f7; color: #a855f7; font-weight: bold; }
+        .grid-bosses { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
     </style>
 </head>
-<body class="p-4 md:p-8 flex flex-col items-center">
+<body class="p-3 md:p-6 flex flex-col items-center min-h-screen">
 
-    <!-- Encabezado -->
-    <header class="w-full max-w-6xl mb-6 border-b border-purple-900/50 pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div>
-            <h1 class="text-3xl font-extrabold text-purple-400 drop-shadow">⚔️ MONITOR MUDREAM MULTIVERSO</h1>
-            <p class="text-xs text-purple-300">Control de Bosses, Timers y Donaciones en Tiempo Real</p>
+    <!-- ENCABEZADO PRINCIPAL -->
+    <header class="w-full max-w-6xl mb-4 border-b border-purple-900/40 pb-4 flex flex-col md:flex-row justify-between items-center gap-3">
+        <div class="text-center md:text-left">
+            <h1 class="text-2xl md:text-3xl font-extrabold text-purple-400 tracking-wide">⚔️ MONITOR MUDREAM MULTIVERSO</h1>
+            <p class="text-xs text-purple-300/80">Control en Vivo de Bosses, Timers, Estado de Bots y Donaciones</p>
         </div>
-        <div id="user-info-box" class="flex items-center gap-3 bg-[#141126] border border-purple-800/60 px-4 py-2 rounded-xl text-xs">
-            <span id="user-display" class="text-purple-300 font-bold">Invitado</span>
+        <div id="user-info-box" class="flex items-center gap-3 bg-[#16122e] border border-purple-800/60 px-4 py-2 rounded-xl text-xs shadow-lg">
+            <span id="user-display" class="text-purple-300">Invitado</span>
             <span id="login-btn-container">
-                <button type="button" onclick="toggleLoginModal()" id="btn-login-trigger" class="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1 rounded font-bold transition">Ingresar</button>
+                <button type="button" onclick="toggleLoginModal()" class="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1.5 rounded-lg font-bold transition">Ingresar</button>
             </span>
         </div>
     </header>
 
-    <!-- TIMERS PRINCIPALES -->
-    <div id="seccion-timers" class="w-full max-w-6xl">
+    <!-- NAVEGACIÓN POR PESTAÑAS -->
+    <nav class="w-full max-w-6xl mb-6 flex border-b border-purple-900/50 gap-4 text-sm font-semibold text-gray-400">
+        <button onclick="cambiarPestana('timers')" id="tab-timers" class="tab-btn active pb-2 px-2 transition">⏱️ Timers Bosses</button>
+        <button onclick="cambiarPestana('donaciones')" id="tab-donaciones" class="tab-btn pb-2 px-2 transition">💎 Donaciones Guild</button>
+        <button onclick="cambiarPestana('estado')" id="tab-estado" class="tab-btn pb-2 px-2 transition">💻 Estado PCs & Bots</button>
+        <button onclick="cambiarPestana('usuarios')" id="tab-usuarios" class="tab-btn pb-2 px-2 transition hidden" id="nav-usuarios">👥 Crear Encargados</button>
+    </nav>
+
+    <!-- PESTAÑA 1: TIMERS BOSSES -->
+    <main id="seccion-timers" class="w-full max-w-6xl">
         <div id="contenedor-bosses" class="grid-bosses">
-            <div class="text-gray-500 text-center col-span-full py-8">Cargando timers de bosses...</div>
+            <div class="text-gray-500 text-center col-span-full py-12">Cargando estado de bosses...</div>
         </div>
-    </div>
+    </main>
 
-    <!-- MODAL LOGIN CORREGIDO -->
+    <!-- PESTAÑA 2: DONACIONES -->
+    <main id="seccion-donaciones" class="w-full max-w-6xl hidden">
+        <div class="bg-[#16122e] border border-purple-800/60 rounded-xl p-4 md:p-6 shadow-xl mb-6">
+            <h2 class="text-lg font-bold text-purple-300 mb-4">💎 Registrar Donación</h2>
+            <form onsubmit="guardarDonacion(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <input type="text" id="donacionPj" placeholder="Nombre PJ" class="bg-[#0b0917] border border-purple-900 text-white p-2 rounded text-sm outline-none" required>
+                <select id="donacionTipo" class="bg-[#0b0917] border border-purple-900 text-white p-2 rounded text-sm outline-none">
+                    <option value="Bless">Jewel of Bless</option>
+                    <option value="Soul">Jewel of Soul</option>
+                    <option value="Life">Jewel of Life</option>
+                    <option value="Chaos">Jewel of Chaos</option>
+                    <option value="Creation">Jewel of Creation</option>
+                    <option value="VIP">Días VIP</option>
+                </select>
+                <input type="number" id="donacionCant" min="1" value="1" class="bg-[#0b0917] border border-purple-900 text-white p-2 rounded text-sm outline-none" required>
+                <button type="submit" class="bg-purple-700 hover:bg-purple-600 text-white font-bold p-2 rounded text-sm transition">Registrar</button>
+            </form>
+        </div>
+
+        <div class="bg-[#16122e] border border-purple-800/60 rounded-xl p-4 shadow-xl">
+            <h2 class="text-lg font-bold text-purple-300 mb-4">📋 Lista de Donaciones</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-purple-200">
+                    <thead class="bg-purple-950/80 text-purple-300 uppercase font-bold border-b border-purple-800">
+                        <tr>
+                            <th class="p-3">PJ</th>
+                            <th class="p-3">Tipo</th>
+                            <th class="p-3">Cantidad</th>
+                            <th class="p-3">Registrado Por</th>
+                            <th class="p-3">Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-donaciones-body">
+                        <tr><td colspan="5" class="text-center p-4 text-gray-500">Cargando registros...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- PESTAÑA 3: ESTADO PCS & BOTS -->
+    <main id="seccion-estado" class="w-full max-w-6xl hidden">
+        <div class="bg-[#16122e] border border-purple-800/60 rounded-xl p-6 shadow-xl text-center">
+            <h2 class="text-lg font-bold text-purple-300 mb-4">💻 Conexión de Bots por Servidor</h2>
+            <div id="contenedor-estado-bots" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+                <!-- Se llena dinámicamente -->
+            </div>
+        </div>
+    </main>
+
+    <!-- PESTAÑA 4: USUARIOS (ADMIN) -->
+    <main id="seccion-usuarios" class="w-full max-w-6xl hidden">
+        <div class="bg-[#16122e] border border-purple-800/60 rounded-xl p-6 shadow-xl max-w-md mx-auto">
+            <h2 class="text-lg font-bold text-purple-300 mb-4 text-center">👥 Crear Encargado / Admin</h2>
+            <form onsubmit="crearUsuario(event)">
+                <input type="text" id="newUser" placeholder="Nuevo Usuario" class="w-full bg-[#0b0917] border border-purple-900 text-white p-2 rounded mb-3 text-sm" required>
+                <input type="password" id="newPass" placeholder="Contraseña Inicial" class="w-full bg-[#0b0917] border border-purple-900 text-white p-2 rounded mb-3 text-sm" required>
+                <select id="newRol" class="w-full bg-[#0b0917] border border-purple-900 text-white p-2 rounded mb-4 text-sm">
+                    <option value="encargado">Encargado</option>
+                    <option value="admin">Administrador</option>
+                </select>
+                <button type="submit" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 rounded text-sm transition">Crear Usuario</button>
+            </form>
+        </div>
+    </main>
+
+    <!-- MODAL DE LOGIN -->
     <div id="modal-login" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50">
-        <div class="bg-[#141126] border border-purple-600 p-6 rounded-xl w-80 text-center shadow-2xl">
-            <h3 class="text-lg font-bold text-purple-300 mb-4">🔐 Iniciar Sesión Encargado</h3>
-            
+        <div class="bg-[#16122e] border border-purple-600 p-6 rounded-xl w-80 text-center shadow-2xl">
+            <h3 class="text-lg font-bold text-purple-300 mb-4">🔐 Iniciar Sesión</h3>
             <form onsubmit="ejecutarLogin(event)">
-                <input type="text" id="loginUser" placeholder="Usuario" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none" required>
-                <input type="password" id="loginPass" placeholder="Contraseña" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-4 text-sm outline-none" required>
-                
+                <input type="text" id="loginUser" placeholder="Usuario" class="w-full bg-[#0b0917] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none" required>
+                <input type="password" id="loginPass" placeholder="Contraseña" class="w-full bg-[#0b0917] border border-purple-900 text-white p-2 rounded mb-4 text-sm outline-none" required>
                 <p id="loginErrorMsg" class="text-red-400 text-xs mb-3 hidden"></p>
-
                 <div class="flex gap-2">
-                    <button type="submit" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 rounded text-sm">Entrar</button>
+                    <button type="submit" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 rounded text-sm transition">Entrar</button>
                     <button type="button" onclick="toggleLoginModal()" class="w-full bg-gray-800 text-gray-400 font-bold py-2 rounded text-sm">Cancelar</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- SCRIPT JS PRINCIPAL -->
     <script>
-        let estadoWeb = { timers: {}, ocultos: [] };
+        let estadoWeb = { timers: {}, ocultos: [], heartbeats: {}, ultimas_pcs: {}, ultimos_pjs: {} };
+        let usuarioActual = null;
 
         const BOSSES_FIJOS = {
             "Server 1": ["Muggron 1", "Muggron 2", "Dreadhorn 1", "Dreadhorn 2"],
@@ -62,17 +136,25 @@
             "Server 20": ["Muggron Barracks 1", "Muggron Barracks 2"]
         };
 
-        const COOLDOWNS_LOCAL = { "Muggron 1": 180, "Muggron 2": 180, "Dreadhorn 1": 60, "Dreadhorn 2": 60 };
+        const COOLDOWNS_MINUTOS = {
+            "Muggron 1": 180, "Muggron 2": 180, "Dreadhorn 1": 60, "Dreadhorn 2": 60,
+            "Muggron Barracks 1": 180, "Muggron Barracks 2": 180
+        };
 
-        async function verificarSesion() {
-            try {
-                const res = await fetch('/api/session');
-                const data = await res.json();
-                if (data.logged_in) {
-                    document.getElementById('user-display').innerHTML = `👤 User: <strong class="text-white">${data.user}</strong> (${data.rol})`;
-                    document.getElementById('login-btn-container').innerHTML = `<a href="/logout" class="bg-red-700 hover:bg-red-600 text-white px-3 py-1 rounded font-bold transition">Salir</a>`;
-                }
-            } catch (e) {}
+        function cambiarPestana(nombre) {
+            ['timers', 'donaciones', 'estado', 'usuarios'].forEach(p => {
+                const sec = document.getElementById(`seccion-${p}`);
+                const btn = document.getElementById(`tab-${p}`);
+                if (sec) sec.classList.add('hidden');
+                if (btn) btn.classList.remove('active');
+            });
+
+            const secActiva = document.getElementById(`seccion-${nombre}`);
+            const btnActivo = document.getElementById(`tab-${nombre}`);
+            if (secActiva) secActiva.classList.remove('hidden');
+            if (btnActivo) btnActivo.classList.add('active');
+
+            if (nombre === 'donaciones') cargarDonaciones();
         }
 
         function toggleLoginModal() {
@@ -80,9 +162,25 @@
             document.getElementById('loginErrorMsg').classList.add('hidden');
         }
 
+        async function verificarSesion() {
+            try {
+                const res = await fetch('/api/session');
+                const data = await res.json();
+                if (data.logged_in) {
+                    usuarioActual = data;
+                    document.getElementById('user-display').innerHTML = `👤 <strong class="text-white">${data.user}</strong> (${data.rol})`;
+                    document.getElementById('login-btn-container').innerHTML = `<a href="/logout" class="bg-red-700 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg font-bold transition">Salir</a>`;
+                    
+                    if (data.rol === 'admin') {
+                        const tabU = document.getElementById('tab-usuarios');
+                        if (tabU) tabU.classList.remove('hidden');
+                    }
+                }
+            } catch (e) {}
+        }
+
         async function ejecutarLogin(e) {
             if (e) e.preventDefault();
-            
             const username = document.getElementById('loginUser').value.trim();
             const password = document.getElementById('loginPass').value;
             const errBox = document.getElementById('loginErrorMsg');
@@ -93,28 +191,27 @@
                 const res = await fetch('/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: username, password: password })
+                    body: JSON.stringify({ username, password })
                 });
-                
                 const data = await res.json();
-                
+
                 if (res.ok && data.status === 'ok') {
                     location.reload();
                 } else {
-                    errBox.textContent = data.error || "Usuario o contraseña incorrectos";
+                    errBox.textContent = data.error || "Datos incorrectos";
                     errBox.classList.remove('hidden');
                 }
             } catch (err) {
-                errBox.textContent = "Error de conexión con el servidor";
+                errBox.textContent = "Error de conexión";
                 errBox.classList.remove('hidden');
             }
         }
 
-        function formatearTiempo(segundosTotales) {
-            if (segundosTotales <= 0) return "00:00:00";
-            const h = Math.floor(segundosTotales / 3600);
-            const m = Math.floor((segundosTotales % 3600) / 60);
-            const s = segundosTotales % 60;
+        function formatearTiempo(seg) {
+            if (seg <= 0) return "00:00:00";
+            const h = Math.floor(seg / 3600);
+            const m = Math.floor((seg % 3600) / 60);
+            const s = seg % 60;
             return `${h > 0 ? String(h).padStart(2, '0') + ':' : ''}${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
         }
 
@@ -123,34 +220,54 @@
                 const res = await fetch('/api/status_timers');
                 if (res.ok) {
                     estadoWeb = await res.json();
-                    renderizarUI();
+                    renderizarBosses();
+                    renderizarEstadoBots();
                 }
             } catch (e) {}
         }
 
-        function renderizarUI() {
+        async function resetBoss(server, boss) {
+            try {
+                await fetch('/api/reset_boss', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ server, boss })
+                });
+                cargarDatos();
+            } catch (e) {}
+        }
+
+        function renderizarBosses() {
             const contenedor = document.getElementById('contenedor-bosses');
+            if (!contenedor) return;
+            
             contenedor.innerHTML = '';
             const ahoraUnix = Math.floor(Date.now() / 1000);
+            const ocultos = new Set(estadoWeb.ocultos || []);
 
             ["Server 1", "Server 2", "Server 3", "Server 20"].forEach(svr => {
                 const timersSvr = (estadoWeb.timers || {})[svr] || {};
                 const listaFija = BOSSES_FIJOS[svr] || [];
 
                 listaFija.forEach(bossName => {
+                    const claveCard = `${svr}_${bossName}`;
+                    if (ocultos.has(claveCard)) return;
+
                     const killUnix = timersSvr[bossName];
                     let cardHTML = '';
 
                     if (killUnix) {
-                        const cdSeg = (COOLDOWNS_LOCAL[bossName] || 60) * 60;
+                        const cdSeg = (COOLDOWNS_MINUTOS[bossName] || 60) * 60;
                         const targetRespawn = killUnix + cdSeg;
 
                         if (ahoraUnix < targetRespawn) {
                             const restoSec = targetRespawn - ahoraUnix;
                             cardHTML = `
-                                <div class="card p-4 rounded-xl bg-red-950/70 border border-red-500 text-center">
-                                    <h3 class="font-bold text-red-100">${bossName} (${svr})</h3>
-                                    <div class="my-2 py-1 bg-red-900/60 text-red-200 font-mono text-lg font-bold">
+                                <div class="card p-4 rounded-xl bg-red-950/70 border border-red-500 text-center relative shadow-lg">
+                                    <button onclick="resetBoss('${svr}', '${bossName}')" class="absolute top-2 right-2 text-red-300 hover:text-white font-bold text-xs bg-red-900/80 px-2 py-0.5 rounded">✕</button>
+                                    <h3 class="font-bold text-red-100 text-sm">${bossName}</h3>
+                                    <span class="text-[10px] text-red-300/80 uppercase font-semibold">${svr}</span>
+                                    <div class="my-2 py-1.5 bg-red-900/60 text-red-200 font-mono text-xl font-bold rounded">
                                         🔴 ${formatearTiempo(restoSec)}
                                     </div>
                                 </div>
@@ -160,9 +277,11 @@
 
                     if (!cardHTML) {
                         cardHTML = `
-                            <div class="card p-4 rounded-xl bg-purple-950/40 border border-purple-700 text-center">
-                                <h3 class="font-bold text-purple-100">${bossName} (${svr})</h3>
-                                <div class="my-2 py-1 bg-purple-900/40 text-purple-200 font-mono text-xs font-bold uppercase">
+                            <div class="card p-4 rounded-xl bg-purple-950/40 border border-purple-700/80 text-center relative shadow-lg">
+                                <button onclick="resetBoss('${svr}', '${bossName}')" class="absolute top-2 right-2 text-purple-300 hover:text-white font-bold text-xs bg-purple-900/80 px-2 py-0.5 rounded">✕</button>
+                                <h3 class="font-bold text-purple-100 text-sm">${bossName}</h3>
+                                <span class="text-[10px] text-purple-300/80 uppercase font-semibold">${svr}</span>
+                                <div class="my-2 py-1.5 bg-purple-900/40 text-purple-200 font-mono text-xs font-bold uppercase rounded tracking-wider">
                                     ⚡ DISPONIBLE
                                 </div>
                             </div>
@@ -171,6 +290,97 @@
                     contenedor.innerHTML += cardHTML;
                 });
             });
+        }
+
+        function renderizarEstadoBots() {
+            const cont = document.getElementById('contenedor-estado-bots');
+            if (!cont) return;
+
+            cont.innerHTML = '';
+            ["Server 1", "Server 2", "Server 3", "Server 20"].forEach(svr => {
+                const hb = (estadoWeb.heartbeats || {})[svr] || 'Sin Registro';
+                const pc = (estadoWeb.ultimas_pcs || {})[svr] || 'N/A';
+                const pj = (estadoWeb.ultimos_pjs || {})[svr] || 'N/A';
+
+                cont.innerHTML += `
+                    <div class="bg-[#0f0c21] border border-purple-900 p-3 rounded-lg text-left">
+                        <h4 class="font-bold text-purple-300 text-sm mb-1">${svr}</h4>
+                        <p class="text-purple-200/80">💻 PC: <span class="text-white font-mono">${pc}</span></p>
+                        <p class="text-purple-200/80">👤 PJ Bot: <span class="text-white font-mono">${pj}</span></p>
+                        <p class="text-purple-200/80 mt-1">🕒 Ping: <span class="text-purple-400 font-mono">${hb}</span></p>
+                    </div>
+                `;
+            });
+        }
+
+        async function cargarDonaciones() {
+            try {
+                const res = await fetch('/api/donaciones');
+                if (res.ok) {
+                    const lista = await res.json();
+                    const tbody = document.getElementById('tabla-donaciones-body');
+                    tbody.innerHTML = '';
+
+                    if (lista.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-gray-500">No hay donaciones registradas</td></tr>';
+                        return;
+                    }
+
+                    lista.forEach(d => {
+                        tbody.innerHTML += `
+                            <tr class="border-b border-purple-900/40 hover:bg-purple-900/20">
+                                <td class="p-3 font-bold text-purple-100">${d.pj_name}</td>
+                                <td class="p-3"><span class="bg-purple-900/60 px-2 py-0.5 rounded text-[11px] font-semibold">${d.tipo_donacion}</span></td>
+                                <td class="p-3 font-mono text-purple-300">${d.cantidad}</td>
+                                <td class="p-3 text-purple-300/80">${d.registrado_por}</td>
+                                <td class="p-3 text-purple-400/80 font-mono text-[11px]">${d.fecha_registro}</td>
+                            </tr>
+                        `;
+                    });
+                }
+            } catch (e) {}
+        }
+
+        async function guardarDonacion(e) {
+            e.preventDefault();
+            const pj_name = document.getElementById('donacionPj').value.trim();
+            const tipo_donacion = document.getElementById('donacionTipo').value;
+            const cantidad = document.getElementById('donacionCant').value;
+
+            try {
+                const res = await fetch('/api/donaciones', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pj_name, tipo_donacion, cantidad })
+                });
+                if (res.ok) {
+                    document.getElementById('donacionPj').value = '';
+                    cargarDonaciones();
+                } else {
+                    alert("Debes iniciar sesión para registrar donaciones.");
+                }
+            } catch (e) {}
+        }
+
+        async function crearUsuario(e) {
+            e.preventDefault();
+            const username = document.getElementById('newUser').value.trim();
+            const password = document.getElementById('newPass').value;
+            const rol = document.getElementById('newRol').value;
+
+            try {
+                const res = await fetch('/api/usuarios', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, rol })
+                });
+                const data = await res.json();
+                alert(data.message || data.error);
+                if (res.ok) {
+                    document.getElementById('newUser').value = '';
+                    document.getElementById('newPass').value = '';
+                }
+            } catch (e) {}
         }
 
         setInterval(cargarDatos, 3000);
