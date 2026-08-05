@@ -20,7 +20,9 @@
         </div>
         <div id="user-info-box" class="flex items-center gap-3 bg-[#141126] border border-purple-800/60 px-4 py-2 rounded-xl text-xs">
             <span id="user-display" class="text-purple-300 font-bold">Invitado</span>
-            <button onclick="toggleLoginModal()" id="btn-login-trigger" class="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1 rounded font-bold transition">Ingresar</button>
+            <span id="login-btn-container">
+                <button onclick="toggleLoginModal()" id="btn-login-trigger" class="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1 rounded font-bold transition">Ingresar</button>
+            </span>
         </div>
     </header>
 
@@ -247,7 +249,7 @@
 
                 if (data.logged_in) {
                     document.getElementById('user-display').innerHTML = `👤 User: <strong class="text-white">${data.user}</strong> (${data.rol})`;
-                    document.getElementById('btn-login-trigger').outerHTML = `<a href="/logout" class="bg-red-700 hover:bg-red-600 text-white px-3 py-1 rounded font-bold transition">Salir</a>`;
+                    document.getElementById('login-btn-container').innerHTML = `<a href="/logout" class="bg-red-700 hover:bg-red-600 text-white px-3 py-1 rounded font-bold transition">Salir</a>`;
                     
                     document.getElementById('btn-descarga-bot').classList.remove('hidden');
 
@@ -428,7 +430,6 @@
 
                     let killUnix = timersSvr[bossName];
 
-                    // BOTÓN ✕ VISIBLE EN ABSOLUTAMENTE TODAS LAS TARJETAS (DISPONIBLE, COOLDOWN Y VENTANA)
                     const btnCerrarHTML = `<button onclick="ocultarTarjetaGlobal('${svr}', '${bossName}')" title="Quitar para toda la guild" class="absolute top-2 right-2 text-white hover:text-red-400 font-extrabold text-sm bg-black/60 hover:bg-black/90 w-6 h-6 rounded-full flex items-center justify-center transition border border-purple-500/50 z-10 cursor-pointer shadow">✕</button>`;
 
                     if (killUnix) {
@@ -443,7 +444,6 @@
                         const targetRespawnUnix = killUnix + cdSegundos;
                         const finVentanaUnix = targetRespawnUnix + ventanaSegundos;
 
-                        // 🔴 ROJO: Durante el Cooldown
                         if (ahoraUnix < targetRespawnUnix) {
                             const restoSec = targetRespawnUnix - ahoraUnix;
                             ordenTiempo = restoSec;
@@ -462,7 +462,6 @@
                                 </div>
                             `;
                         } 
-                        // 🟢 VERDE: Durante la Ventana de Cacería
                         else if (ahoraUnix >= targetRespawnUnix && ahoraUnix <= finVentanaUnix) {
                             const transcurridoVentana = ahoraUnix - targetRespawnUnix;
                             ordenTiempo = -1000 + transcurridoVentana;
@@ -483,8 +482,7 @@
                         }
                     }
 
-                    // 💜 DISPONIBLE / ESPERANDO KILL (Incluso las fijas ahora tienen el botón ✕)
-                    if (!cardHTML) {
+                    if (!cardHTML && !esEventoManual) {
                         ordenTiempo = 88888888;
                         cardHTML = `
                             <div class="card p-4 rounded-xl bg-purple-950/40 border border-purple-700 shadow-lg flex flex-col justify-between text-center min-h-[140px] relative">
