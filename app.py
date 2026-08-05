@@ -35,7 +35,7 @@ COOLDOWNS_CONFIG = {
     "Skeleton King 1": 120, "Skeleton King 2": 120
 }
 
-# === RUTAS Y VISTAS PRINCIPALES ===
+# === RUTAS PRINCIPALES Y LOGIN ===
 
 @app.route('/')
 def index():
@@ -55,7 +55,7 @@ def login():
                 session['user'] = user['username']
                 session['rol'] = user.get('rol', 'encargado')
                 return jsonify({"status": "SUCCESS", "user": user['username'], "rol": user.get('rol')}), 200
-        return jsonify({"error": "Usuario o clave incorrectos"}), 401
+        return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -72,7 +72,7 @@ def check_session():
         "rol": session.get('rol', None)
     })
 
-# === API: CONSULTA DE TIMERS Y BOTS ===
+# === API: CONSULTA DE STATUS ===
 
 @app.route('/api/status_timers', methods=['GET'])
 def status_timers():
@@ -101,10 +101,10 @@ def status_timers():
             "heartbeats": hb_map
         }), 200
     except Exception as e:
-        print(f"Error obteniendo timers: {e}")
+        print(f"Error en status_timers: {e}")
         return jsonify({"error": str(e)}), 500
 
-# === API: REGISTRO DE KILL (FUNCIONA PARA BOT Y WEB) ===
+# === API: REGISTRO DE KILL (DIRECTO O VIA BOT) ===
 
 @app.route('/api/kill', methods=['POST'])
 def kill():
@@ -138,7 +138,32 @@ def kill():
         print(f"Error registrando kill: {e}")
         return jsonify({"error": str(e)}), 500
 
-# === API: DONACIONES (SÓLO PARA USUARIOS LOGUEADOS) ===
+# === API: HEARTBEAT CLIENTES ===
+
+@app.route('/api/heartbeat', methods=['POST'])
+def heartbeat():
+    data = request.get_json() or {}
+    server = data.get('server')
+    pc_id = data.get('pc_id', 'Desconocido')
+    pj_name = data.get('pj_name', 'Desconocido')
+
+    if not server or server not in SERVIDORES_VALIDOS:
+        return jsonify({"error": "Servidor no válido"}), 400
+
+    try:
+        ahora = datetime.now(timezone.utc).isoformat()
+        supabase.table('timers_bosses').update({
+            'last_pc': pc_id,
+            'last_pj': pj_name,
+            'last_heartbeat': ahora
+        }).eq('server', server).execute()
+
+        return jsonify({"status": "OK"}), 200
+    except Exception as e:
+        print(f"Error en heartbeat: {e}")
+        return jsonify({"error": str(e)}), 500
+
+# === API: DONACIONES ===
 
 @app.route('/api/donaciones', methods=['GET', 'POST'])
 def donaciones():
@@ -151,7 +176,7 @@ def donaciones():
 
     if request.method == 'POST':
         if 'user' not in session:
-            return jsonify({"error": "Debes iniciar sesión como encargado para registrar donaciones"}), 401
+            return jsonify({"error": "Debes iniciar sesión para guardar donaciones"}), 401
 
         data = request.get_json() or {}
         pj_name = data.get('pj_name')
@@ -160,7 +185,7 @@ def donaciones():
         registrado_por = session.get('user', 'Encargado')
 
         if not pj_name or not tipo_donacion:
-            return jsonify({"error": "Faltan campos requeridos"}), 400
+            return jsonify({"error": "Faltan campos"}), 400
 
         try:
             supabase.table('donaciones').insert({
