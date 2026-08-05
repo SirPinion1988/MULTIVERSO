@@ -225,7 +225,7 @@
             "Skeleton King 1", "Skeleton King 2"
         ];
 
-        // ENVÍA LA ORDEN AL SERVIDOR PARA QUE IMPACTE A TODOS LOS USUARIOS CONECTADOS
+        // ENVÍA LA ORDEN DE ELIMINACIÓN AL SERVIDOR WEB
         async function ocultarTarjetaGlobal(svr, boss) {
             try {
                 const res = await fetch('/api/reset_boss', {
@@ -429,6 +429,9 @@
 
                     let killUnix = timersSvr[bossName];
 
+                    // BOTÓN ✕ VISIBLE EN TODAS LAS TARJETAS
+                    const btnCerrarHTML = `<button onclick="ocultarTarjetaGlobal('${svr}', '${bossName}')" title="Quitar para toda la guild" class="absolute top-2 right-2 text-white hover:text-red-400 font-extrabold text-sm bg-black/50 hover:bg-black/80 w-6 h-6 rounded-full flex items-center justify-center transition border border-gray-600 z-10 cursor-pointer">✕</button>`;
+
                     if (killUnix) {
                         let transcurridoTotal = ahoraUnix - killUnix;
 
@@ -447,7 +450,7 @@
                             ordenTiempo = restoSec;
                             cardHTML = `
                                 <div class="card p-4 rounded-xl bg-red-950/70 border border-red-500 shadow-lg flex flex-col justify-between text-center min-h-[140px] relative">
-                                    <button onclick="ocultarTarjetaGlobal('${svr}', '${bossName}')" title="Quitar para toda la guild" class="absolute top-2 right-2 text-red-400 hover:text-white font-bold text-xs bg-red-900/60 w-5 h-5 rounded-full flex items-center justify-center transition">✕</button>
+                                    ${btnCerrarHTML}
                                     <div class="flex justify-between items-center mb-1 pr-6">
                                         <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-purple-900 text-purple-200">${svr}</span>
                                         <span class="text-[10px] font-bold text-red-400">COOLDOWN</span>
@@ -466,7 +469,7 @@
                             ordenTiempo = -1000 + transcurridoVentana;
                             cardHTML = `
                                 <div class="card p-4 rounded-xl bg-emerald-950/70 border border-emerald-500 shadow-lg flex flex-col justify-between text-center min-h-[140px] relative">
-                                    <button onclick="ocultarTarjetaGlobal('${svr}', '${bossName}')" title="Quitar para toda la guild" class="absolute top-2 right-2 text-emerald-400 hover:text-white font-bold text-xs bg-emerald-900/60 w-5 h-5 rounded-full flex items-center justify-center transition">✕</button>
+                                    ${btnCerrarHTML}
                                     <div class="flex justify-between items-center mb-1 pr-6">
                                         <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-purple-900 text-purple-200">${svr}</span>
                                         <span class="text-[10px] font-bold text-emerald-400 animate-pulse">CACERÍA EN CURSO</span>
@@ -481,12 +484,13 @@
                         }
                     }
 
-                    // 💜 DISPONIBLE / ESPERANDO KILL (Bosses fijos del servidor)
+                    // 💜 DISPONIBLE / ESPERANDO KILL (Bosses fijos)
                     if (!cardHTML && !esEventoManual) {
                         ordenTiempo = 88888888;
                         cardHTML = `
                             <div class="card p-4 rounded-xl bg-purple-950/40 border border-purple-700 shadow-lg flex flex-col justify-between text-center min-h-[140px] relative">
-                                <div class="flex justify-between items-center mb-1">
+                                ${btnCerrarHTML}
+                                <div class="flex justify-between items-center mb-1 pr-6">
                                     <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-purple-900 text-purple-200">${svr}</span>
                                     <span class="text-[10px] font-bold text-purple-300">DISPONIBLE</span>
                                 </div>
