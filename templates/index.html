@@ -35,9 +35,10 @@
 
     <script>
         let servidorActual = "Server 1";
-        let datosGlobales = { kills: [], config: [], heartbeats: [] };
+        let datosGlobales = { kills: [], heartbeats: [] };
 
-        const COOLDOWNS_PREDETERMINADOS = {
+        // COOLDOWNS EN MINUTOS
+        const COOLDOWNS = {
             "Red Dragon": 240,
             "Yellow Goblin": 120,
             "Blue Goblin": 120,
@@ -62,6 +63,7 @@
             renderizarUI();
         }
 
+        // Convierte segundos a HH:MM:SS
         function formatearTiempo(segundosTotales) {
             if (segundosTotales <= 0) return "00:00:00";
             const h = Math.floor(segundosTotales / 3600);
@@ -85,21 +87,24 @@
             contenedor.innerHTML = '';
             const ahora = Date.now();
 
-            Object.keys(COOLDOWNS_PREDETERMINADOS).forEach(bossName => {
-                const cdMinutes = COOLDOWNS_PREDETERMINADOS[bossName];
-                const killReg = datosGlobales.kills.find(k => k.server_name === servidorActual && k.boss_name === bossName);
+            Object.keys(COOLDOWNS).forEach(bossName => {
+                const cdMinutes = COOLDOWNS[bossName];
+                const killReg = (datosGlobales.kills || []).find(k => k.server_name === servidorActual && k.boss_name === bossName);
 
                 let lastKillTime = killReg ? new Date(killReg.last_kill).getTime() : 0;
                 let respawnMs = cdMinutes * 60 * 1000;
                 let nextSpawnTime = lastKillTime + respawnMs;
                 
+                // Segundos que faltan para reaparecer
                 let segundosRestantesRespawn = Math.floor((nextSpawnTime - ahora) / 1000);
+                
+                // Si faltan segundos para reaparecer -> ESTÁ MUERTO (ROJO)
                 let esRojo = segundosRestantesRespawn > 0;
 
                 const card = document.createElement('div');
                 
                 if (esRojo) {
-                    // 🔴 ROJO: CUENTA REGRESIVA DE MÁS A MENOS
+                    // 🔴 ESTADO ROJO (MUERTO): CUENTA REGRESIVA AL REVÉS (Ej: 01:00:00 -> 00:59:59 -> 00:00:00)
                     card.className = "card p-4 rounded-xl bg-red-900/60 border-2 border-red-500 shadow-lg flex flex-col justify-between";
                     card.innerHTML = `
                         <div>
@@ -107,17 +112,17 @@
                                 <h3 class="font-bold text-lg text-red-100">${bossName}</h3>
                                 <span class="px-2 py-0.5 text-xs rounded bg-red-600 font-bold text-white">COOLDOWN</span>
                             </div>
-                            <p class="text-xs text-red-200 mt-1">Último Kill por: <b class="text-white">${killReg?.last_pj || 'N/A'}</b> (${killReg?.last_pc || 'N/A'})</p>
+                            <p class="text-xs text-red-200 mt-1">Matado por: <b class="text-white">${killReg?.last_pj || 'N/A'}</b> (${killReg?.last_pc || 'N/A'})</p>
                         </div>
                         <div class="mt-4 pt-3 border-t border-red-700/50 text-center">
                             <span class="text-2xl font-black font-mono tracking-wider text-red-200">
                                 🔴 ${formatearTiempo(segundosRestantesRespawn)}
                             </span>
-                            <p class="text-[10px] text-red-300 uppercase font-semibold mt-0.5">Tiempo para respawn (Bajando)</p>
+                            <p class="text-[10px] text-red-300 uppercase font-semibold mt-0.5">Reaparece en (Cuenta Regresiva)</p>
                         </div>
                     `;
                 } else {
-                    // 🟢 VERDE: CUENTA PROGRESIVA DE 0 EN ADELANTE
+                    // 🟢 ESTADO VERDE (EN PERÍODO DE VENTANA): CONTADOR PROGRESIVO DESDE 0 (Ej: 00:00:00 -> 00:00:01)
                     let tiempoEnVentana = lastKillTime === 0 ? 0 : Math.floor((ahora - nextSpawnTime) / 1000);
                     
                     card.className = "card p-4 rounded-xl bg-emerald-950/60 border-2 border-emerald-500 shadow-lg flex flex-col justify-between";
@@ -133,7 +138,7 @@
                             <span class="text-2xl font-black font-mono tracking-wider text-emerald-300 animate-pulse">
                                 🟢 ${formatearTiempo(tiempoEnVentana)}
                             </span>
-                            <p class="text-[10px] text-emerald-400 uppercase font-semibold mt-0.5">Ventana abierta (Subiendo desde 0)</p>
+                            <p class="text-[10px] text-emerald-400 uppercase font-semibold mt-0.5">En período de ventana (Subiendo desde 0)</p>
                         </div>
                     `;
                 }
@@ -141,10 +146,10 @@
                 contenedor.appendChild(card);
             });
 
-            // Status del Bot
+            // Estado de Pings
             const pingBox = document.getElementById('status-pings');
             pingBox.innerHTML = '';
-            const pingsServidor = datosGlobales.heartbeats.filter(h => h.server_name === servidorActual);
+            const pingsServidor = (datosGlobales.heartbeats || []).filter(h => h.server_name === servidorActual);
             if (pingsServidor.length === 0) {
                 pingBox.innerHTML = `<span class="px-2 py-1 rounded bg-gray-800 text-gray-400">⚠️ Sin Bot activo en ${servidorActual}</span>`;
             } else {
@@ -160,8 +165,11 @@
             }
         }
 
+        // Refresca el reloj cada 1 segundo
         setInterval(renderizarUI, 1000);
+        // Pide datos actualizados al backend cada 5 segundos
         setInterval(cargarDatos, 5000);
+        
         cargarDatos();
     </script>
 </body>
