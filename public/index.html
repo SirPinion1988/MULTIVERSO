@@ -99,7 +99,7 @@
                 const card = document.createElement('div');
                 
                 if (esRojo) {
-                    // 🔴 ROJO (MUERTO): Cuenta regresiva de más a menos
+                    // 🔴 ROJO: CUENTA REGRESIVA DE MÁS A MENOS
                     card.className = "card p-4 rounded-xl bg-red-900/60 border-2 border-red-500 shadow-lg flex flex-col justify-between";
                     card.innerHTML = `
                         <div>
@@ -113,11 +113,11 @@
                             <span class="text-2xl font-black font-mono tracking-wider text-red-200">
                                 🔴 ${formatearTiempo(segundosRestantesRespawn)}
                             </span>
-                            <p class="text-[10px] text-red-300 uppercase font-semibold mt-0.5">Cuenta regresiva (De más a menos)</p>
+                            <p class="text-[10px] text-red-300 uppercase font-semibold mt-0.5">Tiempo para respawn (Bajando)</p>
                         </div>
                     `;
                 } else {
-                    // 🟢 VERDE (PERIODO DE APARICIÓN): Cuenta progresiva subiendo desde cero
+                    // 🟢 VERDE: CUENTA PROGRESIVA DE 0 EN ADELANTE
                     let tiempoEnVentana = lastKillTime === 0 ? 0 : Math.floor((ahora - nextSpawnTime) / 1000);
                     
                     card.className = "card p-4 rounded-xl bg-emerald-950/60 border-2 border-emerald-500 shadow-lg flex flex-col justify-between";
@@ -141,7 +141,7 @@
                 contenedor.appendChild(card);
             });
 
-            // Actualización de estado del Bot Local
+            // Status del Bot
             const pingBox = document.getElementById('status-pings');
             pingBox.innerHTML = '';
             const pingsServidor = datosGlobales.heartbeats.filter(h => h.server_name === servidorActual);
