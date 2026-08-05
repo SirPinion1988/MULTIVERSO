@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timezone
 from flask import Flask, render_template, jsonify, request, session, redirect, url_for
 from flask_cors import CORS
-from werkzeug.security import check_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 from supabase import create_client, Client
 
 app = Flask(__name__)
@@ -35,7 +35,7 @@ COOLDOWNS_CONFIG = {
     "Skeleton King 1": 120, "Skeleton King 2": 120
 }
 
-# === RUTAS Y VISTAS ===
+# === RUTAS DE PÁGINA WEB Y AUTENTICACIÓN ===
 
 @app.route('/')
 def index():
@@ -56,7 +56,6 @@ def login():
             user = res.data[0]
             pwd_hash = user.get('password_hash', '')
             
-            # Validar tanto si está encriptada con werkzeug como si está en texto plano
             es_valido = False
             try:
                 if pwd_hash.startswith('pbkdf2:') or pwd_hash.startswith('scrypt:'):
@@ -69,7 +68,14 @@ def login():
             if es_valido:
                 session['user'] = user['username']
                 session['rol'] = user.get('rol', 'encargado')
-                return jsonify({"status": "SUCCESS", "user": user['username'], "rol": user.get('rol')}), 200
+                requiere_cambio = user.get('requiere_cambio_clave', False)
+
+                return jsonify({
+                    "status": "SUCCESS", 
+                    "user": user['username'], 
+                    "rol": user.get('rol'),
+                    "requiere_cambio": requiere_cambio
+                }), 200
 
         return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
     except Exception as e:
@@ -83,13 +89,80 @@ def logout():
 
 @app.route('/api/session', methods=['GET'])
 def check_session():
+    user_name = session.get('user', None)
+    requiere_cambio = False
+    if user_name:
+        res = supabase.table('usuarios').select('requiere_cambio_clave').eq('username', user_name).execute()
+        if res.data and len(res.data) > 0:
+            requiere_cambio = res.data[0].get('requiere_cambio_clave', False)
+
     return jsonify({
         "logged_in": 'user' in session,
-        "user": session.get('user', None),
-        "rol": session.get('rol', None)
+        "user": user_name,
+        "rol": session.get('rol', None),
+        "requiere_cambio": requiere_cambio
     })
 
-# === API STATUS Y TIMERS ===
+@app.route('/api/cambiar_clave', methods=['POST'])
+def cambiar_clave():
+    if 'user' not in session:
+        return jsonify({"error": "No has iniciado sesión"}), 401
+
+    data = request.get_json() or {}
+    nueva_clave = data.get('nueva_clave')
+
+    if not nueva_clave or len(nueva_clave) < 4:
+        return jsonify({"error": "La contraseña debe tener al menos 4 caracteres"}), 400
+
+    try:
+        nueva_hash = generate_password_hash(nueva_clave)
+        supabase.table('usuarios').update({
+            'password_hash': nueva_hash,
+            'requiere_cambio_clave': False
+        }).eq('username', session['user']).execute()
+
+        return jsonify({"status": "SUCCESS"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# === GESTIÓN DE USUARIOS POR PARTE DEL ADMIN ===
+
+@app.route('/api/usuarios', methods=['GET', 'POST'])
+def usuarios_admin():
+    if 'user' not in session or session.get('rol') != 'admin':
+        return jsonify({"error": "Acceso denegado. Solo Administrador."}), 403
+
+    if request.method == 'GET':
+        try:
+            res = supabase.table('usuarios').select('id, username, rol, requiere_cambio_clave, creado_por, created_at').order('created_at', desc=True).execute()
+            return jsonify(res.data if res.data else []), 200
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    if request.method == 'POST':
+        data = request.get_json() or {}
+        username = data.get('username')
+        password = data.get('password')
+        rol = data.get('rol', 'encargado')
+
+        if not username or not password:
+            return jsonify({"error": "Faltan datos obligatorios"}), 400
+
+        try:
+            pwd_hash = generate_password_hash(password)
+            supabase.table('usuarios').insert({
+                'username': username,
+                'password_hash': pwd_hash,
+                'rol': rol,
+                'requiere_cambio_clave': True, # Exigir cambio en 1er login
+                'creado_por': session['user']
+            }).execute()
+
+            return jsonify({"status": "SUCCESS"}), 200
+        except Exception as e:
+            return jsonify({"error": f"Error o usuario ya existente: {str(e)}"}), 500
+
+# === API STATUS Y BOTS ===
 
 @app.route('/api/status_timers', methods=['GET'])
 def status_timers():
@@ -155,7 +228,7 @@ def kill():
         print(f"Error registrando kill: {e}")
         return jsonify({"error": str(e)}), 500
 
-# === API HEARTBEAT CLIENTES ===
+# === API HEARTBEAT ===
 
 @app.route('/api/heartbeat', methods=['POST'])
 def heartbeat():
