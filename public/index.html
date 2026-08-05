@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MuDream Boss Timers - Multiverso</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0d0e15; color: #e2e8f0; font-family: system-ui, sans-serif; }
+        .grid-bosses { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <header class="mb-8 border-b border-gray-800 pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div>
+            <h1 class="text-3xl font-extrabold text-purple-400">⚔️ MUDREAM BOSS TIMERS</h1>
+            <p class="text-sm text-gray-400">Monitor en Tiempo Real - Servidores 1, 2, 3 y 20</p>
+        </div>
+        <div id="status-pings" class="flex flex-wrap gap-2 text-xs"></div>
+    </header>
+
+    <!-- Selector de Servidores -->
+    <div class="flex space-x-2 mb-6 overflow-x-auto pb-2" id="server-tabs">
+        <button onclick="cambiarServidor('Server 1')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-purple-700 text-white" id="tab-Server 1">Server 1</button>
+        <button onclick="cambiarServidor('Server 2')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 2">Server 2</button>
+        <button onclick="cambiarServidor('Server 3')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 3">Server 3</button>
+        <button onclick="cambiarServidor('Server 20')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 20">Server 20</button>
+    </div>
+
+    <!-- Contenedor Principal de Bosses -->
+    <div id="contenedor-bosses" class="grid-bosses">
+        <div class="text-gray-500">Cargando datos de bosses...</div>
+    </div>
+
+    <script>
+        let servidorActual = "Server 1";
+        let datosGlobales = { kills: [], config: [], heartbeats: [] };
+
+        const COOLDOWNS_PREDETERMINADOS = {
+            "Red Dragon": 240,
+            "Yellow Goblin": 120,
+            "Blue Goblin": 120,
+            "Red Goblin": 120,
+            "Muggron 1": 180, "Muggron 2": 180,
+            "Dreadhorn 1": 180, "Dreadhorn 2": 180,
+            "Moltragon 1": 180, "Moltragon 2": 180,
+            "Borgar": 240,
+            "Kharzul 1": 240, "Kharzul 2": 240, "Kharzul 3": 240,
+            "Vescrya 1": 240, "Vescrya 2": 240, "Vescrya 3": 240,
+            "Santa 1": 120, "Santa 2": 120,
+            "White Wizard 1": 120, "White Wizard 2": 120,
+            "Skeleton King 1": 120, "Skeleton King 2": 120
+        };
+
+        function cambiarServidor(srv) {
+            servidorActual = srv;
+            document.querySelectorAll('.btn-tab').forEach(b => {
+                b.className = "btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400";
+            });
+            document.getElementById(`tab-${srv}`).className = "btn-tab px-4 py-2 rounded-lg font-bold bg-purple-700 text-white";
+            renderizarUI();
+        }
+
+        function formatearTiempo(segundosTotales) {
+            if (segundosTotales <= 0) return "00:00:00";
+            const h = Math.floor(segundosTotales / 3600);
+            const m = Math.floor((segundosTotales % 3600) / 60);
+            const s = segundosTotales % 60;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        async function cargarDatos() {
+            try {
+                const res = await fetch('/api/status');
+                datosGlobales = await res.json();
+                renderizarUI();
+            } catch (e) {
+                console.error("Error cargando status:", e);
+            }
+        }
+
+        function renderizarUI() {
+            const contenedor = document.getElementById('contenedor-bosses');
+            contenedor.innerHTML = '';
+            const ahora = Date.now();
+
+            Object.keys(COOLDOWNS_PREDETERMINADOS).forEach(bossName => {
+                const cdMinutes = COOLDOWNS_PREDETERMINADOS[bossName];
+                const killReg = datosGlobales.kills.find(k => k.server_name === servidorActual && k.boss_name === bossName);
+
+                let lastKillTime = killReg ? new Date(killReg.last_kill).getTime() : 0;
+                let respawnMs = cdMinutes * 60 * 1000;
+                let nextSpawnTime = lastKillTime + respawnMs;
+                
+                let segundosRestantesRespawn = Math.floor((nextSpawnTime - ahora) / 1000);
+                let esRojo = segundosRestantesRespawn > 0;
+
+                const card = document.createElement('div');
+                
+                if (esRojo) {
+                    // 🔴 ROJO (MUERTO): Cuenta regresiva de más a menos
+                    card.className = "card p-4 rounded-xl bg-red-900/60 border-2 border-red-500 shadow-lg flex flex-col justify-between";
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex justify-between items-center">
+                                <h3 class="font-bold text-lg text-red-100">${bossName}</h3>
+                                <span class="px-2 py-0.5 text-xs rounded bg-red-600 font-bold text-white">COOLDOWN</span>
+                            </div>
+                            <p class="text-xs text-red-200 mt-1">Último Kill por: <b class="text-white">${killReg?.last_pj || 'N/A'}</b> (${killReg?.last_pc || 'N/A'})</p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-red-700/50 text-center">
+                            <span class="text-2xl font-black font-mono tracking-wider text-red-200">
+                                🔴 ${formatearTiempo(segundosRestantesRespawn)}
+                            </span>
+                            <p class="text-[10px] text-red-300 uppercase font-semibold mt-0.5">Cuenta regresiva (De más a menos)</p>
+                        </div>
+                    `;
+                } else {
+                    // 🟢 VERDE (PERIODO DE APARICIÓN): Cuenta progresiva subiendo desde cero
+                    let tiempoEnVentana = lastKillTime === 0 ? 0 : Math.floor((ahora - nextSpawnTime) / 1000);
+                    
+                    card.className = "card p-4 rounded-xl bg-emerald-950/60 border-2 border-emerald-500 shadow-lg flex flex-col justify-between";
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex justify-between items-center">
+                                <h3 class="font-bold text-lg text-emerald-100">${bossName}</h3>
+                                <span class="px-2 py-0.5 text-xs rounded bg-emerald-600 font-bold text-white animate-pulse">DISPONIBLE</span>
+                            </div>
+                            <p class="text-xs text-emerald-300 mt-1">Último Kill: ${killReg ? new Date(killReg.last_kill).toLocaleTimeString() : 'Sin registro'}</p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-emerald-700/50 text-center">
+                            <span class="text-2xl font-black font-mono tracking-wider text-emerald-300 animate-pulse">
+                                🟢 ${formatearTiempo(tiempoEnVentana)}
+                            </span>
+                            <p class="text-[10px] text-emerald-400 uppercase font-semibold mt-0.5">Ventana abierta (Subiendo desde 0)</p>
+                        </div>
+                    `;
+                }
+
+                contenedor.appendChild(card);
+            });
+
+            // Actualización de estado del Bot Local
+            const pingBox = document.getElementById('status-pings');
+            pingBox.innerHTML = '';
+            const pingsServidor = datosGlobales.heartbeats.filter(h => h.server_name === servidorActual);
+            if (pingsServidor.length === 0) {
+                pingBox.innerHTML = `<span class="px-2 py-1 rounded bg-gray-800 text-gray-400">⚠️ Sin Bot activo en ${servidorActual}</span>`;
+            } else {
+                pingsServidor.forEach(h => {
+                    const diff = (ahora - new Date(h.last_ping).getTime()) / 1000;
+                    const activo = diff < 30;
+                    pingBox.innerHTML += `
+                        <span class="px-2 py-1 rounded ${activo ? 'bg-emerald-900 text-emerald-200 border border-emerald-600' : 'bg-red-950 text-red-300 border border-red-800'}">
+                            💻 ${h.pc_id} (Name: ${h.pj_name}): ${activo ? '🟢 ONLINE' : '🔴 OFFLINE'}
+                        </span>
+                    `;
+                });
+            }
+        }
+
+        setInterval(renderizarUI, 1000);
+        setInterval(cargarDatos, 5000);
+        cargarDatos();
+    </script>
+</body>
+</html>
