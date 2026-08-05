@@ -6,29 +6,22 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "multiverso_secret_key_mu_dream_2026_fixed")
+app.secret_key = os.environ.get("SECRET_KEY", "multiverso_secret_key_2026")
 
-# ARCHIVOS DE PERSISTENCIA
+# ARCHIVOS DE DATOS PERSISTENTES
 DATA_FILE = "timers_data.json"
 USERS_FILE = "users_data.json"
 DONACIONES_FILE = "donaciones_data.json"
 
 LINK_DESCARGA_BOT = "https://drive.google.com/uc?export=download&id=TU_ID_DE_GOOGLE_DRIVE"
 
-# ESTADO EN MEMORIA
-status_timers = {
-    "Server 1": {},
-    "Server 2": {},
-    "Server 3": {},
-    "Server 20": {}
-}
-
-# Lista de tarjetas ocultas globalmente (Sincronizado para toda la guild al presionar X)
+# ESTADO EN MEMORIA Y OCULTADO DE TARJETAS
+status_timers = {"Server 1": {}, "Server 2": {}, "Server 3": {}, "Server 20": {}}
 tarjetas_ocultas_global = set()
-
 heartbeats = {}
 ultimas_pcs = {}
 ultimos_pjs = {}
+
 
 def cargar_json(filepath, default_val):
     if os.path.exists(filepath):
@@ -39,6 +32,7 @@ def cargar_json(filepath, default_val):
             print(f"Error cargando {filepath}: {e}")
     return default_val
 
+
 def guardar_json(filepath, data):
     try:
         with open(filepath, 'w', encoding='utf-8') as f:
@@ -46,7 +40,8 @@ def guardar_json(filepath, data):
     except Exception as e:
         print(f"Error guardando {filepath}: {e}")
 
-# Cargar datos existentes
+
+# Inicialización de bases de datos locales
 status_timers = cargar_json(DATA_FILE, status_timers)
 usuarios_db = cargar_json(USERS_FILE, {})
 donaciones_db = cargar_json(DONACIONES_FILE, [])
@@ -57,39 +52,45 @@ def index():
     return render_template('index.html', link_descarga=LINK_DESCARGA_BOT)
 
 
-# --- AUTENTICACIÓN ---
+# --- SISTEMA DE AUTENTICACIÓN Y USUARIOS ---
 
 @app.route('/login', methods=['POST'])
 def login():
     global usuarios_db
     usuarios_db = cargar_json(USERS_FILE, usuarios_db)
-    
+
     data = request.json or {}
     username = data.get('username', '').strip().lower()
     password = data.get('password', '')
 
-    # Verificación contra usuarios cargados
     if username in usuarios_db:
         stored_pass = usuarios_db[username].get("password", "")
-        # Permite verificación hash o clave en texto plano si existe migración directa
-        es_valido = check_password_hash(stored_pass, password) if stored_pass.startswith("scrypt:") or stored_pass.startswith("pbkdf2:") else (stored_pass == password)
         
+        # Soporta hashes Werkzeug (pbkdf2/scrypt) o texto plano si existe migración directa
+        es_valido = False
+        if stored_pass.startswith("scrypt:") or stored_pass.startswith("pbkdf2:"):
+            es_valido = check_password_hash(stored_pass, password)
+        else:
+            es_valido = (stored_pass == password)
+
         if es_valido:
             session['user'] = username
             session['rol'] = usuarios_db[username].get("rol", "encargado")
             return jsonify({
-                "status": "ok", 
-                "user": username, 
+                "status": "ok",
+                "user": username,
                 "rol": usuarios_db[username].get("rol", "encargado"),
                 "requiere_cambio": usuarios_db[username].get("requiere_cambio", False)
             }), 200
 
     return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
 
+
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('index'))
+
 
 @app.route('/api/session')
 def api_session():
@@ -104,31 +105,69 @@ def api_session():
         })
     return jsonify({"logged_in": False})
 
+
 @app.route('/api/cambiar_clave', methods=['POST'])
 def cambiar_clave():
     if 'user' not in session:
         return jsonify({"error": "No autorizado"}), 401
-    
+
     data = request.json or {}
     nueva_clave = data.get('nueva_clave')
-    
+
     if not nueva_clave or len(nueva_clave) < 4:
         return jsonify({"error": "La contraseña debe tener al menos 4 caracteres"}), 400
-    
+
     username = session['user']
     if username in usuarios_db:
         usuarios_db[username]["password"] = generate_password_hash(nueva_clave)
         usuarios_db[username]["requiere_cambio"] = False
         guardar_json(USERS_FILE, usuarios_db)
-    
+
     return jsonify({"status": "ok", "message": "Contraseña actualizada"}), 200
+
+
+@app.route('/api/usuarios', methods=['GET', 'POST'])
+def usuarios():
+    if 'user' not in session or session.get('rol') != 'admin':
+        return jsonify({"error": "Acceso denegado"}), 403
+
+    if request.method == 'GET':
+        lista_u = []
+        for u, val in usuarios_db.items():
+            lista_u.append({
+                "username": u,
+                "rol": val.get("rol", "encargado"),
+                "requiere_cambio_clave": val.get("requiere_cambio", False),
+                "creado_por": val.get("creado_por", "Sistema")
+            })
+        return jsonify(lista_u)
+
+    if request.method == 'POST':
+        data = request.json or {}
+        new_user = data.get('username', '').strip().lower()
+        new_pass = data.get('password', '')
+        new_rol = data.get('rol', 'encargado')
+
+        if not new_user or not new_pass:
+            return jsonify({"error": "Faltan campos obligatorios"}), 400
+
+        if new_user in usuarios_db:
+            return jsonify({"error": "El usuario ya existe"}), 400
+
+        usuarios_db[new_user] = {
+            "password": generate_password_hash(new_pass),
+            "rol": new_rol,
+            "requiere_cambio": True,
+            "creado_por": session['user']
+        }
+        guardar_json(USERS_FILE, usuarios_db)
+        return jsonify({"status": "ok", "message": f"Usuario {new_user} creado"}), 201
 
 
 # --- TIMERS Y BOTS ---
 
-# Doble ruta para mantener compatibilidad con bots y frontend
-@app.route('/api/timers')
 @app.route('/api/status_timers')
+@app.route('/api/timers')
 def get_status_timers():
     return jsonify({
         "timers": status_timers,
@@ -137,6 +176,7 @@ def get_status_timers():
         "ultimas_pcs": ultimas_pcs,
         "ultimos_pjs": ultimos_pjs
     })
+
 
 @app.route('/api/kill', methods=['POST'])
 def registrar_kill():
@@ -153,8 +193,8 @@ def registrar_kill():
         status_timers[server] = {}
 
     status_timers[server][boss] = int(time.time())
-    
-    # Al registrar un Kill nuevo, reaparece la tarjeta si estaba ocultada con la X
+
+    # Reaparece si la tarjeta estaba oculta
     clave_card = f"{server}_{boss}"
     if clave_card in tarjetas_ocultas_global:
         tarjetas_ocultas_global.remove(clave_card)
@@ -166,11 +206,12 @@ def registrar_kill():
         ultimas_pcs[server] = pc_id
         ultimos_pjs[server] = pj_name
 
-    return jsonify({"status": "ok", "server": server, "boss": boss}), 200
+    return jsonify({"status": "ok"}), 200
+
 
 @app.route('/api/reset_boss', methods=['POST'])
 def reset_boss():
-    """Oculta la tarjeta para TODOS los usuarios que estén viendo la web"""
+    """Elimina la tarjeta con la ✕ para toda la guild"""
     data = request.json or {}
     server = data.get('server')
     boss = data.get('boss')
@@ -184,6 +225,7 @@ def reset_boss():
         return jsonify({"status": "ok", "message": f"{boss} ocultado"}), 200
 
     return jsonify({"error": "Datos inválidos"}), 400
+
 
 @app.route('/api/heartbeat', methods=['POST'])
 def registrar_heartbeat():
@@ -237,6 +279,7 @@ def donaciones():
         guardar_json(DONACIONES_FILE, donaciones_db)
         return jsonify({"status": "ok", "donacion": nueva_donacion}), 201
 
+
 @app.route('/api/donaciones/<int:donacion_id>', methods=['PUT'])
 def editar_donacion(donacion_id):
     if 'user' not in session:
@@ -255,46 +298,6 @@ def editar_donacion(donacion_id):
             return jsonify({"status": "ok", "donacion": don}), 200
 
     return jsonify({"error": "Donación no encontrada"}), 404
-
-
-# --- USUARIOS (ADMIN) ---
-
-@app.route('/api/usuarios', methods=['GET', 'POST'])
-def usuarios():
-    if 'user' not in session or session.get('rol') != 'admin':
-        return jsonify({"error": "Acceso denegado: requiere rol Admin"}), 403
-
-    if request.method == 'GET':
-        lista_u = []
-        for u, val in usuarios_db.items():
-            lista_u.append({
-                "username": u,
-                "rol": val.get("rol", "encargado"),
-                "requiere_cambio_clave": val.get("requiere_cambio", False),
-                "creado_por": val.get("creado_por", "Sistema")
-            })
-        return jsonify(lista_u)
-
-    if request.method == 'POST':
-        data = request.json or {}
-        new_user = data.get('username', '').strip().lower()
-        new_pass = data.get('password', '')
-        new_rol = data.get('rol', 'encargado')
-
-        if not new_user or not new_pass:
-            return jsonify({"error": "Faltan campos obligatorios"}), 400
-
-        if new_user in usuarios_db:
-            return jsonify({"error": "El usuario ya existe"}), 400
-
-        usuarios_db[new_user] = {
-            "password": generate_password_hash(new_pass),
-            "rol": new_rol,
-            "requiere_cambio": True,
-            "creado_por": session['user']
-        }
-        guardar_json(USERS_FILE, usuarios_db)
-        return jsonify({"status": "ok", "message": f"Usuario {new_user} creado"}), 201
 
 
 if __name__ == '__main__':
