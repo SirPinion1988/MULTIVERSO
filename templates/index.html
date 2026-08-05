@@ -225,7 +225,6 @@
             "Skeleton King 1", "Skeleton King 2"
         ];
 
-        // ENVÍA LA ORDEN DE ELIMINACIÓN AL SERVIDOR WEB
         async function ocultarTarjetaGlobal(svr, boss) {
             try {
                 const res = await fetch('/api/reset_boss', {
@@ -429,8 +428,8 @@
 
                     let killUnix = timersSvr[bossName];
 
-                    // BOTÓN ✕ VISIBLE EN TODAS LAS TARJETAS
-                    const btnCerrarHTML = `<button onclick="ocultarTarjetaGlobal('${svr}', '${bossName}')" title="Quitar para toda la guild" class="absolute top-2 right-2 text-white hover:text-red-400 font-extrabold text-sm bg-black/50 hover:bg-black/80 w-6 h-6 rounded-full flex items-center justify-center transition border border-gray-600 z-10 cursor-pointer">✕</button>`;
+                    // BOTÓN ✕ VISIBLE EN ABSOLUTAMENTE TODAS LAS TARJETAS (DISPONIBLE, COOLDOWN Y VENTANA)
+                    const btnCerrarHTML = `<button onclick="ocultarTarjetaGlobal('${svr}', '${bossName}')" title="Quitar para toda la guild" class="absolute top-2 right-2 text-white hover:text-red-400 font-extrabold text-sm bg-black/60 hover:bg-black/90 w-6 h-6 rounded-full flex items-center justify-center transition border border-purple-500/50 z-10 cursor-pointer shadow">✕</button>`;
 
                     if (killUnix) {
                         let transcurridoTotal = ahoraUnix - killUnix;
@@ -484,8 +483,8 @@
                         }
                     }
 
-                    // 💜 DISPONIBLE / ESPERANDO KILL (Bosses fijos)
-                    if (!cardHTML && !esEventoManual) {
+                    // 💜 DISPONIBLE / ESPERANDO KILL (Incluso las fijas ahora tienen el botón ✕)
+                    if (!cardHTML) {
                         ordenTiempo = 88888888;
                         cardHTML = `
                             <div class="card p-4 rounded-xl bg-purple-950/40 border border-purple-700 shadow-lg flex flex-col justify-between text-center min-h-[140px] relative">
