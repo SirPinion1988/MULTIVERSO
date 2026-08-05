@@ -7,21 +7,40 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0a0814; color: #e6e1ff; font-family: 'Segoe UI', system-ui, sans-serif; }
-        .grid-bosses { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+        .grid-bosses { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 1rem; }
     </style>
 </head>
 <body class="p-4 md:p-8 flex flex-col items-center">
 
+    <!-- Encabezado Principal -->
     <header class="w-full max-w-6xl mb-6 border-b border-purple-900/50 pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
-            <h1 class="text-3xl font-extrabold text-purple-400 drop-shadow">⚔️ MUDREAM BOSS TIMERS</h1>
-            <p class="text-xs text-purple-300">Monitor en Tiempo Real - Servidores 1, 2, 3 y 20</p>
+            <h1 class="text-3xl font-extrabold text-purple-400 drop-shadow">⚔️ MONITOR MUDREAM MULTIVERSO</h1>
+            <p class="text-xs text-purple-300">Control de Bosses, Timers y Donaciones en Tiempo Real</p>
         </div>
-        <div id="status-pings" class="flex flex-wrap gap-2 text-xs"></div>
+        <div id="user-info-box" class="flex items-center gap-3 bg-[#141126] border border-purple-800/60 px-4 py-2 rounded-xl text-xs">
+            <span id="user-display" class="text-purple-300 font-bold">Invitado</span>
+            <button onclick="toggleLoginModal()" id="btn-login-trigger" class="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1 rounded font-bold transition">Ingresar</button>
+        </div>
     </header>
 
+    <!-- Barra de Controles y Secciones -->
+    <div class="flex flex-wrap space-x-2 mb-6 overflow-x-auto w-full max-w-6xl justify-center gap-2">
+        <button onclick="setVista('TODOS')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-purple-700 text-white" id="tab-TODOS">👁️ Vista General (Todos)</button>
+        <button onclick="setVista('Server 1')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 1">Server 1</button>
+        <button onclick="setVista('Server 2')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 2">Server 2</button>
+        <button onclick="setVista('Server 3')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 3">Server 3</button>
+        <button onclick="setVista('Server 20')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 20">Server 20</button>
+        <button onclick="setVista('DONACIONES')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-yellow-900/80 border border-yellow-600 text-yellow-300 hover:bg-yellow-800" id="tab-DONACIONES">💎 Donaciones</button>
+        
+        <!-- Pestaña de Descarga del Bot -->
+        <a href="{{ link_descarga }}" target="_blank" class="px-4 py-2 rounded-lg font-bold bg-purple-900 border border-purple-500 text-purple-200 hover:bg-purple-800 transition flex items-center gap-1">
+            ⬇️ Descargar Bot (.exe)
+        </a>
+    </div>
+
     <!-- Panel para Cargar Kills Manuales -->
-    <div class="w-full max-w-6xl bg-[#141126] border border-purple-800 rounded-xl p-4 mb-6 shadow-lg">
+    <div id="panel-kill-manual" class="w-full max-w-6xl bg-[#141126] border border-purple-800 rounded-xl p-4 mb-6 shadow-lg">
         <h3 class="text-center font-bold text-purple-300 mb-3 text-sm uppercase tracking-wider">⚡ Cargar Kill Manual / Evento Especial</h3>
         <div class="flex flex-wrap gap-3 justify-center items-center">
             <select id="manualServer" class="bg-[#0d0a1a] border border-purple-900 text-white text-sm rounded-lg p-2.5 outline-none">
@@ -37,26 +56,70 @@
         </div>
     </div>
 
-    <!-- Selector de Servidores -->
-    <div class="flex space-x-2 mb-6 overflow-x-auto w-full max-w-6xl justify-center" id="server-tabs">
-        <button onclick="cambiarServidor('Server 1')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-purple-700 text-white" id="tab-Server 1">Server 1</button>
-        <button onclick="cambiarServidor('Server 2')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 2">Server 2</button>
-        <button onclick="cambiarServidor('Server 3')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 3">Server 3</button>
-        <button onclick="cambiarServidor('Server 20')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 20">Server 20</button>
-    </div>
-
-    <!-- Contenedor Principal de Bosses -->
-    <div class="w-full max-w-6xl">
-        <div id="contenedor-bosses" class="grid-bosses">
+    <!-- VISTA PRINCIPAL DE TIMERS -->
+    <div id="seccion-timers" class="w-full max-w-6xl">
+        <div id="contenedor-bosses" class="space-y-6">
             <div class="text-gray-500 text-center col-span-full">Cargando datos de bosses...</div>
         </div>
     </div>
 
+    <!-- VISTA DE DONACIONES -->
+    <div id="seccion-donaciones" class="w-full max-w-6xl hidden space-y-6">
+        <div class="bg-[#141126] border border-yellow-600/50 rounded-xl p-6 shadow-lg">
+            <h2 class="text-xl font-bold text-yellow-400 mb-4 flex items-center gap-2">💎 Registrar Nueva Donación</h2>
+            <div class="flex flex-wrap gap-4 items-center">
+                <input type="text" id="donacionPj" placeholder="Nombre de PJ" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-48">
+                <select id="donacionTipo" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-48">
+                    <option value="Jewel of Bless">Jewel of Bless</option>
+                    <option value="Jewel of Soul">Jewel of Soul</option>
+                    <option value="Jewel of Life">Jewel of Life</option>
+                    <option value="Jewel of Creation">Jewel of Creation</option>
+                    <option value="Zen">Zen</option>
+                    <option value="VIP Points">VIP Points</option>
+                </select>
+                <input type="number" id="donacionCantidad" placeholder="Cantidad" value="1" min="1" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-32">
+                <button onclick="guardarDonacion()" class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold px-6 py-2.5 rounded-lg text-sm transition">💾 Registrar</button>
+            </div>
+        </div>
+
+        <div class="bg-[#141126] border border-purple-900 rounded-xl p-6 shadow-lg">
+            <h2 class="text-xl font-bold text-purple-300 mb-4">📜 Historial de Donaciones</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-purple-200">
+                    <thead class="bg-[#0d0a1a] text-purple-400 uppercase text-xs">
+                        <tr>
+                            <th class="p-3">PJ</th>
+                            <th class="p-3">Tipo</th>
+                            <th class="p-3">Cantidad</th>
+                            <th class="p-3">Registrado Por</th>
+                            <th class="p-3">Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-donaciones-body">
+                        <tr><td colspan="5" class="p-4 text-center text-gray-500">Sin donaciones registradas</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE LOGIN -->
+    <div id="modal-login" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50">
+        <div class="bg-[#141126] border border-purple-600 p-6 rounded-xl w-80 text-center shadow-2xl">
+            <h3 class="text-lg font-bold text-purple-300 mb-4">🔐 Iniciar Sesión Encargado</h3>
+            <input type="text" id="loginUser" placeholder="Usuario" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
+            <input type="password" id="loginPass" placeholder="Contraseña" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-4 text-sm outline-none">
+            <div class="flex gap-2">
+                <button onclick="ejecutarLogin()" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 rounded text-sm">Entrar</button>
+                <button onclick="toggleLoginModal()" class="w-full bg-gray-800 text-gray-400 font-bold py-2 rounded text-sm">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        let servidorActual = "Server 1";
+        let modoVista = 'TODOS';
         let estadoWeb = { timers: {}, heartbeats: {}, cooldowns: {}, ultimas_pcs: {}, ultimos_pjs: {} };
 
-        // BOSSES FIJOS QUE SIEMPRE DEBEN MOSTRARSE
         const BOSSES_FIJOS = {
             "Server 1": ["Muggron 1", "Muggron 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Borgar", "Kharzul 1", "Vescrya 1"],
             "Server 2": ["Muggron 1", "Muggron 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Borgar", "Kharzul 1", "Vescrya 1"],
@@ -79,6 +142,27 @@
             "Skeleton King 1": 120, "Skeleton King 2": 120
         };
 
+        function setVista(vista) {
+            modoVista = vista;
+            document.querySelectorAll('.btn-tab').forEach(b => {
+                b.className = "btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400";
+            });
+            const activeTab = document.getElementById(`tab-${vista}`);
+            if (activeTab) activeTab.className = "btn-tab px-4 py-2 rounded-lg font-bold bg-purple-700 text-white";
+
+            if (vista === 'DONACIONES') {
+                document.getElementById('seccion-timers').classList.add('hidden');
+                document.getElementById('panel-kill-manual').classList.add('hidden');
+                document.getElementById('seccion-donaciones').classList.remove('hidden');
+                cargarDonaciones();
+            } else {
+                document.getElementById('seccion-donaciones').classList.add('hidden');
+                document.getElementById('seccion-timers').classList.remove('hidden');
+                document.getElementById('panel-kill-manual').classList.remove('hidden');
+                renderizarUI();
+            }
+        }
+
         function poblarSelector() {
             const select = document.getElementById('manualBoss');
             if (select.children.length > 0) return;
@@ -88,16 +172,6 @@
                 opt.textContent = `${b} (${COOLDOWNS_LOCAL[b]}m)`;
                 select.appendChild(opt);
             });
-        }
-
-        function cambiarServidor(srv) {
-            servidorActual = srv;
-            document.querySelectorAll('.btn-tab').forEach(b => {
-                b.className = "btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400";
-            });
-            document.getElementById(`tab-${srv}`).className = "btn-tab px-4 py-2 rounded-lg font-bold bg-purple-700 text-white";
-            document.getElementById('manualServer').value = srv;
-            renderizarUI();
         }
 
         function formatearTiempo(segundosTotales) {
@@ -114,11 +188,9 @@
                 if (res.ok) {
                     estadoWeb = await res.json();
                     poblarSelector();
-                    renderizarUI();
+                    if (modoVista !== 'DONACIONES') renderizarUI();
                 }
-            } catch (e) {
-                console.error("Error cargando status:", e);
-            }
+            } catch (e) {}
         }
 
         async function enviarKill(svr, boss) {
@@ -126,7 +198,7 @@
                 const res = await fetch('/api/kill', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ server: svr, boss: boss, pc_id: "Navegador Web", pj_name: "Manual Web" })
+                    body: JSON.stringify({ server: svr, boss: boss })
                 });
                 if (res.ok) { cargarDatos(); }
             } catch (e) {}
@@ -142,88 +214,162 @@
             const contenedor = document.getElementById('contenedor-bosses');
             contenedor.innerHTML = '';
             const ahoraUnix = Math.floor(Date.now() / 1000);
-            const timersSvr = (estadoWeb.timers || {})[servidorActual] || {};
+            const serversAMostrar = modoVista === 'TODOS' ? ["Server 1", "Server 2", "Server 3", "Server 20"] : [modoVista];
 
-            const listaFijaServidor = BOSSES_FIJOS[servidorActual] || [];
-            const listaBossesAMostrar = new Set([...listaFijaServidor]);
+            serversAMostrar.forEach(svr => {
+                const serverBlock = document.createElement('div');
+                serverBlock.className = "bg-[#141126] border border-purple-900 rounded-xl p-4 shadow-lg";
 
-            Object.keys(timersSvr).forEach(b => listaBossesAMostrar.add(b));
+                const pcVal = (estadoWeb.ultimas_pcs || {})[svr];
+                const pjVal = (estadoWeb.ultimos_pjs || {})[svr];
+                const lastPing = (estadoWeb.heartbeats || {})[svr];
+                let esOnline = false;
+                if (lastPing) {
+                    const hbUnix = Math.floor(new Date(lastPing).getTime() / 1000);
+                    if (!isNaN(hbUnix) && Math.abs(ahoraUnix - hbUnix) <= 60) esOnline = true;
+                }
 
-            listaBossesAMostrar.forEach(bossName => {
-                const killUnix = timersSvr[bossName];
-                const cdMinutos = COOLDOWNS_LOCAL[bossName] || 60;
+                let htmlContent = `
+                    <div class="flex justify-between items-center border-b border-purple-900/60 pb-3 mb-4">
+                        <h2 class="text-xl font-bold text-white">${svr}</h2>
+                        <span class="text-xs px-3 py-1 rounded-full font-bold border ${esOnline ? 'bg-emerald-950 text-emerald-200 border-emerald-600' : 'bg-red-950 text-red-300 border-red-800'}">
+                            💻 ${pcVal || 'Sin PC'} (PJ: ${pjVal || 'N/A'}): ${esOnline ? '🟢 ONLINE' : '🔴 OFFLINE'}
+                        </span>
+                    </div>
+                    <div class="grid-bosses">
+                `;
 
-                let cardContent = '';
+                const timersSvr = (estadoWeb.timers || {})[svr] || {};
+                const listaFijaServidor = BOSSES_FIJOS[svr] || [];
+                const listaBossesAMostrar = new Set([...listaFijaServidor]);
+                Object.keys(timersSvr).forEach(b => listaBossesAMostrar.add(b));
 
-                if (killUnix) {
-                    const targetRespawnUnix = killUnix + (cdMinutos * 60);
-                    const finVentanaUnix = targetRespawnUnix + 3600;
+                listaBossesAMostrar.forEach(bossName => {
+                    const killUnix = timersSvr[bossName];
+                    const cdMinutos = COOLDOWNS_LOCAL[bossName] || 60;
+                    let cardContent = '';
 
-                    // 1. 🔴 ROJO: COOLDOWN (De más a menos)
-                    if (ahoraUnix < targetRespawnUnix) {
-                        const restoSec = targetRespawnUnix - ahoraUnix;
-                        cardContent = `
-                            <div class="card p-4 rounded-xl bg-red-950/70 border border-red-500 shadow-lg flex flex-col justify-between text-center min-h-[120px]">
-                                <h3 class="font-bold text-red-100 text-sm">${bossName}</h3>
-                                <div class="my-2 py-1 px-2 rounded bg-red-900/50 border border-red-600 text-red-200 font-mono text-base font-bold">
-                                    🔴 ${formatearTiempo(restoSec)}
+                    if (killUnix) {
+                        const targetRespawnUnix = killUnix + (cdMinutos * 60);
+                        const finVentanaUnix = targetRespawnUnix + 3600;
+
+                        // 1. 🔴 ROJO: COOLDOWN (Regresivo)
+                        if (ahoraUnix < targetRespawnUnix) {
+                            const restoSec = targetRespawnUnix - ahoraUnix;
+                            cardContent = `
+                                <div class="card p-3 rounded-xl bg-red-950/70 border border-red-500 shadow-lg flex flex-col justify-between text-center">
+                                    <h3 class="font-bold text-red-100 text-sm">${bossName}</h3>
+                                    <div class="my-2 py-1 px-2 rounded bg-red-900/50 border border-red-600 text-red-200 font-mono text-base font-bold">
+                                        🔴 ${formatearTiempo(restoSec)}
+                                    </div>
+                                    <button onclick="enviarKill('${svr}', '${bossName}')" class="bg-purple-800 hover:bg-purple-700 text-white font-bold text-xs py-1 rounded transition">⚔️ Kill</button>
                                 </div>
-                                <button onclick="enviarKill('${servidorActual}', '${bossName}')" class="bg-purple-800 hover:bg-purple-700 text-white font-bold text-xs py-1 rounded transition">⚔️ Kill</button>
-                            </div>
-                        `;
-                    } 
-                    // 2. 🟡 AMARILLO: VENTANA (De 0 a 60 min)
-                    else if (ahoraUnix >= targetRespawnUnix && ahoraUnix <= finVentanaUnix) {
-                        const transcurridoVentana = ahoraUnix - targetRespawnUnix;
-                        cardContent = `
-                            <div class="card p-4 rounded-xl bg-yellow-950/70 border border-yellow-500 shadow-lg flex flex-col justify-between text-center min-h-[120px]">
-                                <h3 class="font-bold text-yellow-100 text-sm">${bossName}</h3>
-                                <div class="my-2 py-1 px-2 rounded bg-yellow-900/50 border border-yellow-600 text-yellow-200 font-mono text-base font-bold">
-                                    🟡 VENTANA (${formatearTiempo(transcurridoVentana)})
+                            `;
+                        } 
+                        // 2. 🟡 AMARILLO: VENTANA (Ascendente)
+                        else if (ahoraUnix >= targetRespawnUnix && ahoraUnix <= finVentanaUnix) {
+                            const transcurridoVentana = ahoraUnix - targetRespawnUnix;
+                            cardContent = `
+                                <div class="card p-3 rounded-xl bg-yellow-950/70 border border-yellow-500 shadow-lg flex flex-col justify-between text-center">
+                                    <h3 class="font-bold text-yellow-100 text-sm">${bossName}</h3>
+                                    <div class="my-2 py-1 px-2 rounded bg-yellow-900/50 border border-yellow-600 text-yellow-200 font-mono text-base font-bold">
+                                        🟡 VENTANA (${formatearTiempo(transcurridoVentana)})
+                                    </div>
+                                    <button onclick="enviarKill('${svr}', '${bossName}')" class="bg-purple-800 hover:bg-purple-700 text-white font-bold text-xs py-1 rounded transition">⚔️ Kill</button>
                                 </div>
-                                <button onclick="enviarKill('${servidorActual}', '${bossName}')" class="bg-purple-800 hover:bg-purple-700 text-white font-bold text-xs py-1 rounded transition">⚔️ Kill</button>
+                            `;
+                        }
+                    }
+
+                    // 3. 🟢 DISPONIBLE / VIVO (Bosses fijos sin kill o fuera de ventana)
+                    if (!cardContent && listaFijaServidor.includes(bossName)) {
+                        cardContent = `
+                            <div class="card p-3 rounded-xl bg-emerald-950/70 border border-emerald-500 shadow-lg flex flex-col justify-between text-center">
+                                <h3 class="font-bold text-emerald-100 text-sm">${bossName}</h3>
+                                <div class="my-2 py-1 px-2 rounded bg-emerald-900/50 border border-emerald-600 text-emerald-200 font-mono text-xs font-bold uppercase">
+                                    🟢 DISPONIBLE
+                                </div>
+                                <button onclick="enviarKill('${svr}', '${bossName}')" class="bg-purple-800 hover:bg-purple-700 text-white font-bold text-xs py-1 rounded transition">⚔️ Kill</button>
                             </div>
                         `;
                     }
-                }
 
-                // 3. 🟢 DISPONIBLE / VIVO (Bosses fijos sin kill o fuera de ventana)
-                if (!cardContent && listaFijaServidor.includes(bossName)) {
-                    cardContent = `
-                        <div class="card p-4 rounded-xl bg-emerald-950/70 border border-emerald-500 shadow-lg flex flex-col justify-between text-center min-h-[120px]">
-                            <h3 class="font-bold text-emerald-100 text-sm">${bossName}</h3>
-                            <div class="my-2 py-1 px-2 rounded bg-emerald-900/50 border border-emerald-600 text-emerald-200 font-mono text-xs font-bold uppercase">
-                                🟢 DISPONIBLE
-                            </div>
-                            <button onclick="enviarKill('${servidorActual}', '${bossName}')" class="bg-purple-800 hover:bg-purple-700 text-white font-bold text-xs py-1 rounded transition">⚔️ Kill</button>
-                        </div>
-                    `;
-                }
+                    if (cardContent) htmlContent += cardContent;
+                });
 
-                if (cardContent) {
-                    contenedor.innerHTML += cardContent;
-                }
+                htmlContent += `</div>`;
+                serverBlock.innerHTML = htmlContent;
+                contenedor.appendChild(serverBlock);
             });
+        }
 
-            // Estado de Pings
-            const pingBox = document.getElementById('status-pings');
-            pingBox.innerHTML = '';
-            const hbMap = estadoWeb.heartbeats || {};
-            const pcVal = (estadoWeb.ultimas_pcs || {})[servidorActual];
-            const pjVal = (estadoWeb.ultimos_pjs || {})[servidorActual];
-            const lastPing = hbMap[servidorActual];
+        // FUNCIONALIDADES DE DONACIONES Y SESIÓN
+        async function cargarDonaciones() {
+            try {
+                const res = await fetch('/api/donaciones');
+                if (res.ok) {
+                    const data = await res.json();
+                    const tbody = document.getElementById('tabla-donaciones-body');
+                    tbody.innerHTML = '';
+                    if (data.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">Sin donaciones registradas</td></tr>`;
+                        return;
+                    }
+                    data.forEach(d => {
+                        tbody.innerHTML += `
+                            <tr class="border-b border-purple-900/40 hover:bg-purple-900/20">
+                                <td class="p-3 font-bold text-white">${d.pj_name}</td>
+                                <td class="p-3 text-yellow-300">${d.tipo_donacion}</td>
+                                <td class="p-3 font-mono">${d.cantidad}</td>
+                                <td class="p-3 text-purple-400">${d.registrado_por}</td>
+                                <td class="p-3 text-xs text-gray-400">${new Date(d.created_at).toLocaleString()}</td>
+                            </tr>
+                        `;
+                    });
+                }
+            } catch (e) {}
+        }
 
-            let esOnline = false;
-            if (lastPing) {
-                const hbUnix = Math.floor(new Date(lastPing).getTime() / 1000);
-                if (!isNaN(hbUnix) && Math.abs(ahoraUnix - hbUnix) <= 60) esOnline = true;
-            }
+        async function guardarDonacion() {
+            const pj = document.getElementById('donacionPj').value;
+            const tipo = document.getElementById('donacionTipo').value;
+            const cant = document.getElementById('donacionCantidad').value;
+            if (!pj || !tipo) return alert("Ingresa el PJ y el tipo de donación");
 
-            pingBox.innerHTML = `
-                <span class="px-3 py-1 rounded-lg border ${esOnline ? 'bg-emerald-950 text-emerald-200 border-emerald-600' : 'bg-red-950 text-red-300 border-red-800'}">
-                    💻 ${pcVal || 'Sin PC'} (PJ: ${pjVal || 'N/A'}): ${esOnline ? '🟢 ONLINE' : '🔴 OFFLINE'}
-                </span>
-            `;
+            try {
+                const res = await fetch('/api/donaciones', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pj_name: pj, tipo_donacion: tipo, cantidad: cant })
+                });
+                if (res.ok) {
+                    document.getElementById('donacionPj').value = '';
+                    cargarDonaciones();
+                }
+            } catch (e) {}
+        }
+
+        function toggleLoginModal() {
+            document.getElementById('modal-login').classList.toggle('hidden');
+        }
+
+        async function ejecutarLogin() {
+            const username = document.getElementById('loginUser').value;
+            const password = document.getElementById('loginPass').value;
+            try {
+                const res = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    document.getElementById('user-display').innerText = data.user;
+                    toggleLoginModal();
+                } else {
+                    alert(data.error || "Login fallido");
+                }
+            } catch (e) {}
         }
 
         setInterval(renderizarUI, 1000);
