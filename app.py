@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timezone
 from flask import Flask, render_template, jsonify, request, session, redirect, url_for
 from flask_cors import CORS
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash
 from supabase import create_client, Client
 
 app = Flask(__name__)
@@ -35,7 +35,7 @@ COOLDOWNS_CONFIG = {
     "Skeleton King 1": 120, "Skeleton King 2": 120
 }
 
-# === RUTAS PRINCIPALES Y LOGIN ===
+# === RUTAS Y VISTAS ===
 
 @app.route('/')
 def index():
@@ -47,16 +47,33 @@ def login():
     username = data.get('username')
     password = data.get('password')
     
+    if not username or not password:
+        return jsonify({"error": "Faltan datos"}), 400
+
     try:
         res = supabase.table('usuarios').select('*').eq('username', username).execute()
         if res.data and len(res.data) > 0:
             user = res.data[0]
-            if check_password_hash(user['password_hash'], password) or user['password_hash'] == password:
+            pwd_hash = user.get('password_hash', '')
+            
+            # Validar tanto si está encriptada con werkzeug como si está en texto plano
+            es_valido = False
+            try:
+                if pwd_hash.startswith('pbkdf2:') or pwd_hash.startswith('scrypt:'):
+                    es_valido = check_password_hash(pwd_hash, password)
+                else:
+                    es_valido = (pwd_hash == password)
+            except Exception:
+                es_valido = (pwd_hash == password)
+
+            if es_valido:
                 session['user'] = user['username']
                 session['rol'] = user.get('rol', 'encargado')
                 return jsonify({"status": "SUCCESS", "user": user['username'], "rol": user.get('rol')}), 200
+
         return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
     except Exception as e:
+        print(f"Error en login: {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/logout')
@@ -72,7 +89,7 @@ def check_session():
         "rol": session.get('rol', None)
     })
 
-# === API: CONSULTA DE STATUS ===
+# === API STATUS Y TIMERS ===
 
 @app.route('/api/status_timers', methods=['GET'])
 def status_timers():
@@ -104,7 +121,7 @@ def status_timers():
         print(f"Error en status_timers: {e}")
         return jsonify({"error": str(e)}), 500
 
-# === API: REGISTRO DE KILL (DIRECTO O VIA BOT) ===
+# === API KILL ===
 
 @app.route('/api/kill', methods=['POST'])
 def kill():
@@ -133,12 +150,12 @@ def kill():
             'last_heartbeat': datetime.now(timezone.utc).isoformat()
         }).eq('server', server).execute()
 
-        return jsonify({"status": "SUCCESS", "boss": boss, "server": server}), 200
+        return jsonify({"status": "SUCCESS", "boss": boss, "server": server, "timestamp": ahora_unix}), 200
     except Exception as e:
         print(f"Error registrando kill: {e}")
         return jsonify({"error": str(e)}), 500
 
-# === API: HEARTBEAT CLIENTES ===
+# === API HEARTBEAT CLIENTES ===
 
 @app.route('/api/heartbeat', methods=['POST'])
 def heartbeat():
@@ -163,7 +180,7 @@ def heartbeat():
         print(f"Error en heartbeat: {e}")
         return jsonify({"error": str(e)}), 500
 
-# === API: DONACIONES ===
+# === API DONACIONES ===
 
 @app.route('/api/donaciones', methods=['GET', 'POST'])
 def donaciones():
