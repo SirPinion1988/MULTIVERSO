@@ -1,38 +1,29 @@
 import os
 import time
-import json
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
+import psycopg2
+import psycopg2.extras
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "multiverso_secret_key_mu_dream_2026_fixed")
+app.secret_key = os.environ.get("SECRET_KEY", "multiverso_secret_key_2026")
 
-# DICCIONARIO EN MEMORIA (O CUBIERTO CON TU CONEXIÓN A BASE DE DATOS)
-# Si usas Supabase / PostgreSQL con psycopg2, aquí van tus consultas a 'public.usuarios'
+# Cadena de conexión a Supabase/PostgreSQL desde Render
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
-# Mapeo temporal sincronizado con las claves exactas de tu captura:
-usuarios_db = {
-    "pinion": {
-        "password": "scrypt:32768:8:1$ptlyLWa6gpmH82bv...", # Hash real de tu DB
-        "rol": "admin",
-        "requiere_cambio": False
-    },
-    "rayyga": {
-        "password": "scrypt:32768:8:1$ikTbGJ53McKKAeJI...", # Hash real de tu DB
-        "rol": "encargado",
-        "requiere_cambio": False
-    }
-}
-
-status_timers = {
-    "Server 1": {}, "Server 2": {}, "Server 3": {}, "Server 20": {}
-}
-
+# Almacenamiento en memoria para Heartbeats y Ocultado de tarjetas (✕)
+status_timers = {"Server 1": {}, "Server 2": {}, "Server 3": {}, "Server 20": {}}
 tarjetas_ocultas_global = set()
 heartbeats = {}
 ultimas_pcs = {}
 ultimos_pjs = {}
+
+def get_db_connection():
+    """Conecta a la base de datos PostgreSQL de Supabase"""
+    if not DATABASE_URL:
+        return None
+    return psycopg2.connect(DATABASE_URL)
 
 
 @app.route('/')
@@ -40,35 +31,46 @@ def index():
     return render_template('index.html')
 
 
-# --- AUTENTICACIÓN QUE ACEPTA TUS USUARIOS DE LA CAPTURA Y LA CLAVE MAESTRA ---
+# --- AUTENTICACIÓN CONECTADA A SUPABASE ---
 
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json or {}
-    username = data.get('username', '').strip().lower()
-    password = data.get('password', '')
+    username_input = data.get('username', '').strip()
+    password_input = data.get('password', '')
 
-    # 1. ACCESO MAESTRO DE SEGURIDAD (Por si necesitas entrar rápido con cualquier usuario)
-    if password == "super123":
-        rol_usuario = "admin" if username == "pinion" else "encargado"
-        session['user'] = username
-        session['rol'] = rol_usuario
-        print(f"🔓 LOGIN MAESTRO EXITOSO: {username}")
-        return jsonify({"status": "ok", "user": username, "rol": rol_usuario, "requiere_cambio": False}), 200
+    if not username_input or not password_input:
+        return jsonify({"error": "Ingresa usuario y contraseña"}), 400
 
-    # 2. VALIDACIÓN NORMAL (Soporta hashes scrypt de Werkzeug/Supabase)
-    if username in usuarios_db:
-        stored_hash = usuarios_db[username]["password"]
-        if check_password_hash(stored_hash, password):
-            session['user'] = username
-            session['rol'] = usuarios_db[username]["rol"]
-            print(f"✅ LOGIN DB EXITOSO: {username}")
-            return jsonify({
-                "status": "ok", 
-                "user": username, 
-                "rol": usuarios_db[username]["rol"],
-                "requiere_cambio": usuarios_db[username].get("requiere_cambio", False)
-            }), 200
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"error": "Error de conexión a la base de datos"}), 500
+
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            # Busca al usuario ignorando mayúsculas/minúsculas en public.usuarios
+            cur.execute("SELECT * FROM public.usuarios WHERE LOWER(username) = LOWER(%s)", (username_input,))
+            user = cur.fetchone()
+
+            if user:
+                stored_hash = user.get('password_hash')
+                
+                # Compara la clave ingresada contra el hash 'scrypt' de Supabase
+                if stored_hash and check_password_hash(stored_hash, password_input):
+                    session['user'] = user['username']
+                    session['rol'] = user.get('rol', 'encargado')
+                    
+                    return jsonify({
+                        "status": "ok",
+                        "user": user['username'],
+                        "rol": user.get('rol', 'encargado'),
+                        "requiere_cambio": user.get('requiere_cambio', False)
+                    }), 200
+
+    except Exception as e:
+        print(f"Error consultando usuarios en DB: {e}")
+    finally:
+        conn.close()
 
     return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
 
@@ -82,18 +84,15 @@ def logout():
 @app.route('/api/session')
 def api_session():
     if 'user' in session:
-        u_name = session['user']
-        u_info = usuarios_db.get(u_name, {})
         return jsonify({
             "logged_in": True,
-            "user": u_name,
-            "rol": session.get('rol', u_info.get('rol', 'encargado')),
-            "requiere_cambio": u_info.get("requiere_cambio", False)
+            "user": session['user'],
+            "rol": session.get('rol', 'encargado')
         })
     return jsonify({"logged_in": False})
 
 
-# --- RUTAS DE TIMERS Y BOTS ---
+# --- RUTAS DE BOTS Y TIMERS ---
 
 @app.route('/api/timers')
 @app.route('/api/status_timers')
@@ -105,6 +104,7 @@ def get_status_timers():
         "ultimas_pcs": ultimas_pcs,
         "ultimos_pjs": ultimos_pjs
     })
+
 
 @app.route('/api/kill', methods=['POST'])
 def registrar_kill():
@@ -121,7 +121,8 @@ def registrar_kill():
         status_timers[server] = {}
 
     status_timers[server][boss] = int(time.time())
-    
+
+    # Si el boss estaba oculto con la ✕, reaparece automáticamente al registrar kill
     clave_card = f"{server}_{boss}"
     if clave_card in tarjetas_ocultas_global:
         tarjetas_ocultas_global.remove(clave_card)
@@ -131,10 +132,12 @@ def registrar_kill():
         ultimas_pcs[server] = pc_id
         ultimos_pjs[server] = pj_name
 
-    return jsonify({"status": "ok", "server": server, "boss": boss}), 200
+    return jsonify({"status": "ok"}), 200
+
 
 @app.route('/api/reset_boss', methods=['POST'])
 def reset_boss():
+    """Elimina la tarjeta de la pantalla de toda la guild al presionar ✕"""
     data = request.json or {}
     server = data.get('server')
     boss = data.get('boss')
@@ -148,20 +151,6 @@ def reset_boss():
 
     return jsonify({"error": "Datos inválidos"}), 400
 
-@app.route('/api/heartbeat', methods=['POST'])
-def registrar_heartbeat():
-    data = request.json or {}
-    server = data.get('server')
-    pc_id = data.get('pc_id', 'Desconocido')
-    pj_name = data.get('pj_name', 'Desconocido')
-
-    if server:
-        heartbeats[server] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        ultimas_pcs[server] = pc_id
-        ultimos_pjs[server] = pj_name
-        return jsonify({"status": "ok"}), 200
-
-    return jsonify({"error": "Servidor requerido"}), 400
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
