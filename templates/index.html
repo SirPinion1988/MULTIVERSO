@@ -21,41 +21,10 @@
         <div id="user-info-box" class="flex items-center gap-3 bg-[#141126] border border-purple-800/60 px-4 py-2 rounded-xl text-xs">
             <span id="user-display" class="text-purple-300 font-bold">Invitado</span>
             <span id="login-btn-container">
-                <button onclick="toggleLoginModal()" id="btn-login-trigger" class="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1 rounded font-bold transition">Ingresar</button>
+                <button type="button" onclick="toggleLoginModal()" id="btn-login-trigger" class="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1 rounded font-bold transition">Ingresar</button>
             </span>
         </div>
     </header>
-
-    <!-- Navegación -->
-    <div class="flex flex-wrap space-x-2 mb-6 overflow-x-auto w-full max-w-6xl justify-center gap-2">
-        <button onclick="setVista('TODOS')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-purple-700 text-white" id="tab-TODOS">👁️ Vista General (Ordenada x Tiempo)</button>
-        <button onclick="setVista('Server 1')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 1">Server 1</button>
-        <button onclick="setVista('Server 2')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 2">Server 2</button>
-        <button onclick="setVista('Server 3')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 3">Server 3</button>
-        <button onclick="setVista('Server 20')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 20">Server 20</button>
-        <button onclick="setVista('BOTS')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-BOTS">🤖 Bots Activos</button>
-        <button onclick="setVista('DONACIONES')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-yellow-900/80 border border-yellow-600 text-yellow-300 hover:bg-yellow-800" id="tab-DONACIONES">💎 Donaciones</button>
-        <button onclick="setVista('USUARIOS')" id="tab-USUARIOS" class="btn-tab px-4 py-2 rounded-lg font-bold bg-indigo-900 border border-indigo-500 text-indigo-200 hidden">👥 Crear Encargados</button>
-        
-        <a id="btn-descarga-bot" href="{{ link_descarga }}" target="_blank" class="px-4 py-2 rounded-lg font-bold bg-purple-900 border border-purple-500 text-purple-200 hover:bg-purple-800 transition flex items-center gap-1 hidden">
-            ⬇️ Descargar Bot (.exe)
-        </a>
-    </div>
-
-    <!-- Panel Manual -->
-    <div id="panel-kill-manual" class="w-full max-w-6xl bg-[#141126] border border-purple-800 rounded-xl p-4 mb-6 shadow-lg">
-        <h3 class="text-center font-bold text-purple-300 mb-3 text-sm uppercase tracking-wider">⚡ Cargar Kill Manual / Iniciar Boss</h3>
-        <div class="flex flex-wrap gap-3 justify-center items-center">
-            <select id="manualServer" class="bg-[#0d0a1a] border border-purple-900 text-white text-sm rounded-lg p-2.5 outline-none">
-                <option value="Server 1">Server 1</option>
-                <option value="Server 2">Server 2</option>
-                <option value="Server 3">Server 3</option>
-                <option value="Server 20">Server 20</option>
-            </select>
-            <select id="manualBoss" class="bg-[#0d0a1a] border border-purple-900 text-white text-sm rounded-lg p-2.5 outline-none"></select>
-            <button onclick="ejecutarKillForm()" class="bg-purple-700 hover:bg-purple-600 text-white font-bold text-sm px-5 py-2.5 rounded-lg transition">⚔️ Registrar Kill</button>
-        </div>
-    </div>
 
     <!-- TIMERS PRINCIPALES -->
     <div id="seccion-timers" class="w-full max-w-6xl">
@@ -64,272 +33,81 @@
         </div>
     </div>
 
-    <!-- BOTS ACTIVOS -->
-    <div id="seccion-bots" class="w-full max-w-6xl hidden space-y-4">
-        <h2 class="text-xl font-bold text-purple-300 mb-4 border-b border-purple-800 pb-2">🤖 Conexión de Clientes y PCs de la Guild</h2>
-        <div id="contenedor-bots-lista" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-    </div>
-
-    <!-- DONACIONES CON AUDITORÍA Y EDICIÓN -->
-    <div id="seccion-donaciones" class="w-full max-w-6xl hidden space-y-6">
-        <div class="bg-[#141126] border border-yellow-600/50 rounded-xl p-6 shadow-lg">
-            <h2 class="text-xl font-bold text-yellow-400 mb-4 flex items-center gap-2">💎 Registrar Nueva Donación</h2>
-            <div class="flex flex-wrap gap-4 items-center">
-                <input type="text" id="donacionPj" placeholder="Nombre de PJ" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-48">
-                <select id="donacionTipo" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-48">
-                    <option value="Jewel of Bless">Jewel of Bless</option>
-                    <option value="Jewel of Soul">Jewel of Soul</option>
-                    <option value="Jewel of Life">Jewel of Life</option>
-                    <option value="Jewel of Creation">Jewel of Creation</option>
-                    <option value="Zen">Zen</option>
-                    <option value="VIP Points">VIP Points</option>
-                </select>
-                <input type="number" id="donacionCantidad" placeholder="Cantidad" value="1" min="1" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-32">
-                <button onclick="guardarDonacion()" class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold px-6 py-2.5 rounded-lg text-sm transition">💾 Registrar</button>
-            </div>
-        </div>
-
-        <div class="bg-[#141126] border border-purple-900 rounded-xl p-6 shadow-lg">
-            <h2 class="text-xl font-bold text-purple-300 mb-4">📜 Historial de Donaciones</h2>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-purple-200">
-                    <thead class="bg-[#0d0a1a] text-purple-400 uppercase text-xs">
-                        <tr>
-                            <th class="p-3">PJ</th>
-                            <th class="p-3">Tipo</th>
-                            <th class="p-3">Cantidad</th>
-                            <th class="p-3">Registrado Por</th>
-                            <th class="p-3">Auditoría / Modificado</th>
-                            <th class="p-3 text-center">Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-donaciones-body">
-                        <tr><td colspan="6" class="p-4 text-center text-gray-500">Sin donaciones registradas</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- GESTIÓN DE USUARIOS -->
-    <div id="seccion-usuarios" class="w-full max-w-6xl hidden space-y-6">
-        <div class="bg-[#141126] border border-indigo-600/50 rounded-xl p-6 shadow-lg">
-            <h2 class="text-xl font-bold text-indigo-400 mb-4">👑 Crear Nuevo Encargado / Usuario</h2>
-            <div class="flex flex-wrap gap-4 items-center">
-                <input type="text" id="nuevoUser" placeholder="Nombre de Usuario" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-48">
-                <input type="text" id="nuevoPass" placeholder="Contraseña Inicial" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-48">
-                <select id="nuevoRol" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-36">
-                    <option value="encargado">Encargado</option>
-                    <option value="admin">Administrador</option>
-                </select>
-                <button onclick="crearUsuario()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-6 py-2.5 rounded-lg text-sm transition">➕ Crear Usuario</button>
-            </div>
-            <p class="text-xs text-indigo-300 mt-2">💡 Nota: El usuario deberá cambiar su clave obligatoriamente en su primer ingreso.</p>
-        </div>
-
-        <div class="bg-[#141126] border border-purple-900 rounded-xl p-6 shadow-lg">
-            <h2 class="text-xl font-bold text-purple-300 mb-4">👥 Lista de Usuarios Registrados</h2>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-purple-200">
-                    <thead class="bg-[#0d0a1a] text-purple-400 uppercase text-xs">
-                        <tr>
-                            <th class="p-3">Usuario</th>
-                            <th class="p-3">Rol</th>
-                            <th class="p-3">Estado Clave</th>
-                            <th class="p-3">Creado Por</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-usuarios-body"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL EDICIÓN DE DONACIÓN CON AUDITORÍA -->
-    <div id="modal-editar-donacion" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50">
-        <div class="bg-[#141126] border border-yellow-500 p-6 rounded-xl w-96 text-center shadow-2xl">
-            <h3 class="text-lg font-bold text-yellow-300 mb-4">✏️ Editar Donación (Auditoría Activa)</h3>
-            <input type="hidden" id="editDonacionId">
-            <input type="text" id="editDonacionPj" placeholder="PJ Name" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
-            <select id="editDonacionTipo" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
-                <option value="Jewel of Bless">Jewel of Bless</option>
-                <option value="Jewel of Soul">Jewel of Soul</option>
-                <option value="Jewel of Life">Jewel of Life</option>
-                <option value="Jewel of Creation">Jewel of Creation</option>
-                <option value="Zen">Zen</option>
-                <option value="VIP Points">VIP Points</option>
-            </select>
-            <input type="number" id="editDonacionCantidad" placeholder="Cantidad" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-4 text-sm outline-none">
-            <div class="flex gap-2">
-                <button onclick="ejecutarEdicionDonacion()" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 rounded text-sm">💾 Guardar Cambios</button>
-                <button onclick="toggleEditModal()" class="w-full bg-gray-800 text-gray-400 font-bold py-2 rounded text-sm">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL CAMBIO DE CLAVE -->
-    <div id="modal-cambio-clave" class="fixed inset-0 bg-black/90 flex items-center justify-center hidden z-50">
-        <div class="bg-[#141126] border-2 border-yellow-500 p-6 rounded-xl w-96 text-center shadow-2xl">
-            <h3 class="text-xl font-bold text-yellow-400 mb-2">⚠️ PRIMER INGRESO DETECTADO</h3>
-            <p class="text-xs text-gray-300 mb-4">Por seguridad debes actualizar tu contraseña inicial antes de continuar.</p>
-            <input type="password" id="claveNueva1" placeholder="Nueva Contraseña" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded mb-3 text-sm outline-none">
-            <input type="password" id="claveNueva2" placeholder="Repetir Nueva Contraseña" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded mb-4 text-sm outline-none">
-            <button onclick="ejecutarCambioClave()" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2.5 rounded text-sm transition">💾 Guardar Nueva Contraseña</button>
-        </div>
-    </div>
-
-    <!-- MODAL LOGIN -->
+    <!-- MODAL LOGIN CORREGIDO -->
     <div id="modal-login" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50">
         <div class="bg-[#141126] border border-purple-600 p-6 rounded-xl w-80 text-center shadow-2xl">
             <h3 class="text-lg font-bold text-purple-300 mb-4">🔐 Iniciar Sesión Encargado</h3>
-            <input type="text" id="loginUser" placeholder="Usuario" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
-            <input type="password" id="loginPass" placeholder="Contraseña" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-4 text-sm outline-none">
-            <div class="flex gap-2">
-                <button onclick="ejecutarLogin()" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 rounded text-sm">Entrar</button>
-                <button onclick="toggleLoginModal()" class="w-full bg-gray-800 text-gray-400 font-bold py-2 rounded text-sm">Cancelar</button>
-            </div>
+            
+            <form onsubmit="ejecutarLogin(event)">
+                <input type="text" id="loginUser" placeholder="Usuario" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none" required>
+                <input type="password" id="loginPass" placeholder="Contraseña" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-4 text-sm outline-none" required>
+                
+                <p id="loginErrorMsg" class="text-red-400 text-xs mb-3 hidden"></p>
+
+                <div class="flex gap-2">
+                    <button type="submit" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 rounded text-sm">Entrar</button>
+                    <button type="button" onclick="toggleLoginModal()" class="w-full bg-gray-800 text-gray-400 font-bold py-2 rounded text-sm">Cancelar</button>
+                </div>
+            </form>
         </div>
     </div>
 
     <script>
-        let modoVista = 'TODOS';
-        let estadoWeb = { timers: {}, ocultos: [], heartbeats: {}, cooldowns: {} };
-        let estaLogueado = false;
-        let esAdmin = false;
-        let listaDonacionesCache = [];
+        let estadoWeb = { timers: {}, ocultos: [] };
 
         const BOSSES_FIJOS = {
-            "Server 1": ["Muggron 1", "Muggron 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Borgar", "Kharzul 1", "Vescrya 1"],
-            "Server 2": ["Muggron 1", "Muggron 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Borgar", "Kharzul 1", "Vescrya 1"],
-            "Server 3": ["Muggron 1", "Muggron 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Borgar", "Kharzul 1", "Vescrya 1"],
-            "Server 20": ["Muggron Barracks 1", "Muggron Barracks 2", "Muggron Crywolf 1", "Muggron Crywolf 2", "Kharzul 1", "Kharzul 2", "Kharzul 3", "Vescrya 1", "Vescrya 2", "Vescrya 3"]
+            "Server 1": ["Muggron 1", "Muggron 2", "Dreadhorn 1", "Dreadhorn 2"],
+            "Server 2": ["Muggron 1", "Muggron 2", "Dreadhorn 1", "Dreadhorn 2"],
+            "Server 3": ["Muggron 1", "Muggron 2", "Dreadhorn 1", "Dreadhorn 2"],
+            "Server 20": ["Muggron Barracks 1", "Muggron Barracks 2"]
         };
 
-        const COOLDOWNS_LOCAL = {
-            "Muggron 1": 180, "Muggron 2": 180,
-            "Dreadhorn 1": 60, "Dreadhorn 2": 60,
-            "Moltragon 1": 60, "Moltragon 2": 60,
-            "Borgar": 120,
-            "Kharzul 1": 420, "Kharzul 2": 420, "Kharzul 3": 420,
-            "Vescrya 1": 420, "Vescrya 2": 420, "Vescrya 3": 420,
-            "Muggron Barracks 1": 180, "Muggron Barracks 2": 180,
-            "Muggron Crywolf 1": 180, "Muggron Crywolf 2": 180,
-            "Yellow Goblin": 600, "Blue Goblin": 600, "Red Goblin": 600,
-            "Red Dragon": 360, 
-            "Santa 1": 360, "Santa 2": 360,
-            "White Wizard 1": 360, "White Wizard 2": 360,
-            "Skeleton King 1": 360, "Skeleton King 2": 360
-        };
-
-        const BOSSES_SOLO_MANUALES = [
-            "Red Dragon", "Yellow Goblin", "Blue Goblin", "Red Goblin",
-            "Santa 1", "Santa 2", "White Wizard 1", "White Wizard 2",
-            "Skeleton King 1", "Skeleton King 2"
-        ];
-
-        async function ocultarTarjetaGlobal(svr, boss) {
-            try {
-                const res = await fetch('/api/reset_boss', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ server: svr, boss: boss })
-                });
-                if (res.ok) {
-                    await cargarDatos();
-                }
-            } catch (e) {}
-        }
+        const COOLDOWNS_LOCAL = { "Muggron 1": 180, "Muggron 2": 180, "Dreadhorn 1": 60, "Dreadhorn 2": 60 };
 
         async function verificarSesion() {
             try {
                 const res = await fetch('/api/session');
                 const data = await res.json();
-                estaLogueado = data.logged_in;
-                esAdmin = (data.rol === 'admin');
-
                 if (data.logged_in) {
                     document.getElementById('user-display').innerHTML = `👤 User: <strong class="text-white">${data.user}</strong> (${data.rol})`;
                     document.getElementById('login-btn-container').innerHTML = `<a href="/logout" class="bg-red-700 hover:bg-red-600 text-white px-3 py-1 rounded font-bold transition">Salir</a>`;
-                    
-                    document.getElementById('btn-descarga-bot').classList.remove('hidden');
-
-                    if (esAdmin) {
-                        document.getElementById('tab-USUARIOS').classList.remove('hidden');
-                    }
-
-                    if (data.requiere_cambio) {
-                        document.getElementById('modal-cambio-clave').classList.remove('hidden');
-                    }
                 }
             } catch (e) {}
         }
 
-        async function ejecutarCambioClave() {
-            const p1 = document.getElementById('claveNueva1').value;
-            const p2 = document.getElementById('claveNueva2').value;
+        function toggleLoginModal() {
+            document.getElementById('modal-login').classList.toggle('hidden');
+            document.getElementById('loginErrorMsg').classList.add('hidden');
+        }
 
-            if (!p1 || p1 !== p2) return alert("Las contraseñas no coinciden.");
+        async function ejecutarLogin(e) {
+            if (e) e.preventDefault();
+            
+            const username = document.getElementById('loginUser').value.trim();
+            const password = document.getElementById('loginPass').value;
+            const errBox = document.getElementById('loginErrorMsg');
+
+            errBox.classList.add('hidden');
 
             try {
-                const res = await fetch('/api/cambiar_clave', {
+                const res = await fetch('/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nueva_clave: p1 })
+                    body: JSON.stringify({ username: username, password: password })
                 });
-                if (res.ok) {
-                    alert("Contraseña actualizada con éxito.");
-                    document.getElementById('modal-cambio-clave').classList.add('hidden');
+                
+                const data = await res.json();
+                
+                if (res.ok && data.status === 'ok') {
                     location.reload();
                 } else {
-                    alert("Error cambiando contraseña.");
+                    errBox.textContent = data.error || "Usuario o contraseña incorrectos";
+                    errBox.classList.remove('hidden');
                 }
-            } catch (e) {}
-        }
-
-        function setVista(vista) {
-            if (vista === 'DONACIONES' && !estaLogueado) {
-                toggleLoginModal();
-                return;
+            } catch (err) {
+                errBox.textContent = "Error de conexión con el servidor";
+                errBox.classList.remove('hidden');
             }
-
-            modoVista = vista;
-            document.querySelectorAll('.btn-tab').forEach(b => {
-                b.className = "btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400";
-            });
-            const activeTab = document.getElementById(`tab-${vista}`);
-            if (activeTab) activeTab.className = "btn-tab px-4 py-2 rounded-lg font-bold bg-purple-700 text-white";
-
-            document.getElementById('seccion-timers').classList.add('hidden');
-            document.getElementById('seccion-bots').classList.add('hidden');
-            document.getElementById('seccion-donaciones').classList.add('hidden');
-            document.getElementById('seccion-usuarios').classList.add('hidden');
-            document.getElementById('panel-kill-manual').classList.add('hidden');
-
-            if (vista === 'DONACIONES') {
-                document.getElementById('seccion-donaciones').classList.remove('hidden');
-                cargarDonaciones();
-            } else if (vista === 'BOTS') {
-                document.getElementById('seccion-bots').classList.remove('hidden');
-                renderizarBots();
-            } else if (vista === 'USUARIOS') {
-                document.getElementById('seccion-usuarios').classList.remove('hidden');
-                cargarUsuarios();
-            } else {
-                document.getElementById('seccion-timers').classList.remove('hidden');
-                document.getElementById('panel-kill-manual').classList.remove('hidden');
-                renderizarUI();
-            }
-        }
-
-        function poblarSelector() {
-            const select = document.getElementById('manualBoss');
-            if (select.children.length > 0) return;
-            Object.keys(COOLDOWNS_LOCAL).forEach(b => {
-                let opt = document.createElement('option');
-                opt.value = b;
-                opt.textContent = `${b} (${COOLDOWNS_LOCAL[b]}m)`;
-                select.appendChild(opt);
-            });
         }
 
         function formatearTiempo(segundosTotales) {
@@ -345,348 +123,58 @@
                 const res = await fetch('/api/status_timers');
                 if (res.ok) {
                     estadoWeb = await res.json();
-                    poblarSelector();
-                    if (modoVista === 'BOTS') renderizarBots();
-                    else if (modoVista !== 'DONACIONES' && modoVista !== 'USUARIOS') renderizarUI();
+                    renderizarUI();
                 }
             } catch (e) {}
-        }
-
-        async function enviarKill(svr, boss) {
-            try {
-                const res = await fetch('/api/kill', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ server: svr, boss: boss })
-                });
-                if (res.ok) { await cargarDatos(); }
-            } catch (e) {}
-        }
-
-        function ejecutarKillForm() {
-            const svr = document.getElementById('manualServer').value;
-            const boss = document.getElementById('manualBoss').value;
-            if (svr && boss) { enviarKill(svr, boss); }
-        }
-
-        function renderizarBots() {
-            const container = document.getElementById('contenedor-bots-lista');
-            container.innerHTML = '';
-            const ahoraUnix = Math.floor(Date.now() / 1000);
-            const hbMap = estadoWeb.heartbeats || {};
-
-            ["Server 1", "Server 2", "Server 3", "Server 20"].forEach(svr => {
-                const pcVal = (estadoWeb.ultimas_pcs || {})[svr];
-                const pjVal = (estadoWeb.ultimos_pjs || {})[svr];
-                const lastPing = hbMap[svr];
-                let esOnline = false;
-
-                if (lastPing) {
-                    const hbUnix = Math.floor(new Date(lastPing).getTime() / 1000);
-                    if (!isNaN(hbUnix) && Math.abs(ahoraUnix - hbUnix) <= 60) esOnline = true;
-                }
-
-                container.innerHTML += `
-                    <div class="bg-[#141126] border ${esOnline ? 'border-emerald-600' : 'border-red-900'} p-5 rounded-xl shadow-lg flex justify-between items-center">
-                        <div>
-                            <h3 class="font-bold text-lg text-white mb-1">${svr}</h3>
-                            <p class="text-xs text-purple-300">💻 PC Local: <strong class="text-white">${pcVal || 'Sin conexión'}</strong></p>
-                            <p class="text-xs text-purple-300">👤 Personaje: <strong class="text-white">${pjVal || 'N/A'}</strong></p>
-                            <p class="text-[10px] text-gray-400 mt-2">Última señal: ${lastPing ? new Date(lastPing).toLocaleTimeString() : 'Nunca'}</p>
-                        </div>
-                        <div>
-                            <span class="px-4 py-2 rounded-lg font-bold text-xs ${esOnline ? 'bg-emerald-950 text-emerald-200 border border-emerald-500' : 'bg-red-950 text-red-300 border border-red-800'}">
-                                ${esOnline ? '🟢 ONLINE' : '🔴 OFFLINE'}
-                            </span>
-                        </div>
-                    </div>
-                `;
-            });
         }
 
         function renderizarUI() {
             const contenedor = document.getElementById('contenedor-bosses');
             contenedor.innerHTML = '';
             const ahoraUnix = Math.floor(Date.now() / 1000);
-            const serversAMostrar = modoVista === 'TODOS' ? ["Server 1", "Server 2", "Server 3", "Server 20"] : [modoVista];
-            const listaOcultosGlobales = estadoWeb.ocultos || [];
 
-            let listaCards = [];
-
-            serversAMostrar.forEach(svr => {
+            ["Server 1", "Server 2", "Server 3", "Server 20"].forEach(svr => {
                 const timersSvr = (estadoWeb.timers || {})[svr] || {};
-                const listaFijaServidor = BOSSES_FIJOS[svr] || [];
-                const listaBossesAMostrar = new Set([...listaFijaServidor]);
-                Object.keys(timersSvr).forEach(b => listaBossesAMostrar.add(b));
+                const listaFija = BOSSES_FIJOS[svr] || [];
 
-                listaBossesAMostrar.forEach(bossName => {
-                    const claveCard = `${svr}_${bossName}`;
-                    
-                    // SI FUE REMOVIDO CON LA "X", SE IGNORA PARA TODA LA GUILD
-                    if (listaOcultosGlobales.includes(claveCard)) return;
-
-                    const cdMinutos = COOLDOWNS_LOCAL[bossName] || 60;
-                    const cdSegundos = cdMinutos * 60;
-                    const ventanaSegundos = 3600;
-                    const cicloTotalSegundos = cdSegundos + ventanaSegundos;
-                    const esEventoManual = BOSSES_SOLO_MANUALES.includes(bossName);
-
-                    let ordenTiempo = 99999999;
+                listaFija.forEach(bossName => {
+                    const killUnix = timersSvr[bossName];
                     let cardHTML = '';
 
-                    let killUnix = timersSvr[bossName];
-
-                    const btnCerrarHTML = `<button onclick="ocultarTarjetaGlobal('${svr}', '${bossName}')" title="Quitar para toda la guild" class="absolute top-2 right-2 text-white hover:text-red-400 font-extrabold text-sm bg-black/60 hover:bg-black/90 w-6 h-6 rounded-full flex items-center justify-center transition border border-purple-500/50 z-10 cursor-pointer shadow">✕</button>`;
-
                     if (killUnix) {
-                        let transcurridoTotal = ahoraUnix - killUnix;
+                        const cdSeg = (COOLDOWNS_LOCAL[bossName] || 60) * 60;
+                        const targetRespawn = killUnix + cdSeg;
 
-                        if (!esEventoManual && transcurridoTotal >= cicloTotalSegundos) {
-                            const ciclosPasados = Math.floor(transcurridoTotal / cicloTotalSegundos);
-                            killUnix += (ciclosPasados * cicloTotalSegundos);
-                            transcurridoTotal = ahoraUnix - killUnix;
-                        }
-
-                        const targetRespawnUnix = killUnix + cdSegundos;
-                        const finVentanaUnix = targetRespawnUnix + ventanaSegundos;
-
-                        if (ahoraUnix < targetRespawnUnix) {
-                            const restoSec = targetRespawnUnix - ahoraUnix;
-                            ordenTiempo = restoSec;
+                        if (ahoraUnix < targetRespawn) {
+                            const restoSec = targetRespawn - ahoraUnix;
                             cardHTML = `
-                                <div class="card p-4 rounded-xl bg-red-950/70 border border-red-500 shadow-lg flex flex-col justify-between text-center min-h-[140px] relative">
-                                    ${btnCerrarHTML}
-                                    <div class="flex justify-between items-center mb-1 pr-6">
-                                        <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-purple-900 text-purple-200">${svr}</span>
-                                        <span class="text-[10px] font-bold text-red-400">COOLDOWN</span>
-                                    </div>
-                                    <h3 class="font-bold text-red-100 text-base my-1">${bossName}</h3>
-                                    <div class="my-2 py-1.5 px-2 rounded bg-red-900/60 border border-red-500 text-red-200 font-mono text-lg font-bold">
+                                <div class="card p-4 rounded-xl bg-red-950/70 border border-red-500 text-center">
+                                    <h3 class="font-bold text-red-100">${bossName} (${svr})</h3>
+                                    <div class="my-2 py-1 bg-red-900/60 text-red-200 font-mono text-lg font-bold">
                                         🔴 ${formatearTiempo(restoSec)}
                                     </div>
-                                    <button type="button" onclick="enviarKill('${svr}', '${bossName}')" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold text-xs py-2 rounded transition shadow">⚔️ REGISTRAR KILL</button>
-                                </div>
-                            `;
-                        } 
-                        else if (ahoraUnix >= targetRespawnUnix && ahoraUnix <= finVentanaUnix) {
-                            const transcurridoVentana = ahoraUnix - targetRespawnUnix;
-                            ordenTiempo = -1000 + transcurridoVentana;
-                            cardHTML = `
-                                <div class="card p-4 rounded-xl bg-emerald-950/70 border border-emerald-500 shadow-lg flex flex-col justify-between text-center min-h-[140px] relative">
-                                    ${btnCerrarHTML}
-                                    <div class="flex justify-between items-center mb-1 pr-6">
-                                        <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-purple-900 text-purple-200">${svr}</span>
-                                        <span class="text-[10px] font-bold text-emerald-400 animate-pulse">CACERÍA EN CURSO</span>
-                                    </div>
-                                    <h3 class="font-bold text-emerald-100 text-base my-1">${bossName}</h3>
-                                    <div class="my-2 py-1.5 px-2 rounded bg-emerald-900/60 border border-emerald-500 text-emerald-200 font-mono text-lg font-bold">
-                                        🟢 VENTANA (${formatearTiempo(transcurridoVentana)})
-                                    </div>
-                                    <button type="button" onclick="enviarKill('${svr}', '${bossName}')" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold text-xs py-2 rounded transition shadow">⚔️ REGISTRAR KILL</button>
                                 </div>
                             `;
                         }
                     }
 
-                    if (!cardHTML && !esEventoManual) {
-                        ordenTiempo = 88888888;
+                    if (!cardHTML) {
                         cardHTML = `
-                            <div class="card p-4 rounded-xl bg-purple-950/40 border border-purple-700 shadow-lg flex flex-col justify-between text-center min-h-[140px] relative">
-                                ${btnCerrarHTML}
-                                <div class="flex justify-between items-center mb-1 pr-6">
-                                    <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-purple-900 text-purple-200">${svr}</span>
-                                    <span class="text-[10px] font-bold text-purple-300">DISPONIBLE</span>
+                            <div class="card p-4 rounded-xl bg-purple-950/40 border border-purple-700 text-center">
+                                <h3 class="font-bold text-purple-100">${bossName} (${svr})</h3>
+                                <div class="my-2 py-1 bg-purple-900/40 text-purple-200 font-mono text-xs font-bold uppercase">
+                                    ⚡ DISPONIBLE
                                 </div>
-                                <h3 class="font-bold text-purple-100 text-base my-1">${bossName}</h3>
-                                <div class="my-2 py-1.5 px-2 rounded bg-purple-900/40 border border-purple-600 text-purple-200 font-mono text-xs font-bold uppercase">
-                                    ⚡ ESPERANDO KILL
-                                </div>
-                                <button type="button" onclick="enviarKill('${svr}', '${bossName}')" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold text-xs py-2 rounded transition shadow">⚔️ REGISTRAR KILL</button>
                             </div>
                         `;
                     }
-
-                    if (cardHTML) {
-                        listaCards.push({ orden: ordenTiempo, html: cardHTML });
-                    }
+                    contenedor.innerHTML += cardHTML;
                 });
             });
-
-            listaCards.sort((a, b) => a.orden - b.orden);
-
-            if (listaCards.length === 0) {
-                contenedor.innerHTML = `<div class="text-gray-500 italic text-center col-span-full py-12">Sin bosses activos en pantalla.</div>`;
-            } else {
-                listaCards.forEach(c => contenedor.innerHTML += c.html);
-            }
         }
 
-        // USUARIOS Y DONACIONES
-        async function cargarUsuarios() {
-            try {
-                const res = await fetch('/api/usuarios');
-                if (res.ok) {
-                    const data = await res.json();
-                    const tbody = document.getElementById('tabla-usuarios-body');
-                    tbody.innerHTML = '';
-                    data.forEach(u => {
-                        tbody.innerHTML += `
-                            <tr class="border-b border-purple-900/40">
-                                <td class="p-3 font-bold text-white">${u.username}</td>
-                                <td class="p-3 text-indigo-300">${u.rol}</td>
-                                <td class="p-3 text-xs">${u.requiere_cambio_clave ? '⚠️ Debe cambiar clave' : '✅ Clave al día'}</td>
-                                <td class="p-3 text-purple-400">${u.creado_por || 'Sistema'}</td>
-                            </tr>
-                        `;
-                    });
-                }
-            } catch (e) {}
-        }
-
-        async function crearUsuario() {
-            const username = document.getElementById('nuevoUser').value;
-            const password = document.getElementById('nuevoPass').value;
-            const rol = document.getElementById('nuevoRol').value;
-
-            if (!username || !password) return alert("Completa usuario y contraseña");
-
-            try {
-                const res = await fetch('/api/usuarios', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password, rol })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    document.getElementById('nuevoUser').value = '';
-                    document.getElementById('nuevoPass').value = '';
-                    alert(`Usuario ${username} creado con éxito.`);
-                    cargarUsuarios();
-                } else {
-                    alert(data.error || "Error creando usuario");
-                }
-            } catch (e) {}
-        }
-
-        async function cargarDonaciones() {
-            try {
-                const res = await fetch('/api/donaciones');
-                if (res.ok) {
-                    listaDonacionesCache = await res.json();
-                    const tbody = document.getElementById('tabla-donaciones-body');
-                    tbody.innerHTML = '';
-                    if (listaDonacionesCache.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-500">Sin donaciones registradas</td></tr>`;
-                        return;
-                    }
-                    listaDonacionesCache.forEach(d => {
-                        let auditoriaText = 'Sin modificaciones';
-                        if (d.modificado_por) {
-                            auditoriaText = `<span class="text-yellow-400 font-bold">Editado por ${d.modificado_por}</span> (${new Date(d.fecha_modificacion).toLocaleTimeString()})`;
-                        }
-
-                        tbody.innerHTML += `
-                            <tr class="border-b border-purple-900/40 hover:bg-purple-900/20">
-                                <td class="p-3 font-bold text-white">${d.pj_name}</td>
-                                <td class="p-3 text-yellow-300">${d.tipo_donacion}</td>
-                                <td class="p-3 font-mono">${d.cantidad}</td>
-                                <td class="p-3 text-purple-400">${d.registrado_por}</td>
-                                <td class="p-3 text-xs text-gray-300">${auditoriaText}</td>
-                                <td class="p-3 text-center">
-                                    <button onclick="abrirModalEditarDonacion(${d.id})" class="bg-yellow-700 hover:bg-yellow-600 text-white font-bold text-xs px-3 py-1 rounded transition">✏️ Editar</button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                }
-            } catch (e) {}
-        }
-
-        function abrirModalEditarDonacion(id) {
-            const don = listaDonacionesCache.find(x => x.id === id);
-            if (!don) return;
-            document.getElementById('editDonacionId').value = don.id;
-            document.getElementById('editDonacionPj').value = don.pj_name;
-            document.getElementById('editDonacionTipo').value = don.tipo_donacion;
-            document.getElementById('editDonacionCantidad').value = don.cantidad;
-            document.getElementById('modal-editar-donacion').classList.remove('hidden');
-        }
-
-        function toggleEditModal() {
-            document.getElementById('modal-editar-donacion').classList.add('hidden');
-        }
-
-        async function ejecutarEdicionDonacion() {
-            const id = document.getElementById('editDonacionId').value;
-            const pj = document.getElementById('editDonacionPj').value;
-            const tipo = document.getElementById('editDonacionTipo').value;
-            const cant = document.getElementById('editDonacionCantidad').value;
-
-            if (!pj || !tipo || !cant) return alert("Completa todos los campos");
-
-            try {
-                const res = await fetch(`/api/donaciones/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pj_name: pj, tipo_donacion: tipo, cantidad: cant })
-                });
-                if (res.ok) {
-                    toggleEditModal();
-                    cargarDonaciones();
-                } else {
-                    alert("Error guardando modificaciones");
-                }
-            } catch (e) {}
-        }
-
-        async function guardarDonacion() {
-            const pj = document.getElementById('donacionPj').value;
-            const tipo = document.getElementById('donacionTipo').value;
-            const cant = document.getElementById('donacionCantidad').value;
-            if (!pj || !tipo) return alert("Ingresa el PJ y el tipo de donación");
-
-            try {
-                const res = await fetch('/api/donaciones', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pj_name: pj, tipo_donacion: tipo, cantidad: cant })
-                });
-                if (res.ok) {
-                    document.getElementById('donacionPj').value = '';
-                    cargarDonaciones();
-                } else {
-                    alert("Debes estar logueado para cargar donaciones");
-                }
-            } catch (e) {}
-        }
-
-        function toggleLoginModal() {
-            document.getElementById('modal-login').classList.toggle('hidden');
-        }
-
-        async function ejecutarLogin() {
-            const username = document.getElementById('loginUser').value;
-            const password = document.getElementById('loginPass').value;
-            try {
-                const res = await fetch('/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    location.reload();
-                } else {
-                    alert(data.error || "Login fallido");
-                }
-            } catch (e) {}
-        }
-
-        setInterval(renderizarUI, 1000);
         setInterval(cargarDatos, 3000);
-        
         verificarSesion();
-        poblarSelector();
         cargarDatos();
     </script>
 </body>
