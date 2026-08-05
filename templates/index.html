@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0a0814; color: #e6e1ff; font-family: 'Segoe UI', system-ui, sans-serif; }
-        .grid-bosses { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 1rem; }
+        .grid-bosses { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
     </style>
 </head>
 <body class="p-4 md:p-8 flex flex-col items-center">
@@ -26,18 +26,20 @@
 
     <!-- Barra de Controles y Secciones -->
     <div class="flex flex-wrap space-x-2 mb-6 overflow-x-auto w-full max-w-6xl justify-center gap-2">
-        <button onclick="setVista('TODOS')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-purple-700 text-white" id="tab-TODOS">👁️ Vista General (Todos)</button>
+        <button onclick="setVista('TODOS')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-purple-700 text-white" id="tab-TODOS">👁️ Vista General (Ordenada x Tiempo)</button>
         <button onclick="setVista('Server 1')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 1">Server 1</button>
         <button onclick="setVista('Server 2')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 2">Server 2</button>
         <button onclick="setVista('Server 3')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 3">Server 3</button>
         <button onclick="setVista('Server 20')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 20">Server 20</button>
         <button onclick="setVista('DONACIONES')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-yellow-900/80 border border-yellow-600 text-yellow-300 hover:bg-yellow-800" id="tab-DONACIONES">💎 Donaciones</button>
         
-        <!-- Pestaña de Descarga del Bot -->
         <a href="{{ link_descarga }}" target="_blank" class="px-4 py-2 rounded-lg font-bold bg-purple-900 border border-purple-500 text-purple-200 hover:bg-purple-800 transition flex items-center gap-1">
             ⬇️ Descargar Bot (.exe)
         </a>
     </div>
+
+    <!-- Estado Pings de Bots -->
+    <div id="status-pings-bar" class="w-full max-w-6xl mb-6 flex flex-wrap gap-2 justify-center text-xs"></div>
 
     <!-- Panel para Cargar Kills Manuales -->
     <div id="panel-kill-manual" class="w-full max-w-6xl bg-[#141126] border border-purple-800 rounded-xl p-4 mb-6 shadow-lg">
@@ -58,14 +60,14 @@
 
     <!-- VISTA PRINCIPAL DE TIMERS -->
     <div id="seccion-timers" class="w-full max-w-6xl">
-        <div id="contenedor-bosses" class="space-y-6">
+        <div id="contenedor-bosses" class="grid-bosses">
             <div class="text-gray-500 text-center col-span-full">Cargando datos de bosses...</div>
         </div>
     </div>
 
     <!-- VISTA DE DONACIONES -->
     <div id="seccion-donaciones" class="w-full max-w-6xl hidden space-y-6">
-        <div class="bg-[#141126] border border-yellow-600/50 rounded-xl p-6 shadow-lg">
+        <div id="donaciones-form-container" class="bg-[#141126] border border-yellow-600/50 rounded-xl p-6 shadow-lg">
             <h2 class="text-xl font-bold text-yellow-400 mb-4 flex items-center gap-2">💎 Registrar Nueva Donación</h2>
             <div class="flex flex-wrap gap-4 items-center">
                 <input type="text" id="donacionPj" placeholder="Nombre de PJ" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-48">
@@ -119,6 +121,7 @@
     <script>
         let modoVista = 'TODOS';
         let estadoWeb = { timers: {}, heartbeats: {}, cooldowns: {}, ultimas_pcs: {}, ultimos_pjs: {} };
+        let usuarioActual = null;
 
         const BOSSES_FIJOS = {
             "Server 1": ["Muggron 1", "Muggron 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Borgar", "Kharzul 1", "Vescrya 1"],
@@ -141,6 +144,18 @@
             "White Wizard 1": 120, "White Wizard 2": 120,
             "Skeleton King 1": 120, "Skeleton King 2": 120
         };
+
+        async function verificarSesion() {
+            try {
+                const res = await fetch('/api/session');
+                const data = await res.json();
+                if (data.logged_in) {
+                    usuarioActual = data.user;
+                    document.getElementById('user-display').innerHTML = `👤 Encargado: <strong class="text-white">${data.user}</strong>`;
+                    document.getElementById('btn-login-trigger').outerHTML = `<a href="/logout" class="bg-red-700 hover:bg-red-600 text-white px-3 py-1 rounded font-bold transition">Salir</a>`;
+                }
+            } catch (e) {}
+        }
 
         function setVista(vista) {
             modoVista = vista;
@@ -188,6 +203,7 @@
                 if (res.ok) {
                     estadoWeb = await res.json();
                     poblarSelector();
+                    renderizarBotStatus();
                     if (modoVista !== 'DONACIONES') renderizarUI();
                 }
             } catch (e) {}
@@ -200,7 +216,9 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ server: svr, boss: boss })
                 });
-                if (res.ok) { cargarDatos(); }
+                if (res.ok) { 
+                    await cargarDatos(); 
+                }
             } catch (e) {}
         }
 
@@ -210,35 +228,40 @@
             if (svr && boss) { enviarKill(svr, boss); }
         }
 
+        function renderizarBotStatus() {
+            const pingBox = document.getElementById('status-pings-bar');
+            pingBox.innerHTML = '';
+            const ahoraUnix = Math.floor(Date.now() / 1000);
+            const hbMap = estadoWeb.heartbeats || {};
+
+            ["Server 1", "Server 2", "Server 3", "Server 20"].forEach(svr => {
+                const pcVal = (estadoWeb.ultimas_pcs || {})[svr];
+                const pjVal = (estadoWeb.ultimos_pjs || {})[svr];
+                const lastPing = hbMap[svr];
+                let esOnline = false;
+
+                if (lastPing) {
+                    const hbUnix = Math.floor(new Date(lastPing).getTime() / 1000);
+                    if (!isNaN(hbUnix) && Math.abs(ahoraUnix - hbUnix) <= 60) esOnline = true;
+                }
+
+                pingBox.innerHTML += `
+                    <span class="px-3 py-1 rounded-lg border ${esOnline ? 'bg-emerald-950 text-emerald-200 border-emerald-600' : 'bg-red-950 text-red-300 border-red-800'}">
+                        <strong>${svr}:</strong> 💻 ${pcVal || 'Sin PC'} (${pjVal || 'N/A'}): ${esOnline ? '🟢 ONLINE' : '🔴 OFFLINE'}
+                    </span>
+                `;
+            });
+        }
+
         function renderizarUI() {
             const contenedor = document.getElementById('contenedor-bosses');
             contenedor.innerHTML = '';
             const ahoraUnix = Math.floor(Date.now() / 1000);
             const serversAMostrar = modoVista === 'TODOS' ? ["Server 1", "Server 2", "Server 3", "Server 20"] : [modoVista];
 
+            let listaCards = [];
+
             serversAMostrar.forEach(svr => {
-                const serverBlock = document.createElement('div');
-                serverBlock.className = "bg-[#141126] border border-purple-900 rounded-xl p-4 shadow-lg";
-
-                const pcVal = (estadoWeb.ultimas_pcs || {})[svr];
-                const pjVal = (estadoWeb.ultimos_pjs || {})[svr];
-                const lastPing = (estadoWeb.heartbeats || {})[svr];
-                let esOnline = false;
-                if (lastPing) {
-                    const hbUnix = Math.floor(new Date(lastPing).getTime() / 1000);
-                    if (!isNaN(hbUnix) && Math.abs(ahoraUnix - hbUnix) <= 60) esOnline = true;
-                }
-
-                let htmlContent = `
-                    <div class="flex justify-between items-center border-b border-purple-900/60 pb-3 mb-4">
-                        <h2 class="text-xl font-bold text-white">${svr}</h2>
-                        <span class="text-xs px-3 py-1 rounded-full font-bold border ${esOnline ? 'bg-emerald-950 text-emerald-200 border-emerald-600' : 'bg-red-950 text-red-300 border-red-800'}">
-                            💻 ${pcVal || 'Sin PC'} (PJ: ${pjVal || 'N/A'}): ${esOnline ? '🟢 ONLINE' : '🔴 OFFLINE'}
-                        </span>
-                    </div>
-                    <div class="grid-bosses">
-                `;
-
                 const timersSvr = (estadoWeb.timers || {})[svr] || {};
                 const listaFijaServidor = BOSSES_FIJOS[svr] || [];
                 const listaBossesAMostrar = new Set([...listaFijaServidor]);
@@ -247,63 +270,87 @@
                 listaBossesAMostrar.forEach(bossName => {
                     const killUnix = timersSvr[bossName];
                     const cdMinutos = COOLDOWNS_LOCAL[bossName] || 60;
-                    let cardContent = '';
+                    
+                    let ordenTiempo = 99999999;
+                    let cardHTML = '';
 
                     if (killUnix) {
                         const targetRespawnUnix = killUnix + (cdMinutos * 60);
                         const finVentanaUnix = targetRespawnUnix + 3600;
 
-                        // 1. 🔴 ROJO: COOLDOWN (Regresivo)
+                        // 1. 🔴 ROJO: COOLDOWN (Ordenado por los que renacen primero)
                         if (ahoraUnix < targetRespawnUnix) {
                             const restoSec = targetRespawnUnix - ahoraUnix;
-                            cardContent = `
-                                <div class="card p-3 rounded-xl bg-red-950/70 border border-red-500 shadow-lg flex flex-col justify-between text-center">
-                                    <h3 class="font-bold text-red-100 text-sm">${bossName}</h3>
-                                    <div class="my-2 py-1 px-2 rounded bg-red-900/50 border border-red-600 text-red-200 font-mono text-base font-bold">
+                            ordenTiempo = restoSec;
+                            cardHTML = `
+                                <div class="card p-4 rounded-xl bg-red-950/70 border border-red-500 shadow-lg flex flex-col justify-between text-center">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-purple-900 text-purple-200">${svr}</span>
+                                        <span class="text-[10px] font-bold text-red-400">COOLDOWN</span>
+                                    </div>
+                                    <h3 class="font-bold text-red-100 text-base my-1">${bossName}</h3>
+                                    <div class="my-2 py-1.5 px-2 rounded bg-red-900/60 border border-red-500 text-red-200 font-mono text-lg font-bold">
                                         🔴 ${formatearTiempo(restoSec)}
                                     </div>
-                                    <button onclick="enviarKill('${svr}', '${bossName}')" class="bg-purple-800 hover:bg-purple-700 text-white font-bold text-xs py-1 rounded transition">⚔️ Kill</button>
+                                    <button onclick="enviarKill('${svr}', '${bossName}')" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold text-xs py-2 rounded transition shadow">⚔️ REGISTRAR KILL</button>
                                 </div>
                             `;
                         } 
-                        // 2. 🟡 AMARILLO: VENTANA (Ascendente)
+                        // 2. 🟡 AMARILLO: VENTANA DE CACERÍA
                         else if (ahoraUnix >= targetRespawnUnix && ahoraUnix <= finVentanaUnix) {
                             const transcurridoVentana = ahoraUnix - targetRespawnUnix;
-                            cardContent = `
-                                <div class="card p-3 rounded-xl bg-yellow-950/70 border border-yellow-500 shadow-lg flex flex-col justify-between text-center">
-                                    <h3 class="font-bold text-yellow-100 text-sm">${bossName}</h3>
-                                    <div class="my-2 py-1 px-2 rounded bg-yellow-900/50 border border-yellow-600 text-yellow-200 font-mono text-base font-bold">
+                            ordenTiempo = -1000 + transcurridoVentana; // Prioridad máxima arriba
+                            cardHTML = `
+                                <div class="card p-4 rounded-xl bg-yellow-950/70 border border-yellow-500 shadow-lg flex flex-col justify-between text-center">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-purple-900 text-purple-200">${svr}</span>
+                                        <span class="text-[10px] font-bold text-yellow-400 animate-pulse">CACERÍA EN CURSO</span>
+                                    </div>
+                                    <h3 class="font-bold text-yellow-100 text-base my-1">${bossName}</h3>
+                                    <div class="my-2 py-1.5 px-2 rounded bg-yellow-900/60 border border-yellow-500 text-yellow-200 font-mono text-lg font-bold">
                                         🟡 VENTANA (${formatearTiempo(transcurridoVentana)})
                                     </div>
-                                    <button onclick="enviarKill('${svr}', '${bossName}')" class="bg-purple-800 hover:bg-purple-700 text-white font-bold text-xs py-1 rounded transition">⚔️ Kill</button>
+                                    <button onclick="enviarKill('${svr}', '${bossName}')" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold text-xs py-2 rounded transition shadow">⚔️ REGISTRAR KILL</button>
                                 </div>
                             `;
                         }
                     }
 
                     // 3. 🟢 DISPONIBLE / VIVO (Bosses fijos sin kill o fuera de ventana)
-                    if (!cardContent && listaFijaServidor.includes(bossName)) {
-                        cardContent = `
-                            <div class="card p-3 rounded-xl bg-emerald-950/70 border border-emerald-500 shadow-lg flex flex-col justify-between text-center">
-                                <h3 class="font-bold text-emerald-100 text-sm">${bossName}</h3>
-                                <div class="my-2 py-1 px-2 rounded bg-emerald-900/50 border border-emerald-600 text-emerald-200 font-mono text-xs font-bold uppercase">
+                    if (!cardHTML && listaFijaServidor.includes(bossName)) {
+                        ordenTiempo = 88888888;
+                        cardHTML = `
+                            <div class="card p-4 rounded-xl bg-emerald-950/70 border border-emerald-500 shadow-lg flex flex-col justify-between text-center">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-purple-900 text-purple-200">${svr}</span>
+                                    <span class="text-[10px] font-bold text-emerald-400">LISTO</span>
+                                </div>
+                                <h3 class="font-bold text-emerald-100 text-base my-1">${bossName}</h3>
+                                <div class="my-2 py-1.5 px-2 rounded bg-emerald-900/60 border border-emerald-500 text-emerald-200 font-mono text-xs font-bold uppercase">
                                     🟢 DISPONIBLE
                                 </div>
-                                <button onclick="enviarKill('${svr}', '${bossName}')" class="bg-purple-800 hover:bg-purple-700 text-white font-bold text-xs py-1 rounded transition">⚔️ Kill</button>
+                                <button onclick="enviarKill('${svr}', '${bossName}')" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold text-xs py-2 rounded transition shadow">⚔️ REGISTRAR KILL</button>
                             </div>
                         `;
                     }
 
-                    if (cardContent) htmlContent += cardContent;
+                    if (cardHTML) {
+                        listaCards.push({ orden: ordenTiempo, html: cardHTML });
+                    }
                 });
-
-                htmlContent += `</div>`;
-                serverBlock.innerHTML = htmlContent;
-                contenedor.appendChild(serverBlock);
             });
+
+            // Ordenar grilla unificada por tiempo de espera
+            listaCards.sort((a, b) => a.orden - b.orden);
+
+            if (listaCards.length === 0) {
+                contenedor.innerHTML = `<div class="text-gray-500 italic text-center col-span-full py-8">Sin timers activos. Registrar un kill arriba para iniciar.</div>`;
+            } else {
+                listaCards.forEach(c => contenedor.innerHTML += c.html);
+            }
         }
 
-        // FUNCIONALIDADES DE DONACIONES Y SESIÓN
+        // DONACIONES Y LOGIN
         async function cargarDonaciones() {
             try {
                 const res = await fetch('/api/donaciones');
@@ -342,9 +389,12 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ pj_name: pj, tipo_donacion: tipo, cantidad: cant })
                 });
+                const data = await res.json();
                 if (res.ok) {
                     document.getElementById('donacionPj').value = '';
                     cargarDonaciones();
+                } else {
+                    alert(data.error || "Debes estar logueado para cargar donaciones");
                 }
             } catch (e) {}
         }
@@ -364,8 +414,7 @@
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    document.getElementById('user-display').innerText = data.user;
-                    toggleLoginModal();
+                    location.reload();
                 } else {
                     alert(data.error || "Login fallido");
                 }
@@ -375,6 +424,7 @@
         setInterval(renderizarUI, 1000);
         setInterval(cargarDatos, 4000);
         
+        verificarSesion();
         poblarSelector();
         cargarDatos();
     </script>
