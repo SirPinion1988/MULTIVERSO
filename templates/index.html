@@ -35,7 +35,6 @@
         <button onclick="setVista('DONACIONES')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-yellow-900/80 border border-yellow-600 text-yellow-300 hover:bg-yellow-800" id="tab-DONACIONES">💎 Donaciones</button>
         <button onclick="setVista('USUARIOS')" id="tab-USUARIOS" class="btn-tab px-4 py-2 rounded-lg font-bold bg-indigo-900 border border-indigo-500 text-indigo-200 hidden">👥 Crear Encargados</button>
         
-        <!-- BOTÓN DE DESCARGA: OCULTO POR DEFECTO (SÓLO VISIBLE AL LOGUEARSE) -->
         <a id="btn-descarga-bot" href="{{ link_descarga }}" target="_blank" class="px-4 py-2 rounded-lg font-bold bg-purple-900 border border-purple-500 text-purple-200 hover:bg-purple-800 transition flex items-center gap-1 hidden">
             ⬇️ Descargar Bot (.exe)
         </a>
@@ -69,7 +68,7 @@
         <div id="contenedor-bots-lista" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
     </div>
 
-    <!-- DONACIONES -->
+    <!-- DONACIONES CON AUDITORÍA Y EDICIÓN -->
     <div id="seccion-donaciones" class="w-full max-w-6xl hidden space-y-6">
         <div class="bg-[#141126] border border-yellow-600/50 rounded-xl p-6 shadow-lg">
             <h2 class="text-xl font-bold text-yellow-400 mb-4 flex items-center gap-2">💎 Registrar Nueva Donación</h2>
@@ -98,18 +97,19 @@
                             <th class="p-3">Tipo</th>
                             <th class="p-3">Cantidad</th>
                             <th class="p-3">Registrado Por</th>
-                            <th class="p-3">Fecha</th>
+                            <th class="p-3">Auditoría / Modificado</th>
+                            <th class="p-3 text-center">Acción</th>
                         </tr>
                     </thead>
                     <tbody id="tabla-donaciones-body">
-                        <tr><td colspan="5" class="p-4 text-center text-gray-500">Sin donaciones registradas</td></tr>
+                        <tr><td colspan="6" class="p-4 text-center text-gray-500">Sin donaciones registradas</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- GESTIÓN DE USUARIOS (SÓLO ADMIN) -->
+    <!-- GESTIÓN DE USUARIOS -->
     <div id="seccion-usuarios" class="w-full max-w-6xl hidden space-y-6">
         <div class="bg-[#141126] border border-indigo-600/50 rounded-xl p-6 shadow-lg">
             <h2 class="text-xl font-bold text-indigo-400 mb-4">👑 Crear Nuevo Encargado / Usuario</h2>
@@ -143,7 +143,29 @@
         </div>
     </div>
 
-    <!-- MODAL OBLIGATORIO DE CAMBIO DE CLAVE EN 1ER INGRESO -->
+    <!-- MODAL EDICIÓN DE DONACIÓN CON AUDITORÍA -->
+    <div id="modal-editar-donacion" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50">
+        <div class="bg-[#141126] border border-yellow-500 p-6 rounded-xl w-96 text-center shadow-2xl">
+            <h3 class="text-lg font-bold text-yellow-300 mb-4">✏️ Editar Donación (Auditoría Activa)</h3>
+            <input type="hidden" id="editDonacionId">
+            <input type="text" id="editDonacionPj" placeholder="PJ Name" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
+            <select id="editDonacionTipo" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
+                <option value="Jewel of Bless">Jewel of Bless</option>
+                <option value="Jewel of Soul">Jewel of Soul</option>
+                <option value="Jewel of Life">Jewel of Life</option>
+                <option value="Jewel of Creation">Jewel of Creation</option>
+                <option value="Zen">Zen</option>
+                <option value="VIP Points">VIP Points</option>
+            </select>
+            <input type="number" id="editDonacionCantidad" placeholder="Cantidad" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-4 text-sm outline-none">
+            <div class="flex gap-2">
+                <button onclick="ejecutarEdicionDonacion()" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 rounded text-sm">💾 Guardar Cambios</button>
+                <button onclick="toggleEditModal()" class="w-full bg-gray-800 text-gray-400 font-bold py-2 rounded text-sm">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CAMBIO DE CLAVE -->
     <div id="modal-cambio-clave" class="fixed inset-0 bg-black/90 flex items-center justify-center hidden z-50">
         <div class="bg-[#141126] border-2 border-yellow-500 p-6 rounded-xl w-96 text-center shadow-2xl">
             <h3 class="text-xl font-bold text-yellow-400 mb-2">⚠️ PRIMER INGRESO DETECTADO</h3>
@@ -172,6 +194,7 @@
         let estadoWeb = { timers: {}, heartbeats: {}, cooldowns: {} };
         let estaLogueado = false;
         let esAdmin = false;
+        let listaDonacionesCache = [];
 
         const BOSSES_FIJOS = {
             "Server 1": ["Muggron 1", "Muggron 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Borgar", "Kharzul 1", "Vescrya 1"],
@@ -206,10 +229,8 @@
                     document.getElementById('user-display').innerHTML = `👤 User: <strong class="text-white">${data.user}</strong> (${data.rol})`;
                     document.getElementById('btn-login-trigger').outerHTML = `<a href="/logout" class="bg-red-700 hover:bg-red-600 text-white px-3 py-1 rounded font-bold transition">Salir</a>`;
                     
-                    // Mostrar botón de descarga SOLO a usuarios logueados
                     document.getElementById('btn-descarga-bot').classList.remove('hidden');
 
-                    // Mostrar pestaña de encargados SOLO a admins
                     if (esAdmin) {
                         document.getElementById('tab-USUARIOS').classList.remove('hidden');
                     }
@@ -225,9 +246,7 @@
             const p1 = document.getElementById('claveNueva1').value;
             const p2 = document.getElementById('claveNueva2').value;
 
-            if (!p1 || p1 !== p2) {
-                return alert("Las contraseñas no coinciden.");
-            }
+            if (!p1 || p1 !== p2) return alert("Las contraseñas no coinciden.");
 
             try {
                 const res = await fetch('/api/cambiar_clave', {
@@ -469,7 +488,7 @@
             }
         }
 
-        // USUARIOS Y DONACIONES
+        // USUARIOS Y DONACIONES (CON EDICIÓN Y AUDITORÍA)
         async function cargarUsuarios() {
             try {
                 const res = await fetch('/api/usuarios');
@@ -508,7 +527,7 @@
                 if (res.ok) {
                     document.getElementById('nuevoUser').value = '';
                     document.getElementById('nuevoPass').value = '';
-                    alert(`Usuario ${username} creado con éxito. En su primer ingreso deberá cambiar la contraseña.`);
+                    alert(`Usuario ${username} creado con éxito.`);
                     cargarUsuarios();
                 } else {
                     alert(data.error || "Error creando usuario");
@@ -520,20 +539,69 @@
             try {
                 const res = await fetch('/api/donaciones');
                 if (res.ok) {
-                    const data = await res.json();
+                    listaDonacionesCache = await res.json();
                     const tbody = document.getElementById('tabla-donaciones-body');
                     tbody.innerHTML = '';
-                    data.forEach(d => {
+                    if (listaDonacionesCache.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-500">Sin donaciones registradas</td></tr>`;
+                        return;
+                    }
+                    listaDonacionesCache.forEach(d => {
+                        let auditoriaText = 'Sin modificaciones';
+                        if (d.modificado_por) {
+                            auditoriaText = `<span class="text-yellow-400 font-bold">Editado por ${d.modificado_por}</span> (${new Date(d.fecha_modificacion).toLocaleTimeString()})`;
+                        }
+
                         tbody.innerHTML += `
-                            <tr class="border-b border-purple-900/40">
+                            <tr class="border-b border-purple-900/40 hover:bg-purple-900/20">
                                 <td class="p-3 font-bold text-white">${d.pj_name}</td>
                                 <td class="p-3 text-yellow-300">${d.tipo_donacion}</td>
                                 <td class="p-3 font-mono">${d.cantidad}</td>
                                 <td class="p-3 text-purple-400">${d.registrado_por}</td>
-                                <td class="p-3 text-xs text-gray-400">${new Date(d.created_at).toLocaleString()}</td>
+                                <td class="p-3 text-xs text-gray-300">${auditoriaText}</td>
+                                <td class="p-3 text-center">
+                                    <button onclick="abrirModalEditarDonacion(${d.id})" class="bg-yellow-700 hover:bg-yellow-600 text-white font-bold text-xs px-3 py-1 rounded transition">✏️ Editar</button>
+                                </td>
                             </tr>
                         `;
                     });
+                }
+            } catch (e) {}
+        }
+
+        function abrirModalEditarDonacion(id) {
+            const don = listaDonacionesCache.find(x => x.id === id);
+            if (!don) return;
+            document.getElementById('editDonacionId').value = don.id;
+            document.getElementById('editDonacionPj').value = don.pj_name;
+            document.getElementById('editDonacionTipo').value = don.tipo_donacion;
+            document.getElementById('editDonacionCantidad').value = don.cantidad;
+            document.getElementById('modal-editar-donacion').classList.remove('hidden');
+        }
+
+        function toggleEditModal() {
+            document.getElementById('modal-editar-donacion').classList.add('hidden');
+        }
+
+        async function ejecutarEdicionDonacion() {
+            const id = document.getElementById('editDonacionId').value;
+            const pj = document.getElementById('editDonacionPj').value;
+            const tipo = document.getElementById('editDonacionTipo').value;
+            const cant = document.getElementById('editDonacionCantidad').value;
+
+            if (!pj || !tipo || !cant) return alert("Completa todos los campos");
+
+            try {
+                const res = await fetch(`/api/donaciones/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pj_name: pj, tipo_donacion: tipo, cantidad: cant })
+                });
+                if (res.ok) {
+                    toggleEditModal();
+                    cargarDonaciones();
+                } else {
+                    alert("Error guardando modificaciones");
                 }
             } catch (e) {}
         }
