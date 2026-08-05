@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "multiverso_secret_key_mu_dream_2026")
+app.secret_key = os.environ.get("SECRET_KEY", "multiverso_secret_key_mu_dream_2026_fixed")
 
 # ARCHIVOS DE PERSISTENCIA
 DATA_FILE = "timers_data.json"
@@ -44,7 +44,7 @@ def guardar_json(filepath, data):
     except Exception as e:
         print(f"Error guardando {filepath}: {e}")
 
-# Cargar tus datos existentes sin modificar nada
+# Cargar tus datos existentes intactos
 status_timers = cargar_json(DATA_FILE, status_timers)
 usuarios_db = cargar_json(USERS_FILE, {})
 donaciones_db = cargar_json(DONACIONES_FILE, [])
@@ -65,13 +65,18 @@ def login():
     username = data.get('username', '').strip().lower()
     password = data.get('password', '')
 
+    # Si por alguna razón la DB estaba vacía, recargarla
+    global usuarios_db
+    if not usuarios_db:
+        usuarios_db = cargar_json(USERS_FILE, {})
+
     if username in usuarios_db and check_password_hash(usuarios_db[username]["password"], password):
         session['user'] = username
-        session['rol'] = usuarios_db[username]["rol"]
+        session['rol'] = usuarios_db[username].get("rol", "encargado")
         return jsonify({
             "status": "ok", 
             "user": username, 
-            "rol": usuarios_db[username]["rol"],
+            "rol": usuarios_db[username].get("rol", "encargado"),
             "requiere_cambio": usuarios_db[username].get("requiere_cambio", False)
         }), 200
     
@@ -84,13 +89,15 @@ def logout():
 
 @app.route('/api/session')
 def api_session():
-    if 'user' in session and session['user'] in usuarios_db:
-        user_info = usuarios_db.get(session['user'], {})
+    # Validación flexible basada en la cookie activa de la sesión
+    if 'user' in session:
+        u_name = session['user']
+        u_info = usuarios_db.get(u_name, {})
         return jsonify({
             "logged_in": True,
-            "user": session['user'],
-            "rol": session.get('rol', 'encargado'),
-            "requiere_cambio": user_info.get("requiere_cambio", False)
+            "user": u_name,
+            "rol": session.get('rol', u_info.get('rol', 'encargado')),
+            "requiere_cambio": u_info.get("requiere_cambio", False)
         })
     return jsonify({"logged_in": False})
 
@@ -106,9 +113,10 @@ def cambiar_clave():
         return jsonify({"error": "La contraseña debe tener al menos 4 caracteres"}), 400
     
     username = session['user']
-    usuarios_db[username]["password"] = generate_password_hash(nueva_clave)
-    usuarios_db[username]["requiere_cambio"] = False
-    guardar_json(USERS_FILE, usuarios_db)
+    if username in usuarios_db:
+        usuarios_db[username]["password"] = generate_password_hash(nueva_clave)
+        usuarios_db[username]["requiere_cambio"] = False
+        guardar_json(USERS_FILE, usuarios_db)
     
     return jsonify({"status": "ok", "message": "Contraseña actualizada"}), 200
 
