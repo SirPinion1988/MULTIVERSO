@@ -33,6 +33,7 @@
         <button onclick="setVista('Server 20')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 20">Server 20</button>
         <button onclick="setVista('BOTS')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-BOTS">🤖 Bots Activos</button>
         <button onclick="setVista('DONACIONES')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-yellow-900/80 border border-yellow-600 text-yellow-300 hover:bg-yellow-800" id="tab-DONACIONES">💎 Donaciones</button>
+        <button onclick="setVista('USUARIOS')" id="tab-USUARIOS" class="btn-tab px-4 py-2 rounded-lg font-bold bg-indigo-900 border border-indigo-500 text-indigo-200 hidden">👥 Crear Encargados</button>
         
         <a href="{{ link_descarga }}" target="_blank" class="px-4 py-2 rounded-lg font-bold bg-purple-900 border border-purple-500 text-purple-200 hover:bg-purple-800 transition flex items-center gap-1">
             ⬇️ Descargar Bot (.exe)
@@ -49,9 +50,7 @@
                 <option value="Server 3">Server 3</option>
                 <option value="Server 20">Server 20</option>
             </select>
-            <select id="manualBoss" class="bg-[#0d0a1a] border border-purple-900 text-white text-sm rounded-lg p-2.5 outline-none">
-                <!-- Se pobla dinámicamente -->
-            </select>
+            <select id="manualBoss" class="bg-[#0d0a1a] border border-purple-900 text-white text-sm rounded-lg p-2.5 outline-none"></select>
             <button onclick="ejecutarKillForm()" class="bg-purple-700 hover:bg-purple-600 text-white font-bold text-sm px-5 py-2.5 rounded-lg transition">⚔️ Registrar Kill</button>
         </div>
     </div>
@@ -109,6 +108,51 @@
         </div>
     </div>
 
+    <!-- GESTIÓN DE USUARIOS (SÓLO ADMIN) -->
+    <div id="seccion-usuarios" class="w-full max-w-6xl hidden space-y-6">
+        <div class="bg-[#141126] border border-indigo-600/50 rounded-xl p-6 shadow-lg">
+            <h2 class="text-xl font-bold text-indigo-400 mb-4">👑 Crear Nuevo Encargado / Usuario</h2>
+            <div class="flex flex-wrap gap-4 items-center">
+                <input type="text" id="nuevoUser" placeholder="Nombre de Usuario" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-48">
+                <input type="text" id="nuevoPass" placeholder="Contraseña Inicial" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-48">
+                <select id="nuevoRol" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-36">
+                    <option value="encargado">Encargado</option>
+                    <option value="admin">Administrador</option>
+                </select>
+                <button onclick="crearUsuario()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-6 py-2.5 rounded-lg text-sm transition">➕ Crear Usuario</button>
+            </div>
+            <p class="text-xs text-indigo-300 mt-2">💡 Nota: El usuario deberá cambiar su clave obligatoriamente en su primer ingreso.</p>
+        </div>
+
+        <div class="bg-[#141126] border border-purple-900 rounded-xl p-6 shadow-lg">
+            <h2 class="text-xl font-bold text-purple-300 mb-4">👥 Lista de Usuarios Registrados</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-purple-200">
+                    <thead class="bg-[#0d0a1a] text-purple-400 uppercase text-xs">
+                        <tr>
+                            <th class="p-3">Usuario</th>
+                            <th class="p-3">Rol</th>
+                            <th class="p-3">Estado Clave</th>
+                            <th class="p-3">Creado Por</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-usuarios-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL OBLIGATORIO DE CAMBIO DE CLAVE EN 1ER INGRESO -->
+    <div id="modal-cambio-clave" class="fixed inset-0 bg-black/90 flex items-center justify-center hidden z-50">
+        <div class="bg-[#141126] border-2 border-yellow-500 p-6 rounded-xl w-96 text-center shadow-2xl">
+            <h3 class="text-xl font-bold text-yellow-400 mb-2">⚠️ PRIMER INGRESO DETECTADO</h3>
+            <p class="text-xs text-gray-300 mb-4">Por seguridad debes actualizar tu contraseña inicial antes de continuar.</p>
+            <input type="password" id="claveNueva1" placeholder="Nueva Contraseña" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded mb-3 text-sm outline-none">
+            <input type="password" id="claveNueva2" placeholder="Repetir Nueva Contraseña" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded mb-4 text-sm outline-none">
+            <button onclick="ejecutarCambioClave()" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2.5 rounded text-sm transition">💾 Guardar Nueva Contraseña</button>
+        </div>
+    </div>
+
     <!-- MODAL LOGIN -->
     <div id="modal-login" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50">
         <div class="bg-[#141126] border border-purple-600 p-6 rounded-xl w-80 text-center shadow-2xl">
@@ -126,6 +170,7 @@
         let modoVista = 'TODOS';
         let estadoWeb = { timers: {}, heartbeats: {}, cooldowns: {} };
         let estaLogueado = false;
+        let esAdmin = false;
 
         const BOSSES_FIJOS = {
             "Server 1": ["Muggron 1", "Muggron 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Borgar", "Kharzul 1", "Vescrya 1"],
@@ -154,9 +199,42 @@
                 const res = await fetch('/api/session');
                 const data = await res.json();
                 estaLogueado = data.logged_in;
+                esAdmin = (data.rol === 'admin');
+
                 if (data.logged_in) {
-                    document.getElementById('user-display').innerHTML = `👤 Encargado: <strong class="text-white">${data.user}</strong>`;
+                    document.getElementById('user-display').innerHTML = `👤 User: <strong class="text-white">${data.user}</strong> (${data.rol})`;
                     document.getElementById('btn-login-trigger').outerHTML = `<a href="/logout" class="bg-red-700 hover:bg-red-600 text-white px-3 py-1 rounded font-bold transition">Salir</a>`;
+                    
+                    if (esAdmin) {
+                        document.getElementById('tab-USUARIOS').classList.remove('hidden');
+                    }
+
+                    if (data.requiere_cambio) {
+                        document.getElementById('modal-cambio-clave').classList.remove('hidden');
+                    }
+                }
+            } catch (e) {}
+        }
+
+        async function ejecutarCambioClave() {
+            const p1 = document.getElementById('claveNueva1').value;
+            const p2 = document.getElementById('claveNueva2').value;
+
+            if (!p1 || p1 !== p2) {
+                return alert("Las contraseñas no coinciden.");
+            }
+
+            try {
+                const res = await fetch('/api/cambiar_clave', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nueva_clave: p1 })
+                });
+                if (res.ok) {
+                    alert("Contraseña actualizada con éxito.");
+                    document.getElementById('modal-cambio-clave').classList.add('hidden');
+                } else {
+                    alert("Error cambiando contraseña.");
                 }
             } catch (e) {}
         }
@@ -177,6 +255,7 @@
             document.getElementById('seccion-timers').classList.add('hidden');
             document.getElementById('seccion-bots').classList.add('hidden');
             document.getElementById('seccion-donaciones').classList.add('hidden');
+            document.getElementById('seccion-usuarios').classList.add('hidden');
             document.getElementById('panel-kill-manual').classList.add('hidden');
 
             if (vista === 'DONACIONES') {
@@ -185,6 +264,9 @@
             } else if (vista === 'BOTS') {
                 document.getElementById('seccion-bots').classList.remove('hidden');
                 renderizarBots();
+            } else if (vista === 'USUARIOS') {
+                document.getElementById('seccion-usuarios').classList.remove('hidden');
+                cargarUsuarios();
             } else {
                 document.getElementById('seccion-timers').classList.remove('hidden');
                 document.getElementById('panel-kill-manual').classList.remove('hidden');
@@ -218,7 +300,7 @@
                     estadoWeb = await res.json();
                     poblarSelector();
                     if (modoVista === 'BOTS') renderizarBots();
-                    else if (modoVista !== 'DONACIONES') renderizarUI();
+                    else if (modoVista !== 'DONACIONES' && modoVista !== 'USUARIOS') renderizarUI();
                 }
             } catch (e) {}
         }
@@ -230,20 +312,14 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ server: svr, boss: boss })
                 });
-                if (res.ok) {
-                    await cargarDatos();
-                } else {
-                    alert("Error registrando el kill");
-                }
+                if (res.ok) { await cargarDatos(); }
             } catch (e) {}
         }
 
         function ejecutarKillForm() {
             const svr = document.getElementById('manualServer').value;
             const boss = document.getElementById('manualBoss').value;
-            if (svr && boss) { 
-                enviarKill(svr, boss); 
-            }
+            if (svr && boss) { enviarKill(svr, boss); }
         }
 
         function renderizarBots() {
@@ -298,7 +374,7 @@
                 listaBossesAMostrar.forEach(bossName => {
                     const cdMinutos = COOLDOWNS_LOCAL[bossName] || 60;
                     const cdSegundos = cdMinutos * 60;
-                    const ventanaSegundos = 3600; // 60 min de hora ventana
+                    const ventanaSegundos = 3600;
                     const cicloTotalSegundos = cdSegundos + ventanaSegundos;
 
                     let ordenTiempo = 99999999;
@@ -306,11 +382,9 @@
 
                     let killUnix = timersSvr[bossName];
 
-                    // Si no hay kill registrado pero es boss fijo, arranca vivo/listo
                     if (killUnix) {
                         let transcurridoTotal = ahoraUnix - killUnix;
 
-                        // LÓGICA DE REINICIO AUTOMÁTICO TRAS PASAR LA VENTANA DE 60m
                         if (transcurridoTotal >= cicloTotalSegundos) {
                             const ciclosPasados = Math.floor(transcurridoTotal / cicloTotalSegundos);
                             killUnix += (ciclosPasados * cicloTotalSegundos);
@@ -320,7 +394,7 @@
                         const targetRespawnUnix = killUnix + cdSegundos;
                         const finVentanaUnix = targetRespawnUnix + ventanaSegundos;
 
-                        // 1. 🔴 ROJO: COOLDOWN (Cuenta Regresiva a 0)
+                        // 🔴 ROJO
                         if (ahoraUnix < targetRespawnUnix) {
                             const restoSec = targetRespawnUnix - ahoraUnix;
                             ordenTiempo = restoSec;
@@ -338,10 +412,10 @@
                                 </div>
                             `;
                         } 
-                        // 2. 🟡 AMARILLO: HORA VENTANA (Ascendente de 0 a 60 min)
+                        // 🟡 AMARILLO
                         else if (ahoraUnix >= targetRespawnUnix && ahoraUnix <= finVentanaUnix) {
                             const transcurridoVentana = ahoraUnix - targetRespawnUnix;
-                            ordenTiempo = -1000 + transcurridoVentana; // Primero arriba
+                            ordenTiempo = -1000 + transcurridoVentana;
                             cardHTML = `
                                 <div class="card p-4 rounded-xl bg-yellow-950/70 border border-yellow-500 shadow-lg flex flex-col justify-between text-center min-h-[140px]">
                                     <div class="flex justify-between items-center mb-1">
@@ -358,7 +432,6 @@
                         }
                     }
 
-                    // 3. Bosses Fijos iniciales antes del primer Kill
                     if (!cardHTML && listaFijaServidor.includes(bossName)) {
                         ordenTiempo = 88888888;
                         cardHTML = `
@@ -385,13 +458,59 @@
             listaCards.sort((a, b) => a.orden - b.orden);
 
             if (listaCards.length === 0) {
-                contenedor.innerHTML = `<div class="text-gray-500 italic text-center col-span-full py-12">Sin bosses activos en este momento.</div>`;
+                contenedor.innerHTML = `<div class="text-gray-500 italic text-center col-span-full py-12">Sin bosses activos.</div>`;
             } else {
                 listaCards.forEach(c => contenedor.innerHTML += c.html);
             }
         }
 
-        // DONACIONES Y LOGIN
+        // FUNCIONALIDAD USUARIOS Y DONACIONES
+        async function cargarUsuarios() {
+            try {
+                const res = await fetch('/api/usuarios');
+                if (res.ok) {
+                    const data = await res.json();
+                    const tbody = document.getElementById('tabla-usuarios-body');
+                    tbody.innerHTML = '';
+                    data.forEach(u => {
+                        tbody.innerHTML += `
+                            <tr class="border-b border-purple-900/40">
+                                <td class="p-3 font-bold text-white">${u.username}</td>
+                                <td class="p-3 text-indigo-300">${u.rol}</td>
+                                <td class="p-3 text-xs">${u.requiere_cambio_clave ? '⚠️ Debe cambiar clave' : '✅ Clave al día'}</td>
+                                <td class="p-3 text-purple-400">${u.creado_por || 'Sistema'}</td>
+                            </tr>
+                        `;
+                    });
+                }
+            } catch (e) {}
+        }
+
+        async function crearUsuario() {
+            const username = document.getElementById('nuevoUser').value;
+            const password = document.getElementById('nuevoPass').value;
+            const rol = document.getElementById('nuevoRol').value;
+
+            if (!username || !password) return alert("Completa usuario y contraseña");
+
+            try {
+                const res = await fetch('/api/usuarios', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, rol })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    document.getElementById('nuevoUser').value = '';
+                    document.getElementById('nuevoPass').value = '';
+                    alert(`Usuario ${username} creado con éxito. En su primer ingreso deberá cambiar la contraseña.`);
+                    cargarUsuarios();
+                } else {
+                    alert(data.error || "Error creando usuario");
+                }
+            } catch (e) {}
+        }
+
         async function cargarDonaciones() {
             try {
                 const res = await fetch('/api/donaciones');
@@ -399,13 +518,9 @@
                     const data = await res.json();
                     const tbody = document.getElementById('tabla-donaciones-body');
                     tbody.innerHTML = '';
-                    if (data.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">Sin donaciones registradas</td></tr>`;
-                        return;
-                    }
                     data.forEach(d => {
                         tbody.innerHTML += `
-                            <tr class="border-b border-purple-900/40 hover:bg-purple-900/20">
+                            <tr class="border-b border-purple-900/40">
                                 <td class="p-3 font-bold text-white">${d.pj_name}</td>
                                 <td class="p-3 text-yellow-300">${d.tipo_donacion}</td>
                                 <td class="p-3 font-mono">${d.cantidad}</td>
@@ -430,12 +545,11 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ pj_name: pj, tipo_donacion: tipo, cantidad: cant })
                 });
-                const data = await res.json();
                 if (res.ok) {
                     document.getElementById('donacionPj').value = '';
                     cargarDonaciones();
                 } else {
-                    alert(data.error || "Debes estar logueado para cargar donaciones");
+                    alert("Debes estar logueado para cargar donaciones");
                 }
             } catch (e) {}
         }
