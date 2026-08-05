@@ -4,47 +4,35 @@ import json
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "multiverso_secret_key_2026")
 
-# ARCHIVOS DE DATOS PERSISTENTES
-DATA_FILE = "timers_data.json"
-USERS_FILE = "users_data.json"
-DONACIONES_FILE = "donaciones_data.json"
-
+DATABASE_URL = os.environ.get("DATABASE_URL")
 LINK_DESCARGA_BOT = "https://drive.google.com/uc?export=download&id=TU_ID_DE_GOOGLE_DRIVE"
 
-# ESTADO EN MEMORIA Y OCULTADO DE TARJETAS
-status_timers = {"Server 1": {}, "Server 2": {}, "Server 3": {}, "Server 20": {}}
+# Memoria temporal para la X (ocultar tarjetas)
 tarjetas_ocultas_global = set()
-heartbeats = {}
-ultimas_pcs = {}
-ultimos_pjs = {}
 
 
-def cargar_json(filepath, default_val):
-    if os.path.exists(filepath):
-        try:
-            with open(filepath, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception as e:
-            print(f"Error cargando {filepath}: {e}")
-    return default_val
+# --- CONEXIÓN A SUPABASE / POSTGRESQL ---
 
-
-def guardar_json(filepath, data):
+def get_db():
+    """Conecta a la base de datos PostgreSQL de Supabase"""
+    if not DATABASE_URL:
+        return None
     try:
-        with open(filepath, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=4, ensure_ascii=False)
+        # Asegura compatibilidad SSL requerida por Supabase
+        db_url = DATABASE_URL
+        if "sslmode" not in db_url:
+            db_url += "?sslmode=require" if "?" not in db_url else "&sslmode=require"
+        conn = psycopg2.connect(db_url, cursor_factory=RealDictCursor)
+        return conn
     except Exception as e:
-        print(f"Error guardando {filepath}: {e}")
-
-
-# Inicialización de bases de datos locales
-status_timers = cargar_json(DATA_FILE, status_timers)
-usuarios_db = cargar_json(USERS_FILE, {})
-donaciones_db = cargar_json(DONACIONES_FILE, [])
+        print(f"Error conectando a PostgreSQL: {e}")
+        return None
 
 
 @app.route('/')
@@ -52,36 +40,46 @@ def index():
     return render_template('index.html', link_descarga=LINK_DESCARGA_BOT)
 
 
-# --- SISTEMA DE AUTENTICACIÓN Y USUARIOS ---
+# --- SISTEMA DE AUTENTICACIÓN Y USUARIOS (DESDE SUPABASE) ---
 
 @app.route('/login', methods=['POST'])
 def login():
-    global usuarios_db
-    usuarios_db = cargar_json(USERS_FILE, usuarios_db)
-
     data = request.json or {}
     username = data.get('username', '').strip().lower()
     password = data.get('password', '')
 
-    if username in usuarios_db:
-        stored_pass = usuarios_db[username].get("password", "")
-        
-        # Soporta hashes Werkzeug (pbkdf2/scrypt) o texto plano si existe migración directa
-        es_valido = False
-        if stored_pass.startswith("scrypt:") or stored_pass.startswith("pbkdf2:"):
-            es_valido = check_password_hash(stored_pass, password)
-        else:
-            es_valido = (stored_pass == password)
+    conn = get_db()
+    if conn:
+        try:
+            with conn.cursor() as cur:
+                # Búsqueda insensible a mayúsculas/minúsculas
+                cur.execute("SELECT * FROM public.usuarios WHERE LOWER(username) = %s;", (username,))
+                user_row = cur.fetchone()
 
-        if es_valido:
-            session['user'] = username
-            session['rol'] = usuarios_db[username].get("rol", "encargado")
-            return jsonify({
-                "status": "ok",
-                "user": username,
-                "rol": usuarios_db[username].get("rol", "encargado"),
-                "requiere_cambio": usuarios_db[username].get("requiere_cambio", False)
-            }), 200
+            conn.close()
+
+            if user_row:
+                stored_pass = user_row.get("password_hash", "")
+                
+                # Valida contra hash werkzeug, scrypt o clave en texto plano si existe
+                es_valido = False
+                if stored_pass.startswith("scrypt:") or stored_pass.startswith("pbkdf2:"):
+                    es_valido = check_password_hash(stored_pass, password)
+                else:
+                    es_valido = (stored_pass == password)
+
+                if es_valido:
+                    session['user'] = user_row['username']
+                    session['rol'] = user_row.get("rol", "encargado")
+                    return jsonify({
+                        "status": "ok",
+                        "user": user_row['username'],
+                        "rol": session['rol'],
+                        "requiere_cambio": user_row.get("requiere_cambio_clave", False)
+                    }), 200
+        except Exception as e:
+            print(f"Error en login DB: {e}")
+            if conn: conn.close()
 
     return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
 
@@ -96,12 +94,27 @@ def logout():
 def api_session():
     if 'user' in session:
         u_name = session['user']
-        u_info = usuarios_db.get(u_name, {})
+        conn = get_db()
+        req_cambio = False
+        rol = session.get('rol', 'encargado')
+        
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT rol, requiere_cambio_clave FROM public.usuarios WHERE username = %s;", (u_name,))
+                    u_info = cur.fetchone()
+                    if u_info:
+                        rol = u_info['rol']
+                        req_cambio = u_info['requiere_cambio_clave']
+                conn.close()
+            except Exception:
+                if conn: conn.close()
+
         return jsonify({
             "logged_in": True,
             "user": u_name,
-            "rol": session.get('rol', u_info.get('rol', 'encargado')),
-            "requiere_cambio": u_info.get("requiere_cambio", False)
+            "rol": rol,
+            "requiere_cambio": req_cambio
         })
     return jsonify({"logged_in": False})
 
@@ -118,59 +131,100 @@ def cambiar_clave():
         return jsonify({"error": "La contraseña debe tener al menos 4 caracteres"}), 400
 
     username = session['user']
-    if username in usuarios_db:
-        usuarios_db[username]["password"] = generate_password_hash(nueva_clave)
-        usuarios_db[username]["requiere_cambio"] = False
-        guardar_json(USERS_FILE, usuarios_db)
+    new_hash = generate_password_hash(nueva_clave)
 
-    return jsonify({"status": "ok", "message": "Contraseña actualizada"}), 200
+    conn = get_db()
+    if conn:
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE public.usuarios SET password_hash = %s, requiere_cambio_clave = FALSE WHERE username = %s;",
+                    (new_hash, username)
+                )
+                conn.commit()
+            conn.close()
+            return jsonify({"status": "ok", "message": "Contraseña actualizada"}), 200
+        except Exception as e:
+            if conn: conn.close()
+            return jsonify({"error": "Error al actualizar clave"}), 500
+
+    return jsonify({"error": "Error de conexión a la base de datos"}), 500
 
 
 @app.route('/api/usuarios', methods=['GET', 'POST'])
 def usuarios():
     if 'user' not in session or session.get('rol') != 'admin':
-        return jsonify({"error": "Acceso denegado"}), 403
+        return jsonify({"error": "Acceso denegado: Requiere Administrador"}), 403
+
+    conn = get_db()
+    if not conn:
+        return jsonify({"error": "Error de base de datos"}), 500
 
     if request.method == 'GET':
-        lista_u = []
-        for u, val in usuarios_db.items():
-            lista_u.append({
-                "username": u,
-                "rol": val.get("rol", "encargado"),
-                "requiere_cambio_clave": val.get("requiere_cambio", False),
-                "creado_por": val.get("creado_por", "Sistema")
-            })
-        return jsonify(lista_u)
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT username, rol, requiere_cambio_clave, creado_por FROM public.usuarios ORDER BY id ASC;")
+                rows = cur.fetchall()
+            conn.close()
+            return jsonify(rows)
+        except Exception as e:
+            conn.close()
+            return jsonify([])
 
     if request.method == 'POST':
         data = request.json or {}
-        new_user = data.get('username', '').strip().lower()
+        new_user = data.get('username', '').strip()
         new_pass = data.get('password', '')
         new_rol = data.get('rol', 'encargado')
 
         if not new_user or not new_pass:
+            conn.close()
             return jsonify({"error": "Faltan campos obligatorios"}), 400
 
-        if new_user in usuarios_db:
-            return jsonify({"error": "El usuario ya existe"}), 400
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "INSERT INTO public.usuarios (username, password_hash, rol, requiere_cambio_clave, creado_por) VALUES (%s, %s, %s, TRUE, %s);",
+                    (new_user, generate_password_hash(new_pass), new_rol, session['user'])
+                )
+                conn.commit()
+            conn.close()
+            return jsonify({"status": "ok", "message": f"Usuario {new_user} creado"}), 201
+        except Exception as e:
+            conn.close()
+            return jsonify({"error": "El usuario ya existe o hubo un fallo"}), 400
 
-        usuarios_db[new_user] = {
-            "password": generate_password_hash(new_pass),
-            "rol": new_rol,
-            "requiere_cambio": True,
-            "creado_por": session['user']
-        }
-        guardar_json(USERS_FILE, usuarios_db)
-        return jsonify({"status": "ok", "message": f"Usuario {new_user} creado"}), 201
 
-
-# --- TIMERS Y BOTS ---
+# --- TIMERS Y BOTS (DESDE SUPABASE) ---
 
 @app.route('/api/status_timers')
 @app.route('/api/timers')
 def get_status_timers():
+    timers_res = {"Server 1": {}, "Server 2": {}, "Server 3": {}, "Server 20": {}}
+    heartbeats = {}
+    ultimas_pcs = {}
+    ultimos_pjs = {}
+
+    conn = get_db()
+    if conn:
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT server, timers, last_pc, last_pj, last_heartbeat FROM public.timers_bosses;")
+                rows = cur.fetchall()
+                for row in rows:
+                    svr = row['server']
+                    timers_res[svr] = row['timers'] or {}
+                    ultimas_pcs[svr] = row['last_pc']
+                    ultimos_pjs[svr] = row['last_pj']
+                    if row['last_heartbeat']:
+                        heartbeats[svr] = row['last_heartbeat'].strftime("%Y-%m-%d %H:%M:%S")
+            conn.close()
+        except Exception as e:
+            print(f"Error consultando timers DB: {e}")
+            if conn: conn.close()
+
     return jsonify({
-        "timers": status_timers,
+        "timers": timers_res,
         "ocultos": list(tarjetas_ocultas_global),
         "heartbeats": heartbeats,
         "ultimas_pcs": ultimas_pcs,
@@ -189,29 +243,50 @@ def registrar_kill():
     if not server or not boss:
         return jsonify({"error": "Faltan datos"}), 400
 
-    if server not in status_timers:
-        status_timers[server] = {}
+    conn = get_db()
+    if conn:
+        try:
+            with conn.cursor() as cur:
+                # Obtener timers actuales del servidor
+                cur.execute("SELECT timers FROM public.timers_bosses WHERE server = %s;", (server,))
+                row = cur.fetchone()
+                current_timers = row['timers'] if row and row['timers'] else {}
 
-    status_timers[server][boss] = int(time.time())
+                # Actualizar tiempo del boss
+                current_timers[boss] = int(time.time())
 
-    # Reaparece si la tarjeta estaba oculta
-    clave_card = f"{server}_{boss}"
-    if clave_card in tarjetas_ocultas_global:
-        tarjetas_ocultas_global.remove(clave_card)
+                # Reaparecer si estaba ocultado con X
+                clave_card = f"{server}_{boss}"
+                if clave_card in tarjetas_ocultas_global:
+                    tarjetas_ocultas_global.remove(clave_card)
 
-    guardar_json(DATA_FILE, status_timers)
+                # Guardar cambios
+                if pc_id != 'Manual Web':
+                    cur.execute("""
+                        INSERT INTO public.timers_bosses (server, timers, last_pc, last_pj, last_heartbeat)
+                        VALUES (%s, %s, %s, %s, NOW())
+                        ON CONFLICT (server) DO UPDATE 
+                        SET timers = EXCLUDED.timers, last_pc = EXCLUDED.last_pc, last_pj = EXCLUDED.last_pj, last_heartbeat = NOW();
+                    """, (server, json.dumps(current_timers), pc_id, pj_name))
+                else:
+                    cur.execute("""
+                        INSERT INTO public.timers_bosses (server, timers)
+                        VALUES (%s, %s)
+                        ON CONFLICT (server) DO UPDATE SET timers = EXCLUDED.timers;
+                    """, (server, json.dumps(current_timers)))
 
-    if pc_id != 'Manual Web':
-        heartbeats[server] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        ultimas_pcs[server] = pc_id
-        ultimos_pjs[server] = pj_name
+                conn.commit()
+            conn.close()
+            return jsonify({"status": "ok"}), 200
+        except Exception as e:
+            print(f"Error registrando kill: {e}")
+            if conn: conn.close()
 
-    return jsonify({"status": "ok"}), 200
+    return jsonify({"error": "Error de base de datos"}), 500
 
 
 @app.route('/api/reset_boss', methods=['POST'])
 def reset_boss():
-    """Elimina la tarjeta con la ✕ para toda la guild"""
     data = request.json or {}
     server = data.get('server')
     boss = data.get('boss')
@@ -219,9 +294,22 @@ def reset_boss():
     if server and boss:
         clave_card = f"{server}_{boss}"
         tarjetas_ocultas_global.add(clave_card)
-        if server in status_timers and boss in status_timers[server]:
-            del status_timers[server][boss]
-            guardar_json(DATA_FILE, status_timers)
+
+        conn = get_db()
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT timers FROM public.timers_bosses WHERE server = %s;", (server,))
+                    row = cur.fetchone()
+                    if row and row['timers'] and boss in row['timers']:
+                        current_timers = row['timers']
+                        del current_timers[boss]
+                        cur.execute("UPDATE public.timers_bosses SET timers = %s WHERE server = %s;", (json.dumps(current_timers), server))
+                        conn.commit()
+                conn.close()
+            except Exception as e:
+                if conn: conn.close()
+
         return jsonify({"status": "ok", "message": f"{boss} ocultado"}), 200
 
     return jsonify({"error": "Datos inválidos"}), 400
@@ -235,25 +323,52 @@ def registrar_heartbeat():
     pj_name = data.get('pj_name', 'Desconocido')
 
     if server:
-        heartbeats[server] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        ultimas_pcs[server] = pc_id
-        ultimos_pjs[server] = pj_name
-        return jsonify({"status": "ok"}), 200
+        conn = get_db()
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        INSERT INTO public.timers_bosses (server, last_pc, last_pj, last_heartbeat)
+                        VALUES (%s, %s, %s, NOW())
+                        ON CONFLICT (server) DO UPDATE 
+                        SET last_pc = EXCLUDED.last_pc, last_pj = EXCLUDED.last_pj, last_heartbeat = NOW();
+                    """, (server, pc_id, pj_name))
+                    conn.commit()
+                conn.close()
+                return jsonify({"status": "ok"}), 200
+            except Exception as e:
+                if conn: conn.close()
 
     return jsonify({"error": "Servidor requerido"}), 400
 
 
-# --- DONACIONES ---
+# --- DONACIONES (DESDE SUPABASE CON AUDITORÍA) ---
 
 @app.route('/api/donaciones', methods=['GET', 'POST'])
 def donaciones():
-    global donaciones_db
+    conn = get_db()
+    if not conn:
+        return jsonify([] if request.method == 'GET' else {"error": "Error DB"}), 500
 
     if request.method == 'GET':
-        return jsonify(donaciones_db)
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT id, pj_name, tipo_donacion, cantidad, registrado_por, modificado_por,
+                           to_char(created_at, 'YYYY-MM-DD HH24:MI:SS') as fecha_registro,
+                           to_char(fecha_modificacion, 'YYYY-MM-DD HH24:MI:SS') as fecha_modificacion
+                    FROM public.donaciones ORDER BY created_at DESC;
+                """)
+                rows = cur.fetchall()
+            conn.close()
+            return jsonify(rows)
+        except Exception as e:
+            conn.close()
+            return jsonify([])
 
     if request.method == 'POST':
         if 'user' not in session:
+            conn.close()
             return jsonify({"error": "No autorizado"}), 401
 
         data = request.json or {}
@@ -262,22 +377,21 @@ def donaciones():
         cantidad = data.get('cantidad', 1)
 
         if not pj_name or not tipo_donacion:
+            conn.close()
             return jsonify({"error": "Faltan datos de donación"}), 400
 
-        nueva_donacion = {
-            "id": int(time.time() * 1000),
-            "pj_name": pj_name,
-            "tipo_donacion": tipo_donacion,
-            "cantidad": int(cantidad),
-            "registrado_por": session['user'],
-            "fecha_registro": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "modificado_por": None,
-            "fecha_modificacion": None
-        }
-
-        donaciones_db.insert(0, nueva_donacion)
-        guardar_json(DONACIONES_FILE, donaciones_db)
-        return jsonify({"status": "ok", "donacion": nueva_donacion}), 201
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO public.donaciones (pj_name, tipo_donacion, cantidad, registrado_por)
+                    VALUES (%s, %s, %s, %s) RETURNING id;
+                """, (pj_name, tipo_donacion, int(cantidad), session['user']))
+                conn.commit()
+            conn.close()
+            return jsonify({"status": "ok"}), 201
+        except Exception as e:
+            conn.close()
+            return jsonify({"error": "Error al guardar donación"}), 500
 
 
 @app.route('/api/donaciones/<int:donacion_id>', methods=['PUT'])
@@ -286,18 +400,27 @@ def editar_donacion(donacion_id):
         return jsonify({"error": "No autorizado"}), 401
 
     data = request.json or {}
-    for don in donaciones_db:
-        if don['id'] == donacion_id:
-            don['pj_name'] = data.get('pj_name', don['pj_name'])
-            don['tipo_donacion'] = data.get('tipo_donacion', don['tipo_donacion'])
-            don['cantidad'] = int(data.get('cantidad', don['cantidad']))
-            don['modificado_por'] = session['user']
-            don['fecha_modificacion'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    pj_name = data.get('pj_name')
+    tipo_donacion = data.get('tipo_donacion')
+    cantidad = data.get('cantidad')
 
-            guardar_json(DONACIONES_FILE, donaciones_db)
-            return jsonify({"status": "ok", "donacion": don}), 200
+    conn = get_db()
+    if conn:
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE public.donaciones 
+                    SET pj_name = %s, tipo_donacion = %s, cantidad = %s, 
+                        modificado_por = %s, fecha_modificacion = NOW()
+                    WHERE id = %s;
+                """, (pj_name, tipo_donacion, int(cantidad), session['user'], donacion_id))
+                conn.commit()
+            conn.close()
+            return jsonify({"status": "ok"}), 200
+        except Exception as e:
+            if conn: conn.close()
 
-    return jsonify({"error": "Donación no encontrada"}), 404
+    return jsonify({"error": "Error al actualizar donación"}), 500
 
 
 if __name__ == '__main__':
