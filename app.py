@@ -35,7 +35,7 @@ COOLDOWNS_CONFIG = {
     "Skeleton King 1": 120, "Skeleton King 2": 120
 }
 
-# === RUTAS DE PÁGINA WEB Y AUTENTICACIÓN ===
+# === RUTAS PRINCIPALES Y AUTENTICACIÓN ===
 
 @app.route('/')
 def index():
@@ -125,7 +125,7 @@ def cambiar_clave():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# === GESTIÓN DE USUARIOS POR PARTE DEL ADMIN ===
+# === GESTIÓN DE USUARIOS ===
 
 @app.route('/api/usuarios', methods=['GET', 'POST'])
 def usuarios_admin():
@@ -154,7 +154,7 @@ def usuarios_admin():
                 'username': username,
                 'password_hash': pwd_hash,
                 'rol': rol,
-                'requiere_cambio_clave': True, # Exigir cambio en 1er login
+                'requiere_cambio_clave': True,
                 'creado_por': session['user']
             }).execute()
 
@@ -162,7 +162,7 @@ def usuarios_admin():
         except Exception as e:
             return jsonify({"error": f"Error o usuario ya existente: {str(e)}"}), 500
 
-# === API STATUS Y BOTS ===
+# === API STATUS Y TIMERS ===
 
 @app.route('/api/status_timers', methods=['GET'])
 def status_timers():
@@ -253,7 +253,7 @@ def heartbeat():
         print(f"Error en heartbeat: {e}")
         return jsonify({"error": str(e)}), 500
 
-# === API DONACIONES ===
+# === API DONACIONES (CON AUDITORÍA DE MODIFICACIÓN) ===
 
 @app.route('/api/donaciones', methods=['GET', 'POST'])
 def donaciones():
@@ -266,7 +266,7 @@ def donaciones():
 
     if request.method == 'POST':
         if 'user' not in session:
-            return jsonify({"error": "Debes iniciar sesión para guardar donaciones"}), 401
+            return jsonify({"error": "Debes iniciar sesión para registrar donaciones"}), 401
 
         data = request.get_json() or {}
         pj_name = data.get('pj_name')
@@ -287,6 +287,44 @@ def donaciones():
             return jsonify({"status": "SUCCESS"}), 200
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+
+@app.route('/api/donaciones/<int:donacion_id>', methods=['PUT'])
+def editar_donacion(donacion_id):
+    if 'user' not in session:
+        return jsonify({"error": "Debes iniciar sesión como encargado para modificar donaciones"}), 401
+
+    data = request.get_json() or {}
+    nuevo_pj = data.get('pj_name')
+    nuevo_tipo = data.get('tipo_donacion')
+    nueva_cantidad = data.get('cantidad')
+
+    if not nuevo_pj or not nuevo_tipo or nueva_cantidad is None:
+        return jsonify({"error": "Datos incompletos"}), 400
+
+    try:
+        # Obtener registro actual para auditoría
+        res_actual = supabase.table('donaciones').select('*').eq('id', donacion_id).execute()
+        if not res_actual.data or len(res_actual.data) == 0:
+            return jsonify({"error": "Donación no encontrada"}), 404
+
+        reg_actual = res_actual.data[0]
+        ahora = datetime.now(timezone.utc).isoformat()
+
+        # Actualizar registrando auditoría
+        supabase.table('donaciones').update({
+            'pj_name': nuevo_pj,
+            'tipo_donacion': nuevo_tipo,
+            'cantidad': nueva_cantidad,
+            'modificado_por': session['user'],
+            'fecha_modificacion': ahora,
+            'pj_name_anterior': reg_actual.get('pj_name'),
+            'cantidad_anterior': reg_actual.get('cantidad')
+        }).eq('id', donacion_id).execute()
+
+        return jsonify({"status": "SUCCESS"}), 200
+    except Exception as e:
+        print(f"Error modificando donación: {e}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
