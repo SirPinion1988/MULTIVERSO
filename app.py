@@ -1,16 +1,18 @@
 import os
 import json
 from datetime import datetime, timezone
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, session, redirect, url_for
 from flask_cors import CORS
+from werkzeug.security import generate_password_hash, check_password_hash
 from supabase import create_client, Client
 
 app = Flask(__name__)
 CORS(app)
+app.secret_key = "clave_secreta_mudream_donaciones_key_multiverso"
 
 LINK_DESCARGA_BOT = "https://drive.google.com/drive/folders/1Rx1TZZl5IncOpJPLab4YnRqOEIY6iBrC?usp=sharing"
 
-# === CREDENCIALES DIRECTAS DE SUPABASE ===
+# === CREDENCIALES DE SUPABASE ===
 SUPABASE_URL = "https://csdwnpkvuymtasxpujza.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzZHducGt2dXltdGFzeHB1anphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3ODU0NDYsImV4cCI6MjEwMTM2MTQ0Nn0.IwgSW7QwoqLArOTfHYT4TyONA_57y1ELCaiQyZ3xyRg"
 
@@ -33,12 +35,37 @@ COOLDOWNS_CONFIG = {
     "Skeleton King 1": 120, "Skeleton King 2": 120
 }
 
-# === RUTA PRINCIPAL (PÁGINA WEB) ===
+# === RUTAS DE PÁGINA WEB Y AUTENTICACIÓN ===
+
 @app.route('/')
 def index():
     return render_template('index.html', link_descarga=LINK_DESCARGA_BOT)
 
-# === API: CONSULTA DE TIMERS Y BOTS ===
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json() or {}
+    username = data.get('username')
+    password = data.get('password')
+    
+    try:
+        res = supabase.table('usuarios').select('*').eq('username', username).execute()
+        if res.data and len(res.data) > 0:
+            user = res.data[0]
+            if check_password_hash(user['password_hash'], password):
+                session['user'] = user['username']
+                session['rol'] = user.get('rol', 'encargado')
+                return jsonify({"status": "SUCCESS", "user": user['username'], "rol": user.get('rol')}), 200
+        return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('index'))
+
+# === API: CONSULTA DE TIMERS Y ESTADO DE BOTS ===
+
 @app.route('/api/status_timers', methods=['GET'])
 def status_timers():
     try:
@@ -69,7 +96,42 @@ def status_timers():
         print(f"Error obteniendo timers: {e}")
         return jsonify({"error": str(e)}), 500
 
-# === API: RECEPCIÓN DE HEARTBEAT DEL BOT ===
+# === API: REGISTRO DE KILL (BOT O WEB) ===
+
+@app.route('/api/kill', methods=['POST'])
+def kill():
+    data = request.get_json() or {}
+    server = data.get('server')
+    boss = data.get('boss')
+    pc_id = data.get('pc_id', 'Navegador Web')
+    pj_name = data.get('pj_name', session.get('user', 'Manual Web'))
+
+    if not server or server not in SERVIDORES_VALIDOS or not boss:
+        return jsonify({"error": "Datos incompletos"}), 400
+
+    try:
+        res = supabase.table('timers_bosses').select('timers').eq('server', server).execute()
+        current_timers = {}
+        if res.data and len(res.data) > 0:
+            current_timers = res.data[0].get('timers') or {}
+
+        ahora_unix = int(datetime.now(timezone.utc).timestamp())
+        current_timers[boss] = ahora_unix
+
+        supabase.table('timers_bosses').update({
+            'timers': current_timers,
+            'last_pc': pc_id,
+            'last_pj': pj_name,
+            'last_heartbeat': datetime.now(timezone.utc).isoformat()
+        }).eq('server', server).execute()
+
+        return jsonify({"status": "SUCCESS", "boss": boss, "server": server}), 200
+    except Exception as e:
+        print(f"Error registrando kill: {e}")
+        return jsonify({"error": str(e)}), 500
+
+# === API: RECEPCIÓN DE HEARTBEAT DE CLIENTES ===
+
 @app.route('/api/heartbeat', methods=['POST'])
 def heartbeat():
     data = request.get_json() or {}
@@ -93,41 +155,37 @@ def heartbeat():
         print(f"Error en heartbeat: {e}")
         return jsonify({"error": str(e)}), 500
 
-# === API: REGISTRO DE KILL (MANUAL O AUTOMÁTICO) ===
-@app.route('/api/kill', methods=['POST'])
-def kill():
-    data = request.get_json() or {}
-    server = data.get('server')
-    boss = data.get('boss')
-    pc_id = data.get('pc_id', 'Navegador Web')
-    pj_name = data.get('pj_name', 'Manual Web')
+# === API: GESTIÓN DE DONACIONES Y USUARIOS ===
 
-    if not server or server not in SERVIDORES_VALIDOS or not boss:
-        return jsonify({"error": "Datos incompletos"}), 400
+@app.route('/api/donaciones', methods=['GET', 'POST'])
+def donaciones():
+    if request.method == 'GET':
+        try:
+            res = supabase.table('donaciones').select('*').order('created_at', desc=True).execute()
+            return jsonify(res.data if res.data else []), 200
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
-    try:
-        # 1. Obtener jsonb actual de timers del servidor
-        res = supabase.table('timers_bosses').select('timers').eq('server', server).execute()
-        current_timers = {}
-        if res.data and len(res.data) > 0:
-            current_timers = res.data[0].get('timers') or {}
+    if request.method == 'POST':
+        data = request.get_json() or {}
+        pj_name = data.get('pj_name')
+        tipo_donacion = data.get('tipo_donacion')
+        cantidad = data.get('cantidad', 1)
+        registrado_por = session.get('user', 'Sistema')
 
-        # 2. Actualizar la marca Unix de muerte del boss
-        ahora_unix = int(datetime.now(timezone.utc).timestamp())
-        current_timers[boss] = ahora_unix
+        if not pj_name or not tipo_donacion:
+            return jsonify({"error": "Faltan campos requeridos"}), 400
 
-        # 3. Guardar en Supabase
-        supabase.table('timers_bosses').update({
-            'timers': current_timers,
-            'last_pc': pc_id,
-            'last_pj': pj_name,
-            'last_heartbeat': datetime.now(timezone.utc).isoformat()
-        }).eq('server', server).execute()
-
-        return jsonify({"status": "SUCCESS", "boss": boss, "server": server}), 200
-    except Exception as e:
-        print(f"Error registrando kill: {e}")
-        return jsonify({"error": str(e)}), 500
+        try:
+            supabase.table('donaciones').insert({
+                'pj_name': pj_name,
+                'tipo_donacion': tipo_donacion,
+                'cantidad': cantidad,
+                'registrado_por': registrado_por
+            }).execute()
+            return jsonify({"status": "SUCCESS"}), 200
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
