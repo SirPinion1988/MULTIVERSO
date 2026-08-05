@@ -20,9 +20,9 @@
         <div id="status-pings" class="flex flex-wrap gap-2 text-xs"></div>
     </header>
 
-    <!-- Panel para Cargar Kills -->
+    <!-- Panel para Cargar Kills Manuales -->
     <div class="w-full max-w-6xl bg-[#141126] border border-purple-800 rounded-xl p-4 mb-6 shadow-lg">
-        <h3 class="text-center font-bold text-purple-300 mb-3 text-sm uppercase tracking-wider">⚡ Cargar Kill / Iniciar Timer</h3>
+        <h3 class="text-center font-bold text-purple-300 mb-3 text-sm uppercase tracking-wider">⚡ Cargar Kill Manual / Evento Especial</h3>
         <div class="flex flex-wrap gap-3 justify-center items-center">
             <select id="manualServer" class="bg-[#0d0a1a] border border-purple-900 text-white text-sm rounded-lg p-2.5 outline-none">
                 <option value="Server 1">Server 1</option>
@@ -56,6 +56,14 @@
         let servidorActual = "Server 1";
         let estadoWeb = { timers: {}, heartbeats: {}, cooldowns: {} };
 
+        // BOSSES FIJOS QUE SIEMPRE DEBEN APARECER EN PANTALLA
+        const BOSSES_FIJOS = {
+            "Server 1": ["Muggron 1", "Muggron 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Borgar", "Kharzul 1", "Vescrya 1"],
+            "Server 2": ["Muggron 1", "Muggron 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Borgar", "Kharzul 1", "Vescrya 1"],
+            "Server 3": ["Muggron 1", "Muggron 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Borgar", "Kharzul 1", "Vescrya 1"],
+            "Server 20": ["Muggron Barracks 1", "Muggron Barracks 2", "Muggron Crywolf 1", "Muggron Crywolf 2", "Kharzul 1", "Kharzul 2", "Kharzul 3", "Vescrya 1", "Vescrya 2", "Vescrya 3"]
+        };
+
         const COOLDOWNS_LOCAL = {
             "Muggron 1": 180, "Muggron 2": 180,
             "Dreadhorn 1": 60, "Dreadhorn 2": 60,
@@ -64,7 +72,11 @@
             "Kharzul 1": 420, "Kharzul 2": 420, "Kharzul 3": 420,
             "Vescrya 1": 420, "Vescrya 2": 420, "Vescrya 3": 420,
             "Muggron Barracks 1": 180, "Muggron Barracks 2": 180,
-            "Muggron Crywolf 1": 180, "Muggron Crywolf 2": 180
+            "Muggron Crywolf 1": 180, "Muggron Crywolf 2": 180,
+            "Yellow Goblin": 120, "Blue Goblin": 120, "Red Goblin": 120,
+            "Red Dragon": 240, "Santa 1": 120, "Santa 2": 120,
+            "White Wizard 1": 120, "White Wizard 2": 120,
+            "Skeleton King 1": 120, "Skeleton King 2": 120
         };
 
         function poblarSelector() {
@@ -132,60 +144,68 @@
             const ahoraUnix = Math.floor(Date.now() / 1000);
             const timersSvr = (estadoWeb.timers || {})[servidorActual] || {};
 
-            let visiblesCount = 0;
+            // Lista combinada: Bosses fijos obligatorios + Bosses manuales que tengan un kill activo
+            const listaFijaServidor = BOSSES_FIJOS[servidorActual] || [];
+            const listaBossesAMostrar = new Set([...listaFijaServidor]);
 
-            Object.entries(timersSvr).forEach(([bossName, killUnix]) => {
-                // FILTRAR BOSSES VALIDOS SEGÚN EL SERVIDOR
-                if (servidorActual === "Server 20") {
-                    if (!["Kharzul 1", "Kharzul 2", "Kharzul 3", "Vescrya 1", "Vescrya 2", "Vescrya 3", "Muggron Barracks 1", "Muggron Barracks 2", "Muggron Crywolf 1", "Muggron Crywolf 2"].includes(bossName)) return;
-                } else {
-                    if (!["Borgar", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Muggron 1", "Muggron 2", "Kharzul 1", "Vescrya 1"].includes(bossName)) return;
-                }
+            // Añadir bosses manuales solo si tienen registro de kill activo
+            Object.keys(timersSvr).forEach(b => listaBossesAMostrar.add(b));
 
+            listaBossesAMostrar.forEach(bossName => {
+                const killUnix = timersSvr[bossName];
                 const cdMinutos = COOLDOWNS_LOCAL[bossName] || 60;
-                const targetRespawnUnix = killUnix + (cdMinutos * 60);
-                const finVentanaUnix = targetRespawnUnix + 3600; // 60m ventana
 
                 let cardContent = '';
 
-                // 1. 🔴 ROJO: COOLDOWNS (De más a menos)
-                if (ahoraUnix < targetRespawnUnix) {
-                    visiblesCount++;
-                    const restoSec = targetRespawnUnix - ahoraUnix;
+                if (killUnix) {
+                    const targetRespawnUnix = killUnix + (cdMinutos * 60);
+                    const finVentanaUnix = targetRespawnUnix + 3600; // 60 min ventana
+
+                    // 1. 🔴 ROJO: COOLDOWN (De más a menos)
+                    if (ahoraUnix < targetRespawnUnix) {
+                        const restoSec = targetRespawnUnix - ahoraUnix;
+                        cardContent = `
+                            <div class="card p-4 rounded-xl bg-red-950/70 border border-red-500 shadow-lg flex flex-col justify-between text-center min-h-[120px]">
+                                <h3 class="font-bold text-red-100 text-sm">${bossName}</h3>
+                                <div class="my-2 py-1 px-2 rounded bg-red-900/50 border border-red-600 text-red-200 font-mono text-base font-bold">
+                                    🔴 ${formatearTiempo(restoSec)}
+                                </div>
+                                <button onclick="enviarKill('${servidorActual}', '${bossName}')" class="bg-purple-800 hover:bg-purple-700 text-white font-bold text-xs py-1 rounded transition">⚔️ Kill</button>
+                            </div>
+                        `;
+                    } 
+                    // 2. 🟡 AMARILLO: VENTANA (De 0 a 60 min)
+                    else if (ahoraUnix >= targetRespawnUnix && ahoraUnix <= finVentanaUnix) {
+                        const transcurridoVentana = ahoraUnix - targetRespawnUnix;
+                        cardContent = `
+                            <div class="card p-4 rounded-xl bg-yellow-950/70 border border-yellow-500 shadow-lg flex flex-col justify-between text-center min-h-[120px]">
+                                <h3 class="font-bold text-yellow-100 text-sm">${bossName}</h3>
+                                <div class="my-2 py-1 px-2 rounded bg-yellow-900/50 border border-yellow-600 text-yellow-200 font-mono text-base font-bold">
+                                    🟡 VENTANA (${formatearTiempo(transcurridoVentana)})
+                                </div>
+                                <button onclick="enviarKill('${servidorActual}', '${bossName}')" class="bg-purple-800 hover:bg-purple-700 text-white font-bold text-xs py-1 rounded transition">⚔️ Kill</button>
+                            </div>
+                        `;
+                    }
+                }
+
+                // 3. 🟢 DISPONIBLE / VIVO (Si es un boss fijo y no tiene kill reciente o ya pasó la ventana)
+                if (!cardContent && listaFijaServidor.includes(bossName)) {
                     cardContent = `
-                        <div class="card p-4 rounded-xl bg-red-950/70 border border-red-500 shadow-lg flex flex-col justify-between text-center min-h-[120px]">
-                            <h3 class="font-bold text-red-100 text-sm">${bossName}</h3>
-                            <div class="my-2 py-1 px-2 rounded bg-red-900/50 border border-red-600 text-red-200 font-mono text-base font-bold">
-                                🔴 ${formatearTiempo(restoSec)}
+                        <div class="card p-4 rounded-xl bg-emerald-950/70 border border-emerald-500 shadow-lg flex flex-col justify-between text-center min-h-[120px]">
+                            <h3 class="font-bold text-emerald-100 text-sm">${bossName}</h3>
+                            <div class="my-2 py-1 px-2 rounded bg-emerald-900/50 border border-emerald-600 text-emerald-200 font-mono text-xs font-bold uppercase">
+                                🟢 DISPONIBLE
                             </div>
                             <button onclick="enviarKill('${servidorActual}', '${bossName}')" class="bg-purple-800 hover:bg-purple-700 text-white font-bold text-xs py-1 rounded transition">⚔️ Kill</button>
                         </div>
                     `;
-                } 
-                // 2. 🟡 AMARILLO: VENTANA (De 0 a 60 min)
-                else if (ahoraUnix >= targetRespawnUnix && ahoraUnix <= finVentanaUnix) {
-                    visiblesCount++;
-                    const transcurridoVentana = ahoraUnix - targetRespawnUnix;
-                    cardContent = `
-                        <div class="card p-4 rounded-xl bg-yellow-950/70 border border-yellow-500 shadow-lg flex flex-col justify-between text-center min-h-[120px]">
-                            <h3 class="font-bold text-yellow-100 text-sm">${bossName}</h3>
-                            <div class="my-2 py-1 px-2 rounded bg-yellow-900/50 border border-yellow-600 text-yellow-200 font-mono text-base font-bold">
-                                🟡 VENTANA (${formatearTiempo(transcurridoVentana)})
-                            </div>
-                            <button onclick="enviarKill('${servidorActual}', '${bossName}')" class="bg-purple-800 hover:bg-purple-700 text-white font-bold text-xs py-1 rounded transition">⚔️ Kill</button>
-                        </div>
-                    `;
-                } 
-                // 3. ❌ SI PASARON MÁS DE 60 MIN, NO SE DIBUJA (DESAPARECE)
+                }
 
                 if (cardContent) {
                     contenedor.innerHTML += cardContent;
                 }
             });
-
-            if (visiblesCount === 0) {
-                contenedor.innerHTML = `<div class="text-gray-500 italic text-center col-span-full py-8">Sin timers activos en ${servidorActual}. Registrar un kill arriba para iniciar.</div>`;
-            }
 
             // Estado de Pings (Bots Activos)
             const pingBox = document.getElementById('status-pings');
