@@ -44,20 +44,10 @@ def guardar_json(filepath, data):
     except Exception as e:
         print(f"Error guardando {filepath}: {e}")
 
-# Cargar datos iniciales
+# Cargar tus datos existentes sin modificar nada
 status_timers = cargar_json(DATA_FILE, status_timers)
 usuarios_db = cargar_json(USERS_FILE, {})
 donaciones_db = cargar_json(DONACIONES_FILE, [])
-
-# Crear usuario Administrador por defecto si no existe ninguno
-if not usuarios_db:
-    usuarios_db["admin"] = {
-        "password": generate_password_hash("admin123"),
-        "rol": "admin",
-        "requiere_cambio": False,
-        "creado_por": "Sistema"
-    }
-    guardar_json(USERS_FILE, usuarios_db)
 
 
 # --- RUTAS PRINCIPALES DE LA WEB ---
@@ -94,7 +84,7 @@ def logout():
 
 @app.route('/api/session')
 def api_session():
-    if 'user' in session:
+    if 'user' in session and session['user'] in usuarios_db:
         user_info = usuarios_db.get(session['user'], {})
         return jsonify({
             "logged_in": True,
@@ -151,7 +141,6 @@ def registrar_kill():
     status_timers[server][boss] = int(time.time())
     guardar_json(DATA_FILE, status_timers)
 
-    # Actualizar heartbeat si viene del bot local
     if pc_id != 'Manual Web':
         heartbeats[server] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         ultimas_pcs[server] = pc_id
@@ -161,7 +150,6 @@ def registrar_kill():
 
 @app.route('/api/reset_boss', methods=['POST'])
 def reset_boss():
-    """Elimina el registro de un boss de la pantalla para toda la guild (botón ✕)"""
     data = request.json or {}
     server = data.get('server')
     boss = data.get('boss')
