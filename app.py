@@ -23,13 +23,12 @@ status_timers = {
     "Server 20": {}
 }
 
-# Lista de tarjetas ocultas globalmente (Sincronizado para toda la guild)
 tarjetas_ocultas_global = set()
-
 heartbeats = {}
 ultimas_pcs = {}
 ultimos_pjs = {}
 
+# --- FUNCIONES DE PERSISTENCIA ---
 def cargar_json(filepath, default_val):
     if os.path.exists(filepath):
         try:
@@ -46,10 +45,20 @@ def guardar_json(filepath, data):
     except Exception as e:
         print(f"Error guardando {filepath}: {e}")
 
-# Cargar datos existentes
+# Cargar datos
 status_timers = cargar_json(DATA_FILE, status_timers)
 usuarios_db = cargar_json(USERS_FILE, {})
 donaciones_db = cargar_json(DONACIONES_FILE, [])
+
+# SI LA DB VIENE VACÍA POR REINICIO DE RENDER, CREAR USUARIO MAESTRO
+if not usuarios_db:
+    usuarios_db["admin"] = {
+        "password": generate_password_hash("admin123"),
+        "rol": "admin",
+        "requiere_cambio": False,
+        "creado_por": "Sistema"
+    }
+    guardar_json(USERS_FILE, usuarios_db)
 
 
 @app.route('/')
@@ -57,26 +66,34 @@ def index():
     return render_template('index.html', link_descarga=LINK_DESCARGA_BOT)
 
 
-# --- AUTENTICACIÓN ---
+# --- RUTAS DE AUTENTICACIÓN ---
 
 @app.route('/login', methods=['POST'])
 def login():
     global usuarios_db
+    # Forzar recarga desde archivo por si cambió
     usuarios_db = cargar_json(USERS_FILE, usuarios_db)
     
     data = request.json or {}
     username = data.get('username', '').strip().lower()
     password = data.get('password', '')
 
-    if username in usuarios_db and check_password_hash(usuarios_db[username]["password"], password):
-        session['user'] = username
-        session['rol'] = usuarios_db[username].get("rol", "encargado")
-        return jsonify({
-            "status": "ok", 
-            "user": username, 
-            "rol": usuarios_db[username].get("rol", "encargado"),
-            "requiere_cambio": usuarios_db[username].get("requiere_cambio", False)
-        }), 200
+    if username in usuarios_db:
+        stored_hash = usuarios_db[username]["password"]
+        if check_password_hash(stored_hash, password):
+            session['user'] = username
+            session['rol'] = usuarios_db[username].get("rol", "encargado")
+            print(f"✅ Login exitoso: {username}")
+            return jsonify({
+                "status": "ok", 
+                "user": username, 
+                "rol": usuarios_db[username].get("rol", "encargado"),
+                "requiere_cambio": usuarios_db[username].get("requiere_cambio", False)
+            }), 200
+        else:
+            print(f"❌ Clave incorrecta para: {username}")
+    else:
+        print(f"❌ Usuario no encontrado: '{username}'. Usuarios en DB: {list(usuarios_db.keys())}")
     
     return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
 
@@ -118,8 +135,10 @@ def cambiar_clave():
     return jsonify({"status": "ok", "message": "Contraseña actualizada"}), 200
 
 
-# --- TIMERS Y BOTS ---
+# --- RUTAS DE TIMERS Y BOTS ---
 
+# REDIRECCIÓN PARA SOLUCIONAR EL ERROR 404 DE LA CAPTURA
+@app.route('/api/timers')
 @app.route('/api/status_timers')
 def get_status_timers():
     return jsonify({
@@ -146,7 +165,6 @@ def registrar_kill():
 
     status_timers[server][boss] = int(time.time())
     
-    # Al registrar un Kill nuevo, reaparece la tarjeta si estaba ocultada con la X
     clave_card = f"{server}_{boss}"
     if clave_card in tarjetas_ocultas_global:
         tarjetas_ocultas_global.remove(clave_card)
@@ -162,7 +180,6 @@ def registrar_kill():
 
 @app.route('/api/reset_boss', methods=['POST'])
 def reset_boss():
-    """Oculta la tarjeta para TODOS los usuarios que estén viendo la web"""
     data = request.json or {}
     server = data.get('server')
     boss = data.get('boss')
@@ -193,7 +210,7 @@ def registrar_heartbeat():
     return jsonify({"error": "Servidor requerido"}), 400
 
 
-# --- DONACIONES ---
+# --- RUTAS DE DONACIONES ---
 
 @app.route('/api/donaciones', methods=['GET', 'POST'])
 def donaciones():
@@ -249,7 +266,7 @@ def editar_donacion(donacion_id):
     return jsonify({"error": "Donación no encontrada"}), 404
 
 
-# --- USUARIOS (ADMIN) ---
+# --- RUTAS DE USUARIOS (SÓLO ADMIN) ---
 
 @app.route('/api/usuarios', methods=['GET', 'POST'])
 def usuarios():
