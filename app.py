@@ -13,7 +13,6 @@ app.secret_key = os.environ.get("SECRET_KEY", "multiverso_secret_key_2026")
 DATABASE_URL = os.environ.get("DATABASE_URL")
 LINK_DESCARGA_BOT = "https://drive.google.com/uc?export=download&id=TU_ID_DE_GOOGLE_DRIVE"
 
-# ARCHIVOS LOCALES DE PERSISTENCIA (Respaldo en caso de caída de DB)
 DATA_FILE = "timers_data.json"
 USERS_FILE = "users_data.json"
 DONACIONES_FILE = "donaciones_data.json"
@@ -34,7 +33,7 @@ def guardar_json(filepath, data):
     except Exception as e:
         print(f"Error guardando {filepath}: {e}")
 
-# ESTADO EN MEMORIA LOCAL DE ALTA VELOCIDAD
+# Memoria local de respaldo
 status_timers = cargar_json(DATA_FILE, {
     "Server 1": {}, "Server 2": {}, "Server 3": {}, "Server 20": {}
 })
@@ -49,8 +48,6 @@ ultimas_pcs = {}
 ultimos_pjs = {}
 
 
-# --- CONEXIÓN SEGURA A SUPABASE ---
-
 def get_db():
     if not DATABASE_URL:
         return None
@@ -58,12 +55,40 @@ def get_db():
         db_url = DATABASE_URL
         if "sslmode" not in db_url:
             db_url += "?sslmode=require" if "?" not in db_url else "&sslmode=require"
-        conn = psycopg2.connect(db_url, cursor_factory=RealDictCursor, connect_timeout=3)
+        conn = psycopg2.connect(db_url, cursor_factory=RealDictCursor, connect_timeout=5)
         return conn
     except Exception as e:
-        # Si Supabase falla o está en cooldown, no interrumpe la ejecución del servidor
-        print(f"Advertencia DB (se usará respaldo local): {e}")
+        print(f"Advertencia DB: {e}")
         return None
+
+
+def cargar_timers_desde_db():
+    """Carga obligatoriamente los timers guardados en Supabase al iniciar"""
+    global status_timers, heartbeats, ultimas_pcs, ultimos_pjs
+    conn = get_db()
+    if conn:
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT server, timers, last_pc, last_pj, last_heartbeat FROM public.timers_bosses;")
+                rows = cur.fetchall()
+                for row in rows:
+                    svr = row['server']
+                    if row['timers']:
+                        status_timers[svr] = row['timers']
+                    if row['last_pc']:
+                        ultimas_pcs[svr] = row['last_pc']
+                    if row['last_pj']:
+                        ultimos_pjs[svr] = row['last_pj']
+                    if row['last_heartbeat']:
+                        heartbeats[svr] = row['last_heartbeat'].strftime("%Y-%m-%d %H:%M:%S")
+            conn.close()
+            print("✅ Timers cargados exitosamente desde Supabase.")
+        except Exception as e:
+            print(f"Error leyendo timers de Supabase: {e}")
+            if conn: conn.close()
+
+# CARGAR DATOS PERSISTENTES DE SUPABASE AL ARRANCAR EL SERVIDOR
+cargar_timers_desde_db()
 
 
 @app.route('/')
@@ -76,6 +101,27 @@ def index():
 @app.route('/api/status_timers')
 @app.route('/api/timers')
 def get_status_timers():
+    # Intenta refrescar desde Supabase si es posible
+    conn = get_db()
+    if conn:
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT server, timers, last_pc, last_pj, last_heartbeat FROM public.timers_bosses;")
+                rows = cur.fetchall()
+                for row in rows:
+                    svr = row['server']
+                    if row['timers']:
+                        status_timers[svr] = row['timers']
+                    if row['last_pc']:
+                        ultimas_pcs[svr] = row['last_pc']
+                    if row['last_pj']:
+                        ultimos_pjs[svr] = row['last_pj']
+                    if row['last_heartbeat']:
+                        heartbeats[svr] = row['last_heartbeat'].strftime("%Y-%m-%d %H:%M:%S")
+            conn.close()
+        except Exception:
+            if conn: conn.close()
+
     return jsonify({
         "timers": status_timers,
         "ocultos": list(tarjetas_ocultas_global),
@@ -99,7 +145,7 @@ def registrar_kill():
     if server not in status_timers:
         status_timers[server] = {}
 
-    # Actualiza inmediatamente en memoria local
+    # 1. Guardar en memoria local
     status_timers[server][boss] = int(time.time())
 
     clave_card = f"{server}_{boss}"
@@ -113,7 +159,7 @@ def registrar_kill():
         ultimas_pcs[server] = pc_id
         ultimos_pjs[server] = pj_name
 
-    # Intentar sincronizar asíncronamente con Supabase
+    # 2. Guardar permanentemente en Supabase
     conn = get_db()
     if conn:
         try:
@@ -126,7 +172,8 @@ def registrar_kill():
                 """, (server, json.dumps(status_timers.get(server, {})), pc_id, pj_name))
                 conn.commit()
             conn.close()
-        except Exception:
+        except Exception as e:
+            print(f"Error guardando kill en DB: {e}")
             if conn: conn.close()
 
     return jsonify({"status": "ok"}), 200
@@ -144,6 +191,20 @@ def reset_boss():
         if server in status_timers and boss in status_timers[server]:
             del status_timers[server][boss]
             guardar_json(DATA_FILE, status_timers)
+
+            conn = get_db()
+            if conn:
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute("""
+                            UPDATE public.timers_bosses 
+                            SET timers = %s 
+                            WHERE server = %s;
+                        """, (json.dumps(status_timers.get(server, {})), server))
+                        conn.commit()
+                    conn.close()
+                except Exception:
+                    if conn: conn.close()
 
         return jsonify({"status": "ok", "message": f"{boss} ocultado"}), 200
 
@@ -176,7 +237,6 @@ def login():
 
     user_info = None
 
-    # 1. Buscar primero en Supabase
     conn = get_db()
     if conn:
         try:
@@ -187,7 +247,6 @@ def login():
         except Exception:
             if conn: conn.close()
 
-    # 2. Si no hay conexión a Supabase, validar en la base local
     if not user_info and username in usuarios_db:
         user_info = {
             "username": username,
@@ -250,7 +309,6 @@ def cambiar_clave():
     username = session['user']
     new_hash = generate_password_hash(nueva_clave)
 
-    # Actualiza en Supabase
     conn = get_db()
     if conn:
         try:
@@ -264,7 +322,6 @@ def cambiar_clave():
         except Exception:
             if conn: conn.close()
 
-    # Actualiza localmente
     if username in usuarios_db:
         usuarios_db[username]["password"] = new_hash
         usuarios_db[username]["requiere_cambio"] = False
