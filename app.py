@@ -50,7 +50,7 @@ heartbeats = {}
 ultimas_pcs = {}
 ultimos_pjs = {}
 
-# Memoria de control para evitar duplicados por el cartel flotante en pantalla (60 segundos)
+# Control de carteles repetidos en pantalla (65 segundos por Server y Boss)
 carteles_leidos_recientemente = {}
 
 
@@ -74,6 +74,7 @@ def sincronizar_desde_db():
     if conn:
         try:
             with conn.cursor() as cur:
+                # 1. Timers
                 cur.execute("SELECT server, timers, last_pc, last_pj, last_heartbeat FROM public.timers_bosses;")
                 for row in cur.fetchall():
                     svr = row['server']
@@ -86,6 +87,7 @@ def sincronizar_desde_db():
                     if row['last_heartbeat']:
                         heartbeats[svr] = row['last_heartbeat'].strftime("%Y-%m-%d %H:%M:%S")
 
+                # 2. Usuarios
                 cur.execute("SELECT username, password_hash, rol, requiere_cambio_clave, creado_por FROM public.usuarios;")
                 for u in cur.fetchall():
                     uname = u['username'].lower()
@@ -97,6 +99,7 @@ def sincronizar_desde_db():
                         "creado_por": u.get('creado_por', 'Sistema')
                     }
 
+                # 3. Donaciones
                 cur.execute("""
                     SELECT id, pj_name, tipo_donacion, cantidad, registrado_por, modificado_por,
                            to_char(created_at, 'YYYY-MM-DD HH24:MI:SS') as fecha_registro,
@@ -148,20 +151,18 @@ def registrar_kill():
         return jsonify({"error": "Faltan datos"}), 400
 
     now_unix = int(time.time())
-    clave_cartel = f"{server}_{boss}_{pj_name}"
+    clave_cartel = f"{server}_{boss}"
 
-    # 1. FILTRO DE CARTEL REPETIDO EN PANTALLA (Ventana de 65 segundos)
+    # 1. BLOQUEO DE CARTEL FLOTANTE (Filtro estricto de 65 segundos por Server + Boss)
     if pc_id != 'Manual Web':
         ultima_lectura = carteles_leidos_recientemente.get(clave_cartel, 0)
         
-        # Si el mismo PJ reporta el mismo boss hace menos de 65s, es el cartel flotando en pantalla
         if (now_unix - ultima_lectura) < 65:
             return jsonify({
                 "status": "ignored", 
-                "message": "Cartel duplicado ignorado (flotando en pantalla)"
+                "message": f"Cartel duplicado de {boss} en {server} ignorado (flotando en pantalla)."
             }), 200
         
-        # Registrar el timestamp exacto del nuevo cartel procesado
         carteles_leidos_recientemente[clave_cartel] = now_unix
 
     # 2. ASIGNACIÓN INTELIGENTE A INSTANCIAS (ej. Moltragon 1 o Moltragon 2)
@@ -172,16 +173,14 @@ def registrar_kill():
         t1 = timers_svr.get(f"{boss} 1", 0)
         t2 = timers_svr.get(f"{boss} 2", 0)
 
-        # Asigna la muerte a la instancia libre/disponible
         if t1 == 0 or (now_unix - t1) > 3600:
             boss_target = f"{boss} 1"
         elif t2 == 0 or (now_unix - t2) > 3600:
             boss_target = f"{boss} 2"
         else:
-            # Si ambas están en cooldown, renueva la de kill más antiguo
             boss_target = f"{boss} 1" if t1 <= t2 else f"{boss} 2"
 
-    # 3. REGISTRAR KILL EFECTIVO
+    # 3. REGISTRAR EN MEMORIA Y PERSISTENCIA
     if server not in status_timers:
         status_timers[server] = {}
 
@@ -198,7 +197,7 @@ def registrar_kill():
         ultimas_pcs[server] = pc_id
         ultimos_pjs[server] = pj_name
 
-    # Resguardo en Supabase
+    # Sincronización en Supabase
     conn = get_db()
     if conn:
         try:
