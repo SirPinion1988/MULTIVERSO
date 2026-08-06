@@ -50,9 +50,11 @@ heartbeats = {}
 ultimas_pcs = {}
 ultimos_pjs = {}
 
+# Memoria de control para evitar duplicados por el cartel flotante en pantalla (60 segundos)
+carteles_leidos_recientemente = {}
+
 
 def get_db():
-    """Conexión segura a PostgreSQL con timeout estricto para evitar bloqueos"""
     if not DATABASE_URL:
         return None
     try:
@@ -67,13 +69,11 @@ def get_db():
 
 
 def sincronizar_desde_db():
-    """Carga inicial de resguardo desde Supabase"""
     global status_timers, heartbeats, ultimas_pcs, ultimos_pjs, usuarios_db, donaciones_db
     conn = get_db()
     if conn:
         try:
             with conn.cursor() as cur:
-                # 1. Timers
                 cur.execute("SELECT server, timers, last_pc, last_pj, last_heartbeat FROM public.timers_bosses;")
                 for row in cur.fetchall():
                     svr = row['server']
@@ -86,7 +86,6 @@ def sincronizar_desde_db():
                     if row['last_heartbeat']:
                         heartbeats[svr] = row['last_heartbeat'].strftime("%Y-%m-%d %H:%M:%S")
 
-                # 2. Usuarios
                 cur.execute("SELECT username, password_hash, rol, requiere_cambio_clave, creado_por FROM public.usuarios;")
                 for u in cur.fetchall():
                     uname = u['username'].lower()
@@ -98,7 +97,6 @@ def sincronizar_desde_db():
                         "creado_por": u.get('creado_por', 'Sistema')
                     }
 
-                # 3. Donaciones
                 cur.execute("""
                     SELECT id, pj_name, tipo_donacion, cantidad, registrado_por, modificado_por,
                            to_char(created_at, 'YYYY-MM-DD HH24:MI:SS') as fecha_registro,
@@ -142,26 +140,54 @@ def get_status_timers():
 def registrar_kill():
     data = request.json or {}
     server = data.get('server')
-    boss = data.get('boss')
+    boss = data.get('boss')      # ej. "Moltragon"
     pc_id = data.get('pc_id', 'Manual Web')
     pj_name = data.get('pj_name', 'Manual Web')
 
     if not server or not boss:
         return jsonify({"error": "Faltan datos"}), 400
 
+    now_unix = int(time.time())
+    clave_cartel = f"{server}_{boss}_{pj_name}"
+
+    # 1. FILTRO DE CARTEL REPETIDO EN PANTALLA (Ventana de 65 segundos)
+    if pc_id != 'Manual Web':
+        ultima_lectura = carteles_leidos_recientemente.get(clave_cartel, 0)
+        
+        # Si el mismo PJ reporta el mismo boss hace menos de 65s, es el cartel flotando en pantalla
+        if (now_unix - ultima_lectura) < 65:
+            return jsonify({
+                "status": "ignored", 
+                "message": "Cartel duplicado ignorado (flotando en pantalla)"
+            }), 200
+        
+        # Registrar el timestamp exacto del nuevo cartel procesado
+        carteles_leidos_recientemente[clave_cartel] = now_unix
+
+    # 2. ASIGNACIÓN INTELIGENTE A INSTANCIAS (ej. Moltragon 1 o Moltragon 2)
+    boss_target = boss
+    timers_svr = status_timers.get(server, {})
+
+    if boss in ["Muggron", "Dreadhorn", "Moltragon", "Kharzul", "Vescrya"]:
+        t1 = timers_svr.get(f"{boss} 1", 0)
+        t2 = timers_svr.get(f"{boss} 2", 0)
+
+        # Asigna la muerte a la instancia libre/disponible
+        if t1 == 0 or (now_unix - t1) > 3600:
+            boss_target = f"{boss} 1"
+        elif t2 == 0 or (now_unix - t2) > 3600:
+            boss_target = f"{boss} 2"
+        else:
+            # Si ambas están en cooldown, renueva la de kill más antiguo
+            boss_target = f"{boss} 1" if t1 <= t2 else f"{boss} 2"
+
+    # 3. REGISTRAR KILL EFECTIVO
     if server not in status_timers:
         status_timers[server] = {}
 
-    now_unix = int(time.time())
-    last_kill_unix = status_timers[server].get(boss, 0)
+    status_timers[server][boss_target] = now_unix
 
-    # PROTECCIÓN ANTI-DUPLICADO: Si se intenta registrar el mismo boss hace menos de 120 segundos, se ignora
-    if last_kill_unix > 0 and (now_unix - last_kill_unix) < 120:
-        return jsonify({"status": "ignored", "message": "El boss ya fue registrado recientemente"}), 200
-
-    status_timers[server][boss] = now_unix
-
-    clave_card = f"{server}_{boss}"
+    clave_card = f"{server}_{boss_target}"
     if clave_card in tarjetas_ocultas_global:
         tarjetas_ocultas_global.remove(clave_card)
 
@@ -172,7 +198,7 @@ def registrar_kill():
         ultimas_pcs[server] = pc_id
         ultimos_pjs[server] = pj_name
 
-    # Resguardo asíncrono en Supabase
+    # Resguardo en Supabase
     conn = get_db()
     if conn:
         try:
@@ -185,10 +211,10 @@ def registrar_kill():
                 """, (server, json.dumps(status_timers.get(server, {})), pc_id, pj_name))
                 conn.commit()
             conn.close()
-        except Exception as e:
+        except Exception:
             if conn: conn.close()
 
-    return jsonify({"status": "ok"}), 200
+    return jsonify({"status": "ok", "message": f"Kill de {boss_target} registrado"}), 200
 
 
 @app.route('/api/reset_boss', methods=['POST'])
@@ -200,6 +226,7 @@ def reset_boss():
     if server and boss:
         clave_card = f"{server}_{boss}"
         tarjetas_ocultas_global.add(clave_card)
+
         if server in status_timers and boss in status_timers[server]:
             del status_timers[server][boss]
             guardar_json(DATA_FILE, status_timers)
