@@ -36,7 +36,7 @@ def guardar_json(filepath, data):
         print(f"Error guardando {filepath}: {e}")
 
 
-# MEMORIA LOCAL DE RESPALDO
+# MEMORIA LOCAL DE RESPALDO Y RENDIMIENTO
 status_timers = cargar_json(DATA_FILE, {
     "Server 1": {}, "Server 2": {}, "Server 3": {}, "Server 20": {}
 })
@@ -52,24 +52,23 @@ ultimos_pjs = {}
 
 
 def get_db():
+    """Conexión segura a PostgreSQL con timeout estricto para evitar bloqueos"""
     if not DATABASE_URL:
         return None
     try:
         db_url = DATABASE_URL
         if "sslmode" not in db_url:
             db_url += "?sslmode=require" if "?" not in db_url else "&sslmode=require"
-        conn = psycopg2.connect(db_url, cursor_factory=RealDictCursor, connect_timeout=4)
+        conn = psycopg2.connect(db_url, cursor_factory=RealDictCursor, connect_timeout=3)
         return conn
     except Exception as e:
-        print(f"Advertencia DB: {e}")
+        print(f"Advertencia DB (operando en modo local): {e}")
         return None
 
 
-# --- CARGA INICIAL DESDE SUPABASE ---
-
 def sincronizar_desde_db():
-    """Carga Timers y Usuarios desde Supabase a la memoria al arrancar"""
-    global status_timers, heartbeats, ultimas_pcs, ultimos_pjs, usuarios_db
+    """Carga inicial de resguardo desde Supabase"""
+    global status_timers, heartbeats, ultimas_pcs, ultimos_pjs, usuarios_db, donaciones_db
     conn = get_db()
     if conn:
         try:
@@ -98,10 +97,22 @@ def sincronizar_desde_db():
                         "requiere_cambio": u.get('requiere_cambio_clave', False),
                         "creado_por": u.get('creado_por', 'Sistema')
                     }
+
+                # 3. Donaciones
+                cur.execute("""
+                    SELECT id, pj_name, tipo_donacion, cantidad, registrado_por, modificado_por,
+                           to_char(created_at, 'YYYY-MM-DD HH24:MI:SS') as fecha_registro,
+                           to_char(fecha_modificacion, 'YYYY-MM-DD HH24:MI:SS') as fecha_modificacion
+                    FROM public.donaciones ORDER BY created_at DESC;
+                """)
+                rows_don = cur.fetchall()
+                if rows_don:
+                    donaciones_db = rows_don
+
             conn.close()
-            print("✅ Datos de Timers y Usuarios sincronizados con Supabase.")
+            print("✅ Datos cargados y sincronizados desde Supabase.")
         except Exception as e:
-            print(f"Error sincronizando DB: {e}")
+            print(f"Error en sincronización DB: {e}")
             if conn: conn.close()
 
 
@@ -154,6 +165,7 @@ def registrar_kill():
         ultimas_pcs[server] = pc_id
         ultimos_pjs[server] = pj_name
 
+    # Resguardo asíncrono en Supabase
     conn = get_db()
     if conn:
         try:
@@ -212,6 +224,22 @@ def registrar_heartbeat():
         heartbeats[server] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         ultimas_pcs[server] = pc_id
         ultimos_pjs[server] = pj_name
+
+        conn = get_db()
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        INSERT INTO public.timers_bosses (server, last_pc, last_pj, last_heartbeat)
+                        VALUES (%s, %s, %s, NOW())
+                        ON CONFLICT (server) DO UPDATE 
+                        SET last_pc = EXCLUDED.last_pc, last_pj = EXCLUDED.last_pj, last_heartbeat = NOW();
+                    """, (server, pc_id, pj_name))
+                    conn.commit()
+                conn.close()
+            except Exception:
+                if conn: conn.close()
+
         return jsonify({"status": "ok"}), 200
 
     return jsonify({"error": "Servidor requerido"}), 400
@@ -228,7 +256,6 @@ def login():
 
     user_info = usuarios_db.get(username)
 
-    # Buscar en Supabase si no está cargado localmente
     if not user_info:
         conn = get_db()
         if conn:
@@ -302,14 +329,12 @@ def cambiar_clave():
     username = session['user']
     new_hash = generate_password_hash(nueva_clave)
 
-    # Actualizar local
     u_key = username.lower()
     if u_key in usuarios_db:
         usuarios_db[u_key]["password"] = new_hash
         usuarios_db[u_key]["requiere_cambio"] = False
         guardar_json(USERS_FILE, usuarios_db)
 
-    # Actualizar Supabase
     conn = get_db()
     if conn:
         try:
@@ -331,7 +356,6 @@ def usuarios():
 
     conn = get_db()
 
-    # GET: Consultar Supabase primero, si no responde usar usuarios_db
     if request.method == 'GET':
         lista = []
         if conn:
@@ -351,7 +375,6 @@ def usuarios():
             except Exception:
                 if conn: conn.close()
 
-        # Fallback local
         for u, val in usuarios_db.items():
             lista.append({
                 "username": val.get("username", u),
@@ -361,7 +384,6 @@ def usuarios():
             })
         return jsonify(lista)
 
-    # POST: Crear usuario en Supabase y localmente
     if request.method == 'POST':
         data = request.json or {}
         new_user = data.get('username', '').strip()
@@ -375,7 +397,6 @@ def usuarios():
         u_key = new_user.lower()
         p_hash = generate_password_hash(new_pass)
 
-        # 1. Guardar local
         usuarios_db[u_key] = {
             "username": new_user,
             "password": p_hash,
@@ -385,7 +406,6 @@ def usuarios():
         }
         guardar_json(USERS_FILE, usuarios_db)
 
-        # 2. Guardar en Supabase
         if conn:
             try:
                 with conn.cursor() as cur:
@@ -436,6 +456,20 @@ def donaciones():
 
         donaciones_db.insert(0, nueva_donacion)
         guardar_json(DONACIONES_FILE, donaciones_db)
+
+        conn = get_db()
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        INSERT INTO public.donaciones (pj_name, tipo_donacion, cantidad, registrado_por)
+                        VALUES (%s, %s, %s, %s);
+                    """, (pj_name, tipo_donacion, int(cantidad), session['user']))
+                    conn.commit()
+                conn.close()
+            except Exception:
+                if conn: conn.close()
+
         return jsonify({"status": "ok", "donacion": nueva_donacion}), 201
 
 
@@ -454,6 +488,22 @@ def editar_donacion(donacion_id):
             don['fecha_modificacion'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             guardar_json(DONACIONES_FILE, donaciones_db)
+
+            conn = get_db()
+            if conn:
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute("""
+                            UPDATE public.donaciones 
+                            SET pj_name = %s, tipo_donacion = %s, cantidad = %s, 
+                                modificado_por = %s, fecha_modificacion = NOW()
+                            WHERE id = %s;
+                        """, (don['pj_name'], don['tipo_donacion'], don['cantidad'], session['user'], donacion_id))
+                        conn.commit()
+                    conn.close()
+                except Exception:
+                    if conn: conn.close()
+
             return jsonify({"status": "ok", "donacion": don}), 200
 
     return jsonify({"error": "Donación no encontrada"}), 404
