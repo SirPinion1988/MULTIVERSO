@@ -152,7 +152,14 @@ def registrar_kill():
     if server not in status_timers:
         status_timers[server] = {}
 
-    status_timers[server][boss] = int(time.time())
+    now_unix = int(time.time())
+    last_kill_unix = status_timers[server].get(boss, 0)
+
+    # PROTECCIÓN ANTI-DUPLICADO: Si se intenta registrar el mismo boss hace menos de 120 segundos, se ignora
+    if last_kill_unix > 0 and (now_unix - last_kill_unix) < 120:
+        return jsonify({"status": "ignored", "message": "El boss ya fue registrado recientemente"}), 200
+
+    status_timers[server][boss] = now_unix
 
     clave_card = f"{server}_{boss}"
     if clave_card in tarjetas_ocultas_global:
