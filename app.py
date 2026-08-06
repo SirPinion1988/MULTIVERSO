@@ -101,7 +101,7 @@ def index():
 @app.route('/api/status_timers')
 @app.route('/api/timers')
 def get_status_timers():
-    # Intenta refrescar desde Supabase si es posible
+    # Intenta refrescar desde Supabase
     conn = get_db()
     if conn:
         try:
