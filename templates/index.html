@@ -203,33 +203,36 @@
         let esAdmin = false;
         let listaDonacionesCache = [];
 
+        // NOMBRES LIMPIOS (SIN NUMERACIÓN)
         const BOSSES_FIJOS = {
-            "Server 1": ["Muggron 1", "Muggron 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Borgar", "Kharzul 1", "Vescrya 1"],
-            "Server 2": ["Muggron 1", "Muggron 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Borgar", "Kharzul 1", "Vescrya 1"],
-            "Server 3": ["Muggron 1", "Muggron 2", "Dreadhorn 1", "Dreadhorn 2", "Moltragon 1", "Moltragon 2", "Borgar", "Kharzul 1", "Vescrya 1"],
-            "Server 20": ["Muggron Barracks 1", "Muggron Barracks 2", "Muggron Crywolf 1", "Muggron Crywolf 2", "Kharzul 1", "Kharzul 2", "Kharzul 3", "Vescrya 1", "Vescrya 2", "Vescrya 3"]
+            "Server 1": ["Muggron", "Dreadhorn", "Moltragon", "Borgar", "Kharzul", "Vescrya"],
+            "Server 2": ["Muggron", "Dreadhorn", "Moltragon", "Borgar", "Kharzul", "Vescrya"],
+            "Server 3": ["Muggron", "Dreadhorn", "Moltragon", "Borgar", "Kharzul", "Vescrya"],
+            "Server 20": ["Muggron Barracks", "Muggron Crywolf", "Kharzul", "Vescrya"]
         };
 
         const COOLDOWNS_LOCAL = {
-            "Muggron 1": 180, "Muggron 2": 180,
-            "Dreadhorn 1": 60, "Dreadhorn 2": 60,
-            "Moltragon 1": 60, "Moltragon 2": 60,
+            "Muggron": 180,
+            "Dreadhorn": 60,
+            "Moltragon": 60,
             "Borgar": 120,
-            "Kharzul 1": 420, "Kharzul 2": 420, "Kharzul 3": 420,
-            "Vescrya 1": 420, "Vescrya 2": 420, "Vescrya 3": 420,
-            "Muggron Barracks 1": 180, "Muggron Barracks 2": 180,
-            "Muggron Crywolf 1": 180, "Muggron Crywolf 2": 180,
+            "Kharzul": 420,
+            "Vescrya": 420,
+            "Muggron Barracks": 180,
+            "Muggron Crywolf": 180,
             "Yellow Goblin": 600, "Blue Goblin": 600, "Red Goblin": 600,
-            "Red Dragon": 360, 
-            "Santa 1": 360, "Santa 2": 360,
-            "White Wizard 1": 360, "White Wizard 2": 360,
-            "Skeleton King 1": 360, "Skeleton King 2": 360
+            "Red Dragon": 360,
+            "Santa": 360,
+            "White Wizard": 360,
+            "Skeleton King": 360
         };
 
         const BOSSES_SOLO_MANUALES = [
-            "Red Dragon", "Yellow Goblin", "Blue Goblin", "Red Goblin",
-            "Santa 1", "Santa 2", "White Wizard 1", "White Wizard 2",
-            "Skeleton King 1", "Skeleton King 2"
+            "Red Dragon",
+            "Yellow Goblin", "Blue Goblin", "Red Goblin",
+            "Santa",
+            "White Wizard",
+            "Skeleton King"
         ];
 
         function mostrarToast(mensaje, icono = "⚠️") {
@@ -464,6 +467,7 @@
                     const cdSegundos = cdMinutos * 60;
                     const ventanaSegundos = 3600;
                     const cicloTotalSegundos = cdSegundos + ventanaSegundos;
+                    
                     const esEventoManual = BOSSES_SOLO_MANUALES.includes(bossName);
 
                     let ordenTiempo = 99999999;
