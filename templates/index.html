@@ -420,13 +420,12 @@
 
                     const cdMinutos = COOLDOWNS_LOCAL[bossName] || 60;
                     const cdSegundos = cdMinutos * 60;
-                    const ventanaSegundos = 3600;
+                    const ventanaSegundos = 3600; // 1 hora de cacería/ventana
                     const cicloTotalSegundos = cdSegundos + ventanaSegundos;
                     const esEventoManual = BOSSES_SOLO_MANUALES.includes(bossName);
 
                     let ordenTiempo = 99999999;
                     let cardHTML = '';
-
                     let killUnix = timersSvr[bossName];
 
                     const btnCerrarHTML = `<button onclick="ocultarTarjetaGlobal('${svr}', '${bossName}')" title="Quitar para toda la guild" class="absolute top-2 right-2 text-white hover:text-red-400 font-extrabold text-sm bg-black/60 hover:bg-black/90 w-6 h-6 rounded-full flex items-center justify-center transition border border-purple-500/50 z-10 cursor-pointer shadow">✕</button>`;
@@ -434,6 +433,7 @@
                     if (killUnix) {
                         let transcurridoTotal = ahoraUnix - killUnix;
 
+                        // Recálculo automático de ciclos pasados (SOLO si NO es manual)
                         if (!esEventoManual && transcurridoTotal >= cicloTotalSegundos) {
                             const ciclosPasados = Math.floor(transcurridoTotal / cicloTotalSegundos);
                             killUnix += (ciclosPasados * cicloTotalSegundos);
@@ -443,9 +443,11 @@
                         const targetRespawnUnix = killUnix + cdSegundos;
                         const finVentanaUnix = targetRespawnUnix + ventanaSegundos;
 
+                        // CASO 1: EN COOLDOWN (Rojo)
                         if (ahoraUnix < targetRespawnUnix) {
                             const restoSec = targetRespawnUnix - ahoraUnix;
-                            ordenTiempo = restoSec;
+                            // Ordenamiento: los que falten menos tiempo van primero (1, 2, 3...)
+                            ordenTiempo = restoSec; 
                             cardHTML = `
                                 <div class="card p-4 rounded-xl bg-red-950/70 border border-red-500 shadow-lg flex flex-col justify-between text-center min-h-[140px] relative">
                                     ${btnCerrarHTML}
@@ -461,9 +463,11 @@
                                 </div>
                             `;
                         } 
-                        else if (ahoraUnix >= targetRespawnUnix && ahoraUnix <= finVentanaUnix) {
+                        // CASO 2: CACERÍA EN CURSO / VENTANA (Verde)
+                        else if (ahoraUnix >= targetRespawnUnix && (esEventoManual || ahoraUnix <= finVentanaUnix)) {
                             const transcurridoVentana = ahoraUnix - targetRespawnUnix;
-                            ordenTiempo = -1000 + transcurridoVentana;
+                            // Prioridad Máxima: van arriba de todo en pantalla (-1000 en adelante)
+                            ordenTiempo = -1000000 + transcurridoVentana;
                             cardHTML = `
                                 <div class="card p-4 rounded-xl bg-emerald-950/70 border border-emerald-500 shadow-lg flex flex-col justify-between text-center min-h-[140px] relative">
                                     ${btnCerrarHTML}
@@ -481,6 +485,7 @@
                         }
                     }
 
+                    // CASO 3: DISPONIBLES SIN REGISTRO PREVIO (Púrpura)
                     if (!cardHTML && !esEventoManual) {
                         ordenTiempo = 88888888;
                         cardHTML = `
@@ -505,6 +510,10 @@
                 });
             });
 
+            // ORDENAMIENTO EXACTO POR TIEMPO:
+            // 1. Cacerías en curso (Ventana verde) arriba de todo (-1000000...)
+            // 2. Cooldowns (🔴) ordenados de MENOR a MAYOR tiempo restante.
+            // 3. Bosses disponibles/esperando kill al final.
             listaCards.sort((a, b) => a.orden - b.orden);
 
             if (listaCards.length === 0) {
