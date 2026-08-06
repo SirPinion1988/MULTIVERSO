@@ -17,6 +17,7 @@ DATA_FILE = "timers_data.json"
 USERS_FILE = "users_data.json"
 DONACIONES_FILE = "donaciones_data.json"
 
+
 def cargar_json(filepath, default_val):
     if os.path.exists(filepath):
         try:
@@ -26,6 +27,7 @@ def cargar_json(filepath, default_val):
             print(f"Error leyendo {filepath}: {e}")
     return default_val
 
+
 def guardar_json(filepath, data):
     try:
         with open(filepath, 'w', encoding='utf-8') as f:
@@ -33,7 +35,8 @@ def guardar_json(filepath, data):
     except Exception as e:
         print(f"Error guardando {filepath}: {e}")
 
-# Memoria local de respaldo
+
+# MEMORIA LOCAL DE RESPALDO
 status_timers = cargar_json(DATA_FILE, {
     "Server 1": {}, "Server 2": {}, "Server 3": {}, "Server 20": {}
 })
@@ -55,23 +58,25 @@ def get_db():
         db_url = DATABASE_URL
         if "sslmode" not in db_url:
             db_url += "?sslmode=require" if "?" not in db_url else "&sslmode=require"
-        conn = psycopg2.connect(db_url, cursor_factory=RealDictCursor, connect_timeout=5)
+        conn = psycopg2.connect(db_url, cursor_factory=RealDictCursor, connect_timeout=4)
         return conn
     except Exception as e:
         print(f"Advertencia DB: {e}")
         return None
 
 
-def cargar_timers_desde_db():
-    """Carga obligatoriamente los timers guardados en Supabase al iniciar"""
-    global status_timers, heartbeats, ultimas_pcs, ultimos_pjs
+# --- CARGA INICIAL DESDE SUPABASE ---
+
+def sincronizar_desde_db():
+    """Carga Timers y Usuarios desde Supabase a la memoria al arrancar"""
+    global status_timers, heartbeats, ultimas_pcs, ultimos_pjs, usuarios_db
     conn = get_db()
     if conn:
         try:
             with conn.cursor() as cur:
+                # 1. Timers
                 cur.execute("SELECT server, timers, last_pc, last_pj, last_heartbeat FROM public.timers_bosses;")
-                rows = cur.fetchall()
-                for row in rows:
+                for row in cur.fetchall():
                     svr = row['server']
                     if row['timers']:
                         status_timers[svr] = row['timers']
@@ -81,14 +86,26 @@ def cargar_timers_desde_db():
                         ultimos_pjs[svr] = row['last_pj']
                     if row['last_heartbeat']:
                         heartbeats[svr] = row['last_heartbeat'].strftime("%Y-%m-%d %H:%M:%S")
+
+                # 2. Usuarios
+                cur.execute("SELECT username, password_hash, rol, requiere_cambio_clave, creado_por FROM public.usuarios;")
+                for u in cur.fetchall():
+                    uname = u['username'].lower()
+                    usuarios_db[uname] = {
+                        "username": u['username'],
+                        "password": u['password_hash'],
+                        "rol": u.get('rol', 'encargado'),
+                        "requiere_cambio": u.get('requiere_cambio_clave', False),
+                        "creado_por": u.get('creado_por', 'Sistema')
+                    }
             conn.close()
-            print("✅ Timers cargados exitosamente desde Supabase.")
+            print("✅ Datos de Timers y Usuarios sincronizados con Supabase.")
         except Exception as e:
-            print(f"Error leyendo timers de Supabase: {e}")
+            print(f"Error sincronizando DB: {e}")
             if conn: conn.close()
 
-# CARGAR DATOS PERSISTENTES DE SUPABASE AL ARRANCAR EL SERVIDOR
-cargar_timers_desde_db()
+
+sincronizar_desde_db()
 
 
 @app.route('/')
@@ -101,27 +118,6 @@ def index():
 @app.route('/api/status_timers')
 @app.route('/api/timers')
 def get_status_timers():
-    # Intenta refrescar desde Supabase
-    conn = get_db()
-    if conn:
-        try:
-            with conn.cursor() as cur:
-                cur.execute("SELECT server, timers, last_pc, last_pj, last_heartbeat FROM public.timers_bosses;")
-                rows = cur.fetchall()
-                for row in rows:
-                    svr = row['server']
-                    if row['timers']:
-                        status_timers[svr] = row['timers']
-                    if row['last_pc']:
-                        ultimas_pcs[svr] = row['last_pc']
-                    if row['last_pj']:
-                        ultimos_pjs[svr] = row['last_pj']
-                    if row['last_heartbeat']:
-                        heartbeats[svr] = row['last_heartbeat'].strftime("%Y-%m-%d %H:%M:%S")
-            conn.close()
-        except Exception:
-            if conn: conn.close()
-
     return jsonify({
         "timers": status_timers,
         "ocultos": list(tarjetas_ocultas_global),
@@ -145,7 +141,6 @@ def registrar_kill():
     if server not in status_timers:
         status_timers[server] = {}
 
-    # 1. Guardar en memoria local
     status_timers[server][boss] = int(time.time())
 
     clave_card = f"{server}_{boss}"
@@ -159,7 +154,6 @@ def registrar_kill():
         ultimas_pcs[server] = pc_id
         ultimos_pjs[server] = pj_name
 
-    # 2. Guardar permanentemente en Supabase
     conn = get_db()
     if conn:
         try:
@@ -173,7 +167,6 @@ def registrar_kill():
                 conn.commit()
             conn.close()
         except Exception as e:
-            print(f"Error guardando kill en DB: {e}")
             if conn: conn.close()
 
     return jsonify({"status": "ok"}), 200
@@ -196,11 +189,8 @@ def reset_boss():
             if conn:
                 try:
                     with conn.cursor() as cur:
-                        cur.execute("""
-                            UPDATE public.timers_bosses 
-                            SET timers = %s 
-                            WHERE server = %s;
-                        """, (json.dumps(status_timers.get(server, {})), server))
+                        cur.execute("UPDATE public.timers_bosses SET timers = %s WHERE server = %s;", 
+                                    (json.dumps(status_timers.get(server, {})), server))
                         conn.commit()
                     conn.close()
                 except Exception:
@@ -227,36 +217,39 @@ def registrar_heartbeat():
     return jsonify({"error": "Servidor requerido"}), 400
 
 
-# --- AUTENTICACIÓN Y SESIONES ---
+# --- AUTENTICACIÓN Y USUARIOS ---
 
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json or {}
-    username = data.get('username', '').strip().lower()
+    username_raw = data.get('username', '').strip()
+    username = username_raw.lower()
     password = data.get('password', '')
 
-    user_info = None
+    user_info = usuarios_db.get(username)
 
-    conn = get_db()
-    if conn:
-        try:
-            with conn.cursor() as cur:
-                cur.execute("SELECT * FROM public.usuarios WHERE LOWER(username) = %s;", (username,))
-                user_info = cur.fetchone()
-            conn.close()
-        except Exception:
-            if conn: conn.close()
-
-    if not user_info and username in usuarios_db:
-        user_info = {
-            "username": username,
-            "password_hash": usuarios_db[username].get("password", ""),
-            "rol": usuarios_db[username].get("rol", "encargado"),
-            "requiere_cambio_clave": usuarios_db[username].get("requiere_cambio", False)
-        }
+    # Buscar en Supabase si no está cargado localmente
+    if not user_info:
+        conn = get_db()
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT * FROM public.usuarios WHERE LOWER(username) = %s;", (username,))
+                    row = cur.fetchone()
+                    if row:
+                        user_info = {
+                            "username": row['username'],
+                            "password": row['password_hash'],
+                            "rol": row.get('rol', 'encargado'),
+                            "requiere_cambio": row.get('requiere_cambio_clave', False)
+                        }
+                        usuarios_db[username] = user_info
+                conn.close()
+            except Exception:
+                if conn: conn.close()
 
     if user_info:
-        stored_pass = user_info.get("password_hash", "")
+        stored_pass = user_info.get("password", "")
         es_valido = False
         
         if stored_pass.startswith("scrypt:") or stored_pass.startswith("pbkdf2:"):
@@ -265,13 +258,13 @@ def login():
             es_valido = (stored_pass == password)
 
         if es_valido:
-            session['user'] = user_info['username']
+            session['user'] = user_info.get('username', username_raw)
             session['rol'] = user_info.get("rol", "encargado")
             return jsonify({
                 "status": "ok",
-                "user": user_info['username'],
+                "user": session['user'],
                 "rol": session['rol'],
-                "requiere_cambio": user_info.get("requiere_cambio_clave", False)
+                "requiere_cambio": user_info.get("requiere_cambio", False)
             }), 200
 
     return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
@@ -309,28 +302,109 @@ def cambiar_clave():
     username = session['user']
     new_hash = generate_password_hash(nueva_clave)
 
+    # Actualizar local
+    u_key = username.lower()
+    if u_key in usuarios_db:
+        usuarios_db[u_key]["password"] = new_hash
+        usuarios_db[u_key]["requiere_cambio"] = False
+        guardar_json(USERS_FILE, usuarios_db)
+
+    # Actualizar Supabase
     conn = get_db()
     if conn:
         try:
             with conn.cursor() as cur:
-                cur.execute(
-                    "UPDATE public.usuarios SET password_hash = %s, requiere_cambio_clave = FALSE WHERE username = %s;",
-                    (new_hash, username)
-                )
+                cur.execute("UPDATE public.usuarios SET password_hash = %s, requiere_cambio_clave = FALSE WHERE LOWER(username) = %s;", 
+                            (new_hash, u_key))
                 conn.commit()
             conn.close()
         except Exception:
             if conn: conn.close()
 
-    if username in usuarios_db:
-        usuarios_db[username]["password"] = new_hash
-        usuarios_db[username]["requiere_cambio"] = False
-        guardar_json(USERS_FILE, usuarios_db)
-
     return jsonify({"status": "ok", "message": "Contraseña actualizada"}), 200
 
 
-# --- DONACIONES Y USUARIOS ---
+@app.route('/api/usuarios', methods=['GET', 'POST'])
+def usuarios():
+    if 'user' not in session or session.get('rol') != 'admin':
+        return jsonify({"error": "Acceso denegado"}), 403
+
+    conn = get_db()
+
+    # GET: Consultar Supabase primero, si no responde usar usuarios_db
+    if request.method == 'GET':
+        lista = []
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT username, rol, requiere_cambio_clave, creado_por FROM public.usuarios ORDER BY id ASC;")
+                    rows = cur.fetchall()
+                    for r in rows:
+                        lista.append({
+                            "username": r['username'],
+                            "rol": r.get('rol', 'encargado'),
+                            "requiere_cambio_clave": r.get('requiere_cambio_clave', False),
+                            "creado_por": r.get('creado_por', 'Sistema')
+                        })
+                conn.close()
+                return jsonify(lista)
+            except Exception:
+                if conn: conn.close()
+
+        # Fallback local
+        for u, val in usuarios_db.items():
+            lista.append({
+                "username": val.get("username", u),
+                "rol": val.get("rol", "encargado"),
+                "requiere_cambio_clave": val.get("requiere_cambio", False),
+                "creado_por": val.get("creado_por", "Sistema")
+            })
+        return jsonify(lista)
+
+    # POST: Crear usuario en Supabase y localmente
+    if request.method == 'POST':
+        data = request.json or {}
+        new_user = data.get('username', '').strip()
+        new_pass = data.get('password', '')
+        new_rol = data.get('rol', 'encargado')
+
+        if not new_user or not new_pass:
+            if conn: conn.close()
+            return jsonify({"error": "Faltan campos"}), 400
+
+        u_key = new_user.lower()
+        p_hash = generate_password_hash(new_pass)
+
+        # 1. Guardar local
+        usuarios_db[u_key] = {
+            "username": new_user,
+            "password": p_hash,
+            "rol": new_rol,
+            "requiere_cambio": True,
+            "creado_por": session['user']
+        }
+        guardar_json(USERS_FILE, usuarios_db)
+
+        # 2. Guardar en Supabase
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        INSERT INTO public.usuarios (username, password_hash, rol, requiere_cambio_clave, creado_por)
+                        VALUES (%s, %s, %s, TRUE, %s)
+                        ON CONFLICT (username) DO UPDATE 
+                        SET password_hash = EXCLUDED.password_hash, rol = EXCLUDED.rol;
+                    """, (new_user, p_hash, new_rol, session['user']))
+                    conn.commit()
+                conn.close()
+            except Exception as e:
+                print(f"Error creando usuario en DB: {e}")
+                if conn: conn.close()
+
+        return jsonify({"status": "ok", "message": f"Usuario {new_user} creado"}), 201
+
+
+# --- DONACIONES ---
 
 @app.route('/api/donaciones', methods=['GET', 'POST'])
 def donaciones():
@@ -347,7 +421,7 @@ def donaciones():
         cantidad = data.get('cantidad', 1)
 
         if not pj_name or not tipo_donacion:
-            return jsonify({"error": "Faltan datos de donación"}), 400
+            return jsonify({"error": "Faltan datos"}), 400
 
         nueva_donacion = {
             "id": int(time.time() * 1000),
@@ -383,41 +457,6 @@ def editar_donacion(donacion_id):
             return jsonify({"status": "ok", "donacion": don}), 200
 
     return jsonify({"error": "Donación no encontrada"}), 404
-
-
-@app.route('/api/usuarios', methods=['GET', 'POST'])
-def usuarios():
-    if 'user' not in session or session.get('rol') != 'admin':
-        return jsonify({"error": "Acceso denegado"}), 403
-
-    if request.method == 'GET':
-        lista = []
-        for u, val in usuarios_db.items():
-            lista.append({
-                "username": u,
-                "rol": val.get("rol", "encargado"),
-                "requiere_cambio_clave": val.get("requiere_cambio", False),
-                "creado_por": val.get("creado_por", "Sistema")
-            })
-        return jsonify(lista)
-
-    if request.method == 'POST':
-        data = request.json or {}
-        new_user = data.get('username', '').strip().lower()
-        new_pass = data.get('password', '')
-        new_rol = data.get('rol', 'encargado')
-
-        if not new_user or not new_pass:
-            return jsonify({"error": "Faltan campos"}), 400
-
-        usuarios_db[new_user] = {
-            "password": generate_password_hash(new_pass),
-            "rol": new_rol,
-            "requiere_cambio": True,
-            "creado_por": session['user']
-        }
-        guardar_json(USERS_FILE, usuarios_db)
-        return jsonify({"status": "ok", "message": f"Usuario {new_user} creado"}), 201
 
 
 if __name__ == '__main__':
