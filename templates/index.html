@@ -57,7 +57,7 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.7);
         }
 
-        /* Estados del Spot */
+        /* Estados de los Spots */
         .state-idle .spot-circle { border-color: #eccc68; background: rgba(236, 204, 104, 0.25); box-shadow: 0 0 6px #eccc68; }
         .state-idle .spot-timer { color: #f1f2f6; border-color: #ffa502; background: rgba(255, 165, 2, 0.2); }
 
@@ -104,7 +104,7 @@
         <button onclick="setVista('Server 3')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 3">Server 3</button>
         <button onclick="setVista('Server 20')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 20">Server 20</button>
         
-        <!-- 3 PÁGINAS DE MAPA -->
+        <!-- Pestañas de Mapas -->
         <button onclick="setVista('MAPA_1')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-purple-300 border border-purple-900 hover:bg-purple-950" id="tab-MAPA_1">🗺️ Mapa S1</button>
         <button onclick="setVista('MAPA_2')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-purple-300 border border-purple-900 hover:bg-purple-950" id="tab-MAPA_2">🗺️ Mapa S2</button>
         <button onclick="setVista('MAPA_3')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-purple-300 border border-purple-900 hover:bg-purple-950" id="tab-MAPA_3">🗺️ Mapa S3</button>
@@ -144,27 +144,27 @@
     <div id="seccion-mapa" class="w-full max-w-6xl hidden flex flex-col items-center">
         <div class="mb-4 text-center">
             <h2 id="mapa-titulo" class="text-2xl font-bold text-purple-300">🗺️ Mapa de Bosses</h2>
-            <p class="text-xs text-purple-400 mt-1">Haz clic en un spot para iniciar el contador tras matar al boss.</p>
+            <p class="text-xs text-purple-400 mt-1">Clic izquierdo: registrar muerte | Clic derecho: resetear spot a 0</p>
         </div>
 
         <div class="map-wrapper">
             <img src="mapa.jpg" alt="Mapa MU" class="map-bg">
 
             <!-- Zona Noroeste -->
-            <div class="spot-btn" style="left: 8.5%; top: 17%;" onclick="registrarMuerteMapa(1)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-1">Esperando Muerte</span></div>
-            <div class="spot-btn" style="left: 14.5%; top: 9.5%;" onclick="registrarMuerteMapa(2)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-2">Esperando Muerte</span></div>
-            <div class="spot-btn" style="left: 29.5%; top: 15.5%;" onclick="registrarMuerteMapa(3)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-3">Esperando Muerte</span></div>
-            <div class="spot-btn" style="left: 42.5%; top: 16%;" onclick="registrarMuerteMapa(4)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-4">Esperando Muerte</span></div>
+            <div class="spot-btn" style="left: 8.5%; top: 17%;" onclick="registrarMuerteMapa(1)" oncontextmenu="resetearSpotMapa(event, 1)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-1">Esperando Muerte</span></div>
+            <div class="spot-btn" style="left: 14.5%; top: 9.5%;" onclick="registrarMuerteMapa(2)" oncontextmenu="resetearSpotMapa(event, 2)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-2">Esperando Muerte</span></div>
+            <div class="spot-btn" style="left: 29.5%; top: 15.5%;" onclick="registrarMuerteMapa(3)" oncontextmenu="resetearSpotMapa(event, 3)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-3">Esperando Muerte</span></div>
+            <div class="spot-btn" style="left: 42.5%; top: 16%;" onclick="registrarMuerteMapa(4)" oncontextmenu="resetearSpotMapa(event, 4)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-4">Esperando Muerte</span></div>
 
             <!-- Zona Noreste -->
-            <div class="spot-btn" style="left: 61.5%; top: 4.5%;" onclick="registrarMuerteMapa(5)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-5">Esperando Muerte</span></div>
-            <div class="spot-btn" style="left: 59.5%; top: 14%;" onclick="registrarMuerteMapa(6)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-6">Esperando Muerte</span></div>
+            <div class="spot-btn" style="left: 61.5%; top: 4.5%;" onclick="registrarMuerteMapa(5)" oncontextmenu="resetearSpotMapa(event, 5)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-5">Esperando Muerte</span></div>
+            <div class="spot-btn" style="left: 59.5%; top: 14%;" onclick="registrarMuerteMapa(6)" oncontextmenu="resetearSpotMapa(event, 6)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-6">Esperando Muerte</span></div>
 
             <!-- Zona Este / Sureste -->
-            <div class="spot-btn" style="left: 86.5%; top: 53%;" onclick="registrarMuerteMapa(7)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-7">Esperando Muerte</span></div>
-            <div class="spot-btn" style="left: 86.5%; top: 62.5%;" onclick="registrarMuerteMapa(8)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-8">Esperando Muerte</span></div>
-            <div class="spot-btn" style="left: 86.5%; top: 76%;" onclick="registrarMuerteMapa(9)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-9">Esperando Muerte</span></div>
-            <div class="spot-btn" style="left: 86.5%; top: 85%;" onclick="registrarMuerteMapa(10)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-10">Esperando Muerte</span></div>
+            <div class="spot-btn" style="left: 86.5%; top: 53%;" onclick="registrarMuerteMapa(7)" oncontextmenu="resetearSpotMapa(event, 7)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-7">Esperando Muerte</span></div>
+            <div class="spot-btn" style="left: 86.5%; top: 62.5%;" onclick="registrarMuerteMapa(8)" oncontextmenu="resetearSpotMapa(event, 8)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-8">Esperando Muerte</span></div>
+            <div class="spot-btn" style="left: 86.5%; top: 76%;" onclick="registrarMuerteMapa(9)" oncontextmenu="resetearSpotMapa(event, 9)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-9">Esperando Muerte</span></div>
+            <div class="spot-btn" style="left: 86.5%; top: 85%;" onclick="registrarMuerteMapa(10)" oncontextmenu="resetearSpotMapa(event, 10)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-10">Esperando Muerte</span></div>
         </div>
 
         <div class="mt-4 text-xs text-gray-400 bg-[#141126] border border-purple-900/60 p-3 rounded-lg flex flex-wrap justify-center gap-6">
@@ -303,7 +303,7 @@
     <script>
         let modoVista = 'TODOS';
         let servidorMapaActivo = 1;
-        let estadoWeb = { timers: {}, ocultos: [], heartbeats: {}, cooldowns: {} };
+        let estadoWeb = { timers: {}, ocultos: [], heartbeats: {}, cooldowns: {}, mapas: {} };
         let estaLogueado = false;
         let esAdmin = false;
         let listaDonacionesCache = [];
@@ -345,17 +345,58 @@
             }, 3000);
         }
 
-        /* ====== GESTIÓN DE MAPAS LOCALES (S1, S2, S3) ====== */
-        function getStorageKeyMapa() { return `mu_map_timers_srv_${servidorMapaActivo}`; }
-        function loadTimersMapa() { return JSON.parse(localStorage.getItem(getStorageKeyMapa())) || {}; }
-        function saveTimersMapa(data) { localStorage.setItem(getStorageKeyMapa(), JSON.stringify(data)); }
+        /* ====== GESTIÓN DE MAPAS SINCRONIZADOS ====== */
+        function getTimersMapaLocal() {
+            const mapasGlobal = estadoWeb.mapas || {};
+            return mapasGlobal[String(servidorMapaActivo)] || {};
+        }
 
-        function registrarMuerteMapa(spotId) {
-            const timers = loadTimersMapa();
-            timers[spotId] = Date.now();
-            saveTimersMapa(timers);
-            actualizarMapaUI();
-            mostrarToast(`Muerte en Spot #${spotId} (Server ${servidorMapaActivo})`, "⚔️");
+        // CLIC IZQUIERDO: Registrar muerte en el spot del mapa
+        async function registrarMuerteMapa(spotId) {
+            try {
+                const res = await fetch('/api/mapa_kill', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ server: servidorMapaActivo, spot_id: spotId })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.mapas) estadoWeb.mapas = data.mapas;
+                    actualizarMapaUI();
+                    mostrarToast(`Muerte en Spot #${spotId} (Server ${servidorMapaActivo})`, "⚔️");
+                }
+            } catch (e) {
+                // Respaldo local si no hay conexión al backend
+                const key = `mu_map_timers_srv_${servidorMapaActivo}`;
+                const lTimers = JSON.parse(localStorage.getItem(key)) || {};
+                lTimers[spotId] = Date.now();
+                localStorage.setItem(key, JSON.stringify(lTimers));
+                actualizarMapaUI();
+            }
+        }
+
+        // CLIC DERECHO: Resetear a 0 el spot cliqueado por error
+        async function resetearSpotMapa(event, spotId) {
+            event.preventDefault();
+            try {
+                const res = await fetch('/api/mapa_reset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ server: servidorMapaActivo, spot_id: spotId })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.mapas) estadoWeb.mapas = data.mapas;
+                    actualizarMapaUI();
+                    mostrarToast(`Spot #${spotId} reseteado a 0`, "🔄");
+                }
+            } catch (e) {
+                const key = `mu_map_timers_srv_${servidorMapaActivo}`;
+                const lTimers = JSON.parse(localStorage.getItem(key)) || {};
+                delete lTimers[spotId];
+                localStorage.setItem(key, JSON.stringify(lTimers));
+                actualizarMapaUI();
+            }
         }
 
         function formatHMS(ms) {
@@ -375,7 +416,11 @@
 
         function actualizarMapaUI() {
             if (!modoVista.startsWith('MAPA_')) return;
-            const timers = loadTimersMapa();
+            const timersBackend = getTimersMapaLocal();
+            const keyLocal = `mu_map_timers_srv_${servidorMapaActivo}`;
+            const timersLocal = JSON.parse(localStorage.getItem(keyLocal)) || {};
+            const timers = Object.keys(timersBackend).length > 0 ? timersBackend : timersLocal;
+
             const now = Date.now();
 
             for (let i = 1; i <= 10; i++) {
@@ -384,7 +429,7 @@
                 const parent = el.closest('.spot-btn');
                 parent.className = 'spot-btn';
 
-                const deathTime = timers[i];
+                const deathTime = timers[String(i)] || timers[i];
 
                 if (!deathTime) {
                     parent.classList.add('state-idle');
@@ -647,6 +692,7 @@
                     if (killUnix) {
                         let transcurridoTotal = ahoraUnix - killUnix;
 
+                        // Si es automático y ya pasó el ciclo completo, avanza al siguiente ciclo
                         if (!esEventoManual && transcurridoTotal >= cicloTotalSegundos) {
                             const ciclosPasados = Math.floor(transcurridoTotal / cicloTotalSegundos);
                             killUnix += (ciclosPasados * cicloTotalSegundos);
@@ -656,7 +702,12 @@
                         const targetRespawnUnix = killUnix + cdSegundos;
                         const finVentanaUnix = targetRespawnUnix + ventanaSegundos;
 
-                        if (ahoraUnix < targetRespawnUnix) {
+                        // Si es manual y ya pasó la ventana, NO se vuelve a mostrar hasta nuevo kill
+                        if (esEventoManual && ahoraUnix > finVentanaUnix) {
+                            cardHTML = '';
+                        }
+                        // CASO 1: EN COOLDOWN (🔴)
+                        else if (ahoraUnix < targetRespawnUnix) {
                             const restoSec = targetRespawnUnix - ahoraUnix;
                             ordenTiempo = restoSec; 
                             cardHTML = `
@@ -674,6 +725,7 @@
                                 </div>
                             `;
                         } 
+                        // CASO 2: CACERÍA EN CURSO / VENTANA (🟢)
                         else if (ahoraUnix >= targetRespawnUnix && ahoraUnix <= finVentanaUnix) {
                             const transcurridoVentana = ahoraUnix - targetRespawnUnix;
                             ordenTiempo = -1000000 + transcurridoVentana;
@@ -694,6 +746,7 @@
                         }
                     }
 
+                    // CASO 3: DISPONIBLES SIN REGISTRO PREVIO (SOLO AUTOMÁTICOS)
                     if (!cardHTML && !esEventoManual) {
                         ordenTiempo = 88888888;
                         cardHTML = `
