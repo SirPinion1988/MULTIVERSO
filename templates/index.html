@@ -8,6 +8,70 @@
     <style>
         body { background-color: #0a0814; color: #e6e1ff; font-family: 'Segoe UI', system-ui, sans-serif; }
         .grid-bosses { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+
+        /* Estilos del Mapa Interactivo */
+        .map-wrapper {
+            position: relative;
+            width: 720px;
+            max-width: 95vw;
+            aspect-ratio: 1 / 1;
+            border: 2px solid #3b2d6b;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+        }
+        .map-bg { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+        .spot-btn {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            z-index: 10;
+            user-select: none;
+        }
+        .spot-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid #747d8c;
+            background: rgba(116, 125, 140, 0.2);
+            transition: transform 0.15s, background 0.2s, border-color 0.2s;
+        }
+        .spot-btn:hover .spot-circle { transform: scale(1.2); }
+
+        .spot-timer {
+            margin-top: 4px;
+            background: rgba(10, 8, 20, 0.92);
+            border: 1px solid #3b2d6b;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            color: #ced6e0;
+            white-space: nowrap;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.7);
+        }
+
+        /* Estados del Spot */
+        .state-idle .spot-circle { border-color: #eccc68; background: rgba(236, 204, 104, 0.25); box-shadow: 0 0 6px #eccc68; }
+        .state-idle .spot-timer { color: #f1f2f6; border-color: #ffa502; background: rgba(255, 165, 2, 0.2); }
+
+        .state-waiting .spot-circle { border-color: #ff4757; background: rgba(255, 71, 87, 0.25); box-shadow: 0 0 6px #ff4757; }
+        .state-waiting .spot-timer { color: #ff6b81; border-color: #ff4757; }
+
+        .state-window .spot-circle {
+            border-color: #2ed573; background: rgba(46, 213, 115, 0.4);
+            box-shadow: 0 0 14px #2ed573;
+            animation: pulse 0.9s infinite alternate;
+        }
+        .state-window .spot-timer { color: #2ed573; border-color: #2ed573; background: rgba(46, 213, 115, 0.15); }
+
+        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.3); } }
     </style>
 </head>
 <body class="p-4 md:p-8 flex flex-col items-center relative">
@@ -22,7 +86,7 @@
     <header class="w-full max-w-6xl mb-6 border-b border-purple-900/50 pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
             <h1 class="text-3xl font-extrabold text-purple-400 drop-shadow">⚔️ MONITOR MUDREAM MULTIVERSO</h1>
-            <p class="text-xs text-purple-300">Control de Bosses, Timers y Donaciones en Tiempo Real</p>
+            <p class="text-xs text-purple-300">Control de Bosses, Timers, Mapas y Donaciones en Tiempo Real</p>
         </div>
         <div id="user-info-box" class="flex items-center gap-3 bg-[#141126] border border-purple-800/60 px-4 py-2 rounded-xl text-xs">
             <span id="user-display" class="text-purple-300 font-bold">Invitado</span>
@@ -32,13 +96,19 @@
         </div>
     </header>
 
-    <!-- Navegación -->
+    <!-- Navegación de Vistas -->
     <div class="flex flex-wrap space-x-2 mb-6 overflow-x-auto w-full max-w-6xl justify-center gap-2">
-        <button onclick="setVista('TODOS')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-purple-700 text-white" id="tab-TODOS">👁️ Vista General (Ordenada x Tiempo)</button>
+        <button onclick="setVista('TODOS')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-purple-700 text-white" id="tab-TODOS">👁️ Vista General</button>
         <button onclick="setVista('Server 1')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 1">Server 1</button>
         <button onclick="setVista('Server 2')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 2">Server 2</button>
         <button onclick="setVista('Server 3')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 3">Server 3</button>
         <button onclick="setVista('Server 20')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 20">Server 20</button>
+        
+        <!-- 3 PÁGINAS DE MAPA -->
+        <button onclick="setVista('MAPA_1')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-purple-300 border border-purple-900 hover:bg-purple-950" id="tab-MAPA_1">🗺️ Mapa S1</button>
+        <button onclick="setVista('MAPA_2')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-purple-300 border border-purple-900 hover:bg-purple-950" id="tab-MAPA_2">🗺️ Mapa S2</button>
+        <button onclick="setVista('MAPA_3')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-purple-300 border border-purple-900 hover:bg-purple-950" id="tab-MAPA_3">🗺️ Mapa S3</button>
+
         <button onclick="setVista('BOTS')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-BOTS">🤖 Bots Activos</button>
         <button onclick="setVista('DONACIONES')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-yellow-900/80 border border-yellow-600 text-yellow-300 hover:bg-yellow-800" id="tab-DONACIONES">💎 Donaciones</button>
         <button onclick="setVista('USUARIOS')" id="tab-USUARIOS" class="btn-tab px-4 py-2 rounded-lg font-bold bg-indigo-900 border border-indigo-500 text-indigo-200 hidden">👥 Crear Encargados</button>
@@ -63,10 +133,44 @@
         </div>
     </div>
 
-    <!-- TIMERS PRINCIPALES -->
+    <!-- SECCIÓN TIMERS PRINCIPALES -->
     <div id="seccion-timers" class="w-full max-w-6xl">
         <div id="contenedor-bosses" class="grid-bosses">
             <div class="text-gray-500 text-center col-span-full py-8">Cargando timers de bosses...</div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN MAPA INTERACTIVO (S1, S2, S3) -->
+    <div id="seccion-mapa" class="w-full max-w-6xl hidden flex flex-col items-center">
+        <div class="mb-4 text-center">
+            <h2 id="mapa-titulo" class="text-2xl font-bold text-purple-300">🗺️ Mapa de Bosses</h2>
+            <p class="text-xs text-purple-400 mt-1">Haz clic en un spot para iniciar el contador tras matar al boss.</p>
+        </div>
+
+        <div class="map-wrapper">
+            <img src="mapa.jpg" alt="Mapa MU" class="map-bg">
+
+            <!-- Zona Noroeste -->
+            <div class="spot-btn" style="left: 8.5%; top: 17%;" onclick="registrarMuerteMapa(1)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-1">Esperando Muerte</span></div>
+            <div class="spot-btn" style="left: 14.5%; top: 9.5%;" onclick="registrarMuerteMapa(2)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-2">Esperando Muerte</span></div>
+            <div class="spot-btn" style="left: 29.5%; top: 15.5%;" onclick="registrarMuerteMapa(3)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-3">Esperando Muerte</span></div>
+            <div class="spot-btn" style="left: 42.5%; top: 16%;" onclick="registrarMuerteMapa(4)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-4">Esperando Muerte</span></div>
+
+            <!-- Zona Noreste -->
+            <div class="spot-btn" style="left: 61.5%; top: 4.5%;" onclick="registrarMuerteMapa(5)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-5">Esperando Muerte</span></div>
+            <div class="spot-btn" style="left: 59.5%; top: 14%;" onclick="registrarMuerteMapa(6)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-6">Esperando Muerte</span></div>
+
+            <!-- Zona Este / Sureste -->
+            <div class="spot-btn" style="left: 86.5%; top: 53%;" onclick="registrarMuerteMapa(7)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-7">Esperando Muerte</span></div>
+            <div class="spot-btn" style="left: 86.5%; top: 62.5%;" onclick="registrarMuerteMapa(8)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-8">Esperando Muerte</span></div>
+            <div class="spot-btn" style="left: 86.5%; top: 76%;" onclick="registrarMuerteMapa(9)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-9">Esperando Muerte</span></div>
+            <div class="spot-btn" style="left: 86.5%; top: 85%;" onclick="registrarMuerteMapa(10)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-10">Esperando Muerte</span></div>
+        </div>
+
+        <div class="mt-4 text-xs text-gray-400 bg-[#141126] border border-purple-900/60 p-3 rounded-lg flex flex-wrap justify-center gap-6">
+            <span>🔴 <strong>Respawn:</strong> 3:00:00 a 0:00:00</span>
+            <span>🟢 <strong>Ventana:</strong> 00:00 a 60:00 min</span>
+            <span>🟡 <strong>Esperando Muerte:</strong> Detenido</span>
         </div>
     </div>
 
@@ -198,12 +302,16 @@
 
     <script>
         let modoVista = 'TODOS';
+        let servidorMapaActivo = 1;
         let estadoWeb = { timers: {}, ocultos: [], heartbeats: {}, cooldowns: {} };
         let estaLogueado = false;
         let esAdmin = false;
         let listaDonacionesCache = [];
 
-        // NOMBRES LIMPIOS (SIN NUMERACIÓN)
+        const SPAWN_DELAY_MAPA_MS = 3 * 60 * 60 * 1000;  // 3 horas
+        const WINDOW_DURATION_MAPA_MS = 60 * 60 * 1000;  // 60 minutos
+
+        // NOMBRES LIMPIOS
         const BOSSES_FIJOS = {
             "Server 1": ["Muggron", "Dreadhorn", "Moltragon", "Borgar", "Kharzul", "Vescrya"],
             "Server 2": ["Muggron", "Dreadhorn", "Moltragon", "Borgar", "Kharzul", "Vescrya"],
@@ -212,27 +320,15 @@
         };
 
         const COOLDOWNS_LOCAL = {
-            "Muggron": 180,
-            "Dreadhorn": 60,
-            "Moltragon": 60,
-            "Borgar": 120,
-            "Kharzul": 420,
-            "Vescrya": 420,
-            "Muggron Barracks": 180,
-            "Muggron Crywolf": 180,
+            "Muggron": 180, "Dreadhorn": 60, "Moltragon": 60, "Borgar": 120,
+            "Kharzul": 420, "Vescrya": 420, "Muggron Barracks": 180, "Muggron Crywolf": 180,
             "Yellow Goblin": 600, "Blue Goblin": 600, "Red Goblin": 600,
-            "Red Dragon": 360,
-            "Santa": 360,
-            "White Wizard": 360,
-            "Skeleton King": 360
+            "Red Dragon": 360, "Santa": 360, "White Wizard": 360, "Skeleton King": 360
         };
 
         const BOSSES_SOLO_MANUALES = [
-            "Red Dragon",
-            "Yellow Goblin", "Blue Goblin", "Red Goblin",
-            "Santa",
-            "White Wizard",
-            "Skeleton King"
+            "Red Dragon", "Yellow Goblin", "Blue Goblin", "Red Goblin",
+            "Santa", "White Wizard", "Skeleton King"
         ];
 
         function mostrarToast(mensaje, icono = "⚠️") {
@@ -247,6 +343,112 @@
                 toast.classList.remove('translate-y-0', 'opacity-100');
                 toast.classList.add('translate-y-20', 'opacity-0');
             }, 3000);
+        }
+
+        /* ====== GESTIÓN DE MAPAS LOCALES (S1, S2, S3) ====== */
+        function getStorageKeyMapa() { return `mu_map_timers_srv_${servidorMapaActivo}`; }
+        function loadTimersMapa() { return JSON.parse(localStorage.getItem(getStorageKeyMapa())) || {}; }
+        function saveTimersMapa(data) { localStorage.setItem(getStorageKeyMapa(), JSON.stringify(data)); }
+
+        function registrarMuerteMapa(spotId) {
+            const timers = loadTimersMapa();
+            timers[spotId] = Date.now();
+            saveTimersMapa(timers);
+            actualizarMapaUI();
+            mostrarToast(`Muerte en Spot #${spotId} (Server ${servidorMapaActivo})`, "⚔️");
+        }
+
+        function formatHMS(ms) {
+            const totalSecs = Math.max(0, Math.floor(ms / 1000));
+            const h = String(Math.floor(totalSecs / 3600)).padStart(2, '0');
+            const m = String(Math.floor((totalSecs % 3600) / 60)).padStart(2, '0');
+            const s = String(totalSecs % 60).padStart(2, '0');
+            return `${h}:${m}:${s}`;
+        }
+
+        function formatMS(ms) {
+            const totalSecs = Math.max(0, Math.floor(ms / 1000));
+            const m = String(Math.floor(totalSecs / 60)).padStart(2, '0');
+            const s = String(totalSecs % 60).padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function actualizarMapaUI() {
+            if (!modoVista.startsWith('MAPA_')) return;
+            const timers = loadTimersMapa();
+            const now = Date.now();
+
+            for (let i = 1; i <= 10; i++) {
+                const el = document.getElementById(`map-t-${i}`);
+                if (!el) continue;
+                const parent = el.closest('.spot-btn');
+                parent.className = 'spot-btn';
+
+                const deathTime = timers[i];
+
+                if (!deathTime) {
+                    parent.classList.add('state-idle');
+                    el.innerText = 'Esperando Muerte';
+                    continue;
+                }
+
+                const elapsed = now - deathTime;
+
+                if (elapsed < SPAWN_DELAY_MAPA_MS) {
+                    parent.classList.add('state-waiting');
+                    const remaining = SPAWN_DELAY_MAPA_MS - elapsed;
+                    el.innerText = `Respawn: ${formatHMS(remaining)}`;
+                } else if (elapsed < (SPAWN_DELAY_MAPA_MS + WINDOW_DURATION_MAPA_MS)) {
+                    parent.classList.add('state-window');
+                    const windowElapsed = elapsed - SPAWN_DELAY_MAPA_MS;
+                    el.innerText = `¡VENTANA! ${formatMS(windowElapsed)} / 60:00`;
+                } else {
+                    parent.classList.add('state-idle');
+                    el.innerText = 'Esperando Muerte';
+                }
+            }
+        }
+
+        /* ====== NAVEGACIÓN Y VISTAS ====== */
+        function setVista(vista) {
+            if (vista === 'DONACIONES' && !estaLogueado) {
+                toggleLoginModal();
+                return;
+            }
+
+            modoVista = vista;
+            document.querySelectorAll('.btn-tab').forEach(b => {
+                b.className = "btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400";
+            });
+            const activeTab = document.getElementById(`tab-${vista}`);
+            if (activeTab) activeTab.className = "btn-tab px-4 py-2 rounded-lg font-bold bg-purple-700 text-white";
+
+            document.getElementById('seccion-timers').classList.add('hidden');
+            document.getElementById('seccion-mapa').classList.add('hidden');
+            document.getElementById('seccion-bots').classList.add('hidden');
+            document.getElementById('seccion-donaciones').classList.add('hidden');
+            document.getElementById('seccion-usuarios').classList.add('hidden');
+            document.getElementById('panel-kill-manual').classList.add('hidden');
+
+            if (vista === 'DONACIONES') {
+                document.getElementById('seccion-donaciones').classList.remove('hidden');
+                cargarDonaciones();
+            } else if (vista === 'BOTS') {
+                document.getElementById('seccion-bots').classList.remove('hidden');
+                renderizarBots();
+            } else if (vista === 'USUARIOS') {
+                document.getElementById('seccion-usuarios').classList.remove('hidden');
+                cargarUsuarios();
+            } else if (vista.startsWith('MAPA_')) {
+                servidorMapaActivo = parseInt(vista.split('_')[1]);
+                document.getElementById('mapa-titulo').textContent = `🗺️ Mapa de Bosses - Server ${servidorMapaActivo}`;
+                document.getElementById('seccion-mapa').classList.remove('hidden');
+                actualizarMapaUI();
+            } else {
+                document.getElementById('seccion-timers').classList.remove('hidden');
+                document.getElementById('panel-kill-manual').classList.remove('hidden');
+                renderizarUI();
+            }
         }
 
         async function ocultarTarjetaGlobal(svr, boss) {
@@ -304,41 +506,6 @@
             } catch (e) {}
         }
 
-        function setVista(vista) {
-            if (vista === 'DONACIONES' && !estaLogueado) {
-                toggleLoginModal();
-                return;
-            }
-
-            modoVista = vista;
-            document.querySelectorAll('.btn-tab').forEach(b => {
-                b.className = "btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400";
-            });
-            const activeTab = document.getElementById(`tab-${vista}`);
-            if (activeTab) activeTab.className = "btn-tab px-4 py-2 rounded-lg font-bold bg-purple-700 text-white";
-
-            document.getElementById('seccion-timers').classList.add('hidden');
-            document.getElementById('seccion-bots').classList.add('hidden');
-            document.getElementById('seccion-donaciones').classList.add('hidden');
-            document.getElementById('seccion-usuarios').classList.add('hidden');
-            document.getElementById('panel-kill-manual').classList.add('hidden');
-
-            if (vista === 'DONACIONES') {
-                document.getElementById('seccion-donaciones').classList.remove('hidden');
-                cargarDonaciones();
-            } else if (vista === 'BOTS') {
-                document.getElementById('seccion-bots').classList.remove('hidden');
-                renderizarBots();
-            } else if (vista === 'USUARIOS') {
-                document.getElementById('seccion-usuarios').classList.remove('hidden');
-                cargarUsuarios();
-            } else {
-                document.getElementById('seccion-timers').classList.remove('hidden');
-                document.getElementById('panel-kill-manual').classList.remove('hidden');
-                renderizarUI();
-            }
-        }
-
         function poblarSelector() {
             const select = document.getElementById('manualBoss');
             if (select.children.length > 0) return;
@@ -365,6 +532,7 @@
                     estadoWeb = await res.json();
                     poblarSelector();
                     if (modoVista === 'BOTS') renderizarBots();
+                    else if (modoVista.startsWith('MAPA_')) actualizarMapaUI();
                     else if (modoVista !== 'DONACIONES' && modoVista !== 'USUARIOS') renderizarUI();
                 }
             } catch (e) {}
@@ -488,7 +656,6 @@
                         const targetRespawnUnix = killUnix + cdSegundos;
                         const finVentanaUnix = targetRespawnUnix + ventanaSegundos;
 
-                        // CASO 1: EN COOLDOWN (🔴)
                         if (ahoraUnix < targetRespawnUnix) {
                             const restoSec = targetRespawnUnix - ahoraUnix;
                             ordenTiempo = restoSec; 
@@ -507,7 +674,6 @@
                                 </div>
                             `;
                         } 
-                        // CASO 2: CACERÍA EN CURSO / VENTANA (🟢)
                         else if (ahoraUnix >= targetRespawnUnix && ahoraUnix <= finVentanaUnix) {
                             const transcurridoVentana = ahoraUnix - targetRespawnUnix;
                             ordenTiempo = -1000000 + transcurridoVentana;
@@ -528,7 +694,6 @@
                         }
                     }
 
-                    // CASO 3: DISPONIBLES SIN REGISTRO PREVIO (SOLO AUTOMÁTICOS)
                     if (!cardHTML && !esEventoManual) {
                         ordenTiempo = 88888888;
                         cardHTML = `
@@ -724,7 +889,11 @@
             } catch (e) {}
         }
 
-        setInterval(renderizarUI, 1000);
+        setInterval(() => {
+            renderizarUI();
+            actualizarMapaUI();
+        }, 1000);
+
         setInterval(cargarDatos, 3000);
         
         verificarSesion();
