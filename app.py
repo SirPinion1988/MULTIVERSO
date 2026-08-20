@@ -17,7 +17,13 @@ LINK_DESCARGA_BOT = "https://drive.google.com/uc?export=download&id=TU_ID_DE_GOO
 DATA_FILE = "timers_data.json"
 USERS_FILE = "users_data.json"
 DONACIONES_FILE = "donaciones_data.json"
+MAPAS_FILE = "mapas_data.json"
 
+# LISTA OFICIAL DE BOSSES DE INVASIÓN / MANUALES EXCLUSIVOS
+BOSSES_MANUALES = [
+    "Red Dragon", "Yellow Goblin", "Blue Goblin", 
+    "Red Goblin", "Santa", "White Wizard", "Skeleton King"
+]
 
 def cargar_json(filepath, default_val):
     if os.path.exists(filepath):
@@ -37,9 +43,12 @@ def guardar_json(filepath, data):
         print(f"Error guardando {filepath}: {e}")
 
 
-# MEMORIA LOCAL DE RESPALDO Y RENDIMIENTO
+# MEMORIA LOCAL DE RESPALDO
 status_timers = cargar_json(DATA_FILE, {
     "Server 1": {}, "Server 2": {}, "Server 3": {}, "Server 20": {}
+})
+status_mapas = cargar_json(MAPAS_FILE, {
+    "1": {}, "2": {}, "3": {}
 })
 usuarios_db = cargar_json(USERS_FILE, {
     "pinion": {"password": "pass123", "rol": "admin", "requiere_cambio": False}
@@ -50,8 +59,6 @@ tarjetas_ocultas_global = set()
 heartbeats = {}
 ultimas_pcs = {}
 ultimos_pjs = {}
-
-# Memoria de control por Server + Boss + PJ (Filtro anti-cartel de 120s)
 ultimos_kills_recientes = {}
 
 
@@ -136,7 +143,8 @@ def get_status_timers():
         "ocultos": list(tarjetas_ocultas_global),
         "heartbeats": heartbeats,
         "ultimas_pcs": ultimas_pcs,
-        "ultimos_pjs": ultimos_pjs
+        "ultimos_pjs": ultimos_pjs,
+        "mapas": status_mapas
     })
 
 
@@ -151,27 +159,30 @@ def registrar_kill():
     if not server or not boss_raw:
         return jsonify({"error": "Faltan datos"}), 400
 
-    # Limpiar cualquier número accidental del nombre (ej. "Moltragon 1" -> "Moltragon")
+    # Limpiar posibles números pegados al nombre (ej. "Moltragon 1" -> "Moltragon")
     boss = re.sub(r'\s+\d+$', '', boss_raw)
 
+    # BLOQUEO DE SEGURIDAD: Los eventos manuales NO pueden ser disparados por el bot local
+    es_manual_web = (pc_id == 'Manual Web') or ('user' in session)
+    if boss in BOSSES_MANUALES and not es_manual_web:
+        return jsonify({
+            "status": "ignored",
+            "message": f"El boss '{boss}' es de activación manual y no se procesa vía bot automático."
+        }), 200
+
     now_unix = int(time.time())
-    
-    # Clave combinada: Server + Boss + PJ
     clave_cartel = f"{server}_{boss}_{pj_name}"
 
-    # 1. BLOQUEO DE CARTEL REPETIDO (Mismo PJ + Mismo Boss en menos de 120s)
+    # Anti-spam de carteles repetidos en menos de 120 segundos
     if pc_id != 'Manual Web':
         ultimo_registro = ultimos_kills_recientes.get(clave_cartel, 0)
-        
         if (now_unix - ultimo_registro) < 120:
             return jsonify({
                 "status": "ignored", 
                 "message": f"Cartel duplicado de {boss} por {pj_name} ignorado."
             }), 200
-
         ultimos_kills_recientes[clave_cartel] = now_unix
 
-    # 2. REGISTRO EFECTIVO DE KILL
     if server not in status_timers:
         status_timers[server] = {}
 
@@ -188,7 +199,7 @@ def registrar_kill():
         ultimas_pcs[server] = pc_id
         ultimos_pjs[server] = pj_name
 
-    # Sincronización en Supabase
+    # Sincronización en Base de Datos
     conn = get_db()
     if conn:
         try:
@@ -217,7 +228,6 @@ def reset_boss():
         clave_card = f"{server}_{boss}"
         tarjetas_ocultas_global.add(clave_card)
         
-        # Eliminar registros del buffer reciente de este boss
         keys_a_borrar = [k for k in ultimos_kills_recientes if k.startswith(f"{server}_{boss}_")]
         for k in keys_a_borrar:
             ultimos_kills_recientes.pop(k, None)
@@ -240,6 +250,38 @@ def reset_boss():
         return jsonify({"status": "ok", "message": f"{boss} ocultado"}), 200
 
     return jsonify({"error": "Datos inválidos"}), 400
+
+
+# --- MAPAS INTERACTIVOS (S1, S2, S3) ---
+
+@app.route('/api/mapa_kill', methods=['POST'])
+def mapa_kill():
+    data = request.json or {}
+    server_num = str(data.get('server', '1'))
+    spot_id = str(data.get('spot_id'))
+
+    if not spot_id:
+        return jsonify({"error": "Spot no especificado"}), 400
+
+    if server_num not in status_mapas:
+        status_mapas[server_num] = {}
+
+    status_mapas[server_num][spot_id] = int(time.time() * 1000)
+    guardar_json(MAPAS_FILE, status_mapas)
+    return jsonify({"status": "ok", "mapas": status_mapas}), 200
+
+
+@app.route('/api/mapa_reset', methods=['POST'])
+def mapa_reset():
+    data = request.json or {}
+    server_num = str(data.get('server', '1'))
+    spot_id = str(data.get('spot_id'))
+
+    if server_num in status_mapas and spot_id in status_mapas[server_num]:
+        del status_mapas[server_num][spot_id]
+        guardar_json(MAPAS_FILE, status_mapas)
+
+    return jsonify({"status": "ok", "mapas": status_mapas}), 200
 
 
 @app.route('/api/heartbeat', methods=['POST'])
