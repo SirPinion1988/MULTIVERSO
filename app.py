@@ -30,8 +30,10 @@ def cargar_json(filepath, default_val):
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
                 d = json.load(f)
-                if d: return d
-        except Exception: pass
+                if d is not None:
+                    return d
+        except Exception as e:
+            print(f"Aviso leyendo {filepath}: {e}")
     return default_val
 
 def guardar_json(filepath, data):
@@ -64,6 +66,36 @@ def get_db():
         return psycopg2.connect(db_url, cursor_factory=RealDictCursor, connect_timeout=3)
     except Exception:
         return None
+
+def normalizar_campo_json(valor, default_tipo=list):
+    """Garantiza que un campo devuelto por postgres sea una lista o dict python."""
+    if valor is None:
+        return default_tipo()
+    if isinstance(valor, (list, dict)):
+        return valor
+    if isinstance(valor, str):
+        try:
+            return json.loads(valor)
+        except Exception:
+            return default_tipo()
+    return default_tipo()
+
+def formatear_item_db(row):
+    """Normaliza un registro de base de datos a formato JSON limpio."""
+    return {
+        "id": row.get('id'),
+        "nombre": row.get('nombre', 'Item MU'),
+        "tipo": row.get('tipo', 'General'),
+        "base_score": row.get('base_score', 0),
+        "grade_score": row.get('grade_score', 0),
+        "defense": row.get('defense', 0),
+        "durability": row.get('durability', '-'),
+        "requisitos": normalizar_campo_json(row.get('requisitos'), dict),
+        "clases": normalizar_campo_json(row.get('clases'), list),
+        "opciones": normalizar_campo_json(row.get('opciones'), list),
+        "bonus_excelente": normalizar_campo_json(row.get('bonus_excelente'), list),
+        "drive_id": row.get('drive_id', '')
+    }
 
 def sincronizar_desde_db():
     global status_timers, heartbeats, ultimas_pcs, ultimos_pjs, usuarios_db, donaciones_db, items_mu_db
@@ -103,7 +135,7 @@ def sincronizar_desde_db():
             rows_don = cur.fetchall()
             if rows_don: donaciones_db = rows_don
 
-            # 4. Items MU desde Supabase
+            # 4. Todos los Items de MU sin límite
             try:
                 cur.execute("""
                     SELECT id, nombre, tipo, base_score, grade_score, defense, durability,
@@ -112,21 +144,22 @@ def sincronizar_desde_db():
                 """)
                 rows_items = cur.fetchall()
                 if rows_items:
-                    items_mu_db = rows_items
+                    items_mu_db = [formatear_item_db(r) for r in rows_items]
                     guardar_json(ITEMS_FILE, items_mu_db)
-            except Exception as e_items:
-                print(f"Aviso tabla items_mu: {e_items}")
+                    print(f"✅ Sincronizados {len(items_mu_db)} ítems desde Supabase.")
+            except Exception as e_it:
+                print(f"Aviso tabla items_mu: {e_it}")
 
         conn.close()
         print("✅ DB conectada y sincronizada.")
     except Exception as e:
-        print(f"Aviso en sync DB: {e}")
+        print(f"Aviso en sincronización inicial DB: {e}")
         try: conn.close()
         except Exception: pass
 
 sincronizar_desde_db()
 
-# --- RUTAS DE VISTAS ---
+# --- VISTAS ---
 
 @app.route('/')
 def index():
@@ -154,10 +187,11 @@ def api_items():
                     """)
                     rows = cur.fetchall()
                     if rows:
-                        items_mu_db = rows
+                        items_mu_db = [formatear_item_db(r) for r in rows]
                         guardar_json(ITEMS_FILE, items_mu_db)
                 conn.close()
-            except Exception:
+            except Exception as e:
+                print(f"Error consultando items en DB: {e}")
                 if conn: conn.close()
         return jsonify(items_mu_db)
 
@@ -169,7 +203,7 @@ def api_items():
 
         nuevo = {
             "nombre": data.get('nombre', 'Item MU'),
-            "tipo": data.get('tipo', 'Armor'),
+            "tipo": data.get('tipo', 'General'),
             "base_score": int(data.get('base_score', 0)) if str(data.get('base_score', '')).isdigit() else 0,
             "grade_score": int(data.get('grade_score', 0)) if str(data.get('grade_score', '')).isdigit() else 0,
             "defense": int(data.get('defense', 0)) if str(data.get('defense', '')).isdigit() else 0,
@@ -200,7 +234,7 @@ def api_items():
                     conn.commit()
                 conn.close()
             except Exception as e:
-                print(f"Error insertando item en DB: {e}")
+                print(f"Error guardando ítem en Supabase: {e}")
                 if conn: conn.close()
 
         nuevo["id"] = item_id
@@ -238,7 +272,8 @@ def api_items():
                     ))
                     conn.commit()
                 conn.close()
-            except Exception:
+            except Exception as e:
+                print(f"Error actualizando ítem en DB: {e}")
                 if conn: conn.close()
 
         return jsonify({"status": "ok"}), 200
