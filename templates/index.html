@@ -1033,4 +1033,91 @@
             document.getElementById('editDonacionPj').value = don.pj_name;
             document.getElementById('editDonacionTipo').value = don.tipo_donacion;
             document.getElementById('editDonacionCantidad').value = don.cantidad;
-            document.getElementById('modal-editar-don
+            document.getElementById('modal-editar-donacion').classList.remove('hidden');
+        }
+
+        function toggleEditModal() {
+            document.getElementById('modal-editar-donacion').classList.add('hidden');
+        }
+
+        async function ejecutarEdicionDonacion() {
+            const id = document.getElementById('editDonacionId').value;
+            const pj = document.getElementById('editDonacionPj').value;
+            const tipo = document.getElementById('editDonacionTipo').value;
+            const cant = document.getElementById('editDonacionCantidad').value;
+
+            if (!pj || !tipo || !cant) return mostrarToast("Completa todos los campos", "❌");
+
+            try {
+                const res = await fetch(`/api/donaciones/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pj_name: pj, tipo_donacion: tipo, cantidad: cant })
+                });
+                if (res.ok) {
+                    toggleEditModal();
+                    cargarDonaciones();
+                    mostrarToast("Donación actualizada", "💎");
+                } else {
+                    mostrarToast("Error guardando modificaciones", "❌");
+                }
+            } catch (e) {}
+        }
+
+        async function guardarDonacion() {
+            const pj = document.getElementById('donacionPj').value;
+            const tipo = document.getElementById('donacionTipo').value;
+            const cant = document.getElementById('donacionCantidad').value;
+            if (!pj || !tipo) return mostrarToast("Ingresa el PJ y el tipo de donación", "❌");
+
+            try {
+                const res = await fetch('/api/donaciones', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pj_name: pj, tipo_donacion: tipo, cantidad: cant })
+                });
+                if (res.ok) {
+                    document.getElementById('donacionPj').value = '';
+                    cargarDonaciones();
+                    mostrarToast("Donación registrada", "💎");
+                } else {
+                    mostrarToast("Debes estar logueado para cargar donaciones", "🔒");
+                }
+            } catch (e) {}
+        }
+
+        function toggleLoginModal() {
+            document.getElementById('modal-login').classList.toggle('hidden');
+        }
+
+        async function ejecutarLogin() {
+            const username = document.getElementById('loginUser').value;
+            const password = document.getElementById('loginPass').value;
+            try {
+                const res = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    mostrarToast(data.error || "Login fallido", "🔑");
+                }
+            } catch (e) {}
+        }
+
+        setInterval(() => {
+            renderizarUI();
+            actualizarMapaUI();
+        }, 1000);
+
+        setInterval(cargarDatos, 3000);
+        
+        verificarSesion();
+        poblarSelector();
+        cargarDatos();
+    </script>
+</body>
+</html>
