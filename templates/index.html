@@ -232,11 +232,13 @@
                     <option value="Critical damage">Critical Damage Resistance</option>
                     <option value="Strength">Increases Strength</option>
                     <option value="Agility">Increases Agility</option>
+                    <option value="Energy">Increases Energy</option>
+                    <option value="Vitality">Increases Vitality</option>
                 </select>
             </div>
             <div>
                 <label class="block text-xs uppercase text-purple-300 font-bold mb-1.5">Buscar por Nombre:</label>
-                <input type="text" id="filtroItemTexto" oninput="aplicarFiltrosItems()" placeholder="Ej. Bronze Gloves..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-sm outline-none">
+                <input type="text" id="filtroItemTexto" oninput="aplicarFiltrosItems()" placeholder="Ej. Bronze, Samut, Bow..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-sm outline-none">
             </div>
         </div>
 
@@ -381,10 +383,9 @@
         let listaDonacionesCache = [];
         let catalogoItemsCache = [];
 
-        const SPAWN_DELAY_MAPA_MS = 3 * 60 * 60 * 1000;  // 3 horas
-        const WINDOW_DURATION_MAPA_MS = 60 * 60 * 1000;  // 60 minutos
+        const SPAWN_DELAY_MAPA_MS = 3 * 60 * 60 * 1000;
+        const WINDOW_DURATION_MAPA_MS = 60 * 60 * 1000;
 
-        // NOMBRES LIMPIOS
         const BOSSES_FIJOS = {
             "Server 1": ["Muggron", "Dreadhorn", "Moltragon", "Borgar", "Kharzul", "Vescrya"],
             "Server 2": ["Muggron", "Dreadhorn", "Moltragon", "Borgar", "Kharzul", "Vescrya"],
@@ -424,7 +425,6 @@
             return mapasGlobal[String(servidorMapaActivo)] || {};
         }
 
-        // CLIC IZQUIERDO: Registrar muerte en el spot del mapa
         async function registrarMuerteMapa(spotId) {
             try {
                 const res = await fetch('/api/mapa_kill', {
@@ -447,7 +447,6 @@
             }
         }
 
-        // CLIC DERECHO: Resetear a 0 el spot cliqueado por error
         async function resetearSpotMapa(event, spotId) {
             event.preventDefault();
             try {
@@ -567,6 +566,7 @@
                                 ${item.durability ? `<p class="text-gray-300">Durability: [${item.durability}]</p>` : ''}
                                 ${item.requisitos?.strength ? `<p class="text-red-400">Strength available: ${item.requisitos.strength}</p>` : ''}
                                 ${item.requisitos?.agility ? `<p class="text-gray-300">Agility available: ${item.requisitos.agility}</p>` : ''}
+                                ${item.requisitos?.energy ? `<p class="text-cyan-300">Energy available: ${item.requisitos.energy}</p>` : ''}
                             </div>
 
                             <div class="text-center space-y-0.5 text-[11px] text-red-500 font-medium mb-3">
@@ -1033,91 +1033,4 @@
             document.getElementById('editDonacionPj').value = don.pj_name;
             document.getElementById('editDonacionTipo').value = don.tipo_donacion;
             document.getElementById('editDonacionCantidad').value = don.cantidad;
-            document.getElementById('modal-editar-donacion').classList.remove('hidden');
-        }
-
-        function toggleEditModal() {
-            document.getElementById('modal-editar-donacion').classList.add('hidden');
-        }
-
-        async function ejecutarEdicionDonacion() {
-            const id = document.getElementById('editDonacionId').value;
-            const pj = document.getElementById('editDonacionPj').value;
-            const tipo = document.getElementById('editDonacionTipo').value;
-            const cant = document.getElementById('editDonacionCantidad').value;
-
-            if (!pj || !tipo || !cant) return mostrarToast("Completa todos los campos", "❌");
-
-            try {
-                const res = await fetch(`/api/donaciones/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pj_name: pj, tipo_donacion: tipo, cantidad: cant })
-                });
-                if (res.ok) {
-                    toggleEditModal();
-                    cargarDonaciones();
-                    mostrarToast("Donación actualizada", "💎");
-                } else {
-                    mostrarToast("Error guardando modificaciones", "❌");
-                }
-            } catch (e) {}
-        }
-
-        async function guardarDonacion() {
-            const pj = document.getElementById('donacionPj').value;
-            const tipo = document.getElementById('donacionTipo').value;
-            const cant = document.getElementById('donacionCantidad').value;
-            if (!pj || !tipo) return mostrarToast("Ingresa el PJ y el tipo de donación", "❌");
-
-            try {
-                const res = await fetch('/api/donaciones', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pj_name: pj, tipo_donacion: tipo, cantidad: cant })
-                });
-                if (res.ok) {
-                    document.getElementById('donacionPj').value = '';
-                    cargarDonaciones();
-                    mostrarToast("Donación registrada", "💎");
-                } else {
-                    mostrarToast("Debes estar logueado para cargar donaciones", "🔒");
-                }
-            } catch (e) {}
-        }
-
-        function toggleLoginModal() {
-            document.getElementById('modal-login').classList.toggle('hidden');
-        }
-
-        async function ejecutarLogin() {
-            const username = document.getElementById('loginUser').value;
-            const password = document.getElementById('loginPass').value;
-            try {
-                const res = await fetch('/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    location.reload();
-                } else {
-                    mostrarToast(data.error || "Login fallido", "🔑");
-                }
-            } catch (e) {}
-        }
-
-        setInterval(() => {
-            renderizarUI();
-            actualizarMapaUI();
-        }, 1000);
-
-        setInterval(cargarDatos, 3000);
-        
-        verificarSesion();
-        poblarSelector();
-        cargarDatos();
-    </script>
-</body>
-</html>
+            document.getElementById('modal-editar-don
