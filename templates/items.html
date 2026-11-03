@@ -66,7 +66,7 @@
                 </div>
                 
                 <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1.5">Opción Principal:</label>
+                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1.5">Opción Principal (No incluye Exclusive Bonus):</label>
                     <select id="filtroOpcion" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-sm outline-none">
                         <option value="">Todas las Opciones</option>
                         <option value="damage decrease">DD (Damage Decrease)</option>
@@ -76,6 +76,10 @@
                         <option value="critical damage">CRITICAL (Critical Damage)</option>
                         <option value="excellent damage">EXC DMG (Excellent Damage)</option>
                         <option value="zen drop">ZEN (Zen Drop Rate)</option>
+                        <option value="attack speed">Speed (Attack Speed)</option>
+                        <option value="damage to monsters">Damage to Monsters</option>
+                        <option value="physical damage">Physical Damage</option>
+                        <option value="wizardry">Wizardry Damage</option>
                     </select>
                 </div>
                 
@@ -221,12 +225,15 @@
                             ✏️ Editar
                         </button>
                         <div>
+                            <!-- Imagen Drive -->
                             <div class="w-full h-56 bg-black rounded-lg flex items-center justify-center overflow-hidden mb-3 border border-purple-950">
                                 <img src="${img}" alt="${item.nombre}" loading="lazy" class="max-h-full max-w-full object-contain" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200/0f0c1b/4ade80?text=Item+MU';">
                             </div>
 
+                            <!-- Nombre -->
                             <h3 class="text-center font-bold text-emerald-400 text-base mb-2">${item.nombre}</h3>
                             
+                            <!-- Estadísticas -->
                             <div class="text-xs space-y-1 text-center mb-3">
                                 ${item.base_score ? `<p class="text-amber-400 font-semibold">Base Score: ${item.base_score}</p>` : ''}
                                 ${item.grade_score ? `<p class="text-purple-400 font-semibold">Grade Score: ${item.grade_score}</p>` : ''}
@@ -237,6 +244,7 @@
                                 ${item.requisitos?.energy ? `<p class="text-cyan-300">Energy: ${item.requisitos.energy}</p>` : ''}
                             </div>
 
+                            <!-- Clases (PJ) -->
                             <div class="mb-3">
                                 <span class="text-[10px] text-gray-400 uppercase font-bold block mb-1">Equipable por:</span>
                                 <div class="flex flex-wrap gap-1">
@@ -245,6 +253,7 @@
                             </div>
                         </div>
 
+                        <!-- Opciones (Filtro activo solo aquí) -->
                         <div class="border-t border-purple-900/50 pt-2 text-xs space-y-1">
                             <span class="text-[10px] text-purple-300 uppercase font-bold block mb-1">Opciones:</span>
                             ${(item.opciones || []).map(opt => {
@@ -263,6 +272,7 @@
                                 return `<p class="${colorClass}">• ${opt}</p>`;
                             }).join('')}
 
+                            <!-- Exclusive Excellent Bonus: SE MUESTRA PERO NO SE CONSIDERA EN EL FILTRO -->
                             ${(item.bonus_excelente && item.bonus_excelente.length > 0) ? `
                                 <div class="mt-2 pt-1 border-t border-purple-950">
                                     <span class="text-[10px] text-cyan-400 font-bold block mb-0.5">Exclusive Excellent Bonus:</span>
@@ -281,12 +291,11 @@
             const busqueda = document.getElementById('filtroTexto').value.toLowerCase();
 
             const filtrados = catalogo.filter(item => {
+                // 1. Coincidencia por Clase / PJ
                 const matchRaza = !raza || (item.clases && item.clases.some(c => c.toLowerCase().includes(raza)));
 
-                const textoOpciones = [
-                    ...(item.opciones || []),
-                    ...(item.bonus_excelente || [])
-                ].join(' ').toLowerCase();
+                // 2. Coincidencia por Opciones: SOLO item.opciones (EXCLUYE EXCLUSIVE EXCELLENT BONUS)
+                const textoOpciones = (item.opciones || []).join(' ').toLowerCase();
 
                 let matchOpcion = true;
                 if (opcion) {
@@ -295,7 +304,7 @@
                     } else if (opcion === 'reflect') {
                         matchOpcion = textoOpciones.includes('reflect');
                     } else if (opcion === 'maximum life') {
-                        matchOpcion = textoOpciones.includes('maximum life') || textoOpciones.includes('life') || textoOpciones.includes('hp');
+                        matchOpcion = textoOpciones.includes('maximum life') || textoOpciones.includes('hp');
                     } else if (opcion === 'maximum sd') {
                         matchOpcion = textoOpciones.includes('sd');
                     } else {
@@ -303,6 +312,7 @@
                     }
                 }
 
+                // 3. Coincidencia por Nombre
                 const matchTexto = !busqueda || (item.nombre && item.nombre.toLowerCase().includes(busqueda));
 
                 return matchRaza && matchOpcion && matchTexto;
