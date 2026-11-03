@@ -52,35 +52,7 @@ usuarios_db = cargar_json(USERS_FILE, {
     "pinion": {"password": "pass123", "rol": "admin", "requiere_cambio": False}
 })
 donaciones_db = cargar_json(DONACIONES_FILE, [])
-
-DEFAULT_ITEMS = [
-    {
-        "id": 1,
-        "nombre": "Excellent Bronze Gloves",
-        "tipo": "Gloves",
-        "tier": "Excellent",
-        "base_score": 7,
-        "grade_score": 87,
-        "defense": 21,
-        "durability": "49/49",
-        "requisitos": {
-            "strength": 111,
-            "agility": 42
-        },
-        "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord"],
-        "opciones": [
-            "[Rare] Increases maximum SD +3%",
-            "[Rare] Damage decrease +3%",
-            "[Legendary] Critical damage resistance +8%"
-        ],
-        "bonus_excelente": [
-            "Increases Strength +30",
-            "Increases Agility +26"
-        ],
-        "drive_id": "TU_ID_DE_GOOGLE_DRIVE"
-    }
-]
-items_mu_db = cargar_json(ITEMS_FILE, DEFAULT_ITEMS)
+items_mu_db = cargar_json(ITEMS_FILE, [])
 
 tarjetas_ocultas_global = set()
 heartbeats = {}
@@ -539,7 +511,8 @@ def usuarios():
                     """, (new_user, p_hash, new_rol, session['user']))
                     conn.commit()
                 conn.close()
-            except Exception:
+            except Exception as e:
+                print(f"Error creando usuario en DB: {e}")
                 if conn: conn.close()
 
         return jsonify({"status": "ok", "message": f"Usuario {new_user} creado"}), 201
