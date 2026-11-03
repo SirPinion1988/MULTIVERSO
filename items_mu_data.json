@@ -8,36 +8,26 @@
     "grade_score": 87,
     "defense": 21,
     "durability": "49/49",
-    "requisitos": {
-      "strength": 111,
-      "agility": 42
-    },
+    "requisitos": { "strength": 111, "agility": 42 },
     "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord"],
     "opciones": [
       "[Rare] Increases maximum SD +3%",
       "[Rare] Damage decrease +3%",
       "[Legendary] Critical damage resistance +8%"
     ],
-    "bonus_excelente": [
-      "Increases Strength +30",
-      "Increases Agility +26"
-    ],
+    "bonus_excelente": ["Increases Strength +30", "Increases Agility +26"],
     "drive_id": "1u0mZvM_JmyY3NABCGCf35dj6rGVqrFHh"
   },
   {
     "id": 244,
     "nombre": "Excellent Book of Samut",
-    "tipo": "Book / Weapon",
+    "tipo": "Book",
     "tier": "Excellent",
     "base_score": 26,
     "grade_score": 61,
     "defense": 0,
     "durability": "75/75",
-    "requisitos": {
-      "strength": 0,
-      "agility": 66,
-      "energy": 331
-    },
+    "requisitos": { "strength": 0, "agility": 66, "energy": 331 },
     "clases": ["Summoner"],
     "opciones": [
       "Increases wizardry by 3%",
@@ -45,10 +35,7 @@
       "Luck (Critical damage rate +5%)",
       "[Rare] Critical damage rate +7%"
     ],
-    "bonus_excelente": [
-      "Increases Energy +146",
-      "Increases Strength +200"
-    ],
+    "bonus_excelente": ["Increases Energy +146", "Increases Strength +200"],
     "drive_id": "1f5VMBmH8o4CdKIblTkW382mnxkzj7s2U"
   },
   {
@@ -60,20 +47,14 @@
     "grade_score": 57,
     "defense": 46,
     "durability": "57/57",
-    "requisitos": {
-      "strength": 57,
-      "agility": 28
-    },
+    "requisitos": { "strength": 57, "agility": 28 },
     "clases": ["Summoner"],
     "opciones": [
       "Luck (Success rate of Jewel of Soul +25%)",
       "Luck (Critical damage rate +5%)",
       "[Rare] Increases maximum SD +3%"
     ],
-    "bonus_excelente": [
-      "Increases Strength +69",
-      "Increases Agility +69"
-    ],
+    "bonus_excelente": ["Increases Strength +69", "Increases Agility +69"],
     "drive_id": "1T3RcyL2SCS4_a20q2ymcOwu4FpDdW6Hi"
   },
   {
@@ -85,19 +66,13 @@
     "grade_score": 65,
     "defense": 34,
     "durability": "43/43",
-    "requisitos": {
-      "strength": 51,
-      "agility": 0
-    },
+    "requisitos": { "strength": 51, "agility": 0 },
     "clases": ["Dark Wizard", "Magic Gladiator"],
     "opciones": [
       "[Epic] Damage decrease +5%",
       "[Rare] Reflect damage +3%"
     ],
-    "bonus_excelente": [
-      "Increases Vitality +29",
-      "Increases Energy +30"
-    ],
+    "bonus_excelente": ["Increases Vitality +29", "Increases Energy +30"],
     "drive_id": "1Z1YEGk78j_3qZtNUHqFasLqq6_EMKUdW"
   },
   {
@@ -109,12 +84,93 @@
     "grade_score": 55,
     "defense": 40,
     "durability": "51/51",
-    "requisitos": {
-      "strength": 84,
-      "agility": 0
-    },
+    "requisitos": { "strength": 84, "agility": 0 },
     "clases": ["Summoner"],
     "opciones": [
       "Luck (Success rate of Jewel of Soul +25%)",
       "Luck (Critical damage rate +5%)",
-      "
+      "Additional defense +15",
+      "[Legendary] Damage decrease +4%"
+    ],
+    "bonus_excelente": ["Increases Agility +34", "Increases Strength +32"],
+    "drive_id": "1euLQrkH0g0i7L9ugmRk10QRlqgwnmYCY"
+  },
+  {
+    "id": 239,
+    "nombre": "Excellent Epic Silver Bow",
+    "tipo": "Bow",
+    "tier": "Excellent",
+    "base_score": 36,
+    "grade_score": 116,
+    "defense": 0,
+    "durability": "80/80",
+    "requisitos": { "strength": 130, "agility": 433 },
+    "clases": ["Elf"],
+    "opciones": [
+      "[Legendary] Excellent damage rate +8%",
+      "[Rare] Increases physical damage +7%",
+      "[Rare] Obtains +1% life when monster is killed"
+    ],
+    "bonus_excelente": ["Increases Energy +194", "Increases Vitality +181"],
+    "drive_id": "1vp4qyg0Idn9OXgijU7RMAuj9NeUGXkDS"
+  },
+  {
+    "id": 238,
+    "nombre": "Excellent Guardian Pants",
+    "tipo": "Pants",
+    "tier": "Excellent",
+    "base_score": 27,
+    "grade_score": 52,
+    "defense": 109,
+    "durability": "60/60",
+    "requisitos": { "strength": 124, "agility": 209 },
+    "clases": ["Elf"],
+    "opciones": [
+      "Additional defense +30",
+      "[Rare] Increases maximum life +3%"
+    ],
+    "bonus_excelente": ["Increases Energy +62", "Increases Vitality +92"],
+    "drive_id": "1PFjrFglCCrOxtVLmSqftJQGX7TjuxYXN"
+  },
+  {
+    "id": 237,
+    "nombre": "Excellent Aquagold Crossbow",
+    "tipo": "Crossbow",
+    "tier": "Excellent",
+    "base_score": 36,
+    "grade_score": 81,
+    "defense": 0,
+    "durability": "84/84",
+    "requisitos": { "strength": 153, "agility": 372 },
+    "clases": ["Elf"],
+    "opciones": [
+      "Luck (Success rate of Jewel of Soul +25%)",
+      "Luck (Critical damage rate +5%)",
+      "Additional damage +30",
+      "[Epic] Critical damage rate +10%"
+    ],
+    "bonus_excelente": ["Increases Agility +193", "Increases Energy +187"],
+    "drive_id": "1Q9-7z5UIjQE47WN-iB68S4AItMitA-U-"
+  },
+  {
+    "id": 236,
+    "nombre": "Excellent Sacred Claw",
+    "tipo": "Claw",
+    "tier": "Excellent",
+    "base_score": 26,
+    "grade_score": 91,
+    "defense": 0,
+    "durability": "80/80",
+    "requisitos": { "strength": 221, "agility": 100 },
+    "clases": ["Rage Fighter"],
+    "opciones": [
+      "Luck (Success rate of Jewel of Soul +25%)",
+      "Luck (Critical damage rate +5%)",
+      "Additional damage +30",
+      "[Legendary] Damage to monsters +8%",
+      "[Rare] Obtains +1% life when monster is killed"
+    ],
+    "bonus_excelente": ["Increases Strength +212", "Increases Energy +190"],
+    "drive_id": "1_SlZm5z7Kt_tPnTLDE7cqQmpJvWAl71E"
+  }
+]
