@@ -36,17 +36,20 @@
             <h1 class="text-3xl font-extrabold text-emerald-400 drop-shadow">🛡️ CATÁLOGO DE ÍTEMS MU</h1>
             <p class="text-xs text-purple-300">Explorador de ítems por Clase (PJ) y Opciones (DD, Reflect, HP, SD)</p>
         </div>
-        <a href="/" class="bg-purple-900 hover:bg-purple-800 text-purple-200 border border-purple-600 px-4 py-2 rounded-lg text-xs font-bold transition">
-            ← Volver al Monitor
-        </a>
+        <div class="flex items-center gap-3">
+            <button onclick="toggleModalNuevoItem()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow">
+                ➕ Agregar Ítem
+            </button>
+            <a href="/" class="bg-purple-900 hover:bg-purple-800 text-purple-200 border border-purple-600 px-4 py-2 rounded-lg text-xs font-bold transition">
+                ← Volver al Monitor
+            </a>
+        </div>
     </header>
 
     <div class="w-full max-w-6xl space-y-6">
         
         <!-- Panel de Filtros -->
         <div class="bg-[#141126] border border-purple-900/60 p-5 rounded-xl space-y-4">
-            
-            <!-- Selectores principales -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-xs uppercase text-purple-300 font-bold mb-1.5">Clase / Personaje (PJ):</label>
@@ -72,17 +75,13 @@
                         <option value="maximum sd">SD (Increases SD)</option>
                         <option value="critical damage">CRITICAL (Critical Damage)</option>
                         <option value="excellent damage">EXC DMG (Excellent Damage)</option>
-                        <option value="life when monster">LIFE x Kill (Recupera HP)</option>
-                        <option value="strength">Fuerza (Strength Bonus)</option>
-                        <option value="agility">Agilidad (Agility Bonus)</option>
-                        <option value="energy">Energía (Energy Bonus)</option>
-                        <option value="vitality">Vitalidad (Vitality Bonus)</option>
+                        <option value="zen drop">ZEN (Zen Drop Rate)</option>
                     </select>
                 </div>
                 
                 <div>
                     <label class="block text-xs uppercase text-purple-300 font-bold mb-1.5">Buscar por Nombre:</label>
-                    <input type="text" id="filtroTexto" oninput="aplicarFiltros()" placeholder="Ej. Bronze, Samut, Bow, Pad..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-sm outline-none">
+                    <input type="text" id="filtroTexto" oninput="aplicarFiltros()" placeholder="Ej. Sphinx, Bronze, Samut, Bow..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-sm outline-none">
                 </div>
             </div>
 
@@ -98,14 +97,64 @@
             </div>
         </div>
 
-        <!-- Contador de ítems encontrados -->
         <div class="flex justify-between items-center text-xs text-gray-400 px-1">
             <span id="contador-items">Cargando ítems...</span>
         </div>
 
-        <!-- Grilla de Ítems -->
         <div id="contenedor-items" class="grid-items-mu">
             <div class="text-gray-500 text-center col-span-full py-8">Cargando inventario...</div>
+        </div>
+    </div>
+
+    <!-- MODAL PARA AGREGAR NUEVO ÍTEM -->
+    <div id="modal-nuevo-item" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4 overflow-y-auto">
+        <div class="bg-[#141126] border border-emerald-500 p-6 rounded-xl w-full max-w-md shadow-2xl text-left my-8">
+            <h3 class="text-lg font-bold text-emerald-400 mb-3 text-center">➕ Agregar Nuevo Ítem</h3>
+            
+            <label class="block text-xs text-purple-300 font-semibold mb-1">Enlace o ID de la imagen en Google Drive:</label>
+            <input type="text" id="nuevoItemDrive" placeholder="https://drive.google.com/file/d/..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
+
+            <label class="block text-xs text-purple-300 font-semibold mb-1">Nombre del Ítem:</label>
+            <input type="text" id="nuevoItemNombre" placeholder="Ej. Excellent Sphinx Armor" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
+
+            <label class="block text-xs text-purple-300 font-semibold mb-1">Clases que lo equipan (separadas por coma):</label>
+            <input type="text" id="nuevoItemClases" placeholder="Dark Wizard, Magic Gladiator" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
+
+            <label class="block text-xs text-purple-300 font-semibold mb-1">Opciones Principales (separadas por punto y coma ;):</label>
+            <input type="text" id="nuevoItemOpciones" placeholder="[Legendary] Increases maximum life +4%; [Rare] Increases zen drop rate +21%" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
+
+            <label class="block text-xs text-purple-300 font-semibold mb-1">Exclusive Excellent Bonus (separadas por punto y coma ;):</label>
+            <input type="text" id="nuevoItemBonus" placeholder="Increases Energy +50; Increases Vitality +41" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-4 text-sm outline-none">
+
+            <div class="flex gap-2">
+                <button onclick="guardarNuevoItemDesdeWeb()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded text-sm transition">💾 Guardar Ítem</button>
+                <button onclick="toggleModalNuevoItem()" class="w-full bg-gray-800 text-gray-400 font-bold py-2 rounded text-sm">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PARA EDITAR ÍTEM EXISTENTE -->
+    <div id="modal-editar-item" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4 overflow-y-auto">
+        <div class="bg-[#141126] border border-purple-500 p-6 rounded-xl w-full max-w-md shadow-2xl text-left my-8">
+            <h3 class="text-lg font-bold text-purple-300 mb-3 text-center">✏️ Editar Ítem</h3>
+            <input type="hidden" id="editItemId">
+            
+            <label class="block text-xs text-purple-300 font-semibold mb-1">Nombre del Ítem:</label>
+            <input type="text" id="editItemNombre" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
+
+            <label class="block text-xs text-purple-300 font-semibold mb-1">Clases (separadas por coma):</label>
+            <input type="text" id="editItemClases" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
+
+            <label class="block text-xs text-purple-300 font-semibold mb-1">Opciones (separadas por punto y coma ;):</label>
+            <input type="text" id="editItemOpciones" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
+
+            <label class="block text-xs text-purple-300 font-semibold mb-1">Bonus Excelente (separadas por punto y coma ;):</label>
+            <input type="text" id="editItemBonus" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-4 text-sm outline-none">
+
+            <div class="flex gap-2">
+                <button onclick="guardarEdicionItem()" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 rounded text-sm transition">💾 Actualizar</button>
+                <button onclick="toggleModalEditarItem()" class="w-full bg-gray-800 text-gray-400 font-bold py-2 rounded text-sm">Cancelar</button>
+            </div>
         </div>
     </div>
 
@@ -117,6 +166,25 @@
             aplicarFiltros();
         }
 
+        function toggleModalNuevoItem() {
+            document.getElementById('modal-nuevo-item').classList.toggle('hidden');
+        }
+
+        function toggleModalEditarItem() {
+            document.getElementById('modal-editar-item').classList.toggle('hidden');
+        }
+
+        function abrirEditor(id) {
+            const it = catalogo.find(x => x.id === id);
+            if (!it) return;
+            document.getElementById('editItemId').value = it.id;
+            document.getElementById('editItemNombre').value = it.nombre || '';
+            document.getElementById('editItemClases').value = (it.clases || []).join(', ');
+            document.getElementById('editItemOpciones').value = (it.opciones || []).join('; ');
+            document.getElementById('editItemBonus').value = (it.bonus_excelente || []).join('; ');
+            toggleModalEditarItem();
+        }
+
         async function cargar() {
             try {
                 const res = await fetch('/api/items');
@@ -124,10 +192,10 @@
                     catalogo = await res.json();
                     renderizar(catalogo);
                 } else {
-                    document.getElementById('contenedor-items').innerHTML = '<div class="text-red-400 text-center col-span-full">Error consultando datos del servidor.</div>';
+                    document.getElementById('contenedor-items').innerHTML = '<div class="text-red-400 text-center col-span-full">Error al consultar el servidor.</div>';
                 }
             } catch (e) {
-                document.getElementById('contenedor-items').innerHTML = '<div class="text-red-400 text-center col-span-full">Error de conexión al cargar datos.</div>';
+                document.getElementById('contenedor-items').innerHTML = '<div class="text-red-400 text-center col-span-full">Error de red al cargar datos.</div>';
             }
         }
 
@@ -136,41 +204,39 @@
             document.getElementById('contador-items').innerText = `Mostrando ${items.length} ítem(s)`;
 
             if (!items || items.length === 0) {
-                c.innerHTML = '<div class="text-gray-500 text-center col-span-full py-12">No hay ítems que coincidan con estos filtros.</div>';
+                c.innerHTML = '<div class="text-gray-500 text-center col-span-full py-12">No hay ítems con estos filtros.</div>';
                 return;
             }
 
             c.innerHTML = items.map(item => {
                 const img = `https://lh3.googleusercontent.com/d/${item.drive_id}`;
                 
-                // Formateo de clases (PJ)
                 const clasesHTML = (item.clases && item.clases.length > 0)
                     ? item.clases.map(pj => `<span class="badge-pj">${pj}</span>`).join(' ')
                     : '<span class="text-gray-500 text-xs">Sin clase definida</span>';
 
                 return `
-                    <div class="mu-item-card p-4 flex flex-col justify-between">
+                    <div class="mu-item-card p-4 flex flex-col justify-between relative">
+                        <button onclick="abrirEditor(${item.id})" title="Editar nombre o opciones" class="absolute top-3 right-3 bg-black/60 hover:bg-black/90 text-purple-300 hover:text-white px-2 py-1 rounded text-[11px] font-bold border border-purple-500/40 z-10">
+                            ✏️ Editar
+                        </button>
                         <div>
-                            <!-- Imagen Drive -->
                             <div class="w-full h-56 bg-black rounded-lg flex items-center justify-center overflow-hidden mb-3 border border-purple-950">
                                 <img src="${img}" alt="${item.nombre}" loading="lazy" class="max-h-full max-w-full object-contain" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200/0f0c1b/4ade80?text=Item+MU';">
                             </div>
 
-                            <!-- Nombre -->
                             <h3 class="text-center font-bold text-emerald-400 text-base mb-2">${item.nombre}</h3>
                             
-                            <!-- Estadísticas y Scores -->
                             <div class="text-xs space-y-1 text-center mb-3">
                                 ${item.base_score ? `<p class="text-amber-400 font-semibold">Base Score: ${item.base_score}</p>` : ''}
                                 ${item.grade_score ? `<p class="text-purple-400 font-semibold">Grade Score: ${item.grade_score}</p>` : ''}
                                 ${item.defense ? `<p class="text-blue-300 font-semibold">Defense: ${item.defense}</p>` : ''}
-                                ${item.durability ? `<p class="text-gray-300">Durability: [${item.durability}]</p>` : ''}
+                                ${item.durability && item.durability !== '-' ? `<p class="text-gray-300">Durability: [${item.durability}]</p>` : ''}
                                 ${item.requisitos?.strength ? `<p class="text-red-400 font-medium">Strength: ${item.requisitos.strength}</p>` : ''}
                                 ${item.requisitos?.agility ? `<p class="text-gray-300">Agility: ${item.requisitos.agility}</p>` : ''}
                                 ${item.requisitos?.energy ? `<p class="text-cyan-300">Energy: ${item.requisitos.energy}</p>` : ''}
                             </div>
 
-                            <!-- PJs que pueden equiparlo -->
                             <div class="mb-3">
                                 <span class="text-[10px] text-gray-400 uppercase font-bold block mb-1">Equipable por:</span>
                                 <div class="flex flex-wrap gap-1">
@@ -179,14 +245,14 @@
                             </div>
                         </div>
 
-                        <!-- Opciones Especiales (DD, Reflect, HP, etc.) -->
                         <div class="border-t border-purple-900/50 pt-2 text-xs space-y-1">
                             <span class="text-[10px] text-purple-300 uppercase font-bold block mb-1">Opciones:</span>
                             ${(item.opciones || []).map(opt => {
+                                const optL = opt.toLowerCase();
                                 const esLegendary = opt.includes('Legendary');
-                                const esDD = opt.toLowerCase().includes('decrease');
-                                const esReflect = opt.toLowerCase().includes('reflect');
-                                const esLife = opt.toLowerCase().includes('life');
+                                const esDD = optL.includes('decrease') || optL.includes('dd');
+                                const esReflect = optL.includes('reflect');
+                                const esLife = optL.includes('life') || optL.includes('hp');
 
                                 let colorClass = 'text-purple-300';
                                 if (esLegendary) colorClass = 'text-amber-400 font-semibold';
@@ -215,10 +281,8 @@
             const busqueda = document.getElementById('filtroTexto').value.toLowerCase();
 
             const filtrados = catalogo.filter(item => {
-                // Coincidencia por Clase / PJ
                 const matchRaza = !raza || (item.clases && item.clases.some(c => c.toLowerCase().includes(raza)));
 
-                // Coincidencia por Opciones (DD, Reflect, HP, etc.)
                 const textoOpciones = [
                     ...(item.opciones || []),
                     ...(item.bonus_excelente || [])
@@ -231,7 +295,7 @@
                     } else if (opcion === 'reflect') {
                         matchOpcion = textoOpciones.includes('reflect');
                     } else if (opcion === 'maximum life') {
-                        matchOpcion = textoOpciones.includes('maximum life') || textoOpciones.includes('hp');
+                        matchOpcion = textoOpciones.includes('maximum life') || textoOpciones.includes('life') || textoOpciones.includes('hp');
                     } else if (opcion === 'maximum sd') {
                         matchOpcion = textoOpciones.includes('sd');
                     } else {
@@ -239,13 +303,81 @@
                     }
                 }
 
-                // Coincidencia por Nombre
                 const matchTexto = !busqueda || (item.nombre && item.nombre.toLowerCase().includes(busqueda));
 
                 return matchRaza && matchOpcion && matchTexto;
             });
 
             renderizar(filtrados);
+        }
+
+        async function guardarNuevoItemDesdeWeb() {
+            const drive_id = document.getElementById('nuevoItemDrive').value.trim();
+            const nombre = document.getElementById('nuevoItemNombre').value.trim();
+            const clasesRaw = document.getElementById('nuevoItemClases').value.trim();
+            const opcionesRaw = document.getElementById('nuevoItemOpciones').value.trim();
+            const bonusRaw = document.getElementById('nuevoItemBonus').value.trim();
+
+            if (!drive_id || !nombre) {
+                alert("Ingresá al menos el enlace de Drive y el nombre del ítem.");
+                return;
+            }
+
+            const payload = {
+                drive_id: drive_id,
+                nombre: nombre,
+                clases: clasesRaw ? clasesRaw.split(',').map(s => s.trim()) : [],
+                opciones: opcionesRaw ? opcionesRaw.split(';').map(s => s.trim()) : [],
+                bonus_excelente: bonusRaw ? bonusRaw.split(';').map(s => s.trim()) : []
+            };
+
+            try {
+                const res = await fetch('/api/items', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    toggleModalNuevoItem();
+                    cargar();
+                } else {
+                    alert("Error al guardar ítem.");
+                }
+            } catch (e) {
+                alert("Error de red.");
+            }
+        }
+
+        async function guardarEdicionItem() {
+            const id = parseInt(document.getElementById('editItemId').value);
+            const nombre = document.getElementById('editItemNombre').value.trim();
+            const clasesRaw = document.getElementById('editItemClases').value.trim();
+            const opcionesRaw = document.getElementById('editItemOpciones').value.trim();
+            const bonusRaw = document.getElementById('editItemBonus').value.trim();
+
+            const payload = {
+                id: id,
+                nombre: nombre,
+                clases: clasesRaw ? clasesRaw.split(',').map(s => s.trim()) : [],
+                opciones: opcionesRaw ? opcionesRaw.split(';').map(s => s.trim()) : [],
+                bonus_excelente: bonusRaw ? bonusRaw.split(';').map(s => s.trim()) : []
+            };
+
+            try {
+                const res = await fetch('/api/items', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    toggleModalEditarItem();
+                    cargar();
+                } else {
+                    alert("No se pudo actualizar el ítem.");
+                }
+            } catch (e) {
+                alert("Error de conexión.");
+            }
         }
 
         document.addEventListener('DOMContentLoaded', cargar);
