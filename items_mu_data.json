@@ -1,0 +1,120 @@
+[
+  {
+    "id": 246,
+    "nombre": "Excellent Bronze Gloves",
+    "tipo": "Gloves",
+    "tier": "Excellent",
+    "base_score": 7,
+    "grade_score": 87,
+    "defense": 21,
+    "durability": "49/49",
+    "requisitos": {
+      "strength": 111,
+      "agility": 42
+    },
+    "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord"],
+    "opciones": [
+      "[Rare] Increases maximum SD +3%",
+      "[Rare] Damage decrease +3%",
+      "[Legendary] Critical damage resistance +8%"
+    ],
+    "bonus_excelente": [
+      "Increases Strength +30",
+      "Increases Agility +26"
+    ],
+    "drive_id": "1u0mZvM_JmyY3NABCGCf35dj6rGVqrFHh"
+  },
+  {
+    "id": 244,
+    "nombre": "Excellent Book of Samut",
+    "tipo": "Book / Weapon",
+    "tier": "Excellent",
+    "base_score": 26,
+    "grade_score": 61,
+    "defense": 0,
+    "durability": "75/75",
+    "requisitos": {
+      "strength": 0,
+      "agility": 66,
+      "energy": 331
+    },
+    "clases": ["Summoner"],
+    "opciones": [
+      "Increases wizardry by 3%",
+      "Luck (Success rate of Jewel of Soul +25%)",
+      "Luck (Critical damage rate +5%)",
+      "[Rare] Critical damage rate +7%"
+    ],
+    "bonus_excelente": [
+      "Increases Energy +146",
+      "Increases Strength +200"
+    ],
+    "drive_id": "1f5VMBmH8o4CdKIblTkW382mnxkzj7s2U"
+  },
+  {
+    "id": 242,
+    "nombre": "Excellent Red Winged Gloves",
+    "tipo": "Gloves",
+    "tier": "Excellent",
+    "base_score": 22,
+    "grade_score": 57,
+    "defense": 46,
+    "durability": "57/57",
+    "requisitos": {
+      "strength": 57,
+      "agility": 28
+    },
+    "clases": ["Summoner"],
+    "opciones": [
+      "Luck (Success rate of Jewel of Soul +25%)",
+      "Luck (Critical damage rate +5%)",
+      "[Rare] Increases maximum SD +3%"
+    ],
+    "bonus_excelente": [
+      "Increases Strength +69",
+      "Increases Agility +69"
+    ],
+    "drive_id": "1T3RcyL2SCS4_a20q2ymcOwu4FpDdW6Hi"
+  },
+  {
+    "id": 241,
+    "nombre": "Excellent Pad Armor",
+    "tipo": "Armor",
+    "tier": "Excellent",
+    "base_score": 5,
+    "grade_score": 65,
+    "defense": 34,
+    "durability": "43/43",
+    "requisitos": {
+      "strength": 51,
+      "agility": 0
+    },
+    "clases": ["Dark Wizard", "Magic Gladiator"],
+    "opciones": [
+      "[Epic] Damage decrease +5%",
+      "[Rare] Reflect damage +3%"
+    ],
+    "bonus_excelente": [
+      "Increases Vitality +29",
+      "Increases Energy +30"
+    ],
+    "drive_id": "1Z1YEGk78j_3qZtNUHqFasLqq6_EMKUdW"
+  },
+  {
+    "id": 240,
+    "nombre": "Excellent Violent Wind Pants",
+    "tipo": "Pants",
+    "tier": "Excellent",
+    "base_score": 15,
+    "grade_score": 55,
+    "defense": 40,
+    "durability": "51/51",
+    "requisitos": {
+      "strength": 84,
+      "agility": 0
+    },
+    "clases": ["Summoner"],
+    "opciones": [
+      "Luck (Success rate of Jewel of Soul +25%)",
+      "Luck (Critical damage rate +5%)",
+      "
