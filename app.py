@@ -2,8 +2,6 @@ import os
 import time
 import json
 import re
-import urllib.request
-import urllib.parse
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -15,10 +13,6 @@ app.secret_key = os.environ.get("SECRET_KEY", "multiverso_secret_key_2026")
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 LINK_DESCARGA_BOT = "https://drive.google.com/uc?export=download&id=TU_ID_DE_GOOGLE_DRIVE"
-
-# ID DE TU CARPETA DE GOOGLE DRIVE COMPARTIDA
-FOLDER_DRIVE_ID = "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK"
-GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "")
 
 DATA_FILE = "timers_data.json"
 USERS_FILE = "users_data.json"
@@ -35,11 +29,9 @@ def cargar_json(filepath, default_val):
     if os.path.exists(filepath):
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                if data:
-                    return data
-        except Exception:
-            pass
+                d = json.load(f)
+                if d: return d
+        except Exception: pass
     return default_val
 
 def guardar_json(filepath, data):
@@ -74,12 +66,13 @@ def get_db():
         return None
 
 def sincronizar_desde_db():
-    global status_timers, heartbeats, ultimas_pcs, ultimos_pjs, usuarios_db, donaciones_db
+    global status_timers, heartbeats, ultimas_pcs, ultimos_pjs, usuarios_db, donaciones_db, items_mu_db
     conn = get_db()
     if not conn:
         return
     try:
         with conn.cursor() as cur:
+            # 1. Timers
             cur.execute("SELECT server, timers, last_pc, last_pj, last_heartbeat FROM public.timers_bosses;")
             for row in cur.fetchall():
                 svr = row['server']
@@ -88,6 +81,7 @@ def sincronizar_desde_db():
                 if row['last_pj']: ultimos_pjs[svr] = row['last_pj']
                 if row['last_heartbeat']: heartbeats[svr] = row['last_heartbeat'].strftime("%Y-%m-%d %H:%M:%S")
 
+            # 2. Usuarios
             cur.execute("SELECT username, password_hash, rol, requiere_cambio_clave, creado_por FROM public.usuarios;")
             for u in cur.fetchall():
                 uname = u['username'].lower()
@@ -99,6 +93,7 @@ def sincronizar_desde_db():
                     "creado_por": u.get('creado_por', 'Sistema')
                 }
 
+            # 3. Donaciones
             cur.execute("""
                 SELECT id, pj_name, tipo_donacion, cantidad, registrado_por, modificado_por,
                        to_char(created_at, 'YYYY-MM-DD HH24:MI:SS') as fecha_registro,
@@ -107,82 +102,31 @@ def sincronizar_desde_db():
             """)
             rows_don = cur.fetchall()
             if rows_don: donaciones_db = rows_don
+
+            # 4. Items MU desde Supabase
+            try:
+                cur.execute("""
+                    SELECT id, nombre, tipo, base_score, grade_score, defense, durability,
+                           requisitos, clases, opciones, bonus_excelente, drive_id
+                    FROM public.items_mu ORDER BY id DESC;
+                """)
+                rows_items = cur.fetchall()
+                if rows_items:
+                    items_mu_db = rows_items
+                    guardar_json(ITEMS_FILE, items_mu_db)
+            except Exception as e_items:
+                print(f"Aviso tabla items_mu: {e_items}")
+
         conn.close()
-    except Exception:
+        print("✅ DB conectada y sincronizada.")
+    except Exception as e:
+        print(f"Aviso en sync DB: {e}")
         try: conn.close()
         except Exception: pass
 
 sincronizar_desde_db()
 
-# --- FUNCIÓN DE ESCANEO AUTOMÁTICO DE GOOGLE DRIVE ---
-
-def escanear_carpeta_drive():
-    """
-    Consulta la carpeta pública de Drive.
-    Si se configuró GOOGLE_API_KEY consulta la API oficial;
-    si no, utiliza el parser del feed público.
-    """
-    global items_mu_db
-    archivos_drive = []
-
-    if GOOGLE_API_KEY:
-        try:
-            q = urllib.parse.quote(f"'{FOLDER_DRIVE_ID}' in parents and trashed=false")
-            url = f"https://www.googleapis.com/drive/v3/files?q={q}&key={GOOGLE_API_KEY}&fields=files(id,name,mimeType)"
-            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req, timeout=4) as response:
-                res_data = json.loads(response.read().decode('utf-8'))
-                for f in res_data.get('files', []):
-                    if 'image' in f.get('mimeType', ''):
-                        archivos_drive.append({"id": f['id'], "nombre": f['name']})
-        except Exception as e:
-            print(f"Error consultando Drive API: {e}")
-
-    # Si no hay API KEY o falló, intenta leer el directorio web público
-    if not archivos_drive:
-        try:
-            url_folder = f"https://drive.google.com/embeddedfolderview?id={FOLDER_DRIVE_ID}#grid"
-            req = urllib.request.Request(url_folder, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req, timeout=4) as resp:
-                html = resp.read().decode('utf-8', errors='ignore')
-                # Busca coincidencias de IDs de archivos
-                ids_encontrados = set(re.findall(r'https://drive\.google\.com/file/d/([a-zA-Z0-9_-]+)', html))
-                for file_id in ids_encontrados:
-                    archivos_drive.append({"id": file_id, "nombre": f"Item {file_id[:6]}"})
-        except Exception as e:
-            print(f"Error leyendo carpeta pública: {e}")
-
-    # Incorporar los archivos encontrados que aún no estén en la base local
-    items_actuales = {item.get('drive_id'): item for item in items_mu_db if item.get('drive_id')}
-    nuevos_detectados = 0
-
-    for arch in archivos_drive:
-        fid = arch['id']
-        if fid not in items_actuales:
-            nombre_limpio = re.sub(r'\.[a-zA-Z0-9]+$', '', arch['nombre']).replace('_', ' ')
-            nuevo_item = {
-                "id": int(time.time() * 1000) + nuevos_detectados,
-                "nombre": nombre_limpio,
-                "tipo": "General",
-                "tier": "Excellent",
-                "base_score": "",
-                "grade_score": "",
-                "defense": "",
-                "durability": "",
-                "requisitos": {},
-                "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord", "Dark Wizard", "Fairy Elf", "Summoner", "Rage Fighter"],
-                "opciones": ["[Auto] Item detectado desde Google Drive"],
-                "bonus_excelente": [],
-                "drive_id": fid
-            }
-            items_mu_db.insert(0, nuevo_item)
-            nuevos_detectados += 1
-
-    if nuevos_detectados > 0:
-        guardar_json(ITEMS_FILE, items_mu_db)
-        print(f"✅ Se detectaron y agregaron {nuevos_detectados} ítems nuevos desde Drive.")
-
-# --- VISTAS ---
+# --- RUTAS DE VISTAS ---
 
 @app.route('/')
 def index():
@@ -194,16 +138,27 @@ def vista_items():
 
 # --- API DE ITEMS ---
 
-@app.route('/api/items', methods=['GET', 'POST'])
+@app.route('/api/items', methods=['GET', 'POST', 'PUT'])
 def api_items():
     global items_mu_db
+    conn = get_db()
+
     if request.method == 'GET':
-        items_mu_db = cargar_json(ITEMS_FILE, items_mu_db)
-        # Escaneo no bloqueante
-        try:
-            escanear_carpeta_drive()
-        except Exception:
-            pass
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        SELECT id, nombre, tipo, base_score, grade_score, defense, durability,
+                               requisitos, clases, opciones, bonus_excelente, drive_id
+                        FROM public.items_mu ORDER BY id DESC;
+                    """)
+                    rows = cur.fetchall()
+                    if rows:
+                        items_mu_db = rows
+                        guardar_json(ITEMS_FILE, items_mu_db)
+                conn.close()
+            except Exception:
+                if conn: conn.close()
         return jsonify(items_mu_db)
 
     if request.method == 'POST':
@@ -212,24 +167,81 @@ def api_items():
         match = re.search(r'(?:/d/|id=)([a-zA-Z0-9_-]+)', raw_drive)
         id_limpio = match.group(1) if match else raw_drive.strip()
 
-        nuevo_item = {
-            "id": int(time.time() * 1000),
-            "nombre": data.get('nombre', 'Sin Nombre'),
-            "tipo": data.get('tipo', 'General'),
-            "tier": data.get('tier', 'Excellent'),
-            "base_score": data.get('base_score', ''),
-            "grade_score": data.get('grade_score', ''),
-            "defense": data.get('defense', ''),
-            "durability": data.get('durability', ''),
+        nuevo = {
+            "nombre": data.get('nombre', 'Item MU'),
+            "tipo": data.get('tipo', 'Armor'),
+            "base_score": int(data.get('base_score', 0)) if str(data.get('base_score', '')).isdigit() else 0,
+            "grade_score": int(data.get('grade_score', 0)) if str(data.get('grade_score', '')).isdigit() else 0,
+            "defense": int(data.get('defense', 0)) if str(data.get('defense', '')).isdigit() else 0,
+            "durability": data.get('durability', '-'),
             "requisitos": data.get('requisitos', {}),
             "clases": data.get('clases', []),
             "opciones": data.get('opciones', []),
             "bonus_excelente": data.get('bonus_excelente', []),
             "drive_id": id_limpio
         }
-        items_mu_db.insert(0, nuevo_item)
+
+        item_id = int(time.time() * 1000)
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        INSERT INTO public.items_mu (nombre, tipo, base_score, grade_score, defense, durability, requisitos, clases, opciones, bonus_excelente, drive_id)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id;
+                    """, (
+                        nuevo["nombre"], nuevo["tipo"], nuevo["base_score"], nuevo["grade_score"],
+                        nuevo["defense"], nuevo["durability"], json.dumps(nuevo["requisitos"]),
+                        json.dumps(nuevo["clases"]), json.dumps(nuevo["opciones"]),
+                        json.dumps(nuevo["bonus_excelente"]), nuevo["drive_id"]
+                    ))
+                    row = cur.fetchone()
+                    if row: item_id = row['id']
+                    conn.commit()
+                conn.close()
+            except Exception as e:
+                print(f"Error insertando item en DB: {e}")
+                if conn: conn.close()
+
+        nuevo["id"] = item_id
+        items_mu_db.insert(0, nuevo)
         guardar_json(ITEMS_FILE, items_mu_db)
-        return jsonify({"status": "ok", "item": nuevo_item}), 201
+        return jsonify({"status": "ok", "item": nuevo}), 201
+
+    if request.method == 'PUT':
+        data = request.json or {}
+        item_id = data.get('id')
+        if not item_id:
+            if conn: conn.close()
+            return jsonify({"error": "ID requerido"}), 400
+
+        for it in items_mu_db:
+            if it.get('id') == item_id:
+                it['nombre'] = data.get('nombre', it['nombre'])
+                it['clases'] = data.get('clases', it.get('clases', []))
+                it['opciones'] = data.get('opciones', it.get('opciones', []))
+                it['bonus_excelente'] = data.get('bonus_excelente', it.get('bonus_excelente', []))
+
+        guardar_json(ITEMS_FILE, items_mu_db)
+
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        UPDATE public.items_mu 
+                        SET nombre = %s, clases = %s, opciones = %s, bonus_excelente = %s
+                        WHERE id = %s;
+                    """, (
+                        data.get('nombre'), json.dumps(data.get('clases', [])),
+                        json.dumps(data.get('opciones', [])), json.dumps(data.get('bonus_excelente', [])),
+                        item_id
+                    ))
+                    conn.commit()
+                conn.close()
+            except Exception:
+                if conn: conn.close()
+
+        return jsonify({"status": "ok"}), 200
 
 # --- TIMERS Y BOTS ---
 
