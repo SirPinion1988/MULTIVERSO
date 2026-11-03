@@ -16,9 +16,16 @@
             box-shadow: 0 8px 20px rgba(0,0,0,0.6);
             transition: transform 0.2s, border-color 0.2s;
         }
-        .mu-item-card:hover {
-            transform: translateY(-3px);
-            border-color: #6366f1;
+        .mu-item-card:hover { transform: translateY(-3px); border-color: #8b5cf6; }
+        .badge-pj {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            background: rgba(139, 92, 246, 0.2);
+            border: 1px solid rgba(139, 92, 246, 0.5);
+            color: #c4b5fd;
         }
     </style>
 </head>
@@ -27,7 +34,7 @@
     <header class="w-full max-w-6xl mb-6 border-b border-purple-900/50 pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
             <h1 class="text-3xl font-extrabold text-emerald-400 drop-shadow">🛡️ CATÁLOGO DE ÍTEMS MU</h1>
-            <p class="text-xs text-purple-300">Explorador de ítems y opciones de MuDream</p>
+            <p class="text-xs text-purple-300">Explorador de ítems por Clase (PJ) y Opciones (DD, Reflect, HP, SD)</p>
         </div>
         <a href="/" class="bg-purple-900 hover:bg-purple-800 text-purple-200 border border-purple-600 px-4 py-2 rounded-lg text-xs font-bold transition">
             ← Volver al Monitor
@@ -35,38 +42,65 @@
     </header>
 
     <div class="w-full max-w-6xl space-y-6">
-        <!-- Filtros -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-[#141126] border border-purple-900/60 p-4 rounded-xl">
-            <div>
-                <label class="block text-xs uppercase text-purple-300 font-bold mb-1.5">Filtrar por Raza / Clase:</label>
-                <select id="filtroRaza" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-sm outline-none">
-                    <option value="">Todas las Razas</option>
-                    <option value="Dark Knight">Dark Knight</option>
-                    <option value="Magic Gladiator">Magic Gladiator</option>
-                    <option value="Dark Lord">Dark Lord</option>
-                    <option value="Dark Wizard">Dark Wizard</option>
-                    <option value="Fairy Elf">Fairy Elf</option>
-                    <option value="Summoner">Summoner</option>
-                    <option value="Rage Fighter">Rage Fighter</option>
-                </select>
+        
+        <!-- Panel de Filtros -->
+        <div class="bg-[#141126] border border-purple-900/60 p-5 rounded-xl space-y-4">
+            
+            <!-- Selectores principales -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1.5">Clase / Personaje (PJ):</label>
+                    <select id="filtroRaza" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-sm outline-none">
+                        <option value="">Todos los Personajes</option>
+                        <option value="Dark Knight">BK - Dark Knight</option>
+                        <option value="Dark Wizard">SM - Dark Wizard</option>
+                        <option value="Elf">ME - Fairy Elf</option>
+                        <option value="Magic Gladiator">MG - Magic Gladiator</option>
+                        <option value="Dark Lord">DL - Dark Lord</option>
+                        <option value="Summoner">SUM - Summoner</option>
+                        <option value="Rage Fighter">RF - Rage Fighter</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1.5">Opción Principal:</label>
+                    <select id="filtroOpcion" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-sm outline-none">
+                        <option value="">Todas las Opciones</option>
+                        <option value="damage decrease">DD (Damage Decrease)</option>
+                        <option value="reflect">REFLECT (Reflect Damage)</option>
+                        <option value="maximum life">HP (Increases Life)</option>
+                        <option value="maximum sd">SD (Increases SD)</option>
+                        <option value="critical damage">CRITICAL (Critical Damage)</option>
+                        <option value="excellent damage">EXC DMG (Excellent Damage)</option>
+                        <option value="life when monster">LIFE x Kill (Recupera HP)</option>
+                        <option value="strength">Fuerza (Strength Bonus)</option>
+                        <option value="agility">Agilidad (Agility Bonus)</option>
+                        <option value="energy">Energía (Energy Bonus)</option>
+                        <option value="vitality">Vitalidad (Vitality Bonus)</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1.5">Buscar por Nombre:</label>
+                    <input type="text" id="filtroTexto" oninput="aplicarFiltros()" placeholder="Ej. Bronze, Samut, Bow, Pad..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-sm outline-none">
+                </div>
             </div>
-            <div>
-                <label class="block text-xs uppercase text-purple-300 font-bold mb-1.5">Filtrar por Opción:</label>
-                <select id="filtroOpcion" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-sm outline-none">
-                    <option value="">Todas las Opciones</option>
-                    <option value="SD">Maximum SD</option>
-                    <option value="Damage decrease">Damage Decrease</option>
-                    <option value="Critical damage">Critical Damage Resistance</option>
-                    <option value="Strength">Increases Strength</option>
-                    <option value="Agility">Increases Agility</option>
-                    <option value="Energy">Increases Energy</option>
-                    <option value="Vitality">Increases Vitality</option>
-                </select>
+
+            <!-- Accesos Rápidos de Opciones MU -->
+            <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-purple-900/40">
+                <span class="text-xs text-gray-400 font-semibold mr-1">Filtros rápidos:</span>
+                <button onclick="setFiltroRapido('damage decrease')" class="px-2.5 py-1 rounded bg-red-950/80 hover:bg-red-900 text-red-300 border border-red-700/60 text-xs font-bold transition">🛡️ DD</button>
+                <button onclick="setFiltroRapido('reflect')" class="px-2.5 py-1 rounded bg-yellow-950/80 hover:bg-yellow-900 text-yellow-300 border border-yellow-700/60 text-xs font-bold transition">⚡ Reflect</button>
+                <button onclick="setFiltroRapido('maximum life')" class="px-2.5 py-1 rounded bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-700/60 text-xs font-bold transition">❤️ HP</button>
+                <button onclick="setFiltroRapido('maximum sd')" class="px-2.5 py-1 rounded bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/60 text-xs font-bold transition">🔷 SD</button>
+                <button onclick="setFiltroRapido('critical damage')" class="px-2.5 py-1 rounded bg-purple-950/80 hover:bg-purple-900 text-purple-300 border border-purple-700/60 text-xs font-bold transition">💥 Crítico</button>
+                <button onclick="setFiltroRapido('')" class="px-2.5 py-1 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-bold transition">Limpiar</button>
             </div>
-            <div>
-                <label class="block text-xs uppercase text-purple-300 font-bold mb-1.5">Buscar por Nombre:</label>
-                <input type="text" id="filtroTexto" oninput="aplicarFiltros()" placeholder="Ej. Bronze, Samut, Bow..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-sm outline-none">
-            </div>
+        </div>
+
+        <!-- Contador de ítems encontrados -->
+        <div class="flex justify-between items-center text-xs text-gray-400 px-1">
+            <span id="contador-items">Cargando ítems...</span>
         </div>
 
         <!-- Grilla de Ítems -->
@@ -78,55 +112,95 @@
     <script>
         let catalogo = [];
 
+        function setFiltroRapido(opcion) {
+            document.getElementById('filtroOpcion').value = opcion;
+            aplicarFiltros();
+        }
+
         async function cargar() {
             try {
                 const res = await fetch('/api/items');
                 if (res.ok) {
                     catalogo = await res.json();
                     renderizar(catalogo);
+                } else {
+                    document.getElementById('contenedor-items').innerHTML = '<div class="text-red-400 text-center col-span-full">Error consultando datos del servidor.</div>';
                 }
             } catch (e) {
-                document.getElementById('contenedor-items').innerHTML = '<div class="text-red-400 text-center col-span-full">Error al cargar datos.</div>';
+                document.getElementById('contenedor-items').innerHTML = '<div class="text-red-400 text-center col-span-full">Error de conexión al cargar datos.</div>';
             }
         }
 
         function renderizar(items) {
             const c = document.getElementById('contenedor-items');
+            document.getElementById('contador-items').innerText = `Mostrando ${items.length} ítem(s)`;
+
             if (!items || items.length === 0) {
-                c.innerHTML = '<div class="text-gray-500 text-center col-span-full py-12">No hay ítems para mostrar.</div>';
+                c.innerHTML = '<div class="text-gray-500 text-center col-span-full py-12">No hay ítems que coincidan con estos filtros.</div>';
                 return;
             }
+
             c.innerHTML = items.map(item => {
                 const img = `https://lh3.googleusercontent.com/d/${item.drive_id}`;
+                
+                // Formateo de clases (PJ)
+                const clasesHTML = (item.clases && item.clases.length > 0)
+                    ? item.clases.map(pj => `<span class="badge-pj">${pj}</span>`).join(' ')
+                    : '<span class="text-gray-500 text-xs">Sin clase definida</span>';
+
                 return `
                     <div class="mu-item-card p-4 flex flex-col justify-between">
                         <div>
-                            <div class="w-full h-52 bg-black rounded-lg flex items-center justify-center overflow-hidden mb-3 border border-purple-950">
+                            <!-- Imagen Drive -->
+                            <div class="w-full h-56 bg-black rounded-lg flex items-center justify-center overflow-hidden mb-3 border border-purple-950">
                                 <img src="${img}" alt="${item.nombre}" loading="lazy" class="max-h-full max-w-full object-contain" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200/0f0c1b/4ade80?text=Item+MU';">
                             </div>
+
+                            <!-- Nombre -->
                             <h3 class="text-center font-bold text-emerald-400 text-base mb-2">${item.nombre}</h3>
+                            
+                            <!-- Estadísticas y Scores -->
                             <div class="text-xs space-y-1 text-center mb-3">
                                 ${item.base_score ? `<p class="text-amber-400 font-semibold">Base Score: ${item.base_score}</p>` : ''}
                                 ${item.grade_score ? `<p class="text-purple-400 font-semibold">Grade Score: ${item.grade_score}</p>` : ''}
                                 ${item.defense ? `<p class="text-blue-300 font-semibold">Defense: ${item.defense}</p>` : ''}
                                 ${item.durability ? `<p class="text-gray-300">Durability: [${item.durability}]</p>` : ''}
-                                ${item.requisitos?.strength ? `<p class="text-red-400">Strength available: ${item.requisitos.strength}</p>` : ''}
-                                ${item.requisitos?.agility ? `<p class="text-gray-300">Agility available: ${item.requisitos.agility}</p>` : ''}
-                                ${item.requisitos?.energy ? `<p class="text-cyan-300">Energy available: ${item.requisitos.energy}</p>` : ''}
+                                ${item.requisitos?.strength ? `<p class="text-red-400 font-medium">Strength: ${item.requisitos.strength}</p>` : ''}
+                                ${item.requisitos?.agility ? `<p class="text-gray-300">Agility: ${item.requisitos.agility}</p>` : ''}
+                                ${item.requisitos?.energy ? `<p class="text-cyan-300">Energy: ${item.requisitos.energy}</p>` : ''}
                             </div>
-                            <div class="text-center space-y-0.5 text-[11px] text-red-500 font-medium mb-3">
-                                ${(item.clases || []).map(clase => `<div>Can be equipped by ${clase}</div>`).join('')}
+
+                            <!-- PJs que pueden equiparlo -->
+                            <div class="mb-3">
+                                <span class="text-[10px] text-gray-400 uppercase font-bold block mb-1">Equipable por:</span>
+                                <div class="flex flex-wrap gap-1">
+                                    ${clasesHTML}
+                                </div>
                             </div>
                         </div>
+
+                        <!-- Opciones Especiales (DD, Reflect, HP, etc.) -->
                         <div class="border-t border-purple-900/50 pt-2 text-xs space-y-1">
+                            <span class="text-[10px] text-purple-300 uppercase font-bold block mb-1">Opciones:</span>
                             ${(item.opciones || []).map(opt => {
                                 const esLegendary = opt.includes('Legendary');
-                                return `<p class="${esLegendary ? 'text-amber-400' : 'text-purple-400'} font-medium">${opt}</p>`;
+                                const esDD = opt.toLowerCase().includes('decrease');
+                                const esReflect = opt.toLowerCase().includes('reflect');
+                                const esLife = opt.toLowerCase().includes('life');
+
+                                let colorClass = 'text-purple-300';
+                                if (esLegendary) colorClass = 'text-amber-400 font-semibold';
+                                else if (esDD) colorClass = 'text-red-400 font-semibold';
+                                else if (esReflect) colorClass = 'text-yellow-300 font-semibold';
+                                else if (esLife) colorClass = 'text-emerald-400 font-semibold';
+
+                                return `<p class="${colorClass}">• ${opt}</p>`;
                             }).join('')}
+
                             ${(item.bonus_excelente && item.bonus_excelente.length > 0) ? `
                                 <div class="mt-2 pt-1 border-t border-purple-950">
-                                    <span class="text-[11px] text-emerald-400 font-bold block mb-0.5">Exclusive Excellent Bonus:</span>
-                                    ${item.bonus_excelente.map(b => `<p class="text-cyan-300 text-[11px]">${b}</p>`).join('')}
+                                    <span class="text-[10px] text-cyan-400 font-bold block mb-0.5">Exclusive Excellent Bonus:</span>
+                                    ${item.bonus_excelente.map(b => `<p class="text-cyan-300 text-[11px] font-mono">• ${b}</p>`).join('')}
                                 </div>
                             ` : ''}
                         </div>
@@ -136,17 +210,41 @@
         }
 
         function aplicarFiltros() {
-            const raza = document.getElementById('filtroRaza').value;
+            const raza = document.getElementById('filtroRaza').value.toLowerCase();
             const opcion = document.getElementById('filtroOpcion').value.toLowerCase();
             const busqueda = document.getElementById('filtroTexto').value.toLowerCase();
 
             const filtrados = catalogo.filter(item => {
-                const matchRaza = !raza || (item.clases && item.clases.includes(raza));
-                const textoOpciones = [...(item.opciones || []), ...(item.bonus_excelente || [])].join(' ').toLowerCase();
-                const matchOpcion = !opcion || textoOpciones.includes(opcion);
+                // Coincidencia por Clase / PJ
+                const matchRaza = !raza || (item.clases && item.clases.some(c => c.toLowerCase().includes(raza)));
+
+                // Coincidencia por Opciones (DD, Reflect, HP, etc.)
+                const textoOpciones = [
+                    ...(item.opciones || []),
+                    ...(item.bonus_excelente || [])
+                ].join(' ').toLowerCase();
+
+                let matchOpcion = true;
+                if (opcion) {
+                    if (opcion === 'damage decrease') {
+                        matchOpcion = textoOpciones.includes('damage decrease') || textoOpciones.includes('dd');
+                    } else if (opcion === 'reflect') {
+                        matchOpcion = textoOpciones.includes('reflect');
+                    } else if (opcion === 'maximum life') {
+                        matchOpcion = textoOpciones.includes('maximum life') || textoOpciones.includes('hp');
+                    } else if (opcion === 'maximum sd') {
+                        matchOpcion = textoOpciones.includes('sd');
+                    } else {
+                        matchOpcion = textoOpciones.includes(opcion);
+                    }
+                }
+
+                // Coincidencia por Nombre
                 const matchTexto = !busqueda || (item.nombre && item.nombre.toLowerCase().includes(busqueda));
+
                 return matchRaza && matchOpcion && matchTexto;
             });
+
             renderizar(filtrados);
         }
 
