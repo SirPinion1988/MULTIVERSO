@@ -31,33 +31,15 @@ BOSSES_MANUALES = [
 ]
 
 DEFAULT_ITEMS = [
-    {"id": 265, "nombre": "Excellent Sphinx Armor", "tipo": "Armor", "base_score": 19, "defense": 75, "durability": "51/51", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["[Legendary] Increases maximum life +4%", "[Rare] Increases zen drop rate +21%"], "bonus_excelente": ["Increases Energy +50", "Increases Vitality +41"], "drive_id": "1BC0k90uaW4rHp1dQM1Y-pxLwE1KfnLku"},
-    {"id": 264, "nombre": "Excellent Legendary Pants", "tipo": "Pants", "base_score": 27, "defense": 105, "durability": "57/57", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["[Epic] Reflect damage +5%", "[Epic] Critical damage resistance +10%"], "bonus_excelente": ["Increases Agility +98", "Increases Strength +110"], "drive_id": "1Jmjh8YltzfO2xBhBDGX0oYxr-WMdG4xK"},
-    {"id": 260, "nombre": "Excellent Black Dragon Pants", "tipo": "Pants", "base_score": 42, "defense": 129, "durability": "89/89", "clases": ["Dark Knight"], "opciones": ["[Legendary] Reflect damage +4%", "[Epic] Increases zen drop rate +30%"], "bonus_excelente": ["Increases Energy +101", "Increases Strength +145"], "drive_id": "1iHHVi5Fr0KKdjWX1luSpI9CzuPAK5Aq5"},
-    {"id": 258, "nombre": "Excellent Sphinx Gloves", "tipo": "Gloves", "base_score": 14, "defense": 40, "durability": "51/51", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["[Rare] Increases maximum life +3%", "[Legendary] Critical damage resistance +8%"], "bonus_excelente": ["Increases Vitality +58", "Increases Agility +65"], "drive_id": "1SD_eAIslC4Le3N1PuIBrF1fFB2V5mIZE"},
-    {"id": 253, "nombre": "Excellent Light Plate Pants", "tipo": "Pants", "base_score": 25, "defense": 66, "durability": "57/57", "clases": ["Dark Lord"], "opciones": ["[Rare] Damage decrease +3%", "[Rare] Reflect damage +3%"], "bonus_excelente": ["Increases Vitality +52", "Increases Agility +78"], "drive_id": "134KbPtgfHsEJsso7bM7bBWeiC5qt3VY4"},
-    {"id": 252, "nombre": "Excellent Bronze Helm", "tipo": "Helm", "base_score": 8, "defense": 36, "durability": "49/49", "clases": ["Dark Knight", "Dark Lord"], "opciones": ["[Rare] Reflect damage +3%", "[Legendary] Critical damage resistance +8%"], "bonus_excelente": ["Increases Strength +32", "Increases Vitality +34"], "drive_id": "1TuHbtxMsonvbMfdAvR18aO7oYJTiVWxd"},
-    {"id": 250, "nombre": "Excellent Bill of Balrog", "tipo": "Weapon", "base_score": 32, "defense": 0, "durability": "100/100", "clases": ["Dark Knight", "Magic Gladiator"], "opciones": ["[Legendary] Excellent damage rate +8%", "[Epic] Damage to monsters +10%"], "bonus_excelente": ["Increases Agility +232", "Increases Vitality +239"], "drive_id": "14Ufrcc1tRoI5OD1weZ7Ag1opgm-djCIm"},
-    {"id": 248, "nombre": "Excellent Legendary Shield", "tipo": "Shield", "base_score": 24, "defense": 229, "durability": "65/65", "clases": ["Dark Wizard", "Elf", "Magic Gladiator"], "opciones": ["[Rare] Increases maximum SD +3%", "[Rare] Damage decrease +3%"], "bonus_excelente": ["Increases Vitality +99", "Increases Energy +74"], "drive_id": "1uNOlQGiHDxzszBHLYFBqLra-c6Vy2Qe1"},
-    {"id": 246, "nombre": "Excellent Bronze Gloves", "tipo": "Gloves", "base_score": 7, "defense": 21, "durability": "49/49", "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord"], "opciones": ["[Rare] Increases maximum SD +3%", "[Rare] Damage decrease +3%", "[Legendary] Critical damage resistance +8%"], "bonus_excelente": ["Increases Strength +30", "Increases Agility +26"], "drive_id": "1u0mZvM_JmyY3NABCGCf35dj6rGVqrFHh"},
-    {"id": 244, "nombre": "Excellent Book of Samut", "tipo": "Book", "base_score": 26, "defense": 0, "durability": "75/75", "clases": ["Summoner"], "opciones": ["Increases wizardry by 3%", "[Rare] Critical damage rate +7%"], "bonus_excelente": ["Increases Energy +146", "Increases Strength +200"], "drive_id": "1f5VMBmH8o4CdKIblTkW382mnxkzj7s2U"},
-    {"id": 242, "nombre": "Excellent Red Winged Gloves", "tipo": "Gloves", "base_score": 22, "defense": 46, "durability": "57/57", "clases": ["Summoner"], "opciones": ["[Rare] Increases maximum SD +3%"], "bonus_excelente": ["Increases Strength +69", "Increases Agility +69"], "drive_id": "1T3RcyL2SCS4_a20q2ymcOwu4FpDdW6Hi"},
-    {"id": 241, "nombre": "Excellent Pad Armor", "tipo": "Armor", "base_score": 5, "defense": 34, "durability": "43/43", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["[Epic] Damage decrease +5%", "[Rare] Reflect damage +3%"], "bonus_excelente": ["Increases Vitality +29", "Increases Energy +30"], "drive_id": "1Z1YEGk78j_3qZtNUHqFasLqq6_EMKUdW"},
-    {"id": 240, "nombre": "Excellent Violent Wind Pants", "tipo": "Pants", "base_score": 15, "defense": 40, "durability": "51/51", "clases": ["Summoner"], "opciones": ["[Legendary] Damage decrease +4%"], "bonus_excelente": ["Increases Agility +34", "Increases Strength +32"], "drive_id": "1euLQrkH0g0i7L9ugmRk10QRlqgwnmYCY"},
-    {"id": 239, "nombre": "Excellent Epic Silver Bow", "tipo": "Bow", "base_score": 36, "defense": 0, "durability": "80/80", "clases": ["Elf"], "opciones": ["[Legendary] Excellent damage rate +8%", "[Rare] Increases physical damage +7%"], "bonus_excelente": ["Increases Energy +194", "Increases Vitality +181"], "drive_id": "1vp4qyg0Idn9OXgijU7RMAuj9NeUGXkDS"},
-    {"id": 238, "nombre": "Excellent Guardian Pants", "tipo": "Pants", "base_score": 27, "defense": 109, "durability": "60/60", "clases": ["Elf"], "opciones": ["[Rare] Increases maximum life +3%"], "bonus_excelente": ["Increases Energy +62", "Increases Vitality +92"], "drive_id": "1PFjrFglCCrOxtVLmSqftJQGX7TjuxYXN"},
-    {"id": 237, "nombre": "Excellent Aquagold Crossbow", "tipo": "Crossbow", "base_score": 36, "defense": 0, "durability": "84/84", "clases": ["Elf"], "opciones": ["[Epic] Critical damage rate +10%"], "bonus_excelente": ["Increases Agility +193", "Increases Energy +187"], "drive_id": "1Q9-7z5UIjQE47WN-iB68S4AItMitA-U-"},
-    {"id": 236, "nombre": "Excellent Sacred Claw", "tipo": "Claw", "base_score": 26, "defense": 0, "durability": "80/80", "clases": ["Rage Fighter"], "opciones": ["[Legendary] Damage to monsters +8%", "[Rare] Obtains +1% life when monster is killed"], "bonus_excelente": ["Increases Strength +212", "Increases Energy +190"], "drive_id": "1_SlZm5z7Kt_tPnTLDE7cqQmpJvWAl71E"},
-    {"id": 234, "nombre": "Excellent Bronze Pants", "tipo": "Pants", "base_score": 8, "defense": 41, "durability": "49/49", "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord"], "opciones": ["[Rare] Damage decrease +3%", "[Rare] Reflect damage +3%"], "bonus_excelente": ["Increases Strength +37", "Increases Agility +39"], "drive_id": "1iS3vLcZtCi3QULyH9FP12KX3gy3f05in"},
-    {"id": 232, "nombre": "Excellent Brass Gloves", "tipo": "Gloves", "base_score": 16, "defense": 37, "durability": "59/59", "clases": ["Dark Knight", "Magic Gladiator"], "opciones": ["[Epic] Damage decrease +5%"], "bonus_excelente": ["Increases Strength +52", "Increases Agility +58"], "drive_id": "14jkj6gYmmDrFzDDxjOYxVzo9x3RE44Xh"},
-    {"id": 231, "nombre": "Excellent Buckler", "tipo": "Shield", "base_score": 3, "defense": 115, "durability": "39/39", "clases": ["Dark Wizard", "Dark Knight", "Elf", "Magic Gladiator", "Dark Lord", "Grow Lancer"], "opciones": ["[Legendary] Increases maximum life +4%"], "bonus_excelente": ["Increases Energy +27", "Increases Vitality +24"], "drive_id": "1dKoBcHU0jPDRHl4uTzdZJYBTC_mxyrfn"},
-    {"id": 228, "nombre": "Excellent Wind Armor", "tipo": "Armor", "base_score": 16, "defense": 69, "durability": "47/47", "clases": ["Elf"], "opciones": ["[Legendary] Damage decrease +4%", "[Legendary] Reflect damage +4%"], "bonus_excelente": ["Increases Energy +47", "Increases Vitality +41"], "drive_id": "1YjKaPoCXFLBcWL7Lz9Goj0lrRarDeTL3"},
-    {"id": 226, "nombre": "Excellent Legendary Armor", "tipo": "Armor", "base_score": 28, "defense": 115, "durability": "57/57", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["[Epic] Reflect damage +5%"], "bonus_excelente": ["Increases Energy +94", "Increases Vitality +103"], "drive_id": "1Eb2WLe_9yynGaicJ095iPibmXsX8vVKg"},
-    {"id": 225, "nombre": "Excellent Dragon Pants", "tipo": "Pants", "base_score": 28, "defense": 114, "durability": "83/83", "clases": ["Dark Knight", "Magic Gladiator"], "opciones": ["[Rare] Increases maximum life +3%"], "bonus_excelente": ["Increases Strength +73", "Increases Vitality +70"], "drive_id": "1UMnuuoHNYatk8Cxh_e3dswaJuVdkU8mF"},
-    {"id": 223, "nombre": "Excellent Legendary Shield", "tipo": "Shield", "base_score": 24, "defense": 229, "durability": "65/65", "clases": ["Dark Wizard", "Elf", "Magic Gladiator"], "opciones": ["[Rare] Increases maximum life +3%", "[Rare] Reflect damage +3%"], "bonus_excelente": ["Increases Energy +112", "Increases Vitality +102"], "drive_id": "1wxfC56ZrHQ_QsV-sV_pmKFpQc4z7FEBD"},
-    {"id": 222, "nombre": "Excellent Epic Kriss", "tipo": "Weapon", "base_score": 46, "defense": 0, "durability": "56/56", "clases": ["Dark Wizard", "Dark Knight", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"], "opciones": ["[Rare] Increases attack speed +28", "[Legendary] Critical damage rate +8%"], "bonus_excelente": ["Increases Strength +210", "Increases Agility +149"], "drive_id": "1_A4LY4mAC3TpekrAV9do_vBitSkHvLtL"},
-    {"id": 213, "nombre": "Excellent Dragon Armor", "tipo": "Armor", "base_score": 30, "defense": 158, "durability": "83/83", "clases": ["Dark Knight", "Magic Gladiator"], "opciones": ["[Rare] Reflect damage +3%"], "bonus_excelente": ["Increases Strength +90", "Increases Vitality +107"], "drive_id": "1rA7sasV87YnLlkeiXO4vIR7Ek3yW9q0Q"},
-    {"id": 212, "nombre": "Excellent Lighting Sword", "tipo": "Weapon", "base_score": 48, "defense": 0, "durability": "65/65", "clases": ["Dark Knight", "Elf", "Magic Gladiator"], "opciones": ["[Rare] Excellent damage rate +7%"], "bonus_excelente": ["Increases Strength +232", "Increases Energy +193"], "drive_id": "1myQ5xRo8IsjT2ykowGABfq476ccUI1Uh"}
+    {"id": 1, "archivo_id": "1kr-En", "nombre": "Excellent Vine Pants", "tipo": "Pants", "clases": ["Elf"], "opciones": ["Additional defense +30", "[Rare] Reflect damage +3%"], "bonus_excelente": ["Increases Agility +23", "Increases Energy +29"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": None},
+    {"id": 2, "archivo_id": "1ruk-H", "nombre": "Excellent Bluewing Crossbow", "tipo": "Crossbow", "clases": ["Elf"], "opciones": ["Additional damage +30", "[Rare] Increases physical damage +7%", "[Epic] Critical damage rate +10%"], "bonus_excelente": ["Increases Agility +141", "Increases Energy +178"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": None},
+    {"id": 3, "archivo_id": "1zw2LP", "nombre": "Excellent Pad Boots", "tipo": "Boots", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["Luck (Critical +5%)", "Additional defense +30", "[Rare] Increases maximum life +3%", "[Rare] Damage decrease +3%", "[Legendary] Reflect damage +4%"], "bonus_excelente": ["Increases Energy +37", "Increases Strength +26"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": None},
+    {"id": 4, "archivo_id": "267.png", "nombre": "Excellent Scale Pants", "tipo": "Pants", "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord", "Rage Fighter"], "opciones": ["Additional defense +30", "[Rare] Increases maximum life +3%", "[Epic] Damage decrease +5%"], "bonus_excelente": ["Increases Strength +30", "Increases Energy +31"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": None},
+    {"id": 5, "archivo_id": "265.png", "nombre": "Excellent Sphinx Armor", "tipo": "Armor", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["Luck (Critical +5%)", "Additional defense +15", "[Legendary] Increases maximum life +4%", "[Rare] Increases zen drop rate +21%"], "bonus_excelente": ["Increases Energy +50", "Increases Vitality +41"], "drive_id": "1BC0k90uaW4rHp1dQM1Y-pxLwE1KfnLku", "asignado_a": None},
+    {"id": 6, "archivo_id": "264.png", "nombre": "Excellent Legendary Pants", "tipo": "Pants", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["Luck (Critical +5%)", "Additional defense +15", "[Epic] Reflect damage +5%", "[Epic] Critical damage resistance +10%"], "bonus_excelente": ["Increases Agility +98", "Increases Strength +110"], "drive_id": "1Jmjh8YltzfO2xBhBDGX0oYxr-WMdG4xK", "asignado_a": None},
+    {"id": 7, "archivo_id": "260.png", "nombre": "Excellent Black Dragon Pants", "tipo": "Pants", "clases": ["Dark Knight"], "opciones": ["Additional defense +15", "[Legendary] Reflect damage +4%", "[Epic] Increases zen drop rate +30%"], "bonus_excelente": ["Increases Energy +101", "Increases Strength +145"], "drive_id": "1iHHVi5Fr0KKdjWX1luSpI9CzuPAK5Aq5", "asignado_a": None},
+    {"id": 8, "archivo_id": "246.png", "nombre": "Excellent Bronze Gloves", "tipo": "Gloves", "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord"], "opciones": ["[Rare] Increases maximum SD +3%", "[Rare] Damage decrease +3%", "[Legendary] Critical damage resistance +8%"], "bonus_excelente": ["Increases Strength +30", "Increases Agility +26"], "drive_id": "1u0mZvM_JmyY3NABCGCf35dj6rGVqrFHh", "asignado_a": None},
+    {"id": 9, "archivo_id": "244.png", "nombre": "Excellent Book of Samut", "tipo": "Book", "clases": ["Summoner"], "opciones": ["Increases wizardry by 3%", "[Rare] Critical damage rate +7%"], "bonus_excelente": ["Increases Energy +146", "Increases Strength +200"], "drive_id": "1f5VMBmH8o4CdKIblTkW382mnxkzj7s2U", "asignado_a": None}
 ]
 
 def cargar_json(filepath, default_val):
@@ -108,6 +90,7 @@ def normalizar_campo_json(valor, default_tipo):
         except Exception: return default_tipo
     return default_tipo
 
+# --- ESCÁNER CONTINUO DE GOOGLE DRIVE ---
 def sincronizar_drive_continuo():
     global items_mu_db
     archivos_detectados = []
@@ -132,7 +115,7 @@ def sincronizar_drive_continuo():
                 html = resp.read().decode('utf-8', errors='ignore')
                 ids = set(re.findall(r'https://drive\.google\.com/file/d/([a-zA-Z0-9_-]+)', html))
                 for fid in ids:
-                    archivos_detectados.append({"id": fid, "name": f"Item_{fid[:6]}"})
+                    archivos_detectados.append({"id": fid, "name": fid[:8]})
         except Exception: pass
 
     existentes = {it.get('drive_id') for it in items_mu_db if it.get('drive_id')}
@@ -140,16 +123,17 @@ def sincronizar_drive_continuo():
     for arch in archivos_detectados:
         fid = arch['id']
         if fid not in existentes:
-            nombre_limpio = re.sub(r'\.[a-zA-Z0-9]+$', '', arch['name']).replace('_', ' ')
+            nombre_archivo = arch['name']
             nuevo_item = {
                 "id": int(time.time() * 1000) + nuevos,
-                "nombre": nombre_limpio,
+                "archivo_id": nombre_archivo,
+                "nombre": f"Item ({nombre_archivo})",
                 "tipo": "General",
-                "base_score": 0, "defense": 0, "durability": "-",
                 "clases": ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"],
                 "opciones": ["[Auto] Captura detectada en Drive"],
                 "bonus_excelente": [],
-                "drive_id": fid
+                "drive_id": fid,
+                "asignado_a": None
             }
             items_mu_db.insert(0, nuevo_item)
             nuevos += 1
@@ -164,8 +148,8 @@ def obtener_todos_items():
         try:
             with conn.cursor() as cur:
                 cur.execute("""
-                    SELECT id, nombre, tipo, base_score, grade_score, defense, durability,
-                           requisitos, clases, opciones, bonus_excelente, drive_id
+                    SELECT id, archivo_id, nombre, tipo, base_score, defense, durability,
+                           clases, opciones, bonus_excelente, drive_id, asignado_a
                     FROM public.items_mu ORDER BY id DESC;
                 """)
                 filas = cur.fetchall()
@@ -174,17 +158,17 @@ def obtener_todos_items():
                     for r in filas:
                         items_formateados.append({
                             "id": r['id'],
+                            "archivo_id": r.get('archivo_id') or str(r['id']),
                             "nombre": r.get('nombre') or 'Sin Nombre',
                             "tipo": r.get('tipo') or 'General',
                             "base_score": r.get('base_score') or 0,
-                            "grade_score": r.get('grade_score') or 0,
                             "defense": r.get('defense') or 0,
                             "durability": r.get('durability') or '-',
-                            "requisitos": normalizar_campo_json(r.get('requisitos'), {}),
                             "clases": normalizar_campo_json(r.get('clases'), []),
                             "opciones": normalizar_campo_json(r.get('opciones'), []),
                             "bonus_excelente": normalizar_campo_json(r.get('bonus_excelente'), []),
-                            "drive_id": r.get('drive_id') or ''
+                            "drive_id": r.get('drive_id') or '',
+                            "asignado_a": r.get('asignado_a')
                         })
                     items_mu_db = items_formateados
                     guardar_json(ITEMS_FILE, items_mu_db)
@@ -214,8 +198,7 @@ def vista_items():
 def api_items():
     global items_mu_db
     if request.method == 'GET':
-        lista = obtener_todos_items()
-        return jsonify(lista)
+        return jsonify(obtener_todos_items())
 
     conn = get_db()
     if request.method == 'POST':
@@ -225,6 +208,7 @@ def api_items():
         id_limpio = match.group(1) if match else raw_drive.strip()
 
         nuevo = {
+            "archivo_id": data.get('archivo_id') or f"item_{int(time.time())}",
             "nombre": data.get('nombre', 'Item MU'),
             "tipo": data.get('tipo', 'Armor'),
             "base_score": int(data.get('base_score', 0)) if str(data.get('base_score', '')).isdigit() else 0,
@@ -233,7 +217,8 @@ def api_items():
             "clases": data.get('clases', []),
             "opciones": data.get('opciones', []),
             "bonus_excelente": data.get('bonus_excelente', []),
-            "drive_id": id_limpio
+            "drive_id": id_limpio,
+            "asignado_a": None
         }
         item_id = int(time.time() * 1000)
 
@@ -241,9 +226,9 @@ def api_items():
             try:
                 with conn.cursor() as cur:
                     cur.execute("""
-                        INSERT INTO public.items_mu (nombre, tipo, base_score, defense, durability, clases, opciones, bonus_excelente, drive_id)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id;
-                    """, (nuevo["nombre"], nuevo["tipo"], nuevo["base_score"], nuevo["defense"], nuevo["durability"], json.dumps(nuevo["clases"]), json.dumps(nuevo["opciones"]), json.dumps(nuevo["bonus_excelente"]), nuevo["drive_id"]))
+                        INSERT INTO public.items_mu (archivo_id, nombre, tipo, base_score, defense, durability, clases, opciones, bonus_excelente, drive_id)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id;
+                    """, (nuevo["archivo_id"], nuevo["nombre"], nuevo["tipo"], nuevo["base_score"], nuevo["defense"], nuevo["durability"], json.dumps(nuevo["clases"]), json.dumps(nuevo["opciones"]), json.dumps(nuevo["bonus_excelente"]), nuevo["drive_id"]))
                     row = cur.fetchone()
                     if row: item_id = row['id']
                     conn.commit()
@@ -259,29 +244,31 @@ def api_items():
     if request.method == 'PUT':
         data = request.json or {}
         item_id = data.get('id')
+        asignado_a = data.get('asignado_a')
+
         for it in items_mu_db:
             if it.get('id') == item_id:
-                it['nombre'] = data.get('nombre', it['nombre'])
-                it['clases'] = data.get('clases', it.get('clases', []))
-                it['opciones'] = data.get('opciones', it.get('opciones', []))
-                it['bonus_excelente'] = data.get('bonus_excelente', it.get('bonus_excelente', []))
+                if 'asignado_a' in data: it['asignado_a'] = asignado_a
+                if 'nombre' in data: it['nombre'] = data['nombre']
+                if 'clases' in data: it['clases'] = data['clases']
+                if 'opciones' in data: it['opciones'] = data['opciones']
+                if 'bonus_excelente' in data: it['bonus_excelente'] = data['bonus_excelente']
+
         guardar_json(ITEMS_FILE, items_mu_db)
 
         if conn:
             try:
                 with conn.cursor() as cur:
-                    cur.execute("""
-                        UPDATE public.items_mu 
-                        SET nombre = %s, clases = %s, opciones = %s, bonus_excelente = %s
-                        WHERE id = %s;
-                    """, (data.get('nombre'), json.dumps(data.get('clases', [])), json.dumps(data.get('opciones', [])), json.dumps(data.get('bonus_excelente', [])), item_id))
+                    cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE id = %s;", (asignado_a, item_id))
                     conn.commit()
                 conn.close()
             except Exception:
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
 
-@app.route('/api/miembros', methods=['GET', 'POST', 'PUT', 'DELETE'])
+# --- API DE MIEMBROS DEL CLAN ---
+
+@app.route('/api/miembros', methods=['GET', 'POST', 'DELETE'])
 def api_miembros():
     global miembros_clan_db
     conn = get_db()
@@ -313,23 +300,22 @@ def api_miembros():
         nombre_pj = data.get('nombre_pj', '').strip()
         raza = data.get('raza', 'Dark Knight').strip()
         items_asignados = data.get('items_asignados', [])
-        notas = data.get('notas', '').strip()
 
         if not nombre_pj:
             if conn: conn.close()
-            return jsonify({"error": "Nombre de PJ requerido"}), 400
+            return jsonify({"error": "Nick de PJ requerido"}), 400
 
         nuevo_id = int(time.time() * 1000)
         if conn:
             try:
                 with conn.cursor() as cur:
                     cur.execute("""
-                        INSERT INTO public.miembros_clan (nombre_pj, raza, items_asignados, notas)
-                        VALUES (%s, %s, %s, %s)
+                        INSERT INTO public.miembros_clan (nombre_pj, raza, items_asignados)
+                        VALUES (%s, %s, %s)
                         ON CONFLICT (nombre_pj) DO UPDATE 
-                        SET raza = EXCLUDED.raza, items_asignados = EXCLUDED.items_asignados, notas = EXCLUDED.notas
+                        SET raza = EXCLUDED.raza, items_asignados = EXCLUDED.items_asignados
                         RETURNING id;
-                    """, (nombre_pj, raza, json.dumps(items_asignados), notas))
+                    """, (nombre_pj, raza, json.dumps(items_asignados)))
                     r = cur.fetchone()
                     if r: nuevo_id = r['id']
                     conn.commit()
@@ -337,36 +323,29 @@ def api_miembros():
             except Exception:
                 if conn: conn.close()
 
-        miembro = {"id": nuevo_id, "nombre_pj": nombre_pj, "raza": raza, "items_asignados": items_asignados, "notas": notas}
+        miembro = {"id": nuevo_id, "nombre_pj": nombre_pj, "raza": raza, "items_asignados": items_asignados}
         miembros_clan_db = [m for m in miembros_clan_db if m['nombre_pj'].lower() != nombre_pj.lower()]
         miembros_clan_db.append(miembro)
         guardar_json(MIEMBROS_FILE, miembros_clan_db)
         return jsonify({"status": "ok", "miembro": miembro}), 201
 
-    if request.method == 'PUT':
+    if request.method == 'DELETE':
         data = request.json or {}
         m_id = data.get('id')
-        for m in miembros_clan_db:
-            if m['id'] == m_id:
-                m['nombre_pj'] = data.get('nombre_pj', m['nombre_pj'])
-                m['raza'] = data.get('raza', m['raza'])
-                m['items_asignados'] = data.get('items_asignados', m['items_asignados'])
-                m['notas'] = data.get('notas', m['notas'])
-
+        miembros_clan_db = [m for m in miembros_clan_db if m['id'] != m_id]
         guardar_json(MIEMBROS_FILE, miembros_clan_db)
+
         if conn:
             try:
                 with conn.cursor() as cur:
-                    cur.execute("""
-                        UPDATE public.miembros_clan
-                        SET nombre_pj = %s, raza = %s, items_asignados = %s, notas = %s
-                        WHERE id = %s;
-                    """, (data.get('nombre_pj'), data.get('raza'), json.dumps(data.get('items_asignados', [])), data.get('notas', ''), m_id))
+                    cur.execute("DELETE FROM public.miembros_clan WHERE id = %s;", (m_id,))
                     conn.commit()
                 conn.close()
             except Exception:
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
+
+# --- TIMERS Y BOTS ---
 
 @app.route('/api/status_timers')
 @app.route('/api/timers')
@@ -663,6 +642,8 @@ def usuarios():
                 if conn: conn.close()
         return jsonify({"status": "ok", "message": f"Usuario {new_user} creado"}), 201
 
+# --- DONACIONES ---
+
 @app.route('/api/donaciones', methods=['GET', 'POST'])
 def donaciones():
     if request.method == 'GET':
@@ -731,4 +712,3 @@ def editar_donacion(donacion_id):
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
-    
