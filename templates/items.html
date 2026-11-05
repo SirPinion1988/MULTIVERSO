@@ -7,53 +7,70 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0a0814; color: #e6e1ff; font-family: 'Segoe UI', system-ui, sans-serif; }
-        .grid-items-mu { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 1.25rem; }
-        .mu-item-card {
-            background: #0f0c1b;
+        
+        /* Contenedor con Scroll para la Lista Compacta */
+        .tabla-scroll-container {
+            max-height: 68vh;
+            overflow-y: auto;
             border: 1px solid #2b214a;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
-            transition: transform 0.2s, border-color 0.2s;
+            border-radius: 8px;
+            background: #0d0a1a;
         }
-        .mu-item-card:hover { transform: translateY(-3px); border-color: #8b5cf6; }
-        .badge-pj {
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 700;
-            background: rgba(139, 92, 246, 0.2);
-            border: 1px solid rgba(139, 92, 246, 0.5);
-            color: #c4b5fd;
-        }
+
+        /* Estilo de la barra de scroll */
+        .tabla-scroll-container::-webkit-scrollbar { width: 8px; }
+        .tabla-scroll-container::-webkit-scrollbar-track { background: #0a0814; }
+        .tabla-scroll-container::-webkit-scrollbar-thumb { background: #4c1d95; border-radius: 4px; }
+        .tabla-scroll-container::-webkit-scrollbar-thumb:hover { background: #6d28d9; }
+
+        /* Estilos de la tabla compacta */
+        .tabla-items { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+        .tabla-items th { background: #17112e; padding: 10px 12px; color: #c4b5fd; font-weight: 700; text-transform: uppercase; font-size: 11px; border-bottom: 2px solid #3b2d6b; position: sticky; top: 0; z-index: 10; }
+        .tabla-items td { padding: 8px 12px; border-bottom: 1px solid #1f1838; vertical-align: middle; }
+        .tabla-items tr:hover { background: rgba(139, 92, 246, 0.08); }
+
+        /* Badges */
+        .badge-pj { display: inline-block; padding: 1px 5px; border-radius: 4px; font-size: 10px; font-weight: 700; background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.4); color: #c4b5fd; margin-right: 2px; }
+        .badge-opt { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; margin-right: 3px; margin-bottom: 2px; }
+        .opt-dd { background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #fca5a5; }
+        .opt-ref { background: rgba(234, 179, 8, 0.15); border: 1px solid #eab308; color: #fde047; }
+        .opt-hp { background: rgba(34, 197, 94, 0.15); border: 1px solid #22c55e; color: #86efac; }
+        .opt-sd { background: rgba(6, 182, 212, 0.15); border: 1px solid #06b6d4; color: #67e8f9; }
+        .opt-gen { background: rgba(168, 85, 247, 0.15); border: 1px solid #a855f7; color: #d8b4fe; }
+
+        /* Vista en Cuadrícula (Opcional) */
+        .grid-items-mu { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem; }
+        .mu-item-card { background: #0f0c1b; border: 1px solid #2b214a; border-radius: 10px; overflow: hidden; padding: 14px; box-shadow: 0 8px 20px rgba(0,0,0,0.6); }
     </style>
 </head>
 <body class="p-4 md:p-8 flex flex-col items-center">
 
-    <header class="w-full max-w-6xl mb-6 border-b border-purple-900/50 pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
+    <header class="w-full max-w-7xl mb-6 border-b border-purple-900/50 pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
             <h1 class="text-3xl font-extrabold text-emerald-400 drop-shadow">🛡️ CATÁLOGO DE ÍTEMS MU</h1>
-            <p class="text-xs text-purple-300">Explorador de ítems por Clase (PJ) y Opciones (DD, Reflect, HP, SD)</p>
+            <p class="text-xs text-purple-300">Explorador de ítems por listado compacto, scroll continuo y filtros directos</p>
         </div>
         <div class="flex items-center gap-3">
-            <button onclick="toggleModalNuevoItem()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow">
+            <button onclick="toggleModoVista()" id="btn-cambiar-modo" class="bg-indigo-900/80 hover:bg-indigo-800 text-indigo-200 border border-indigo-500 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow">
+                🎴 Ver como Tarjetas
+            </button>
+            <button onclick="toggleModalNuevoItem()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow">
                 ➕ Agregar Ítem
             </button>
-            <a href="/" class="bg-purple-900 hover:bg-purple-800 text-purple-200 border border-purple-600 px-4 py-2 rounded-lg text-xs font-bold transition">
+            <a href="/" class="bg-purple-900 hover:bg-purple-800 text-purple-200 border border-purple-600 px-3 py-1.5 rounded-lg text-xs font-bold transition">
                 ← Volver al Monitor
             </a>
         </div>
     </header>
 
-    <div class="w-full max-w-6xl space-y-6">
+    <div class="w-full max-w-7xl space-y-4">
         
         <!-- Panel de Filtros -->
-        <div class="bg-[#141126] border border-purple-900/60 p-5 rounded-xl space-y-4">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-[#141126] border border-purple-900/60 p-4 rounded-xl space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1.5">Clase / Personaje (PJ):</label>
-                    <select id="filtroRaza" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-sm outline-none">
+                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">Clase / Personaje (PJ):</label>
+                    <select id="filtroRaza" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded-lg text-xs outline-none">
                         <option value="">Todos los Personajes</option>
                         <option value="Dark Knight">BK - Dark Knight</option>
                         <option value="Dark Wizard">SM - Dark Wizard</option>
@@ -66,8 +83,8 @@
                 </div>
                 
                 <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1.5">Opción Principal (No toma Exclusive Bonus):</label>
-                    <select id="filtroOpcion" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-sm outline-none">
+                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">Opción Principal:</label>
+                    <select id="filtroOpcion" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded-lg text-xs outline-none">
                         <option value="">Todas las Opciones</option>
                         <option value="damage decrease">DD (Damage Decrease)</option>
                         <option value="reflect">REFLECT (Reflect Damage)</option>
@@ -76,92 +93,131 @@
                         <option value="critical damage">CRITICAL (Critical Damage)</option>
                         <option value="excellent damage">EXC DMG (Excellent Damage)</option>
                         <option value="zen drop">ZEN (Zen Drop Rate)</option>
-                        <option value="attack speed">Speed (Attack Speed)</option>
-                        <option value="damage to monsters">Damage to Monsters</option>
                     </select>
                 </div>
                 
                 <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1.5">Buscar por Nombre:</label>
-                    <input type="text" id="filtroTexto" oninput="aplicarFiltros()" placeholder="Ej. Sphinx, Bronze, Samut, Bow..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-sm outline-none">
+                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">Buscar por Nombre o Archivo:</label>
+                    <input type="text" id="filtroTexto" oninput="aplicarFiltros()" placeholder="Ej. Sphinx, Bronze, 246..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded-lg text-xs outline-none">
                 </div>
             </div>
 
-            <!-- Accesos Rápidos de Opciones MU -->
-            <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-purple-900/40">
-                <span class="text-xs text-gray-400 font-semibold mr-1">Filtros rápidos:</span>
-                <button onclick="setFiltroRapido('damage decrease')" class="px-2.5 py-1 rounded bg-red-950/80 hover:bg-red-900 text-red-300 border border-red-700/60 text-xs font-bold transition">🛡️ DD</button>
-                <button onclick="setFiltroRapido('reflect')" class="px-2.5 py-1 rounded bg-yellow-950/80 hover:bg-yellow-900 text-yellow-300 border border-yellow-700/60 text-xs font-bold transition">⚡ Reflect</button>
-                <button onclick="setFiltroRapido('maximum life')" class="px-2.5 py-1 rounded bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-700/60 text-xs font-bold transition">❤️ HP</button>
-                <button onclick="setFiltroRapido('maximum sd')" class="px-2.5 py-1 rounded bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/60 text-xs font-bold transition">🔷 SD</button>
-                <button onclick="setFiltroRapido('critical damage')" class="px-2.5 py-1 rounded bg-purple-950/80 hover:bg-purple-900 text-purple-300 border border-purple-700/60 text-xs font-bold transition">💥 Crítico</button>
-                <button onclick="setFiltroRapido('')" class="px-2.5 py-1 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-bold transition">Limpiar</button>
+            <!-- Accesos Rápidos -->
+            <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-purple-900/30">
+                <span class="text-[11px] text-gray-400 font-semibold mr-1">Filtro rápido:</span>
+                <button onclick="setFiltroRapido('damage decrease')" class="px-2 py-0.5 rounded bg-red-950 hover:bg-red-900 text-red-300 border border-red-700/60 text-[11px] font-bold transition">🛡️ DD</button>
+                <button onclick="setFiltroRapido('reflect')" class="px-2 py-0.5 rounded bg-yellow-950 hover:bg-yellow-900 text-yellow-300 border border-yellow-700/60 text-[11px] font-bold transition">⚡ Reflect</button>
+                <button onclick="setFiltroRapido('maximum life')" class="px-2 py-0.5 rounded bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-700/60 text-[11px] font-bold transition">❤️ HP</button>
+                <button onclick="setFiltroRapido('maximum sd')" class="px-2 py-0.5 rounded bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/60 text-[11px] font-bold transition">🔷 SD</button>
+                <button onclick="setFiltroRapido('')" class="px-2 py-0.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 text-[11px] font-bold transition">Limpiar</button>
+                <span id="contador-items" class="ml-auto text-xs text-purple-300 font-mono font-semibold">Cargando...</span>
             </div>
         </div>
 
-        <div class="flex justify-between items-center text-xs text-gray-400 px-1">
-            <span id="contador-items">Cargando ítems...</span>
+        <!-- CONTENEDOR VISTA LISTADO COMPACTO CON SCROLL -->
+        <div id="vista-lista" class="tabla-scroll-container">
+            <table class="tabla-items">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">Img</th>
+                        <th style="width: 200px;">Nombre del Ítem</th>
+                        <th style="width: 140px;">Clases (PJ)</th>
+                        <th>Opciones Principales</th>
+                        <th style="width: 170px;">Exclusive Bonus</th>
+                        <th style="width: 80px; text-align: center;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-items-body">
+                    <tr><td colspan="6" class="text-center py-8 text-gray-500">Cargando ítems desde el servidor...</td></tr>
+                </tbody>
+            </table>
         </div>
 
-        <div id="contenedor-items" class="grid-items-mu">
-            <div class="text-gray-500 text-center col-span-full py-8">Cargando inventario...</div>
+        <!-- CONTENEDOR VISTA CUADRÍCULA (OCULTO POR DEFECTO) -->
+        <div id="vista-grid" class="grid-items-mu hidden"></div>
+    </div>
+
+    <!-- MODAL DE VISTA PREVIA DE IMAGEN FLOTANTE -->
+    <div id="modal-preview-img" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4" onclick="cerrarPreviewImg()">
+        <div class="bg-[#141126] border border-purple-500 p-2 rounded-xl max-w-sm max-h-[85vh] flex flex-col items-center shadow-2xl" onclick="event.stopPropagation()">
+            <img id="preview-img-tag" src="" alt="Vista Previa" class="max-h-[75vh] object-contain rounded-lg">
+            <button onclick="cerrarPreviewImg()" class="mt-2 text-xs bg-gray-800 hover:bg-gray-700 text-white px-4 py-1 rounded">Cerrar</button>
         </div>
     </div>
 
     <!-- MODAL PARA AGREGAR NUEVO ÍTEM -->
     <div id="modal-nuevo-item" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4 overflow-y-auto">
         <div class="bg-[#141126] border border-emerald-500 p-6 rounded-xl w-full max-w-md shadow-2xl text-left my-8">
-            <h3 class="text-lg font-bold text-emerald-400 mb-3 text-center">➕ Agregar Nuevo Ítem</h3>
+            <h3 class="text-base font-bold text-emerald-400 mb-3 text-center">➕ Agregar Nuevo Ítem</h3>
             
-            <label class="block text-xs text-purple-300 font-semibold mb-1">Enlace o ID de la imagen en Google Drive:</label>
-            <input type="text" id="nuevoItemDrive" placeholder="https://drive.google.com/file/d/..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
+            <label class="block text-xs text-purple-300 font-semibold mb-1">Enlace o ID de Drive:</label>
+            <input type="text" id="nuevoItemDrive" placeholder="https://drive.google.com/file/d/..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-xs outline-none">
 
             <label class="block text-xs text-purple-300 font-semibold mb-1">Nombre del Ítem:</label>
-            <input type="text" id="nuevoItemNombre" placeholder="Ej. Excellent Sphinx Armor" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
+            <input type="text" id="nuevoItemNombre" placeholder="Ej. Excellent Sphinx Armor" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-xs outline-none">
 
-            <label class="block text-xs text-purple-300 font-semibold mb-1">Clases que lo equipan (separadas por coma):</label>
-            <input type="text" id="nuevoItemClases" placeholder="Dark Wizard, Magic Gladiator" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
+            <label class="block text-xs text-purple-300 font-semibold mb-1">Clases (separadas por coma):</label>
+            <input type="text" id="nuevoItemClases" placeholder="Dark Wizard, Magic Gladiator" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-xs outline-none">
 
-            <label class="block text-xs text-purple-300 font-semibold mb-1">Opciones Principales (separadas por punto y coma ;):</label>
-            <input type="text" id="nuevoItemOpciones" placeholder="[Legendary] Increases maximum life +4%; [Rare] Increases zen drop rate +21%" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
+            <label class="block text-xs text-purple-300 font-semibold mb-1">Opciones (separadas por punto y coma ;):</label>
+            <input type="text" id="nuevoItemOpciones" placeholder="[Rare] Damage decrease +3%; [Rare] Reflect damage +3%" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-xs outline-none">
 
-            <label class="block text-xs text-purple-300 font-semibold mb-1">Exclusive Excellent Bonus (separadas por punto y coma ;):</label>
-            <input type="text" id="nuevoItemBonus" placeholder="Increases Energy +50; Increases Vitality +41" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-4 text-sm outline-none">
+            <label class="block text-xs text-purple-300 font-semibold mb-1">Exclusive Bonus (separadas por punto y coma ;):</label>
+            <input type="text" id="nuevoItemBonus" placeholder="Increases Energy +50; Increases Vitality +41" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-4 text-xs outline-none">
 
             <div class="flex gap-2">
-                <button onclick="guardarNuevoItemDesdeWeb()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded text-sm transition">💾 Guardar Ítem</button>
-                <button onclick="toggleModalNuevoItem()" class="w-full bg-gray-800 text-gray-400 font-bold py-2 rounded text-sm">Cancelar</button>
+                <button onclick="guardarNuevoItemDesdeWeb()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded text-xs transition">💾 Guardar</button>
+                <button onclick="toggleModalNuevoItem()" class="w-full bg-gray-800 text-gray-400 font-bold py-2 rounded text-xs">Cancelar</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL PARA EDITAR ÍTEM EXISTENTE -->
+    <!-- MODAL PARA EDITAR ÍTEM -->
     <div id="modal-editar-item" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4 overflow-y-auto">
         <div class="bg-[#141126] border border-purple-500 p-6 rounded-xl w-full max-w-md shadow-2xl text-left my-8">
-            <h3 class="text-lg font-bold text-purple-300 mb-3 text-center">✏️ Editar Ítem</h3>
+            <h3 class="text-base font-bold text-purple-300 mb-3 text-center">✏️ Editar Ítem</h3>
             <input type="hidden" id="editItemId">
             
             <label class="block text-xs text-purple-300 font-semibold mb-1">Nombre del Ítem:</label>
-            <input type="text" id="editItemNombre" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
+            <input type="text" id="editItemNombre" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-xs outline-none">
 
             <label class="block text-xs text-purple-300 font-semibold mb-1">Clases (separadas por coma):</label>
-            <input type="text" id="editItemClases" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
+            <input type="text" id="editItemClases" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-xs outline-none">
 
             <label class="block text-xs text-purple-300 font-semibold mb-1">Opciones (separadas por punto y coma ;):</label>
-            <input type="text" id="editItemOpciones" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
+            <input type="text" id="editItemOpciones" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-xs outline-none">
 
             <label class="block text-xs text-purple-300 font-semibold mb-1">Bonus Excelente (separadas por punto y coma ;):</label>
-            <input type="text" id="editItemBonus" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-4 text-sm outline-none">
+            <input type="text" id="editItemBonus" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-4 text-xs outline-none">
 
             <div class="flex gap-2">
-                <button onclick="guardarEdicionItem()" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 rounded text-sm transition">💾 Actualizar</button>
-                <button onclick="toggleModalEditarItem()" class="w-full bg-gray-800 text-gray-400 font-bold py-2 rounded text-sm">Cancelar</button>
+                <button onclick="guardarEdicionItem()" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 rounded text-xs transition">💾 Actualizar</button>
+                <button onclick="toggleModalEditarItem()" class="w-full bg-gray-800 text-gray-400 font-bold py-2 rounded text-xs">Cancelar</button>
             </div>
         </div>
     </div>
 
     <script>
         let catalogo = [];
+        let modoVisualizacion = 'LISTA'; // 'LISTA' o 'GRID'
+
+        function toggleModoVista() {
+            modoVisualizacion = (modoVisualizacion === 'LISTA') ? 'GRID' : 'LISTA';
+            const btn = document.getElementById('btn-cambiar-modo');
+            const vLista = document.getElementById('vista-lista');
+            const vGrid = document.getElementById('vista-grid');
+
+            if (modoVisualizacion === 'LISTA') {
+                btn.innerText = '🎴 Ver como Tarjetas';
+                vLista.classList.remove('hidden');
+                vGrid.classList.add('hidden');
+            } else {
+                btn.innerText = '📋 Ver como Lista Compacta';
+                vLista.classList.add('hidden');
+                vGrid.classList.remove('hidden');
+            }
+            aplicarFiltros();
+        }
 
         function setFiltroRapido(opcion) {
             document.getElementById('filtroOpcion').value = opcion;
@@ -176,14 +232,36 @@
             document.getElementById('modal-editar-item').classList.toggle('hidden');
         }
 
+        function mostrarPreviewImg(url) {
+            document.getElementById('preview-img-tag').src = url;
+            document.getElementById('modal-preview-img').classList.remove('hidden');
+        }
+
+        function cerrarPreviewImg() {
+            document.getElementById('modal-preview-img').classList.add('hidden');
+        }
+
+        function parsearArraySeguro(val) {
+            if (!val) return [];
+            if (Array.isArray(val)) return val;
+            if (typeof val === 'string') {
+                try {
+                    const parsed = JSON.parse(val);
+                    if (Array.isArray(parsed)) return parsed;
+                } catch(e) {}
+                return [val];
+            }
+            return [];
+        }
+
         function abrirEditor(id) {
             const it = catalogo.find(x => x.id === id);
             if (!it) return;
             document.getElementById('editItemId').value = it.id;
             document.getElementById('editItemNombre').value = it.nombre || '';
-            document.getElementById('editItemClases').value = (it.clases || []).join(', ');
-            document.getElementById('editItemOpciones').value = (it.opciones || []).join('; ');
-            document.getElementById('editItemBonus').value = (it.bonus_excelente || []).join('; ');
+            document.getElementById('editItemClases').value = parsearArraySeguro(it.clases).join(', ');
+            document.getElementById('editItemOpciones').value = parsearArraySeguro(it.opciones).join('; ');
+            document.getElementById('editItemBonus').value = parsearArraySeguro(it.bonus_excelente).join('; ');
             toggleModalEditarItem();
         }
 
@@ -192,89 +270,113 @@
                 const res = await fetch('/api/items');
                 if (res.ok) {
                     catalogo = await res.json();
-                    renderizar(catalogo);
+                    aplicarFiltros();
                 } else {
-                    document.getElementById('contenedor-items').innerHTML = '<div class="text-red-400 text-center col-span-full">Error al consultar el servidor.</div>';
+                    document.getElementById('tabla-items-body').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-400">Error al consultar datos.</td></tr>';
                 }
             } catch (e) {
-                document.getElementById('contenedor-items').innerHTML = '<div class="text-red-400 text-center col-span-full">Error de red al cargar datos.</div>';
+                document.getElementById('tabla-items-body').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-400">Error de conexión al cargar datos.</td></tr>';
             }
         }
 
         function renderizar(items) {
-            const c = document.getElementById('contenedor-items');
-            document.getElementById('contador-items').innerText = `Mostrando ${items.length} ítem(s) de un total de ${catalogo.length}`;
+            document.getElementById('contador-items').innerText = `${items.length} ítem(s) encontrados`;
 
+            if (modoVisualizacion === 'LISTA') {
+                renderizarTabla(items);
+            } else {
+                renderizarGrid(items);
+            }
+        }
+
+        function renderizarTabla(items) {
+            const tbody = document.getElementById('tabla-items-body');
             if (!items || items.length === 0) {
-                c.innerHTML = '<div class="text-gray-500 text-center col-span-full py-12">No hay ítems con estos filtros.</div>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500">No hay ítems con los filtros seleccionados.</td></tr>';
                 return;
             }
 
-            c.innerHTML = items.map(item => {
-                const img = `https://lh3.googleusercontent.com/d/${item.drive_id}`;
-                
-                const clasesHTML = (item.clases && item.clases.length > 0)
-                    ? item.clases.map(pj => `<span class="badge-pj">${pj}</span>`).join(' ')
-                    : '<span class="text-gray-500 text-xs">Sin clase definida</span>';
+            tbody.innerHTML = items.map(item => {
+                const imgUrl = `https://lh3.googleusercontent.com/d/${item.drive_id}`;
+                const clasesLista = parsearArraySeguro(item.clases);
+                const opcionesLista = parsearArraySeguro(item.opciones);
+                const bonusLista = parsearArraySeguro(item.bonus_excelente);
+
+                const clasesBadges = clasesLista.map(c => `<span class="badge-pj">${c}</span>`).join('');
+
+                const opcionesBadges = opcionesLista.map(opt => {
+                    const l = opt.toLowerCase();
+                    let cls = 'opt-gen';
+                    if (l.includes('decrease') || l.includes('dd')) cls = 'opt-dd';
+                    else if (l.includes('reflect')) cls = 'opt-ref';
+                    else if (l.includes('life') || l.includes('hp')) cls = 'opt-hp';
+                    else if (l.includes('sd')) cls = 'opt-sd';
+                    return `<span class="badge-opt ${cls}">${opt}</span>`;
+                }).join('');
+
+                const bonusText = bonusLista.length > 0 
+                    ? bonusLista.map(b => `<div class="text-[11px] text-cyan-300 font-mono leading-tight">• ${b}</div>`).join('') 
+                    : '<span class="text-gray-600 text-xs">-</span>';
 
                 return `
-                    <div class="mu-item-card p-4 flex flex-col justify-between relative">
-                        <button onclick="abrirEditor(${item.id})" title="Editar nombre o opciones" class="absolute top-3 right-3 bg-black/60 hover:bg-black/90 text-purple-300 hover:text-white px-2 py-1 rounded text-[11px] font-bold border border-purple-500/40 z-10">
+                    <tr>
+                        <td class="text-center">
+                            <button onclick="mostrarPreviewImg('${imgUrl}')" title="Ver captura" class="w-8 h-8 rounded bg-black/60 hover:bg-purple-900 border border-purple-800 flex items-center justify-center text-xs transition">
+                                🖼️
+                            </button>
+                        </td>
+                        <td>
+                            <div class="font-bold text-emerald-400 text-sm">${item.nombre}</div>
+                            <div class="text-[10px] text-gray-500 font-mono">ID / Archivo: ${item.drive_id ? item.drive_id.substring(0, 8) + '...' : 'N/A'}</div>
+                        </td>
+                        <td>${clasesBadges || '<span class="text-gray-600">-</span>'}</td>
+                        <td><div class="flex flex-wrap">${opcionesBadges || '<span class="text-gray-600">-</span>'}</div></td>
+                        <td>${bonusText}</td>
+                        <td class="text-center">
+                            <button onclick="abrirEditor(${item.id})" class="text-purple-300 hover:text-white bg-purple-950 hover:bg-purple-800 border border-purple-700/60 px-2 py-1 rounded text-xs transition font-semibold">
+                                ✏️ Editar
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderizarGrid(items) {
+            const vGrid = document.getElementById('vista-grid');
+            if (!items || items.length === 0) {
+                vGrid.innerHTML = '<div class="text-gray-500 text-center col-span-full py-12">No hay ítems con estos filtros.</div>';
+                return;
+            }
+
+            vGrid.innerHTML = items.map(item => {
+                const imgUrl = `https://lh3.googleusercontent.com/d/${item.drive_id}`;
+                const clasesLista = parsearArraySeguro(item.clases);
+                const opcionesLista = parsearArraySeguro(item.opciones);
+                const bonusLista = parsearArraySeguro(item.bonus_excelente);
+
+                const clasesHTML = clasesLista.map(c => `<span class="badge-pj">${c}</span>`).join(' ');
+
+                return `
+                    <div class="mu-item-card flex flex-col justify-between relative">
+                        <button onclick="abrirEditor(${item.id})" class="absolute top-3 right-3 bg-black/70 hover:bg-black text-purple-300 hover:text-white px-2 py-0.5 rounded text-[11px] font-bold border border-purple-500/40 z-10">
                             ✏️ Editar
                         </button>
                         <div>
-                            <!-- Imagen Drive -->
-                            <div class="w-full h-56 bg-black rounded-lg flex items-center justify-center overflow-hidden mb-3 border border-purple-950">
-                                <img src="${img}" alt="${item.nombre}" loading="lazy" class="max-h-full max-w-full object-contain" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200/0f0c1b/4ade80?text=Item+MU';">
+                            <div class="w-full h-48 bg-black rounded-lg flex items-center justify-center overflow-hidden mb-3 border border-purple-950 cursor-pointer" onclick="mostrarPreviewImg('${imgUrl}')">
+                                <img src="${imgUrl}" alt="${item.nombre}" loading="lazy" class="max-h-full max-w-full object-contain" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200/0f0c1b/4ade80?text=Item+MU';">
                             </div>
-
-                            <!-- Nombre -->
-                            <h3 class="text-center font-bold text-emerald-400 text-base mb-2">${item.nombre}</h3>
-                            
-                            <!-- Estadísticas -->
-                            <div class="text-xs space-y-1 text-center mb-3">
-                                ${item.base_score ? `<p class="text-amber-400 font-semibold">Base Score: ${item.base_score}</p>` : ''}
-                                ${item.grade_score ? `<p class="text-purple-400 font-semibold">Grade Score: ${item.grade_score}</p>` : ''}
-                                ${item.defense ? `<p class="text-blue-300 font-semibold">Defense: ${item.defense}</p>` : ''}
-                                ${item.durability && item.durability !== '-' ? `<p class="text-gray-300">Durability: [${item.durability}]</p>` : ''}
-                                ${item.requisitos?.strength ? `<p class="text-red-400 font-medium">Strength: ${item.requisitos.strength}</p>` : ''}
-                                ${item.requisitos?.agility ? `<p class="text-gray-300">Agility: ${item.requisitos.agility}</p>` : ''}
-                                ${item.requisitos?.energy ? `<p class="text-cyan-300">Energy: ${item.requisitos.energy}</p>` : ''}
-                            </div>
-
-                            <!-- Clases (PJ) -->
-                            <div class="mb-3">
-                                <span class="text-[10px] text-gray-400 uppercase font-bold block mb-1">Equipable por:</span>
-                                <div class="flex flex-wrap gap-1">
-                                    ${clasesHTML}
-                                </div>
+                            <h3 class="text-center font-bold text-emerald-400 text-sm mb-2">${item.nombre}</h3>
+                            <div class="mb-2">
+                                <div class="flex flex-wrap gap-1">${clasesHTML}</div>
                             </div>
                         </div>
-
-                        <!-- Opciones (Filtro activo exclusivamente en este bloque) -->
                         <div class="border-t border-purple-900/50 pt-2 text-xs space-y-1">
-                            <span class="text-[10px] text-purple-300 uppercase font-bold block mb-1">Opciones:</span>
-                            ${(item.opciones || []).map(opt => {
-                                const optL = opt.toLowerCase();
-                                const esLegendary = opt.includes('Legendary');
-                                const esDD = optL.includes('decrease') || optL.includes('dd');
-                                const esReflect = optL.includes('reflect');
-                                const esLife = optL.includes('life') || optL.includes('hp');
-
-                                let colorClass = 'text-purple-300';
-                                if (esLegendary) colorClass = 'text-amber-400 font-semibold';
-                                else if (esDD) colorClass = 'text-red-400 font-semibold';
-                                else if (esReflect) colorClass = 'text-yellow-300 font-semibold';
-                                else if (esLife) colorClass = 'text-emerald-400 font-semibold';
-
-                                return `<p class="${colorClass}">• ${opt}</p>`;
-                            }).join('')}
-
-                            <!-- Exclusive Excellent Bonus: SE MUESTRA VISUALMENTE PERO EL FILTRO LO IGNORA -->
-                            ${(item.bonus_excelente && item.bonus_excelente.length > 0) ? `
+                            ${opcionesLista.map(opt => `<p class="text-purple-300">• ${opt}</p>`).join('')}
+                            ${bonusLista.length > 0 ? `
                                 <div class="mt-2 pt-1 border-t border-purple-950">
                                     <span class="text-[10px] text-cyan-400 font-bold block mb-0.5">Exclusive Excellent Bonus:</span>
-                                    ${item.bonus_excelente.map(b => `<p class="text-cyan-300 text-[11px] font-mono">• ${b}</p>`).join('')}
+                                    ${bonusLista.map(b => `<p class="text-cyan-300 text-[11px] font-mono">• ${b}</p>`).join('')}
                                 </div>
                             ` : ''}
                         </div>
@@ -289,11 +391,14 @@
             const busqueda = document.getElementById('filtroTexto').value.toLowerCase();
 
             const filtrados = catalogo.filter(item => {
-                // 1. Coincidencia por Clase / PJ
-                const matchRaza = !raza || (item.clases && item.clases.some(c => c.toLowerCase().includes(raza)));
+                const clasesLista = parsearArraySeguro(item.clases);
+                const opcionesLista = parsearArraySeguro(item.opciones);
 
-                // 2. Coincidencia por Opciones: SOLO en item.opciones (EXCLUYE EXCLUSIVE EXCELLENT BONUS)
-                const textoOpciones = (item.opciones || []).join(' ').toLowerCase();
+                // 1. Coincidencia por Clase / PJ
+                const matchRaza = !raza || clasesLista.some(c => String(c).toLowerCase().includes(raza));
+
+                // 2. Coincidencia por Opciones: SOLO en opcionesLista (EXCLUYE Exclusive Bonus)
+                const textoOpciones = opcionesLista.join(' ').toLowerCase();
 
                 let matchOpcion = true;
                 if (opcion) {
@@ -302,7 +407,7 @@
                     } else if (opcion === 'reflect') {
                         matchOpcion = textoOpciones.includes('reflect');
                     } else if (opcion === 'maximum life') {
-                        matchOpcion = textoOpciones.includes('maximum life') || textoOpciones.includes('life') || textoOpciones.includes('hp');
+                        matchOpcion = textoOpciones.includes('maximum life') || textoOpciones.includes('hp');
                     } else if (opcion === 'maximum sd') {
                         matchOpcion = textoOpciones.includes('sd');
                     } else {
@@ -310,8 +415,10 @@
                     }
                 }
 
-                // 3. Coincidencia por Nombre
-                const matchTexto = !busqueda || (item.nombre && item.nombre.toLowerCase().includes(busqueda));
+                // 3. Coincidencia por Nombre o Nombre de Archivo / Drive ID
+                const nombreItem = String(item.nombre || '').toLowerCase();
+                const archivoId = String(item.drive_id || '').toLowerCase();
+                const matchTexto = !busqueda || nombreItem.includes(busqueda) || archivoId.includes(busqueda);
 
                 return matchRaza && matchOpcion && matchTexto;
             });
