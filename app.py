@@ -30,9 +30,7 @@ BOSSES_MANUALES = [
     "Red Goblin", "Santa", "White Wizard", "Skeleton King"
 ]
 
-# Respaldo en memoria garantizado
 DEFAULT_ITEMS = [
-    {"id": 1, "nombre": "Excellent Scale Pants", "tipo": "Pants", "base_score": 13, "defense": 48, "durability": "55/55", "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord", "Rage Fighter"], "opciones": ["[Rare] Increases maximum life +3%", "[Epic] Damage decrease +5%"], "bonus_excelente": ["Increases Strength +30", "Increases Energy +31"], "drive_id": "scale_pants_img"},
     {"id": 265, "nombre": "Excellent Sphinx Armor", "tipo": "Armor", "base_score": 19, "defense": 75, "durability": "51/51", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["[Legendary] Increases maximum life +4%", "[Rare] Increases zen drop rate +21%"], "bonus_excelente": ["Increases Energy +50", "Increases Vitality +41"], "drive_id": "1BC0k90uaW4rHp1dQM1Y-pxLwE1KfnLku"},
     {"id": 264, "nombre": "Excellent Legendary Pants", "tipo": "Pants", "base_score": 27, "defense": 105, "durability": "57/57", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["[Epic] Reflect damage +5%", "[Epic] Critical damage resistance +10%"], "bonus_excelente": ["Increases Agility +98", "Increases Strength +110"], "drive_id": "1Jmjh8YltzfO2xBhBDGX0oYxr-WMdG4xK"},
     {"id": 260, "nombre": "Excellent Black Dragon Pants", "tipo": "Pants", "base_score": 42, "defense": 129, "durability": "89/89", "clases": ["Dark Knight"], "opciones": ["[Legendary] Reflect damage +4%", "[Epic] Increases zen drop rate +30%"], "bonus_excelente": ["Increases Energy +101", "Increases Strength +145"], "drive_id": "1iHHVi5Fr0KKdjWX1luSpI9CzuPAK5Aq5"},
@@ -53,7 +51,13 @@ DEFAULT_ITEMS = [
     {"id": 234, "nombre": "Excellent Bronze Pants", "tipo": "Pants", "base_score": 8, "defense": 41, "durability": "49/49", "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord"], "opciones": ["[Rare] Damage decrease +3%", "[Rare] Reflect damage +3%"], "bonus_excelente": ["Increases Strength +37", "Increases Agility +39"], "drive_id": "1iS3vLcZtCi3QULyH9FP12KX3gy3f05in"},
     {"id": 232, "nombre": "Excellent Brass Gloves", "tipo": "Gloves", "base_score": 16, "defense": 37, "durability": "59/59", "clases": ["Dark Knight", "Magic Gladiator"], "opciones": ["[Epic] Damage decrease +5%"], "bonus_excelente": ["Increases Strength +52", "Increases Agility +58"], "drive_id": "14jkj6gYmmDrFzDDxjOYxVzo9x3RE44Xh"},
     {"id": 231, "nombre": "Excellent Buckler", "tipo": "Shield", "base_score": 3, "defense": 115, "durability": "39/39", "clases": ["Dark Wizard", "Dark Knight", "Elf", "Magic Gladiator", "Dark Lord", "Grow Lancer"], "opciones": ["[Legendary] Increases maximum life +4%"], "bonus_excelente": ["Increases Energy +27", "Increases Vitality +24"], "drive_id": "1dKoBcHU0jPDRHl4uTzdZJYBTC_mxyrfn"},
-    {"id": 228, "nombre": "Excellent Wind Armor", "tipo": "Armor", "base_score": 16, "defense": 69, "durability": "47/47", "clases": ["Elf"], "opciones": ["[Legendary] Damage decrease +4%", "[Legendary] Reflect damage +4%"], "bonus_excelente": ["Increases Energy +47", "Increases Vitality +41"], "drive_id": "1YjKaPoCXFLBcWL7Lz9Goj0lrRarDeTL3"}
+    {"id": 228, "nombre": "Excellent Wind Armor", "tipo": "Armor", "base_score": 16, "defense": 69, "durability": "47/47", "clases": ["Elf"], "opciones": ["[Legendary] Damage decrease +4%", "[Legendary] Reflect damage +4%"], "bonus_excelente": ["Increases Energy +47", "Increases Vitality +41"], "drive_id": "1YjKaPoCXFLBcWL7Lz9Goj0lrRarDeTL3"},
+    {"id": 226, "nombre": "Excellent Legendary Armor", "tipo": "Armor", "base_score": 28, "defense": 115, "durability": "57/57", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["[Epic] Reflect damage +5%"], "bonus_excelente": ["Increases Energy +94", "Increases Vitality +103"], "drive_id": "1Eb2WLe_9yynGaicJ095iPibmXsX8vVKg"},
+    {"id": 225, "nombre": "Excellent Dragon Pants", "tipo": "Pants", "base_score": 28, "defense": 114, "durability": "83/83", "clases": ["Dark Knight", "Magic Gladiator"], "opciones": ["[Rare] Increases maximum life +3%"], "bonus_excelente": ["Increases Strength +73", "Increases Vitality +70"], "drive_id": "1UMnuuoHNYatk8Cxh_e3dswaJuVdkU8mF"},
+    {"id": 223, "nombre": "Excellent Legendary Shield", "tipo": "Shield", "base_score": 24, "defense": 229, "durability": "65/65", "clases": ["Dark Wizard", "Elf", "Magic Gladiator"], "opciones": ["[Rare] Increases maximum life +3%", "[Rare] Reflect damage +3%"], "bonus_excelente": ["Increases Energy +112", "Increases Vitality +102"], "drive_id": "1wxfC56ZrHQ_QsV-sV_pmKFpQc4z7FEBD"},
+    {"id": 222, "nombre": "Excellent Epic Kriss", "tipo": "Weapon", "base_score": 46, "defense": 0, "durability": "56/56", "clases": ["Dark Wizard", "Dark Knight", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"], "opciones": ["[Rare] Increases attack speed +28", "[Legendary] Critical damage rate +8%"], "bonus_excelente": ["Increases Strength +210", "Increases Agility +149"], "drive_id": "1_A4LY4mAC3TpekrAV9do_vBitSkHvLtL"},
+    {"id": 213, "nombre": "Excellent Dragon Armor", "tipo": "Armor", "base_score": 30, "defense": 158, "durability": "83/83", "clases": ["Dark Knight", "Magic Gladiator"], "opciones": ["[Rare] Reflect damage +3%"], "bonus_excelente": ["Increases Strength +90", "Increases Vitality +107"], "drive_id": "1rA7sasV87YnLlkeiXO4vIR7Ek3yW9q0Q"},
+    {"id": 212, "nombre": "Excellent Lighting Sword", "tipo": "Weapon", "base_score": 48, "defense": 0, "durability": "65/65", "clases": ["Dark Knight", "Elf", "Magic Gladiator"], "opciones": ["[Rare] Excellent damage rate +7%"], "bonus_excelente": ["Increases Strength +232", "Increases Energy +193"], "drive_id": "1myQ5xRo8IsjT2ykowGABfq476ccUI1Uh"}
 ]
 
 def cargar_json(filepath, default_val):
@@ -143,7 +147,7 @@ def sincronizar_drive_continuo():
                 "tipo": "General",
                 "base_score": 0, "defense": 0, "durability": "-",
                 "clases": ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"],
-                "opciones": ["[Auto] Captura nueva detectada en Drive"],
+                "opciones": ["[Auto] Captura detectada en Drive"],
                 "bonus_excelente": [],
                 "drive_id": fid
             }
@@ -695,4 +699,36 @@ def donaciones():
         return jsonify({"status": "ok", "donacion": nueva_donacion}), 201
 
 @app.route('/api/donaciones/<int:donacion_id>', methods=['PUT'])
-def editar_donacion(donacion_
+def editar_donacion(donacion_id):
+    if 'user' not in session: return jsonify({"error": "No autorizado"}), 401
+    data = request.json or {}
+    for don in donaciones_db:
+        if don['id'] == donacion_id:
+            don['pj_name'] = data.get('pj_name', don['pj_name'])
+            don['tipo_donacion'] = data.get('tipo_donacion', don['tipo_donacion'])
+            don['cantidad'] = int(data.get('cantidad', don['cantidad']))
+            don['modificado_por'] = session['user']
+            don['fecha_modificacion'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            guardar_json(DONACIONES_FILE, donaciones_db)
+            conn = get_db()
+            if conn:
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute("""
+                            UPDATE public.donaciones 
+                            SET pj_name = %s, tipo_donacion = %s, cantidad = %s, 
+                                modificado_por = %s, fecha_modificacion = NOW()
+                            WHERE id = %s;
+                        """, (don['pj_name'], don['tipo_donacion'], don['cantidad'], session['user'], donacion_id))
+                        conn.commit()
+                    conn.close()
+                except Exception:
+                    if conn: conn.close()
+            return jsonify({"status": "ok", "donacion": don}), 200
+    return jsonify({"error": "Donación no encontrada"}), 404
+
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
+    
