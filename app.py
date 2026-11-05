@@ -2,15 +2,12 @@ import os
 import time
 import json
 import re
-import io
 import requests
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from PIL import Image
-import pytesseract
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "multiverso_secret_key_2026")
@@ -84,55 +81,14 @@ def usuario_es_autorizado():
     if 'user' not in session: return False
     return session['user'].lower() in ['pinion', 'tolkien', 'nasda']
 
-# --- PARSEADOR OCR DE CAPTURAS DE MU ONLINE ---
-def procesar_ocr_imagen(img_bytes):
-    try:
-        img = Image.open(io.BytesIO(img_bytes))
-        texto = pytesseract.image_to_string(img, lang='eng')
-    except Exception as e:
-        print(f"Error en OCR: {e}")
-        return "Item MU", [], [], []
-
-    lineas = [l.strip() for l in texto.split('\n') if l.strip()]
-    nombre = "Item MU"
-    clases = []
-    opciones = []
-    bonus_excelente = []
-    es_bonus = False
-
-    for l in lineas:
-        l_lower = l.lower()
-        if "exclusive excellent bonus" in l_lower:
-            es_bonus = True
-            continue
-
-        if "excellent" in l_lower and nombre == "Item MU":
-            nombre = l
-            continue
-
-        if "can be equipped by" in l_lower:
-            clase = l.split("by")[-1].strip()
-            if clase and clase not in clases:
-                clases.append(clase)
-            continue
-
-        if es_bonus:
-            if "increases" in l_lower or "+" in l:
-                bonus_excelente.append(l)
-        else:
-            if any(opt in l_lower for opt in ["damage", "defense", "luck", "life", "rate", "reflect", "sd", "speed", "wizardry"]):
-                opciones.append(l)
-
-    return nombre, clases, opciones, bonus_excelente
-
-# --- SINCRONIZACIÓN 100% DINÁMICA CON GOOGLE DRIVE ---
+# --- SINCRONIZACIÓN DINÁMICA CON GOOGLE DRIVE (SIN PIL NI OCR PESADO) ---
 def sincronizar_drive_continuo():
     global items_mu_db
     if not FOLDER_DRIVE_ID: return
 
     archivos_detectados = []
 
-    # 1. Consulta mediante Google Drive API v3
+    # 1. API Oficial de Google Drive v3
     if GOOGLE_API_KEY:
         try:
             q = f"'{FOLDER_DRIVE_ID}' in parents and trashed=false"
@@ -169,30 +125,18 @@ def sincronizar_drive_continuo():
     for arch in archivos_detectados:
         fid = arch['id']
         if fid not in existentes_ids:
-            img_url = f"https://drive.google.com/uc?export=download&id={fid}"
-            nombre_item = arch['name']
-            clases = ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"]
-            opciones = ["[Auto] Captura detectada en Drive"]
-            bonus = []
-
-            try:
-                img_res = requests.get(img_url, timeout=4)
-                if img_res.status_code == 200:
-                    n_ocr, c_ocr, o_ocr, b_ocr = procesar_ocr_imagen(img_res.content)
-                    if n_ocr != "Item MU": nombre_item = n_ocr
-                    if c_ocr: clases = c_ocr
-                    if o_ocr: opciones = o_ocr
-                    if b_ocr: bonus = b_ocr
-            except Exception: pass
+            nombre_limpio = re.sub(r'\.[a-zA-Z0-9]+$', '', arch['name']).replace('_', ' ')
+            if not nombre_limpio or nombre_limpio.isdigit():
+                nombre_limpio = f"Item #{nombre_limpio}"
 
             nuevo_item = {
                 "archivo_id": arch['name'],
-                "nombre": nombre_item,
+                "nombre": nombre_limpio,
                 "tipo": "Equipment",
                 "base_score": 0, "defense": 0, "durability": "-",
-                "clases": clases,
-                "opciones": opciones,
-                "bonus_excelente": bonus,
+                "clases": ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"],
+                "opciones": ["[Auto] Captura de Drive sincronizada"],
+                "bonus_excelente": [],
                 "drive_id": fid,
                 "asignado_a": None
             }
@@ -204,7 +148,7 @@ def sincronizar_drive_continuo():
                             INSERT INTO public.items_mu (archivo_id, nombre, tipo, clases, opciones, bonus_excelente, drive_id)
                             VALUES (%s, %s, %s, %s, %s, %s, %s)
                             ON CONFLICT (drive_id) DO NOTHING;
-                        """, (nuevo_item["archivo_id"], nuevo_item["nombre"], nuevo_item["tipo"], json.dumps(clases), json.dumps(opciones), json.dumps(bonus), fid))
+                        """, (nuevo_item["archivo_id"], nuevo_item["nombre"], nuevo_item["tipo"], json.dumps(nuevo_item["clases"]), json.dumps(nuevo_item["opciones"]), json.dumps(nuevo_item["bonus_excelente"]), fid))
                         conn.commit()
                 except Exception: pass
 
@@ -278,16 +222,36 @@ def api_items():
         data = request.json or {}
         item_id = data.get('id')
         asignado_a = data.get('asignado_a')
+        nombre = data.get('nombre')
+        clases = data.get('clases')
+        opciones = data.get('opciones')
+        bonus_excelente = data.get('bonus_excelente')
 
         for it in items_mu_db:
             if it.get('id') == item_id:
-                it['asignado_a'] = asignado_a
+                if asignado_a is not None or 'asignado_a' in data: it['asignado_a'] = asignado_a
+                if nombre: it['nombre'] = nombre
+                if clases is not None: it['clases'] = clases
+                if opciones is not None: it['opciones'] = opciones
+                if bonus_excelente is not None: it['bonus_excelente'] = bonus_excelente
+
         guardar_json(ITEMS_FILE, items_mu_db)
 
         if conn:
             try:
                 with conn.cursor() as cur:
-                    cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE id = %s;", (asignado_a, item_id))
+                    if nombre or clases is not None or opciones is not None:
+                        cur.execute("""
+                            UPDATE public.items_mu 
+                            SET nombre = COALESCE(%s, nombre),
+                                clases = COALESCE(%s, clases),
+                                opciones = COALESCE(%s, opciones),
+                                bonus_excelente = COALESCE(%s, bonus_excelente),
+                                asignado_a = %s
+                            WHERE id = %s;
+                        """, (nombre, json.dumps(clases) if clases is not None else None, json.dumps(opciones) if opciones is not None else None, json.dumps(bonus_excelente) if bonus_excelente is not None else None, asignado_a, item_id))
+                    else:
+                        cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE id = %s;", (asignado_a, item_id))
                     conn.commit()
                 conn.close()
             except Exception:
@@ -324,7 +288,7 @@ def api_miembros():
         return jsonify(miembros_clan_db)
 
     if not usuario_es_autorizado():
-        return jsonify({"error": "No autorizado. Solo administradores pueden gestionar miembros."}), 403
+        return jsonify({"error": "No autorizado. Solo Pinion, tolkien o nasda tienen permisos."}), 403
 
     if request.method == 'POST':
         data = request.json or {}
@@ -350,7 +314,7 @@ def api_miembros():
                     r = cur.fetchone()
                     if r: nuevo_id = r['id']
 
-                    # Sincronización en tabla items_mu
+                    # Sincronizar campo asignado_a en items_mu
                     cur.execute("UPDATE public.items_mu SET asignado_a = NULL WHERE asignado_a = %s;", (nombre_pj,))
                     for arch_id in items_asignados:
                         cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE archivo_id = %s OR CAST(id AS TEXT) = %s;", (nombre_pj, arch_id, arch_id))
@@ -386,7 +350,7 @@ def api_miembros():
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
 
-# Importación masiva desde Excel
+# Importación masiva desde Excel / CSV
 @app.route('/api/miembros/importar', methods=['POST'])
 def importar_miembros_excel():
     if not usuario_es_autorizado():
@@ -570,7 +534,7 @@ def registrar_heartbeat():
         return jsonify({"status": "ok"}), 200
     return jsonify({"error": "Servidor requerido"}), 400
 
-# --- LOGIN MULTI-USUARIO ---
+# --- AUTENTICACIÓN ---
 
 @app.route('/login', methods=['POST'])
 def login():
