@@ -81,14 +81,14 @@ def usuario_es_autorizado():
     if 'user' not in session: return False
     return session['user'].lower() in ['pinion', 'tolkien', 'nasda']
 
-# --- SINCRONIZACIÓN DINÁMICA CON GOOGLE DRIVE (SIN PIL NI OCR PESADO) ---
+# --- SINCRONIZACIÓN DIRECTA CON GOOGLE DRIVE ---
 def sincronizar_drive_continuo():
     global items_mu_db
     if not FOLDER_DRIVE_ID: return
 
     archivos_detectados = []
 
-    # 1. API Oficial de Google Drive v3
+    # 1. API Google Drive
     if GOOGLE_API_KEY:
         try:
             q = f"'{FOLDER_DRIVE_ID}' in parents and trashed=false"
@@ -101,7 +101,7 @@ def sincronizar_drive_continuo():
         except Exception as e:
             print(f"Error API Drive: {e}")
 
-    # 2. Respaldo por carpeta pública web
+    # 2. Carpeta pública
     if not archivos_detectados:
         try:
             url_folder = f"https://drive.google.com/embeddedfolderview?id={FOLDER_DRIVE_ID}#grid"
@@ -135,7 +135,7 @@ def sincronizar_drive_continuo():
                 "tipo": "Equipment",
                 "base_score": 0, "defense": 0, "durability": "-",
                 "clases": ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"],
-                "opciones": ["[Auto] Captura de Drive sincronizada"],
+                "opciones": ["[Auto] Captura sincronizada de Drive"],
                 "bonus_excelente": [],
                 "drive_id": fid,
                 "asignado_a": None
@@ -288,7 +288,7 @@ def api_miembros():
         return jsonify(miembros_clan_db)
 
     if not usuario_es_autorizado():
-        return jsonify({"error": "No autorizado. Solo Pinion, tolkien o nasda tienen permisos."}), 403
+        return jsonify({"error": "No autorizado. Solo administradores pueden gestionar miembros."}), 403
 
     if request.method == 'POST':
         data = request.json or {}
@@ -314,7 +314,7 @@ def api_miembros():
                     r = cur.fetchone()
                     if r: nuevo_id = r['id']
 
-                    # Sincronizar campo asignado_a en items_mu
+                    # Sincronización en tabla items_mu
                     cur.execute("UPDATE public.items_mu SET asignado_a = NULL WHERE asignado_a = %s;", (nombre_pj,))
                     for arch_id in items_asignados:
                         cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE archivo_id = %s OR CAST(id AS TEXT) = %s;", (nombre_pj, arch_id, arch_id))
@@ -350,7 +350,7 @@ def api_miembros():
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
 
-# Importación masiva desde Excel / CSV
+# Importación masiva desde Excel
 @app.route('/api/miembros/importar', methods=['POST'])
 def importar_miembros_excel():
     if not usuario_es_autorizado():
