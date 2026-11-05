@@ -2,6 +2,8 @@ import os
 import time
 import json
 import re
+import urllib.request
+import urllib.parse
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -13,16 +15,49 @@ app.secret_key = os.environ.get("SECRET_KEY", "multiverso_secret_key_2026")
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 LINK_DESCARGA_BOT = "https://drive.google.com/uc?export=download&id=TU_ID_DE_GOOGLE_DRIVE"
+FOLDER_DRIVE_ID = os.environ.get("DRIVE_FOLDER_ID", "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK")
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "")
 
 DATA_FILE = "timers_data.json"
 USERS_FILE = "users_data.json"
 DONACIONES_FILE = "donaciones_data.json"
 MAPAS_FILE = "mapas_data.json"
 ITEMS_FILE = "items_mu_data.json"
+MIEMBROS_FILE = "miembros_data.json"
 
 BOSSES_MANUALES = [
     "Red Dragon", "Yellow Goblin", "Blue Goblin", 
     "Red Goblin", "Santa", "White Wizard", "Skeleton King"
+]
+
+DEFAULT_ITEMS = [
+    {"id": 265, "nombre": "Excellent Sphinx Armor", "tipo": "Armor", "base_score": 19, "defense": 75, "durability": "51/51", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["[Legendary] Increases maximum life +4%", "[Rare] Increases zen drop rate +21%"], "bonus_excelente": ["Increases Energy +50", "Increases Vitality +41"], "drive_id": "1BC0k90uaW4rHp1dQM1Y-pxLwE1KfnLku"},
+    {"id": 264, "nombre": "Excellent Legendary Pants", "tipo": "Pants", "base_score": 27, "defense": 105, "durability": "57/57", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["[Epic] Reflect damage +5%", "[Epic] Critical damage resistance +10%"], "bonus_excelente": ["Increases Agility +98", "Increases Strength +110"], "drive_id": "1Jmjh8YltzfO2xBhBDGX0oYxr-WMdG4xK"},
+    {"id": 260, "nombre": "Excellent Black Dragon Pants", "tipo": "Pants", "base_score": 42, "defense": 129, "durability": "89/89", "clases": ["Dark Knight"], "opciones": ["[Legendary] Reflect damage +4%", "[Epic] Increases zen drop rate +30%"], "bonus_excelente": ["Increases Energy +101", "Increases Strength +145"], "drive_id": "1iHHVi5Fr0KKdjWX1luSpI9CzuPAK5Aq5"},
+    {"id": 258, "nombre": "Excellent Sphinx Gloves", "tipo": "Gloves", "base_score": 14, "defense": 40, "durability": "51/51", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["[Rare] Increases maximum life +3%", "[Legendary] Critical damage resistance +8%"], "bonus_excelente": ["Increases Vitality +58", "Increases Agility +65"], "drive_id": "1SD_eAIslC4Le3N1PuIBrF1fFB2V5mIZE"},
+    {"id": 253, "nombre": "Excellent Light Plate Pants", "tipo": "Pants", "base_score": 25, "defense": 66, "durability": "57/57", "clases": ["Dark Lord"], "opciones": ["[Rare] Damage decrease +3%", "[Rare] Reflect damage +3%"], "bonus_excelente": ["Increases Vitality +52", "Increases Agility +78"], "drive_id": "134KbPtgfHsEJsso7bM7bBWeiC5qt3VY4"},
+    {"id": 252, "nombre": "Excellent Bronze Helm", "tipo": "Helm", "base_score": 8, "defense": 36, "durability": "49/49", "clases": ["Dark Knight", "Dark Lord"], "opciones": ["[Rare] Reflect damage +3%", "[Legendary] Critical damage resistance +8%"], "bonus_excelente": ["Increases Strength +32", "Increases Vitality +34"], "drive_id": "1TuHbtxMsonvbMfdAvR18aO7oYJTiVWxd"},
+    {"id": 250, "nombre": "Excellent Bill of Balrog", "tipo": "Weapon", "base_score": 32, "defense": 0, "durability": "100/100", "clases": ["Dark Knight", "Magic Gladiator"], "opciones": ["[Legendary] Excellent damage rate +8%", "[Epic] Damage to monsters +10%"], "bonus_excelente": ["Increases Agility +232", "Increases Vitality +239"], "drive_id": "14Ufrcc1tRoI5OD1weZ7Ag1opgm-djCIm"},
+    {"id": 248, "nombre": "Excellent Legendary Shield", "tipo": "Shield", "base_score": 24, "defense": 229, "durability": "65/65", "clases": ["Dark Wizard", "Elf", "Magic Gladiator"], "opciones": ["[Rare] Increases maximum SD +3%", "[Rare] Damage decrease +3%"], "bonus_excelente": ["Increases Vitality +99", "Increases Energy +74"], "drive_id": "1uNOlQGiHDxzszBHLYFBqLra-c6Vy2Qe1"},
+    {"id": 246, "nombre": "Excellent Bronze Gloves", "tipo": "Gloves", "base_score": 7, "defense": 21, "durability": "49/49", "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord"], "opciones": ["[Rare] Increases maximum SD +3%", "[Rare] Damage decrease +3%", "[Legendary] Critical damage resistance +8%"], "bonus_excelente": ["Increases Strength +30", "Increases Agility +26"], "drive_id": "1u0mZvM_JmyY3NABCGCf35dj6rGVqrFHh"},
+    {"id": 244, "nombre": "Excellent Book of Samut", "tipo": "Book", "base_score": 26, "defense": 0, "durability": "75/75", "clases": ["Summoner"], "opciones": ["Increases wizardry by 3%", "[Rare] Critical damage rate +7%"], "bonus_excelente": ["Increases Energy +146", "Increases Strength +200"], "drive_id": "1f5VMBmH8o4CdKIblTkW382mnxkzj7s2U"},
+    {"id": 242, "nombre": "Excellent Red Winged Gloves", "tipo": "Gloves", "base_score": 22, "defense": 46, "durability": "57/57", "clases": ["Summoner"], "opciones": ["[Rare] Increases maximum SD +3%"], "bonus_excelente": ["Increases Strength +69", "Increases Agility +69"], "drive_id": "1T3RcyL2SCS4_a20q2ymcOwu4FpDdW6Hi"},
+    {"id": 241, "nombre": "Excellent Pad Armor", "tipo": "Armor", "base_score": 5, "defense": 34, "durability": "43/43", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["[Epic] Damage decrease +5%", "[Rare] Reflect damage +3%"], "bonus_excelente": ["Increases Vitality +29", "Increases Energy +30"], "drive_id": "1Z1YEGk78j_3qZtNUHqFasLqq6_EMKUdW"},
+    {"id": 240, "nombre": "Excellent Violent Wind Pants", "tipo": "Pants", "base_score": 15, "defense": 40, "durability": "51/51", "clases": ["Summoner"], "opciones": ["[Legendary] Damage decrease +4%"], "bonus_excelente": ["Increases Agility +34", "Increases Strength +32"], "drive_id": "1euLQrkH0g0i7L9ugmRk10QRlqgwnmYCY"},
+    {"id": 239, "nombre": "Excellent Epic Silver Bow", "tipo": "Bow", "base_score": 36, "defense": 0, "durability": "80/80", "clases": ["Elf"], "opciones": ["[Legendary] Excellent damage rate +8%", "[Rare] Increases physical damage +7%"], "bonus_excelente": ["Increases Energy +194", "Increases Vitality +181"], "drive_id": "1vp4qyg0Idn9OXgijU7RMAuj9NeUGXkDS"},
+    {"id": 238, "nombre": "Excellent Guardian Pants", "tipo": "Pants", "base_score": 27, "defense": 109, "durability": "60/60", "clases": ["Elf"], "opciones": ["[Rare] Increases maximum life +3%"], "bonus_excelente": ["Increases Energy +62", "Increases Vitality +92"], "drive_id": "1PFjrFglCCrOxtVLmSqftJQGX7TjuxYXN"},
+    {"id": 237, "nombre": "Excellent Aquagold Crossbow", "tipo": "Crossbow", "base_score": 36, "defense": 0, "durability": "84/84", "clases": ["Elf"], "opciones": ["[Epic] Critical damage rate +10%"], "bonus_excelente": ["Increases Agility +193", "Increases Energy +187"], "drive_id": "1Q9-7z5UIjQE47WN-iB68S4AItMitA-U-"},
+    {"id": 236, "nombre": "Excellent Sacred Claw", "tipo": "Claw", "base_score": 26, "defense": 0, "durability": "80/80", "clases": ["Rage Fighter"], "opciones": ["[Legendary] Damage to monsters +8%", "[Rare] Obtains +1% life when monster is killed"], "bonus_excelente": ["Increases Strength +212", "Increases Energy +190"], "drive_id": "1_SlZm5z7Kt_tPnTLDE7cqQmpJvWAl71E"},
+    {"id": 234, "nombre": "Excellent Bronze Pants", "tipo": "Pants", "base_score": 8, "defense": 41, "durability": "49/49", "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord"], "opciones": ["[Rare] Damage decrease +3%", "[Rare] Reflect damage +3%"], "bonus_excelente": ["Increases Strength +37", "Increases Agility +39"], "drive_id": "1iS3vLcZtCi3QULyH9FP12KX3gy3f05in"},
+    {"id": 232, "nombre": "Excellent Brass Gloves", "tipo": "Gloves", "base_score": 16, "defense": 37, "durability": "59/59", "clases": ["Dark Knight", "Magic Gladiator"], "opciones": ["[Epic] Damage decrease +5%"], "bonus_excelente": ["Increases Strength +52", "Increases Agility +58"], "drive_id": "14jkj6gYmmDrFzDDxjOYxVzo9x3RE44Xh"},
+    {"id": 231, "nombre": "Excellent Buckler", "tipo": "Shield", "base_score": 3, "defense": 115, "durability": "39/39", "clases": ["Dark Wizard", "Dark Knight", "Elf", "Magic Gladiator", "Dark Lord", "Grow Lancer"], "opciones": ["[Legendary] Increases maximum life +4%"], "bonus_excelente": ["Increases Energy +27", "Increases Vitality +24"], "drive_id": "1dKoBcHU0jPDRHl4uTzdZJYBTC_mxyrfn"},
+    {"id": 228, "nombre": "Excellent Wind Armor", "tipo": "Armor", "base_score": 16, "defense": 69, "durability": "47/47", "clases": ["Elf"], "opciones": ["[Legendary] Damage decrease +4%", "[Legendary] Reflect damage +4%"], "bonus_excelente": ["Increases Energy +47", "Increases Vitality +41"], "drive_id": "1YjKaPoCXFLBcWL7Lz9Goj0lrRarDeTL3"},
+    {"id": 226, "nombre": "Excellent Legendary Armor", "tipo": "Armor", "base_score": 28, "defense": 115, "durability": "57/57", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["[Epic] Reflect damage +5%"], "bonus_excelente": ["Increases Energy +94", "Increases Vitality +103"], "drive_id": "1Eb2WLe_9yynGaicJ095iPibmXsX8vVKg"},
+    {"id": 225, "nombre": "Excellent Dragon Pants", "tipo": "Pants", "base_score": 28, "defense": 114, "durability": "83/83", "clases": ["Dark Knight", "Magic Gladiator"], "opciones": ["[Rare] Increases maximum life +3%"], "bonus_excelente": ["Increases Strength +73", "Increases Vitality +70"], "drive_id": "1UMnuuoHNYatk8Cxh_e3dswaJuVdkU8mF"},
+    {"id": 223, "nombre": "Excellent Legendary Shield", "tipo": "Shield", "base_score": 24, "defense": 229, "durability": "65/65", "clases": ["Dark Wizard", "Elf", "Magic Gladiator"], "opciones": ["[Rare] Increases maximum life +3%", "[Rare] Reflect damage +3%"], "bonus_excelente": ["Increases Energy +112", "Increases Vitality +102"], "drive_id": "1wxfC56ZrHQ_QsV-sV_pmKFpQc4z7FEBD"},
+    {"id": 222, "nombre": "Excellent Epic Kriss", "tipo": "Weapon", "base_score": 46, "defense": 0, "durability": "56/56", "clases": ["Dark Wizard", "Dark Knight", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"], "opciones": ["[Rare] Increases attack speed +28", "[Legendary] Critical damage rate +8%"], "bonus_excelente": ["Increases Strength +210", "Increases Agility +149"], "drive_id": "1_A4LY4mAC3TpekrAV9do_vBitSkHvLtL"},
+    {"id": 213, "nombre": "Excellent Dragon Armor", "tipo": "Armor", "base_score": 30, "defense": 158, "durability": "83/83", "clases": ["Dark Knight", "Magic Gladiator"], "opciones": ["[Rare] Reflect damage +3%"], "bonus_excelente": ["Increases Strength +90", "Increases Vitality +107"], "drive_id": "1rA7sasV87YnLlkeiXO4vIR7Ek3yW9q0Q"},
+    {"id": 212, "nombre": "Excellent Lighting Sword", "tipo": "Weapon", "base_score": 48, "defense": 0, "durability": "65/65", "clases": ["Dark Knight", "Elf", "Magic Gladiator"], "opciones": ["[Rare] Excellent damage rate +7%"], "bonus_excelente": ["Increases Strength +232", "Increases Energy +193"], "drive_id": "1myQ5xRo8IsjT2ykowGABfq476ccUI1Uh"}
 ]
 
 def cargar_json(filepath, default_val):
@@ -30,10 +65,8 @@ def cargar_json(filepath, default_val):
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
                 d = json.load(f)
-                if d is not None:
-                    return d
-        except Exception as e:
-            print(f"Aviso leyendo {filepath}: {e}")
+                if d is not None: return d
+        except Exception: pass
     return default_val
 
 def guardar_json(filepath, data):
@@ -43,12 +76,12 @@ def guardar_json(filepath, data):
     except Exception as e:
         print(f"Error guardando {filepath}: {e}")
 
-# Memoria local
 status_timers = cargar_json(DATA_FILE, {"Server 1": {}, "Server 2": {}, "Server 3": {}, "Server 20": {}})
 status_mapas = cargar_json(MAPAS_FILE, {"1": {}, "2": {}, "3": {}})
 usuarios_db = cargar_json(USERS_FILE, {"pinion": {"password": "pass123", "rol": "admin", "requiere_cambio": False}})
 donaciones_db = cargar_json(DONACIONES_FILE, [])
-items_mu_db = cargar_json(ITEMS_FILE, [])
+items_mu_db = cargar_json(ITEMS_FILE, DEFAULT_ITEMS) or DEFAULT_ITEMS
+miembros_clan_db = cargar_json(MIEMBROS_FILE, [])
 
 tarjetas_ocultas_global = set()
 heartbeats = {}
@@ -63,103 +96,111 @@ def get_db():
         db_url = DATABASE_URL
         if "sslmode" not in db_url:
             db_url += "?sslmode=require" if "?" not in db_url else "&sslmode=require"
-        return psycopg2.connect(db_url, cursor_factory=RealDictCursor, connect_timeout=3)
+        return psycopg2.connect(db_url, cursor_factory=RealDictCursor, connect_timeout=4)
     except Exception:
         return None
 
-def normalizar_campo_json(valor, default_tipo=list):
-    """Garantiza que un campo devuelto por postgres sea una lista o dict python."""
-    if valor is None:
-        return default_tipo()
-    if isinstance(valor, (list, dict)):
-        return valor
+def normalizar_campo_json(valor, default_tipo):
+    if valor is None: return default_tipo
+    if isinstance(valor, (list, dict)): return valor
     if isinstance(valor, str):
+        try: return json.loads(valor)
+        except Exception: return default_tipo
+    return default_tipo
+
+def sincronizar_drive_continuo():
+    global items_mu_db
+    archivos_detectados = []
+
+    if GOOGLE_API_KEY:
         try:
-            return json.loads(valor)
-        except Exception:
-            return default_tipo()
-    return default_tipo()
+            q = urllib.parse.quote(f"'{FOLDER_DRIVE_ID}' in parents and trashed=false")
+            url = f"https://www.googleapis.com/drive/v3/files?q={q}&key={GOOGLE_API_KEY}&fields=files(id,name,mimeType)"
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=3) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+                for f in data.get('files', []):
+                    if 'image' in f.get('mimeType', ''):
+                        archivos_detectados.append({"id": f['id'], "name": f['name']})
+        except Exception: pass
 
-def formatear_item_db(row):
-    """Normaliza un registro de base de datos a formato JSON limpio."""
-    return {
-        "id": row.get('id'),
-        "nombre": row.get('nombre', 'Item MU'),
-        "tipo": row.get('tipo', 'General'),
-        "base_score": row.get('base_score', 0),
-        "grade_score": row.get('grade_score', 0),
-        "defense": row.get('defense', 0),
-        "durability": row.get('durability', '-'),
-        "requisitos": normalizar_campo_json(row.get('requisitos'), dict),
-        "clases": normalizar_campo_json(row.get('clases'), list),
-        "opciones": normalizar_campo_json(row.get('opciones'), list),
-        "bonus_excelente": normalizar_campo_json(row.get('bonus_excelente'), list),
-        "drive_id": row.get('drive_id', '')
-    }
+    if not archivos_detectados:
+        try:
+            url_folder = f"https://drive.google.com/embeddedfolderview?id={FOLDER_DRIVE_ID}#grid"
+            req = urllib.request.Request(url_folder, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=3) as resp:
+                html = resp.read().decode('utf-8', errors='ignore')
+                ids = set(re.findall(r'https://drive\.google\.com/file/d/([a-zA-Z0-9_-]+)', html))
+                for fid in ids:
+                    archivos_detectados.append({"id": fid, "name": f"Item_{fid[:6]}"})
+        except Exception: pass
 
-def sincronizar_desde_db():
-    global status_timers, heartbeats, ultimas_pcs, ultimos_pjs, usuarios_db, donaciones_db, items_mu_db
+    existentes = {it.get('drive_id') for it in items_mu_db if it.get('drive_id')}
+    nuevos = 0
+    for arch in archivos_detectados:
+        fid = arch['id']
+        if fid not in existentes:
+            nombre_limpio = re.sub(r'\.[a-zA-Z0-9]+$', '', arch['name']).replace('_', ' ')
+            nuevo_item = {
+                "id": int(time.time() * 1000) + nuevos,
+                "nombre": nombre_limpio,
+                "tipo": "General",
+                "base_score": 0, "defense": 0, "durability": "-",
+                "clases": ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"],
+                "opciones": ["[Auto] Captura nueva detectada en Drive"],
+                "bonus_excelente": [],
+                "drive_id": fid
+            }
+            items_mu_db.insert(0, nuevo_item)
+            nuevos += 1
+
+    if nuevos > 0:
+        guardar_json(ITEMS_FILE, items_mu_db)
+
+def obtener_todos_items():
+    global items_mu_db
     conn = get_db()
-    if not conn:
-        return
-    try:
-        with conn.cursor() as cur:
-            # 1. Timers
-            cur.execute("SELECT server, timers, last_pc, last_pj, last_heartbeat FROM public.timers_bosses;")
-            for row in cur.fetchall():
-                svr = row['server']
-                if row['timers']: status_timers[svr] = row['timers']
-                if row['last_pc']: ultimas_pcs[svr] = row['last_pc']
-                if row['last_pj']: ultimos_pjs[svr] = row['last_pj']
-                if row['last_heartbeat']: heartbeats[svr] = row['last_heartbeat'].strftime("%Y-%m-%d %H:%M:%S")
-
-            # 2. Usuarios
-            cur.execute("SELECT username, password_hash, rol, requiere_cambio_clave, creado_por FROM public.usuarios;")
-            for u in cur.fetchall():
-                uname = u['username'].lower()
-                usuarios_db[uname] = {
-                    "username": u['username'],
-                    "password": u['password_hash'],
-                    "rol": u.get('rol', 'encargado'),
-                    "requiere_cambio": u.get('requiere_cambio_clave', False),
-                    "creado_por": u.get('creado_por', 'Sistema')
-                }
-
-            # 3. Donaciones
-            cur.execute("""
-                SELECT id, pj_name, tipo_donacion, cantidad, registrado_por, modificado_por,
-                       to_char(created_at, 'YYYY-MM-DD HH24:MI:SS') as fecha_registro,
-                       to_char(fecha_modificacion, 'YYYY-MM-DD HH24:MI:SS') as fecha_modificacion
-                FROM public.donaciones ORDER BY created_at DESC;
-            """)
-            rows_don = cur.fetchall()
-            if rows_don: donaciones_db = rows_don
-
-            # 4. Todos los Items de MU sin límite
-            try:
+    if conn:
+        try:
+            with conn.cursor() as cur:
                 cur.execute("""
                     SELECT id, nombre, tipo, base_score, grade_score, defense, durability,
                            requisitos, clases, opciones, bonus_excelente, drive_id
                     FROM public.items_mu ORDER BY id DESC;
                 """)
-                rows_items = cur.fetchall()
-                if rows_items:
-                    items_mu_db = [formatear_item_db(r) for r in rows_items]
+                filas = cur.fetchall()
+                if filas and len(filas) > 0:
+                    items_formateados = []
+                    for r in filas:
+                        items_formateados.append({
+                            "id": r['id'],
+                            "nombre": r.get('nombre') or 'Sin Nombre',
+                            "tipo": r.get('tipo') or 'General',
+                            "base_score": r.get('base_score') or 0,
+                            "grade_score": r.get('grade_score') or 0,
+                            "defense": r.get('defense') or 0,
+                            "durability": r.get('durability') or '-',
+                            "requisitos": normalizar_campo_json(r.get('requisitos'), {}),
+                            "clases": normalizar_campo_json(r.get('clases'), []),
+                            "opciones": normalizar_campo_json(r.get('opciones'), []),
+                            "bonus_excelente": normalizar_campo_json(r.get('bonus_excelente'), []),
+                            "drive_id": r.get('drive_id') or ''
+                        })
+                    items_mu_db = items_formateados
                     guardar_json(ITEMS_FILE, items_mu_db)
-                    print(f"✅ Sincronizados {len(items_mu_db)} ítems desde Supabase.")
-            except Exception as e_it:
-                print(f"Aviso tabla items_mu: {e_it}")
+            conn.close()
+        except Exception:
+            try: conn.close()
+            except Exception: pass
 
-        conn.close()
-        print("✅ DB conectada y sincronizada.")
-    except Exception as e:
-        print(f"Aviso en sincronización inicial DB: {e}")
-        try: conn.close()
-        except Exception: pass
+    if not items_mu_db or len(items_mu_db) == 0:
+        items_mu_db = DEFAULT_ITEMS
 
-sincronizar_desde_db()
+    try:
+        sincronizar_drive_continuo()
+    except Exception: pass
 
-# --- VISTAS ---
+    return items_mu_db
 
 @app.route('/')
 def index():
@@ -169,32 +210,14 @@ def index():
 def vista_items():
     return render_template('items.html')
 
-# --- API DE ITEMS ---
-
 @app.route('/api/items', methods=['GET', 'POST', 'PUT'])
 def api_items():
     global items_mu_db
-    conn = get_db()
-
     if request.method == 'GET':
-        if conn:
-            try:
-                with conn.cursor() as cur:
-                    cur.execute("""
-                        SELECT id, nombre, tipo, base_score, grade_score, defense, durability,
-                               requisitos, clases, opciones, bonus_excelente, drive_id
-                        FROM public.items_mu ORDER BY id DESC;
-                    """)
-                    rows = cur.fetchall()
-                    if rows:
-                        items_mu_db = [formatear_item_db(r) for r in rows]
-                        guardar_json(ITEMS_FILE, items_mu_db)
-                conn.close()
-            except Exception as e:
-                print(f"Error consultando items en DB: {e}")
-                if conn: conn.close()
-        return jsonify(items_mu_db)
+        lista = obtener_todos_items()
+        return jsonify(lista)
 
+    conn = get_db()
     if request.method == 'POST':
         data = request.json or {}
         raw_drive = data.get('drive_id', '')
@@ -203,38 +226,29 @@ def api_items():
 
         nuevo = {
             "nombre": data.get('nombre', 'Item MU'),
-            "tipo": data.get('tipo', 'General'),
+            "tipo": data.get('tipo', 'Armor'),
             "base_score": int(data.get('base_score', 0)) if str(data.get('base_score', '')).isdigit() else 0,
-            "grade_score": int(data.get('grade_score', 0)) if str(data.get('grade_score', '')).isdigit() else 0,
             "defense": int(data.get('defense', 0)) if str(data.get('defense', '')).isdigit() else 0,
             "durability": data.get('durability', '-'),
-            "requisitos": data.get('requisitos', {}),
             "clases": data.get('clases', []),
             "opciones": data.get('opciones', []),
             "bonus_excelente": data.get('bonus_excelente', []),
             "drive_id": id_limpio
         }
-
         item_id = int(time.time() * 1000)
+
         if conn:
             try:
                 with conn.cursor() as cur:
                     cur.execute("""
-                        INSERT INTO public.items_mu (nombre, tipo, base_score, grade_score, defense, durability, requisitos, clases, opciones, bonus_excelente, drive_id)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        RETURNING id;
-                    """, (
-                        nuevo["nombre"], nuevo["tipo"], nuevo["base_score"], nuevo["grade_score"],
-                        nuevo["defense"], nuevo["durability"], json.dumps(nuevo["requisitos"]),
-                        json.dumps(nuevo["clases"]), json.dumps(nuevo["opciones"]),
-                        json.dumps(nuevo["bonus_excelente"]), nuevo["drive_id"]
-                    ))
+                        INSERT INTO public.items_mu (nombre, tipo, base_score, defense, durability, clases, opciones, bonus_excelente, drive_id)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id;
+                    """, (nuevo["nombre"], nuevo["tipo"], nuevo["base_score"], nuevo["defense"], nuevo["durability"], json.dumps(nuevo["clases"]), json.dumps(nuevo["opciones"]), json.dumps(nuevo["bonus_excelente"]), nuevo["drive_id"]))
                     row = cur.fetchone()
                     if row: item_id = row['id']
                     conn.commit()
                 conn.close()
-            except Exception as e:
-                print(f"Error guardando ítem en Supabase: {e}")
+            except Exception:
                 if conn: conn.close()
 
         nuevo["id"] = item_id
@@ -245,17 +259,12 @@ def api_items():
     if request.method == 'PUT':
         data = request.json or {}
         item_id = data.get('id')
-        if not item_id:
-            if conn: conn.close()
-            return jsonify({"error": "ID requerido"}), 400
-
         for it in items_mu_db:
             if it.get('id') == item_id:
                 it['nombre'] = data.get('nombre', it['nombre'])
                 it['clases'] = data.get('clases', it.get('clases', []))
                 it['opciones'] = data.get('opciones', it.get('opciones', []))
                 it['bonus_excelente'] = data.get('bonus_excelente', it.get('bonus_excelente', []))
-
         guardar_json(ITEMS_FILE, items_mu_db)
 
         if conn:
@@ -265,20 +274,99 @@ def api_items():
                         UPDATE public.items_mu 
                         SET nombre = %s, clases = %s, opciones = %s, bonus_excelente = %s
                         WHERE id = %s;
-                    """, (
-                        data.get('nombre'), json.dumps(data.get('clases', [])),
-                        json.dumps(data.get('opciones', [])), json.dumps(data.get('bonus_excelente', [])),
-                        item_id
-                    ))
+                    """, (data.get('nombre'), json.dumps(data.get('clases', [])), json.dumps(data.get('opciones', [])), json.dumps(data.get('bonus_excelente', [])), item_id))
                     conn.commit()
                 conn.close()
-            except Exception as e:
-                print(f"Error actualizando ítem en DB: {e}")
+            except Exception:
                 if conn: conn.close()
-
         return jsonify({"status": "ok"}), 200
 
-# --- TIMERS Y BOTS ---
+@app.route('/api/miembros', methods=['GET', 'POST', 'PUT', 'DELETE'])
+def api_miembros():
+    global miembros_clan_db
+    conn = get_db()
+
+    if request.method == 'GET':
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT id, nombre_pj, raza, items_asignados, notas FROM public.miembros_clan ORDER BY id ASC;")
+                    filas = cur.fetchall()
+                    if filas:
+                        miembros_clan_db = []
+                        for r in filas:
+                            miembros_clan_db.append({
+                                "id": r['id'],
+                                "nombre_pj": r['nombre_pj'],
+                                "raza": r['raza'],
+                                "items_asignados": normalizar_campo_json(r['items_asignados'], []),
+                                "notas": r.get('notas', '')
+                            })
+                        guardar_json(MIEMBROS_FILE, miembros_clan_db)
+                conn.close()
+            except Exception:
+                if conn: conn.close()
+        return jsonify(miembros_clan_db)
+
+    if request.method == 'POST':
+        data = request.json or {}
+        nombre_pj = data.get('nombre_pj', '').strip()
+        raza = data.get('raza', 'Dark Knight').strip()
+        items_asignados = data.get('items_asignados', [])
+        notas = data.get('notas', '').strip()
+
+        if not nombre_pj:
+            if conn: conn.close()
+            return jsonify({"error": "Nombre de PJ requerido"}), 400
+
+        nuevo_id = int(time.time() * 1000)
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        INSERT INTO public.miembros_clan (nombre_pj, raza, items_asignados, notas)
+                        VALUES (%s, %s, %s, %s)
+                        ON CONFLICT (nombre_pj) DO UPDATE 
+                        SET raza = EXCLUDED.raza, items_asignados = EXCLUDED.items_asignados, notas = EXCLUDED.notas
+                        RETURNING id;
+                    """, (nombre_pj, raza, json.dumps(items_asignados), notas))
+                    r = cur.fetchone()
+                    if r: nuevo_id = r['id']
+                    conn.commit()
+                conn.close()
+            except Exception:
+                if conn: conn.close()
+
+        miembro = {"id": nuevo_id, "nombre_pj": nombre_pj, "raza": raza, "items_asignados": items_asignados, "notas": notas}
+        miembros_clan_db = [m for m in miembros_clan_db if m['nombre_pj'].lower() != nombre_pj.lower()]
+        miembros_clan_db.append(miembro)
+        guardar_json(MIEMBROS_FILE, miembros_clan_db)
+        return jsonify({"status": "ok", "miembro": miembro}), 201
+
+    if request.method == 'PUT':
+        data = request.json or {}
+        m_id = data.get('id')
+        for m in miembros_clan_db:
+            if m['id'] == m_id:
+                m['nombre_pj'] = data.get('nombre_pj', m['nombre_pj'])
+                m['raza'] = data.get('raza', m['raza'])
+                m['items_asignados'] = data.get('items_asignados', m['items_asignados'])
+                m['notas'] = data.get('notas', m['notas'])
+
+        guardar_json(MIEMBROS_FILE, miembros_clan_db)
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        UPDATE public.miembros_clan
+                        SET nombre_pj = %s, raza = %s, items_asignados = %s, notas = %s
+                        WHERE id = %s;
+                    """, (data.get('nombre_pj'), data.get('raza'), json.dumps(data.get('items_asignados', [])), data.get('notas', ''), m_id))
+                    conn.commit()
+                conn.close()
+            except Exception:
+                if conn: conn.close()
+        return jsonify({"status": "ok"}), 200
 
 @app.route('/api/status_timers')
 @app.route('/api/timers')
@@ -301,7 +389,6 @@ def registrar_kill():
     pj_name = data.get('pj_name', 'Manual Web')
 
     if not server or not boss_raw: return jsonify({"error": "Faltan datos"}), 400
-
     boss = re.sub(r'\s+\d+$', '', boss_raw)
     es_manual_web = (pc_id == 'Manual Web') or ('user' in session)
 
@@ -319,7 +406,6 @@ def registrar_kill():
 
     if server not in status_timers: status_timers[server] = {}
     status_timers[server][boss] = now_unix
-
     clave_card = f"{server}_{boss}"
     if clave_card in tarjetas_ocultas_global: tarjetas_ocultas_global.remove(clave_card)
     guardar_json(DATA_FILE, status_timers)
@@ -375,8 +461,6 @@ def reset_boss():
         return jsonify({"status": "ok", "message": f"{boss} ocultado"}), 200
     return jsonify({"error": "Datos inválidos"}), 400
 
-# --- MAPAS INTERACTIVOS ---
-
 @app.route('/api/mapa_kill', methods=['POST'])
 def mapa_kill():
     data = request.json or {}
@@ -427,8 +511,6 @@ def registrar_heartbeat():
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
     return jsonify({"error": "Servidor requerido"}), 400
-
-# --- AUTENTICACIÓN ---
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -580,8 +662,6 @@ def usuarios():
             except Exception:
                 if conn: conn.close()
         return jsonify({"status": "ok", "message": f"Usuario {new_user} creado"}), 201
-
-# --- DONACIONES ---
 
 @app.route('/api/donaciones', methods=['GET', 'POST'])
 def donaciones():
