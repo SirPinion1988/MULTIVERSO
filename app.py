@@ -25,26 +25,22 @@ MAPAS_FILE = "mapas_data.json"
 ITEMS_FILE = "items_mu_data.json"
 MIEMBROS_FILE = "miembros_data.json"
 
-USUARIOS_AUTORIZADOS = ["pinion", "tolkien", "nasda"]
-
 BOSSES_MANUALES = [
     "Red Dragon", "Yellow Goblin", "Blue Goblin", 
     "Red Goblin", "Santa", "White Wizard", "Skeleton King"
 ]
 
 DEFAULT_ITEMS = [
-    {"id": 1, "archivo_id": "1iAU8Va4", "nombre": "Excellent Morning Star", "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord", "Rage Fighter"], "opciones": ["Falling Slash Skill", "Additional damage +60", "[Rare] Excellent damage rate +7%", "[Rare] Increases attack speed +28", "[Rare] Critical damage rate +7%"], "bonus_excelente": ["Increases Strength +128", "Increases Agility +147"], "drive_id": "1iAU8Va4", "asignado_a": None},
-    {"id": 2, "archivo_id": "19MyVAmk", "nombre": "Excellent Assassin Sword", "clases": ["Dark Knight", "Magic Gladiator"], "opciones": ["Additional damage +30", "[Rare] Critical damage rate +7%"], "bonus_excelente": ["Increases Strength +132", "Increases Agility +133"], "drive_id": "19MyVAmk", "asignado_a": None},
-    {"id": 3, "archivo_id": "1XcEYqEM", "nombre": "Excellent Leather Gloves", "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord"], "opciones": ["Additional defense +30", "[Rare] Increases maximum SD +3%", "[Rare] Reflect damage +3%", "[Rare] Increases zen drop rate +21%"], "bonus_excelente": ["Increases Strength +36", "Increases Energy +39"], "drive_id": "1XcEYqEM", "asignado_a": None},
-    {"id": 4, "archivo_id": "1kr-En", "nombre": "Excellent Vine Pants", "clases": ["Elf"], "opciones": ["Additional defense +30", "[Rare] Reflect damage +3%"], "bonus_excelente": ["Increases Agility +23", "Increases Energy +29"], "drive_id": "1kr-En", "asignado_a": None},
-    {"id": 5, "archivo_id": "1ruk-H", "nombre": "Excellent Bluewing Crossbow", "clases": ["Elf"], "opciones": ["Additional damage +30", "[Rare] Increases physical damage +7%", "[Epic] Critical damage rate +10%"], "bonus_excelente": ["Increases Agility +141", "Increases Energy +178"], "drive_id": "1ruk-H", "asignado_a": None},
-    {"id": 6, "archivo_id": "1zw2LP", "nombre": "Excellent Pad Boots", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["Additional defense +30", "[Rare] Increases maximum life +3%", "[Rare] Damage decrease +3%", "[Legendary] Reflect damage +4%"], "bonus_excelente": ["Increases Energy +37", "Increases Strength +26"], "drive_id": "1zw2LP", "asignado_a": None},
-    {"id": 7, "archivo_id": "267.png", "nombre": "Excellent Scale Pants", "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord", "Rage Fighter"], "opciones": ["Additional defense +30", "[Rare] Increases maximum life +3%", "[Epic] Damage decrease +5%"], "bonus_excelente": ["Increases Strength +30", "Increases Energy +31"], "drive_id": "267.png", "asignado_a": None},
-    {"id": 8, "archivo_id": "265.png", "nombre": "Excellent Sphinx Armor", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["Additional defense +15", "[Legendary] Increases maximum life +4%", "[Rare] Increases zen drop rate +21%"], "bonus_excelente": ["Increases Energy +50", "Increases Vitality +41"], "drive_id": "1BC0k90uaW4rHp1dQM1Y-pxLwE1KfnLku", "asignado_a": None},
-    {"id": 9, "archivo_id": "264.png", "nombre": "Excellent Legendary Pants", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["Additional defense +15", "[Epic] Reflect damage +5%", "[Epic] Critical damage resistance +10%"], "bonus_excelente": ["Increases Agility +98", "Increases Strength +110"], "drive_id": "1Jmjh8YltzfO2xBhBDGX0oYxr-WMdG4xK", "asignado_a": None},
-    {"id": 10, "archivo_id": "260.png", "nombre": "Excellent Black Dragon Pants", "clases": ["Dark Knight"], "opciones": ["Additional defense +15", "[Legendary] Reflect damage +4%", "[Epic] Increases zen drop rate +30%"], "bonus_excelente": ["Increases Energy +101", "Increases Strength +145"], "drive_id": "1iHHVi5Fr0KKdjWX1luSpI9CzuPAK5Aq5", "asignado_a": None},
-    {"id": 11, "archivo_id": "246.png", "nombre": "Excellent Bronze Gloves", "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord"], "opciones": ["[Rare] Increases maximum SD +3%", "[Rare] Damage decrease +3%", "[Legendary] Critical damage resistance +8%"], "bonus_excelente": ["Increases Strength +30", "Increases Agility +26"], "drive_id": "1u0mZvM_JmyY3NABCGCf35dj6rGVqrFHh", "asignado_a": None},
-    {"id": 12, "archivo_id": "244.png", "nombre": "Excellent Book of Samut", "clases": ["Summoner"], "opciones": ["Increases wizardry by 3%", "[Rare] Critical damage rate +7%"], "bonus_excelente": ["Increases Energy +146", "Increases Strength +200"], "drive_id": "1f5VMBmH8o4CdKIblTkW382mnxkzj7s2U", "asignado_a": None}
+    {"id": 1, "archivo_id": "1iAU8Va4", "nombre": "Excellent Morning Star", "tipo": "Weapon", "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord", "Rage Fighter"], "opciones": ["Falling Slash Skill", "Luck (Critical +5%)", "Additional damage +60", "[Rare] Excellent damage rate +7%", "[Rare] Increases attack speed +28", "[Rare] Critical damage rate +7%"], "bonus_excelente": ["Increases Strength +128", "Increases Agility +147"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": None},
+    {"id": 2, "archivo_id": "19MyVAmk", "nombre": "Excellent Assassin Sword", "tipo": "Weapon", "clases": ["Dark Knight", "Magic Gladiator"], "opciones": ["Additional damage +30", "[Rare] Critical damage rate +7%"], "bonus_excelente": ["Increases Strength +132", "Increases Agility +133"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": None},
+    {"id": 3, "archivo_id": "1XcEYqEM", "nombre": "Excellent Leather Gloves", "tipo": "Gloves", "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord"], "opciones": ["Luck (Critical +5%)", "[Rare] Increases maximum SD +3%", "[Rare] Reflect damage +3%", "[Rare] Increases zen drop rate +21%"], "bonus_excelente": ["Increases Strength +36", "Increases Energy +39"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": None},
+    {"id": 4, "archivo_id": "1kr-En", "nombre": "Excellent Vine Pants", "tipo": "Pants", "clases": ["Elf"], "opciones": ["Additional defense +30", "[Rare] Reflect damage +3%"], "bonus_excelente": ["Increases Agility +23", "Increases Energy +29"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": None},
+    {"id": 5, "archivo_id": "1ruk-H", "nombre": "Excellent Bluewing Crossbow", "tipo": "Crossbow", "clases": ["Elf"], "opciones": ["Additional damage +30", "[Rare] Increases physical damage +7%", "[Epic] Critical damage rate +10%"], "bonus_excelente": ["Increases Agility +141", "Increases Energy +178"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": None},
+    {"id": 6, "archivo_id": "1zw2LP", "nombre": "Excellent Pad Boots", "tipo": "Boots", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["Luck (Critical +5%)", "Additional defense +30", "[Rare] Increases maximum life +3%", "[Rare] Damage decrease +3%", "[Legendary] Reflect damage +4%"], "bonus_excelente": ["Increases Energy +37", "Increases Strength +26"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": None},
+    {"id": 7, "archivo_id": "267.png", "nombre": "Excellent Scale Pants", "tipo": "Pants", "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord", "Rage Fighter"], "opciones": ["Additional defense +30", "[Rare] Increases maximum life +3%", "[Epic] Damage decrease +5%"], "bonus_excelente": ["Increases Strength +30", "Increases Energy +31"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": None},
+    {"id": 8, "archivo_id": "265.png", "nombre": "Excellent Sphinx Armor", "tipo": "Armor", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["Luck (Critical +5%)", "Additional defense +15", "[Legendary] Increases maximum life +4%", "[Rare] Increases zen drop rate +21%"], "bonus_excelente": ["Increases Energy +50", "Increases Vitality +41"], "drive_id": "1BC0k90uaW4rHp1dQM1Y-pxLwE1KfnLku", "asignado_a": None},
+    {"id": 9, "archivo_id": "264.png", "nombre": "Excellent Legendary Pants", "tipo": "Pants", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["Luck (Critical +5%)", "Additional defense +15", "[Epic] Reflect damage +5%", "[Epic] Critical damage resistance +10%"], "bonus_excelente": ["Increases Agility +98", "Increases Strength +110"], "drive_id": "1Jmjh8YltzfO2xBhBDGX0oYxr-WMdG4xK", "asignado_a": None},
+    {"id": 10, "archivo_id": "260.png", "nombre": "Excellent Black Dragon Pants", "tipo": "Pants", "clases": ["Dark Knight"], "opciones": ["Additional defense +15", "[Legendary] Reflect damage +4%", "[Epic] Increases zen drop rate +30%"], "bonus_excelente": ["Increases Energy +101", "Increases Strength +145"], "drive_id": "1iHHVi5Fr0KKdjWX1luSpI9CzuPAK5Aq5", "asignado_a": None}
 ]
 
 def cargar_json(filepath, default_val):
@@ -65,6 +61,7 @@ def guardar_json(filepath, data):
 
 status_timers = cargar_json(DATA_FILE, {"Server 1": {}, "Server 2": {}, "Server 3": {}, "Server 20": {}})
 status_mapas = cargar_json(MAPAS_FILE, {"1": {}, "2": {}, "3": {}})
+usuarios_db = cargar_json(USERS_FILE, {})
 donaciones_db = cargar_json(DONACIONES_FILE, [])
 items_mu_db = cargar_json(ITEMS_FILE, DEFAULT_ITEMS) or DEFAULT_ITEMS
 miembros_clan_db = cargar_json(MIEMBROS_FILE, [])
@@ -94,9 +91,13 @@ def normalizar_campo_json(valor, default_tipo):
         except Exception: return default_tipo
     return default_tipo
 
-def usuario_autorizado():
-    return 'user' in session and session['user'].lower() in USUARIOS_AUTORIZADOS
+def usuario_es_autorizado():
+    """Valida si el usuario logueado en la sesión es Pinion, tolkien o nasda."""
+    if 'user' not in session: return False
+    u = session['user'].lower()
+    return u in ['pinion', 'tolkien', 'nasda']
 
+# --- ESCÁNER CONTINUO DE GOOGLE DRIVE ---
 def sincronizar_drive_continuo():
     global items_mu_db
     archivos_detectados = []
@@ -125,17 +126,16 @@ def sincronizar_drive_continuo():
         except Exception: pass
 
     existentes = {it.get('drive_id') for it in items_mu_db if it.get('drive_id')}
-    existentes_arch = {it.get('archivo_id') for it in items_mu_db if it.get('archivo_id')}
     nuevos = 0
     for arch in archivos_detectados:
         fid = arch['id']
-        fnom = arch['name']
-        if fid not in existentes and fnom not in existentes_arch:
+        if fid not in existentes:
+            nombre_archivo = arch['name']
             nuevo_item = {
                 "id": int(time.time() * 1000) + nuevos,
-                "archivo_id": fnom,
-                "nombre": fnom,
-                "tipo": "General",
+                "archivo_id": nombre_archivo,
+                "nombre": f"Item ({nombre_archivo})",
+                "tipo": "Equipment",
                 "clases": ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"],
                 "opciones": ["[Auto] Captura detectada en Drive"],
                 "bonus_excelente": [],
@@ -155,8 +155,9 @@ def obtener_todos_items():
         try:
             with conn.cursor() as cur:
                 cur.execute("""
-                    SELECT id, archivo_id, nombre, tipo, clases, opciones, bonus_excelente, drive_id, asignado_a
-                    FROM public.items_mu ORDER BY id ASC;
+                    SELECT id, archivo_id, nombre, tipo, base_score, defense, durability,
+                           clases, opciones, bonus_excelente, drive_id, asignado_a
+                    FROM public.items_mu ORDER BY id DESC;
                 """)
                 filas = cur.fetchall()
                 if filas and len(filas) > 0:
@@ -166,7 +167,10 @@ def obtener_todos_items():
                             "id": r['id'],
                             "archivo_id": r.get('archivo_id') or str(r['id']),
                             "nombre": r.get('nombre') or 'Sin Nombre',
-                            "tipo": r.get('tipo') or 'General',
+                            "tipo": r.get('tipo') or 'Equipment',
+                            "base_score": r.get('base_score') or 0,
+                            "defense": r.get('defense') or 0,
+                            "durability": r.get('durability') or '-',
                             "clases": normalizar_campo_json(r.get('clases'), []),
                             "opciones": normalizar_campo_json(r.get('opciones'), []),
                             "bonus_excelente": normalizar_campo_json(r.get('bonus_excelente'), []),
@@ -180,10 +184,11 @@ def obtener_todos_items():
             try: conn.close()
             except Exception: pass
 
-    if not items_mu_db:
+    if not items_mu_db or len(items_mu_db) == 0:
         items_mu_db = DEFAULT_ITEMS
 
-    try: sincronizar_drive_continuo()
+    try:
+        sincronizar_drive_continuo()
     except Exception: pass
 
     return items_mu_db
@@ -196,38 +201,40 @@ def index():
 def vista_items():
     return render_template('items.html')
 
-@app.route('/api/items', methods=['GET', 'PUT'])
+# --- API DE ITEMS ---
+
+@app.route('/api/items', methods=['GET', 'POST', 'PUT'])
 def api_items():
     global items_mu_db
     if request.method == 'GET':
         return jsonify(obtener_todos_items())
 
-    if request.method == 'PUT':
-        if not usuario_autorizado():
-            return jsonify({"error": "Solo Pinion, tolkien o nasda pueden asignar ítems"}), 403
+    # Solo los 3 autorizados pueden modificar o asignar
+    if not usuario_es_autorizado():
+        return jsonify({"error": "No autorizado. Solo Pinion, tolkien o nasda pueden editar."}), 403
 
+    conn = get_db()
+    if request.method == 'PUT':
         data = request.json or {}
         item_id = data.get('id')
         asignado_a = data.get('asignado_a')
-        if asignado_a: asignado_a = asignado_a.strip()
 
         for it in items_mu_db:
-            if it.get('id') == item_id or it.get('archivo_id') == item_id:
+            if it.get('id') == item_id:
                 it['asignado_a'] = asignado_a
-
         guardar_json(ITEMS_FILE, items_mu_db)
 
-        conn = get_db()
         if conn:
             try:
                 with conn.cursor() as cur:
-                    cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE id = %s OR archivo_id = %s;", 
-                                (asignado_a, item_id, str(item_id)))
+                    cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE id = %s;", (asignado_a, item_id))
                     conn.commit()
                 conn.close()
             except Exception:
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
+
+# --- API DE MIEMBROS DEL CLAN ---
 
 @app.route('/api/miembros', methods=['GET', 'POST', 'DELETE'])
 def api_miembros():
@@ -256,17 +263,19 @@ def api_miembros():
                 if conn: conn.close()
         return jsonify(miembros_clan_db)
 
-    if request.method == 'POST':
-        if not usuario_autorizado():
-            return jsonify({"error": "Solo Pinion, tolkien o nasda pueden modificar miembros"}), 403
+    # Solo los 3 autorizados pueden crear, asignar o eliminar miembros
+    if not usuario_es_autorizado():
+        return jsonify({"error": "No autorizado. Solo Pinion, tolkien o nasda tienen permisos."}), 403
 
+    if request.method == 'POST':
         data = request.json or {}
         nombre_pj = data.get('nombre_pj', '').strip()
         raza = data.get('raza', 'Dark Knight').strip()
         items_asignados = data.get('items_asignados', [])
 
         if not nombre_pj:
-            return jsonify({"error": "Nick de PJ requerido"}), 400
+            if conn: conn.close()
+            return jsonify({"error": "Nick requerido"}), 400
 
         nuevo_id = int(time.time() * 1000)
         if conn:
@@ -281,6 +290,12 @@ def api_miembros():
                     """, (nombre_pj, raza, json.dumps(items_asignados)))
                     r = cur.fetchone()
                     if r: nuevo_id = r['id']
+
+                    # Sincronizar en cascada hacia la tabla items_mu
+                    cur.execute("UPDATE public.items_mu SET asignado_a = NULL WHERE asignado_a = %s;", (nombre_pj,))
+                    for arch_id in items_asignados:
+                        cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE archivo_id = %s OR CAST(id AS TEXT) = %s;", (nombre_pj, arch_id, arch_id))
+
                     conn.commit()
                 conn.close()
             except Exception:
@@ -293,11 +308,10 @@ def api_miembros():
         return jsonify({"status": "ok", "miembro": miembro}), 201
 
     if request.method == 'DELETE':
-        if not usuario_autorizado():
-            return jsonify({"error": "Acceso restringido a encargados"}), 403
-
         data = request.json or {}
         m_id = data.get('id')
+        nombre_pj = data.get('nombre_pj')
+
         miembros_clan_db = [m for m in miembros_clan_db if m['id'] != m_id]
         guardar_json(MIEMBROS_FILE, miembros_clan_db)
 
@@ -305,115 +319,53 @@ def api_miembros():
             try:
                 with conn.cursor() as cur:
                     cur.execute("DELETE FROM public.miembros_clan WHERE id = %s;", (m_id,))
+                    if nombre_pj:
+                        cur.execute("UPDATE public.items_mu SET asignado_a = NULL WHERE asignado_a = %s;", (nombre_pj,))
                     conn.commit()
                 conn.close()
             except Exception:
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
 
-# Importador masivo de miembros y asignación (Nick, Raza, Items)
-@app.route('/api/miembros/importar_csv', methods=['POST'])
-def importar_miembros_csv():
-    if not usuario_autorizado():
-        return jsonify({"error": "Acceso restringido a encargados"}), 403
+# Importación masiva desde Excel/CSV
+@app.route('/api/miembros/importar', methods=['POST'])
+def importar_miembros_excel():
+    if not usuario_es_autorizado():
+        return jsonify({"error": "No autorizado"}), 403
 
-    data = request.json or {}
-    lineas = data.get('csv_data', '').splitlines()
-    cargados = 0
+    filas = (request.json or {}).get('filas', [])
+    if not filas:
+        return jsonify({"error": "No se enviaron datos"}), 400
 
-    for lin in lineas:
-        partes = [p.strip() for p in lin.split(',')]
-        if len(partes) >= 2:
-            nick = partes[0]
-            raza = partes[1]
-            if not nick or nick.lower() == 'nick': continue
-            items = partes[2:] if len(partes) > 2 else []
-            items_limpios = [x for x in items if x]
-
-            # Guardar o actualizar miembro
-            conn = get_db()
-            if conn:
-                try:
-                    with conn.cursor() as cur:
-                        cur.execute("""
-                            INSERT INTO public.miembros_clan (nombre_pj, raza, items_asignados)
-                            VALUES (%s, %s, %s)
-                            ON CONFLICT (nombre_pj) DO UPDATE SET raza = EXCLUDED.raza, items_asignados = EXCLUDED.items_asignados;
-                        """, (nick, raza, json.dumps(items_limpios)))
-                        conn.commit()
-                    conn.close()
-                except Exception:
-                    if conn: conn.close()
-
-            # Asignar items en tabla de items
-            for arch_id in items_limpios:
-                conn_it = get_db()
-                if conn_it:
-                    try:
-                        with conn_it.cursor() as cur:
-                            cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE archivo_id = %s;", (nick, arch_id))
-                            conn_it.commit()
-                        conn_it.close()
-                    except Exception:
-                        if conn_it: conn_it.close()
-            cargados += 1
-
-    return jsonify({"status": "ok", "cargados": cargados}), 200
-
-@app.route('/login', methods=['POST'])
-def login():
-    data = request.json or {}
-    username_raw = data.get('username', '').strip()
-    password = data.get('password', '').strip()
-
-    if not username_raw or not password:
-        return jsonify({"error": "Completá usuario y contraseña"}), 400
-
-    username = username_raw.lower()
-
-    # Validación directa garantizada para los 3 usuarios del clan
-    credenciales = {
-        "pinion": ("G1nt0n1c", "admin"),
-        "tolkien": ("tolkien123", "encargado"),
-        "nasda": ("nasda123", "encargado")
-    }
-
-    if username in credenciales and password == credenciales[username][0]:
-        session['user'] = username_raw
-        session['rol'] = credenciales[username][1]
-        return jsonify({"status": "ok", "user": session['user'], "rol": session['rol']}), 200
-
-    # Comprobación en base de datos Supabase
     conn = get_db()
-    if conn:
-        try:
-            with conn.cursor() as cur:
-                cur.execute("SELECT username, password_hash, rol FROM public.usuarios WHERE LOWER(username) = %s;", (username,))
-                row = cur.fetchone()
-                if row:
-                    p_hash = row['password_hash']
-                    es_valido = check_password_hash(p_hash, password) if (p_hash.startswith("scrypt:") or p_hash.startswith("pbkdf2:")) else (p_hash == password)
-                    if es_valido:
-                        session['user'] = row['username']
-                        session['rol'] = row.get('rol', 'encargado')
-                        conn.close()
-                        return jsonify({"status": "ok", "user": session['user'], "rol": session['rol']}), 200
-            conn.close()
-        except Exception:
-            if conn: conn.close()
+    for row in filas:
+        pj = str(row.get('nick', '')).strip()
+        raza = str(row.get('raza', 'Dark Knight')).strip()
+        items_raw = str(row.get('items', '')).strip()
+        items_lista = [x.strip() for x in items_raw.split(',') if x.strip()]
 
-    return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
+        if not pj: continue
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('index'))
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        INSERT INTO public.miembros_clan (nombre_pj, raza, items_asignados)
+                        VALUES (%s, %s, %s)
+                        ON CONFLICT (nombre_pj) DO UPDATE 
+                        SET raza = EXCLUDED.raza, items_asignados = EXCLUDED.items_asignados;
+                    """, (pj, raza, json.dumps(items_lista)))
+                    
+                    cur.execute("UPDATE public.items_mu SET asignado_a = NULL WHERE asignado_a = %s;", (pj,))
+                    for arch_id in items_lista:
+                        cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE archivo_id = %s OR CAST(id AS TEXT) = %s;", (pj, arch_id, arch_id))
+                    conn.commit()
+            except Exception: pass
 
-@app.route('/api/session')
-def api_session():
-    if 'user' in session:
-        return jsonify({"logged_in": True, "user": session['user'], "rol": session.get('rol', 'encargado'), "autorizado": usuario_autorizado()})
-    return jsonify({"logged_in": False, "autorizado": False})
+    if conn: conn.close()
+    return jsonify({"status": "ok", "message": f"{len(filas)} filas procesadas"}), 200
+
+# --- TIMERS Y BOTS ---
 
 @app.route('/api/status_timers')
 @app.route('/api/timers')
@@ -559,6 +511,77 @@ def registrar_heartbeat():
         return jsonify({"status": "ok"}), 200
     return jsonify({"error": "Servidor requerido"}), 400
 
+# --- LOGIN MULTI-USUARIO ---
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json or {}
+    username_raw = data.get('username', '').strip()
+    password = data.get('password', '').strip()
+
+    if not username_raw or not password:
+        return jsonify({"error": "Completá usuario y contraseña"}), 400
+
+    username = username_raw.lower()
+
+    # Validar primero contra Supabase
+    conn = get_db()
+    user_db = None
+    if conn:
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT username, password_hash, rol FROM public.usuarios WHERE LOWER(username) = %s;", (username,))
+                user_db = cur.fetchone()
+            conn.close()
+        except Exception:
+            if conn: conn.close()
+
+    # Fallback local garantizado para los 3 usuarios autorizados
+    if not user_db:
+        if username == 'pinion' and password == 'G1nt0n1c':
+            user_db = {'username': 'Pinion', 'password_hash': 'G1nt0n1c', 'rol': 'admin'}
+        elif username == 'tolkien' and password == 'tolkien123':
+            user_db = {'username': 'tolkien', 'password_hash': 'tolkien123', 'rol': 'encargado'}
+        elif username == 'nasda' and password == 'nasda123':
+            user_db = {'username': 'nasda', 'password_hash': 'nasda123', 'rol': 'encargado'}
+
+    if user_db:
+        stored_pass = user_db.get("password_hash", "")
+        es_valido = False
+        if stored_pass.startswith("scrypt:") or stored_pass.startswith("pbkdf2:"):
+            try:
+                es_valido = check_password_hash(stored_pass, password)
+            except Exception: pass
+        else:
+            es_valido = (stored_pass == password)
+
+        if es_valido:
+            session['user'] = user_db.get('username', username_raw)
+            session['rol'] = user_db.get('rol', 'encargado')
+            return jsonify({
+                "status": "ok",
+                "user": session['user'],
+                "rol": session['rol']
+            }), 200
+
+    return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('index'))
+
+@app.route('/api/session')
+def api_session():
+    if 'user' in session:
+        return jsonify({
+            "logged_in": True,
+            "user": session['user'],
+            "rol": session.get('rol', 'encargado'),
+            "autorizado": usuario_es_autorizado()
+        })
+    return jsonify({"logged_in": False, "autorizado": False})
+
 @app.route('/api/donaciones', methods=['GET', 'POST'])
 def donaciones():
     if request.method == 'GET':
@@ -574,8 +597,7 @@ def donaciones():
         nueva_donacion = {
             "id": int(time.time() * 1000), "pj_name": pj_name, "tipo_donacion": tipo_donacion,
             "cantidad": int(cantidad), "registrado_por": session['user'],
-            "fecha_registro": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "modificado_por": None, "fecha_modificacion": None
+            "fecha_registro": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
         donaciones_db.insert(0, nueva_donacion)
         guardar_json(DONACIONES_FILE, donaciones_db)
@@ -584,10 +606,7 @@ def donaciones():
         if conn:
             try:
                 with conn.cursor() as cur:
-                    cur.execute("""
-                        INSERT INTO public.donaciones (pj_name, tipo_donacion, cantidad, registrado_por)
-                        VALUES (%s, %s, %s, %s);
-                    """, (pj_name, tipo_donacion, int(cantidad), session['user']))
+                    cur.execute("INSERT INTO public.donaciones (pj_name, tipo_donacion, cantidad, registrado_por) VALUES (%s, %s, %s, %s);", (pj_name, tipo_donacion, int(cantidad), session['user']))
                     conn.commit()
                 conn.close()
             except Exception:
