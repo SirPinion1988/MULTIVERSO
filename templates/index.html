@@ -219,7 +219,7 @@
                 </select>
             </div>
             <div>
-                <label class="block text-xs uppercase text-purple-300 font-bold mb-1.5">Filtrar por Opción (No toma Exclusive Bonus):</label>
+                <label class="block text-xs uppercase text-purple-300 font-bold mb-1.5">Filtrar por Opción (Excluye Exclusive Bonus):</label>
                 <select id="filtroItemOpcion" onchange="aplicarFiltrosItems()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-sm outline-none">
                     <option value="">Todas las Opciones</option>
                     <option value="damage decrease">DD (Damage Decrease)</option>
@@ -510,6 +510,19 @@
             }
         }
 
+        function parsearArraySeguro(val) {
+            if (!val) return [];
+            if (Array.isArray(val)) return val;
+            if (typeof val === 'string') {
+                try {
+                    const parsed = JSON.parse(val);
+                    if (Array.isArray(parsed)) return parsed;
+                } catch(e) {}
+                return [val];
+            }
+            return [];
+        }
+
         async function cargarItemsMu() {
             try {
                 const res = await fetch('/api/items');
@@ -535,6 +548,610 @@
 
             contenedor.innerHTML = items.map(item => {
                 const imgUrl = `https://lh3.googleusercontent.com/d/${item.drive_id}`;
-                const clasesHTML = (item.clases && item.clases.length > 0)
-                    ? item.clases.map(pj => `<span class="badge-pj">${pj}</span>`).join(' ')
-                    : '<span class="text-gray-50
+                const clasesLista = parsearArraySeguro(item.clases);
+                const opcionesLista = parsearArraySeguro(item.opciones);
+                const bonusLista = parsearArraySeguro(item.bonus_excelente);
+
+                const clasesHTML = clasesLista.length > 0
+                    ? clasesLista.map(pj => `<span class="badge-pj">${pj}</span>`).join(' ')
+                    : '<span class="text-gray-500 text-xs">Sin clase</span>';
+
+                return `
+                    <div class="mu-item-card p-4 flex flex-col justify-between">
+                        <div>
+                            <div class="w-full h-52 bg-black rounded-lg flex items-center justify-center overflow-hidden mb-3 border border-purple-950">
+                                <img src="${imgUrl}" alt="${item.nombre}" loading="lazy" class="max-h-full max-w-full object-contain" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200/0f0c1b/4ade80?text=Item+MU';">
+                            </div>
+                            <h3 class="text-center font-bold text-emerald-400 text-base mb-2">${item.nombre}</h3>
+                            
+                            <div class="text-xs space-y-1 text-center mb-3">
+                                ${item.base_score ? `<p class="text-amber-400 font-semibold">Base Score: ${item.base_score}</p>` : ''}
+                                ${item.grade_score ? `<p class="text-purple-400 font-semibold">Grade Score: ${item.grade_score}</p>` : ''}
+                                ${item.defense ? `<p class="text-blue-300 font-semibold">Defense: ${item.defense}</p>` : ''}
+                                ${item.durability && item.durability !== '-' ? `<p class="text-gray-300">Durability: [${item.durability}]</p>` : ''}
+                                ${item.requisitos?.strength ? `<p class="text-red-400 font-medium">Strength: ${item.requisitos.strength}</p>` : ''}
+                                ${item.requisitos?.agility ? `<p class="text-gray-300">Agility: ${item.requisitos.agility}</p>` : ''}
+                                ${item.requisitos?.energy ? `<p class="text-cyan-300">Energy: ${item.requisitos.energy}</p>` : ''}
+                            </div>
+
+                            <div class="mb-3">
+                                <span class="text-[10px] text-gray-400 uppercase font-bold block mb-1">Equipable por:</span>
+                                <div class="flex flex-wrap gap-1">
+                                    ${clasesHTML}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Opciones principales -->
+                        <div class="border-t border-purple-900/50 pt-2 text-xs space-y-1">
+                            <span class="text-[10px] text-purple-300 uppercase font-bold block mb-1">Opciones:</span>
+                            ${opcionesLista.map(opt => {
+                                const optL = opt.toLowerCase();
+                                const esLegendary = opt.includes('Legendary');
+                                const esDD = optL.includes('decrease') || optL.includes('dd');
+                                const esReflect = optL.includes('reflect');
+                                const esLife = optL.includes('life') || optL.includes('hp');
+
+                                let colorClass = 'text-purple-300';
+                                if (esLegendary) colorClass = 'text-amber-400 font-semibold';
+                                else if (esDD) colorClass = 'text-red-400 font-semibold';
+                                else if (esReflect) colorClass = 'text-yellow-300 font-semibold';
+                                else if (esLife) colorClass = 'text-emerald-400 font-semibold';
+
+                                return `<p class="${colorClass}">• ${opt}</p>`;
+                            }).join('')}
+
+                            <!-- Exclusive Excellent Bonus: SE MUESTRA PERO NO SE FILTRA -->
+                            ${bonusLista.length > 0 ? `
+                                <div class="mt-2 pt-1 border-t border-purple-950">
+                                    <span class="text-[10px] text-cyan-400 font-bold block mb-0.5">Exclusive Excellent Bonus:</span>
+                                    ${bonusLista.map(b => `<p class="text-cyan-300 text-[11px] font-mono">• ${b}</p>`).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function aplicarFiltrosItems() {
+            const raza = document.getElementById('filtroItemRaza').value.toLowerCase();
+            const opcion = document.getElementById('filtroItemOpcion').value.toLowerCase();
+            const busqueda = document.getElementById('filtroItemTexto').value.toLowerCase();
+
+            const filtrados = catalogoItemsCache.filter(item => {
+                const clasesLista = parsearArraySeguro(item.clases);
+                const opcionesLista = parsearArraySeguro(item.opciones);
+
+                const matchRaza = !raza || clasesLista.some(c => String(c).toLowerCase().includes(raza));
+                
+                // SOLO BUSCA EN item.opciones (EXCLUYE EXCLUSIVE BONUS)
+                const textoOpciones = opcionesLista.join(' ').toLowerCase();
+
+                let matchOpcion = true;
+                if (opcion) {
+                    if (opcion === 'damage decrease') {
+                        matchOpcion = textoOpciones.includes('damage decrease') || textoOpciones.includes('dd');
+                    } else if (opcion === 'reflect') {
+                        matchOpcion = textoOpciones.includes('reflect');
+                    } else if (opcion === 'maximum life') {
+                        matchOpcion = textoOpciones.includes('maximum life') || textoOpciones.includes('hp');
+                    } else if (opcion === 'maximum sd') {
+                        matchOpcion = textoOpciones.includes('sd');
+                    } else {
+                        matchOpcion = textoOpciones.includes(opcion);
+                    }
+                }
+
+                const matchTexto = !busqueda || (item.nombre && item.nombre.toLowerCase().includes(busqueda));
+
+                return matchRaza && matchOpcion && matchTexto;
+            });
+
+            renderizarItemsMu(filtrados);
+        }
+
+        function setVista(vista) {
+            if (vista === 'DONACIONES' && !estaLogueado) {
+                toggleLoginModal();
+                return;
+            }
+
+            modoVista = vista;
+            document.querySelectorAll('.btn-tab').forEach(b => {
+                b.className = "btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400";
+            });
+            const activeTab = document.getElementById(`tab-${vista}`);
+            if (activeTab) {
+                if (vista === 'ITEMS') {
+                    activeTab.className = "btn-tab px-4 py-2 rounded-lg font-bold bg-emerald-700 text-white";
+                } else {
+                    activeTab.className = "btn-tab px-4 py-2 rounded-lg font-bold bg-purple-700 text-white";
+                }
+            }
+
+            document.getElementById('seccion-timers').classList.add('hidden');
+            document.getElementById('seccion-mapa').classList.add('hidden');
+            document.getElementById('seccion-items').classList.add('hidden');
+            document.getElementById('seccion-bots').classList.add('hidden');
+            document.getElementById('seccion-donaciones').classList.add('hidden');
+            document.getElementById('seccion-usuarios').classList.add('hidden');
+            document.getElementById('panel-kill-manual').classList.add('hidden');
+
+            if (vista === 'DONACIONES') {
+                document.getElementById('seccion-donaciones').classList.remove('hidden');
+                cargarDonaciones();
+            } else if (vista === 'ITEMS') {
+                document.getElementById('seccion-items').classList.remove('hidden');
+                cargarItemsMu();
+            } else if (vista === 'BOTS') {
+                document.getElementById('seccion-bots').classList.remove('hidden');
+                renderizarBots();
+            } else if (vista === 'USUARIOS') {
+                document.getElementById('seccion-usuarios').classList.remove('hidden');
+                cargarUsuarios();
+            } else if (vista.startsWith('MAPA_')) {
+                servidorMapaActivo = parseInt(vista.split('_')[1]);
+                document.getElementById('mapa-titulo').textContent = `🗺️ Mapa de Bosses - Server ${servidorMapaActivo}`;
+                document.getElementById('seccion-mapa').classList.remove('hidden');
+                actualizarMapaUI();
+            } else {
+                document.getElementById('seccion-timers').classList.remove('hidden');
+                document.getElementById('panel-kill-manual').classList.remove('hidden');
+                renderizarUI();
+            }
+        }
+
+        async function ocultarTarjetaGlobal(svr, boss) {
+            try {
+                const res = await fetch('/api/reset_boss', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ server: svr, boss: boss })
+                });
+                if (res.ok) { await cargarDatos(); }
+            } catch (e) {}
+        }
+
+        async function verificarSesion() {
+            try {
+                const res = await fetch('/api/session');
+                const data = await res.json();
+                estaLogueado = data.logged_in;
+                esAdmin = (data.rol === 'admin');
+
+                if (data.logged_in) {
+                    document.getElementById('user-display').innerHTML = `👤 User: <strong class="text-white">${data.user}</strong> (${data.rol})`;
+                    document.getElementById('login-btn-container').innerHTML = `<a href="/logout" class="bg-red-700 hover:bg-red-600 text-white px-3 py-1 rounded font-bold transition">Salir</a>`;
+                    document.getElementById('btn-descarga-bot').classList.remove('hidden');
+
+                    if (esAdmin) {
+                        document.getElementById('tab-USUARIOS').classList.remove('hidden');
+                    }
+                    if (data.requiere_cambio) {
+                        document.getElementById('modal-cambio-clave').classList.remove('hidden');
+                    }
+                }
+            } catch (e) {}
+        }
+
+        async function ejecutarCambioClave() {
+            const p1 = document.getElementById('claveNueva1').value;
+            const p2 = document.getElementById('claveNueva2').value;
+
+            if (!p1 || p1 !== p2) return mostrarToast("Las contraseñas no coinciden.", "❌");
+
+            try {
+                const res = await fetch('/api/cambiar_clave', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nueva_clave: p1 })
+                });
+                if (res.ok) {
+                    mostrarToast("Contraseña actualizada con éxito.", "✅");
+                    document.getElementById('modal-cambio-clave').classList.add('hidden');
+                    location.reload();
+                } else {
+                    mostrarToast("Error cambiando contraseña.", "❌");
+                }
+            } catch (e) {}
+        }
+
+        function poblarSelector() {
+            const select = document.getElementById('manualBoss');
+            if (select.children.length > 0) return;
+            Object.keys(COOLDOWNS_LOCAL).forEach(b => {
+                let opt = document.createElement('option');
+                opt.value = b;
+                opt.textContent = `${b} (${COOLDOWNS_LOCAL[b]}m)`;
+                select.appendChild(opt);
+            });
+        }
+
+        function formatearTiempo(segundosTotales) {
+            if (segundosTotales <= 0) return "00:00:00";
+            const h = Math.floor(segundosTotales / 3600);
+            const m = Math.floor((segundosTotales % 3600) / 60);
+            const s = segundosTotales % 60;
+            return `${h > 0 ? String(h).padStart(2, '0') + ':' : ''}${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        async function cargarDatos() {
+            try {
+                const res = await fetch('/api/status_timers');
+                if (res.ok) {
+                    estadoWeb = await res.json();
+                    poblarSelector();
+                    if (modoVista === 'BOTS') renderizarBots();
+                    else if (modoVista.startsWith('MAPA_')) actualizarMapaUI();
+                    else if (modoVista !== 'DONACIONES' && modoVista !== 'USUARIOS' && modoVista !== 'ITEMS') renderizarUI();
+                }
+            } catch (e) {}
+        }
+
+        async function enviarKill(svr, boss) {
+            const timersSvr = (estadoWeb.timers || {})[svr] || {};
+            const killUnix = timersSvr[boss];
+            const ahoraUnix = Math.floor(Date.now() / 1000);
+
+            const cdMinutos = COOLDOWNS_LOCAL[boss] || 60;
+            const cdSegundos = cdMinutos * 60;
+            const ventanaSegundos = 3600;
+            const esEventoManual = BOSSES_SOLO_MANUALES.includes(boss);
+
+            if (killUnix) {
+                const targetRespawnUnix = killUnix + cdSegundos;
+                const finVentanaUnix = targetRespawnUnix + ventanaSegundos;
+
+                if (ahoraUnix < finVentanaUnix || (esEventoManual && ahoraUnix < targetRespawnUnix)) {
+                    mostrarToast(`${boss} (${svr}) ya está activo.`, "🛑");
+                    return;
+                }
+            }
+
+            try {
+                const res = await fetch('/api/kill', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ server: svr, boss: boss })
+                });
+                if (res.ok) { 
+                    mostrarToast(`Kill registrado: ${boss} (${svr})`, "⚔️");
+                    await cargarDatos(); 
+                }
+            } catch (e) {}
+        }
+
+        function ejecutarKillForm() {
+            const svr = document.getElementById('manualServer').value;
+            const boss = document.getElementById('manualBoss').value;
+            if (svr && boss) { enviarKill(svr, boss); }
+        }
+
+        function renderizarBots() {
+            const container = document.getElementById('contenedor-bots-lista');
+            container.innerHTML = '';
+            const ahoraUnix = Math.floor(Date.now() / 1000);
+            const hbMap = estadoWeb.heartbeats || {};
+
+            ["Server 1", "Server 2", "Server 3", "Server 20"].forEach(svr => {
+                const pcVal = (estadoWeb.ultimas_pcs || {})[svr];
+                const pjVal = (estadoWeb.ultimos_pjs || {})[svr];
+                const lastPing = hbMap[svr];
+                let esOnline = false;
+
+                if (lastPing) {
+                    const hbUnix = Math.floor(new Date(lastPing).getTime() / 1000);
+                    if (!isNaN(hbUnix) && Math.abs(ahoraUnix - hbUnix) <= 120) esOnline = true;
+                }
+
+                container.innerHTML += `
+                    <div class="bg-[#141126] border ${esOnline ? 'border-emerald-600' : 'border-red-900'} p-5 rounded-xl shadow-lg flex justify-between items-center">
+                        <div>
+                            <h3 class="font-bold text-lg text-white mb-1">${svr}</h3>
+                            <p class="text-xs text-purple-300">💻 PC Local: <strong class="text-white">${pcVal || 'Sin conexión'}</strong></p>
+                            <p class="text-xs text-purple-300">👤 Personaje: <strong class="text-white">${pjVal || 'N/A'}</strong></p>
+                            <p class="text-[10px] text-gray-400 mt-2">Última señal: ${lastPing ? new Date(lastPing).toLocaleTimeString() : 'Nunca'}</p>
+                        </div>
+                        <div>
+                            <span class="px-4 py-2 rounded-lg font-bold text-xs ${esOnline ? 'bg-emerald-950 text-emerald-200 border border-emerald-500' : 'bg-red-950 text-red-300 border border-red-800'}">
+                                ${esOnline ? '🟢 ONLINE' : '🔴 OFFLINE'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderizarUI() {
+            const contenedor = document.getElementById('contenedor-bosses');
+            contenedor.innerHTML = '';
+            const ahoraUnix = Math.floor(Date.now() / 1000);
+            const serversAMostrar = modoVista === 'TODOS' ? ["Server 1", "Server 2", "Server 3", "Server 20"] : [modoVista];
+            const listaOcultosGlobales = estadoWeb.ocultos || [];
+
+            let listaCards = [];
+
+            serversAMostrar.forEach(svr => {
+                const timersSvr = (estadoWeb.timers || {})[svr] || {};
+                const listaFijaServidor = BOSSES_FIJOS[svr] || [];
+                const listaBossesAMostrar = new Set([...listaFijaServidor]);
+                Object.keys(timersSvr).forEach(b => listaBossesAMostrar.add(b));
+
+                listaBossesAMostrar.forEach(bossName => {
+                    const claveCard = `${svr}_${bossName}`;
+                    if (listaOcultosGlobales.includes(claveCard)) return;
+
+                    const cdMinutos = COOLDOWNS_LOCAL[bossName] || 60;
+                    const cdSegundos = cdMinutos * 60;
+                    const ventanaSegundos = 3600;
+                    const cicloTotalSegundos = cdSegundos + ventanaSegundos;
+                    const esEventoManual = BOSSES_SOLO_MANUALES.includes(bossName);
+
+                    let ordenTiempo = 99999999;
+                    let cardHTML = '';
+                    let killUnix = timersSvr[bossName];
+
+                    const btnCerrarHTML = `<button onclick="ocultarTarjetaGlobal('${svr}', '${bossName}')" title="Quitar para toda la guild" class="absolute top-2 right-2 text-white hover:text-red-400 font-extrabold text-sm bg-black/60 hover:bg-black/90 w-6 h-6 rounded-full flex items-center justify-center transition border border-purple-500/50 z-10 cursor-pointer shadow">✕</button>`;
+
+                    if (killUnix) {
+                        let transcurridoTotal = ahoraUnix - killUnix;
+
+                        if (!esEventoManual && transcurridoTotal >= cicloTotalSegundos) {
+                            const ciclosPasados = Math.floor(transcurridoTotal / cicloTotalSegundos);
+                            killUnix += (ciclosPasados * cicloTotalSegundos);
+                            transcurridoTotal = ahoraUnix - killUnix;
+                        }
+
+                        const targetRespawnUnix = killUnix + cdSegundos;
+                        const finVentanaUnix = targetRespawnUnix + ventanaSegundos;
+
+                        if (esEventoManual && ahoraUnix > finVentanaUnix) {
+                            cardHTML = '';
+                        }
+                        else if (ahoraUnix < targetRespawnUnix) {
+                            const restoSec = targetRespawnUnix - ahoraUnix;
+                            ordenTiempo = restoSec; 
+                            cardHTML = `
+                                <div class="card p-4 rounded-xl bg-red-950/70 border border-red-500 shadow-lg flex flex-col justify-between text-center min-h-[140px] relative">
+                                    ${btnCerrarHTML}
+                                    <div class="flex justify-between items-center mb-1 pr-6">
+                                        <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-purple-900 text-purple-200">${svr}</span>
+                                        <span class="text-[10px] font-bold text-red-400">COOLDOWN</span>
+                                    </div>
+                                    <h3 class="font-bold text-red-100 text-base my-1">${bossName}</h3>
+                                    <div class="my-2 py-1.5 px-2 rounded bg-red-900/60 border border-red-500 text-red-200 font-mono text-lg font-bold">
+                                        🔴 ${formatearTiempo(restoSec)}
+                                    </div>
+                                    <button type="button" onclick="enviarKill('${svr}', '${bossName}')" class="w-full bg-purple-700/50 hover:bg-purple-600/50 text-white/70 font-bold text-xs py-2 rounded transition shadow cursor-not-allowed">⚔️ EN COOLDOWN</button>
+                                </div>
+                            `;
+                        } 
+                        else if (ahoraUnix >= targetRespawnUnix && ahoraUnix <= finVentanaUnix) {
+                            const transcurridoVentana = ahoraUnix - targetRespawnUnix;
+                            ordenTiempo = -1000000 + transcurridoVentana;
+                            cardHTML = `
+                                <div class="card p-4 rounded-xl bg-emerald-950/70 border border-emerald-500 shadow-lg flex flex-col justify-between text-center min-h-[140px] relative">
+                                    ${btnCerrarHTML}
+                                    <div class="flex justify-between items-center mb-1 pr-6">
+                                        <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-purple-900 text-purple-200">${svr}</span>
+                                        <span class="text-[10px] font-bold text-emerald-400 animate-pulse">CACERÍA EN CURSO</span>
+                                    </div>
+                                    <h3 class="font-bold text-emerald-100 text-base my-1">${bossName}</h3>
+                                    <div class="my-2 py-1.5 px-2 rounded bg-emerald-900/60 border border-emerald-500 text-emerald-200 font-mono text-lg font-bold">
+                                        🟢 VENTANA (${formatearTiempo(transcurridoVentana)})
+                                    </div>
+                                    <button type="button" onclick="enviarKill('${svr}', '${bossName}')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2 rounded transition shadow">⚔️ REGISTRAR KILL</button>
+                                </div>
+                            `;
+                        }
+                    }
+
+                    if (!cardHTML && !esEventoManual) {
+                        ordenTiempo = 88888888;
+                        cardHTML = `
+                            <div class="card p-4 rounded-xl bg-purple-950/40 border border-purple-700 shadow-lg flex flex-col justify-between text-center min-h-[140px] relative">
+                                ${btnCerrarHTML}
+                                <div class="flex justify-between items-center mb-1 pr-6">
+                                    <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-purple-900 text-purple-200">${svr}</span>
+                                    <span class="text-[10px] font-bold text-purple-300">DISPONIBLE</span>
+                                </div>
+                                <h3 class="font-bold text-purple-100 text-base my-1">${bossName}</h3>
+                                <div class="my-2 py-1.5 px-2 rounded bg-purple-900/40 border border-purple-600 text-purple-200 font-mono text-xs font-bold uppercase">
+                                    ⚡ ESPERANDO KILL
+                                </div>
+                                <button type="button" onclick="enviarKill('${svr}', '${bossName}')" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold text-xs py-2 rounded transition shadow">⚔️ REGISTRAR KILL</button>
+                            </div>
+                        `;
+                    }
+
+                    if (cardHTML) {
+                        listaCards.push({ orden: ordenTiempo, html: cardHTML });
+                    }
+                });
+            });
+
+            listaCards.sort((a, b) => a.orden - b.orden);
+
+            if (listaCards.length === 0) {
+                contenedor.innerHTML = `<div class="text-gray-500 italic text-center col-span-full py-12">Sin bosses activos en pantalla.</div>`;
+            } else {
+                listaCards.forEach(c => contenedor.innerHTML += c.html);
+            }
+        }
+
+        async function cargarUsuarios() {
+            try {
+                const res = await fetch('/api/usuarios');
+                if (res.ok) {
+                    const data = await res.json();
+                    const tbody = document.getElementById('tabla-usuarios-body');
+                    tbody.innerHTML = '';
+                    data.forEach(u => {
+                        tbody.innerHTML += `
+                            <tr class="border-b border-purple-900/40">
+                                <td class="p-3 font-bold text-white">${u.username}</td>
+                                <td class="p-3 text-indigo-300">${u.rol}</td>
+                                <td class="p-3 text-xs">${u.requiere_cambio_clave ? '⚠️ Debe cambiar clave' : '✅ Clave al día'}</td>
+                                <td class="p-3 text-purple-400">${u.creado_por || 'Sistema'}</td>
+                            </tr>
+                        `;
+                    });
+                }
+            } catch (e) {}
+        }
+
+        async function crearUsuario() {
+            const username = document.getElementById('nuevoUser').value;
+            const password = document.getElementById('nuevoPass').value;
+            const rol = document.getElementById('nuevoRol').value;
+
+            if (!username || !password) return mostrarToast("Completa usuario y contraseña", "❌");
+
+            try {
+                const res = await fetch('/api/usuarios', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, rol })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    document.getElementById('nuevoUser').value = '';
+                    document.getElementById('nuevoPass').value = '';
+                    mostrarToast(`Usuario ${username} creado con éxito.`, "👤");
+                    cargarUsuarios();
+                } else {
+                    mostrarToast(data.error || "Error creando usuario", "❌");
+                }
+            } catch (e) {}
+        }
+
+        async function cargarDonaciones() {
+            try {
+                const res = await fetch('/api/donaciones');
+                if (res.ok) {
+                    listaDonacionesCache = await res.json();
+                    const tbody = document.getElementById('tabla-donaciones-body');
+                    tbody.innerHTML = '';
+                    if (listaDonacionesCache.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-500">Sin donaciones registradas</td></tr>`;
+                        return;
+                    }
+                    listaDonacionesCache.forEach(d => {
+                        let auditoriaText = 'Sin modificaciones';
+                        if (d.modificado_por) {
+                            auditoriaText = `<span class="text-yellow-400 font-bold">Editado por ${d.modificado_por}</span> (${new Date(d.fecha_modificacion).toLocaleTimeString()})`;
+                        }
+
+                        tbody.innerHTML += `
+                            <tr class="border-b border-purple-900/40 hover:bg-purple-900/20">
+                                <td class="p-3 font-bold text-white">${d.pj_name}</td>
+                                <td class="p-3 text-yellow-300">${d.tipo_donacion}</td>
+                                <td class="p-3 font-mono">${d.cantidad}</td>
+                                <td class="p-3 text-purple-400">${d.registrado_por}</td>
+                                <td class="p-3 text-xs text-gray-300">${auditoriaText}</td>
+                                <td class="p-3 text-center">
+                                    <button onclick="abrirModalEditarDonacion(${d.id})" class="bg-yellow-700 hover:bg-yellow-600 text-white font-bold text-xs px-3 py-1 rounded transition">✏️ Editar</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+            } catch (e) {}
+        }
+
+        function abrirModalEditarDonacion(id) {
+            const don = listaDonacionesCache.find(x => x.id === id);
+            if (!don) return;
+            document.getElementById('editDonacionId').value = don.id;
+            document.getElementById('editDonacionPj').value = don.pj_name;
+            document.getElementById('editDonacionTipo').value = don.tipo_donacion;
+            document.getElementById('editDonacionCantidad').value = don.cantidad;
+            document.getElementById('modal-editar-donacion').classList.remove('hidden');
+        }
+
+        function toggleEditModal() {
+            document.getElementById('modal-editar-donacion').classList.add('hidden');
+        }
+
+        async function ejecutarEdicionDonacion() {
+            const id = document.getElementById('editDonacionId').value;
+            const pj = document.getElementById('editDonacionPj').value;
+            const tipo = document.getElementById('editDonacionTipo').value;
+            const cant = document.getElementById('editDonacionCantidad').value;
+
+            if (!pj || !tipo || !cant) return mostrarToast("Completa todos los campos", "❌");
+
+            try {
+                const res = await fetch(`/api/donaciones/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pj_name: pj, tipo_donacion: tipo, cantidad: cant })
+                });
+                if (res.ok) {
+                    toggleEditModal();
+                    cargarDonaciones();
+                    mostrarToast("Donación actualizada", "💎");
+                } else {
+                    mostrarToast("Error guardando modificaciones", "❌");
+                }
+            } catch (e) {}
+        }
+
+        async function guardarDonacion() {
+            const pj = document.getElementById('donacionPj').value;
+            const tipo = document.getElementById('donacionTipo').value;
+            const cant = document.getElementById('donacionCantidad').value;
+            if (!pj || !tipo) return mostrarToast("Ingresa el PJ y el tipo de donación", "❌");
+
+            try {
+                const res = await fetch('/api/donaciones', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pj_name: pj, tipo_donacion: tipo, cantidad: cant })
+                });
+                if (res.ok) {
+                    document.getElementById('donacionPj').value = '';
+                    cargarDonaciones();
+                    mostrarToast("Donación registrada", "💎");
+                } else {
+                    mostrarToast("Debes estar logueado para cargar donaciones", "🔒");
+                }
+            } catch (e) {}
+        }
+
+        function toggleLoginModal() {
+            document.getElementById('modal-login').classList.toggle('hidden');
+        }
+
+        async function ejecutarLogin() {
+            const username = document.getElementById('loginUser').value;
+            const password = document.getElementById('loginPass').value;
+            try {
+                const res = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    mostrarToast(data.error || "Login fallido", "🔑");
+                }
+            } catch (e) {}
+        }
+
+        setInterval(() => {
+            renderizarUI();
+            actualizarMapaUI();
+        }, 1000);
+
+        setInterval(cargarDatos, 3000);
+        
+        verificarSesion();
+        poblarSelector();
+        cargarDatos();
+    </script>
+</body>
+</html>
