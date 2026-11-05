@@ -329,6 +329,7 @@
 
                 const matchRaza = !raza || clasesLista.some(c => String(c).toLowerCase().includes(raza));
 
+                // Búsqueda estricta sobre opciones (no busca en Exclusive Excellent Bonus)
                 const textoOpciones = opcionesLista.join(' ').toLowerCase();
                 let matchOpcion = true;
                 if (opcion) {
