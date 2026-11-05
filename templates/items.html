@@ -5,12 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🛡️ Catálogo de Ítems & Clan - MuDream Multiverso</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { background-color: #0a0814; color: #e6e1ff; font-family: 'Segoe UI', system-ui, sans-serif; }
         
-        /* Contenedor con barra de desplazamiento (Scroll / Roll) obligatoria */
+        /* Contenedor obligatorio de barra de desplazamiento (Scroll / Roll) */
         .tabla-scroll-box {
-            height: 520px !important;
+            height: 540px !important;
             overflow-y: scroll !important;
             border: 1px solid #3b2d6b;
             border-radius: 8px;
@@ -18,23 +19,11 @@
             position: relative;
         }
 
-        /* Estilo visual permanente del scrollbar */
-        .tabla-scroll-box::-webkit-scrollbar {
-            width: 10px;
-        }
-        .tabla-scroll-box::-webkit-scrollbar-track {
-            background: #0d0a1a;
-            border-left: 1px solid #2b214a;
-        }
-        .tabla-scroll-box::-webkit-scrollbar-thumb {
-            background: #6d28d9;
-            border-radius: 5px;
-        }
-        .tabla-scroll-box::-webkit-scrollbar-thumb:hover {
-            background: #8b5cf6;
-        }
+        .tabla-scroll-box::-webkit-scrollbar { width: 10px; }
+        .tabla-scroll-box::-webkit-scrollbar-track { background: #0d0a1a; border-left: 1px solid #2b214a; }
+        .tabla-scroll-box::-webkit-scrollbar-thumb { background: #6d28d9; border-radius: 5px; }
+        .tabla-scroll-box::-webkit-scrollbar-thumb:hover { background: #8b5cf6; }
 
-        /* Tabla compacta */
         .tabla-items { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
         .tabla-items th { 
             background: #17112e; 
@@ -51,7 +40,6 @@
         .tabla-items td { padding: 8px 12px; border-bottom: 1px solid #1f1838; vertical-align: middle; }
         .tabla-items tr:hover { background: rgba(139, 92, 246, 0.1); }
 
-        /* Badges */
         .badge-pj { display: inline-block; padding: 1px 5px; border-radius: 4px; font-size: 10px; font-weight: 700; background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.4); color: #c4b5fd; margin-right: 2px; }
         .badge-opt { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 4px; margin-bottom: 3px; }
         .opt-dd { background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #fca5a5; }
@@ -79,9 +67,12 @@
     <header class="w-full max-w-7xl mb-6 border-b border-purple-900/50 pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
             <h1 class="text-3xl font-extrabold text-emerald-400 drop-shadow">🛡️ MULTIVERSO - ÍTEMS & CLAN</h1>
-            <p class="text-xs text-purple-300">Listado compacto con desplazamiento continuo (scroll), filtrado estricto y miembros</p>
+            <p class="text-xs text-purple-300">Listado compacto de ítems, sincronización con Drive y asignación al clan</p>
         </div>
         <div class="flex items-center gap-3">
+            <span id="session-user-badge" class="text-xs text-purple-300 font-bold bg-[#141126] px-3 py-1.5 rounded-lg border border-purple-900">
+                Invitado
+            </span>
             <button onclick="cargar(true)" class="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow">
                 🔄 Actualizar Ahora
             </button>
@@ -105,13 +96,13 @@
                     <label class="block text-xs uppercase text-purple-300 font-bold mb-1">Buscar por Clase / Raza (PJ):</label>
                     <select id="filtroRaza" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded-lg text-xs outline-none">
                         <option value="">Todas las Razas</option>
-                        <option value="Dark Knight">Dark Knight (BK)</option>
-                        <option value="Dark Wizard">Dark Wizard (SM)</option>
-                        <option value="Elf">Fairy Elf (ME)</option>
-                        <option value="Magic Gladiator">Magic Gladiator (MG)</option>
-                        <option value="Dark Lord">Dark Lord (DL)</option>
-                        <option value="Summoner">Summoner (SUM)</option>
-                        <option value="Rage Fighter">Rage Fighter (RF)</option>
+                        <option value="Dark Knight">BK - Dark Knight</option>
+                        <option value="Dark Wizard">SM - Dark Wizard</option>
+                        <option value="Elf">ME - Fairy Elf</option>
+                        <option value="Magic Gladiator">MG - Magic Gladiator</option>
+                        <option value="Dark Lord">DL - Dark Lord</option>
+                        <option value="Summoner">SUM - Summoner</option>
+                        <option value="Rage Fighter">RF - Rage Fighter</option>
                     </select>
                 </div>
                 
@@ -131,7 +122,7 @@
                 
                 <div>
                     <label class="block text-xs uppercase text-purple-300 font-bold mb-1">Buscar por Nombre o ID:</label>
-                    <input type="text" id="filtroTexto" oninput="aplicarFiltros()" placeholder="Ej. Vine Pants, Scale, 246, 1kr-En..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded-lg text-xs outline-none">
+                    <input type="text" id="filtroTexto" oninput="aplicarFiltros()" placeholder="Ej. Morning Star, 1iAU8Va4, Vine, 246..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded-lg text-xs outline-none">
                 </div>
             </div>
 
@@ -142,26 +133,26 @@
                 <button onclick="setFiltroRapido('maximum life')" class="px-2.5 py-1 rounded bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-700/60 text-xs font-bold transition">❤️ HP</button>
                 <button onclick="setFiltroRapido('maximum sd')" class="px-2.5 py-1 rounded bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/60 text-xs font-bold transition">🔷 SD</button>
                 <button onclick="setFiltroRapido('')" class="px-2.5 py-1 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-bold transition">Limpiar</button>
-                <span id="contador-items" class="ml-auto text-xs text-purple-300 font-mono font-semibold">0 ítem(s) en lista</span>
+                <span id="contador-items" class="ml-auto text-xs text-purple-300 font-mono font-semibold">Cargando...</span>
             </div>
         </div>
 
-        <!-- TABLA CON SCROLL OBLIGATORIO -->
+        <!-- TABLA COMPACTA CON SCROLL VERTICAL -->
         <div class="tabla-scroll-box">
             <table class="tabla-items">
                 <thead>
                     <tr>
                         <th style="width: 50px; text-align: center;">Ver</th>
-                        <th style="width: 120px;">ID / Archivo</th>
+                        <th style="width: 130px;">ID / Archivo</th>
                         <th style="width: 230px;">Nombre del Ítem</th>
-                        <th style="width: 160px;">Clases que lo equipan</th>
+                        <th style="width: 170px;">Clases que lo equipan</th>
                         <th>Opciones Principales de Combate</th>
                         <th style="width: 200px;">Exclusive Excellent Bonus</th>
-                        <th style="width: 130px; text-align: center;">Asignado A</th>
+                        <th style="width: 160px; text-align: center;">Estado / Asignado</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-items-body">
-                    <tr><td colspan="7" class="text-center py-8 text-gray-500">Cargando ítems...</td></tr>
+                    <tr><td colspan="7" class="text-center py-8 text-gray-500">Cargando catálogo...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -169,11 +160,9 @@
 
     <!-- SECCIÓN 2: MIEMBROS DEL CLAN -->
     <div id="seccion-clan-view" class="w-full max-w-7xl space-y-4 hidden">
-        <div class="bg-[#141126] border border-indigo-700/60 p-4 rounded-xl shadow-lg">
-            <h2 class="text-sm font-bold text-indigo-300 uppercase mb-3 flex items-center gap-1.5">
-                ➕ Registrar Nuevo Miembro del Clan
-            </h2>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+        <div class="bg-[#141126] border border-indigo-700/60 p-4 rounded-xl shadow-lg flex flex-col md:flex-row justify-between items-center gap-4">
+            <!-- Formulario agregar miembro -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end w-full md:w-auto flex-1">
                 <div>
                     <label class="block text-[11px] text-gray-300 font-semibold mb-1">Nombre / Nick del PJ:</label>
                     <input type="text" id="clanPjNombre" placeholder="Ej. PinionBK" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs outline-none">
@@ -192,9 +181,16 @@
                 </div>
                 <div>
                     <button onclick="guardarMiembroClan()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded text-xs transition shadow">
-                        💾 Registrar Miembro
+                        ➕ Poner Miembro
                     </button>
                 </div>
+            </div>
+
+            <!-- Importador Excel / CSV -->
+            <div class="border-t md:border-t-0 md:border-l border-purple-900/60 pt-3 md:pt-0 md:pl-4 flex flex-col items-center">
+                <label class="text-[11px] text-yellow-300 font-bold mb-1">📥 Importar desde Excel (.xlsx / .csv)</label>
+                <input type="file" id="inputExcel" accept=".xlsx, .xls, .csv" onchange="importarArchivoExcel(event)" class="text-xs text-gray-400 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-yellow-700 file:text-white hover:file:bg-yellow-600 cursor-pointer">
+                <span class="text-[10px] text-gray-500 mt-1">Columnas esperadas: Nick, Raza, Items</span>
             </div>
         </div>
 
@@ -202,10 +198,10 @@
             <table class="tabla-items">
                 <thead>
                     <tr>
-                        <th style="width: 160px;">Nick del PJ</th>
-                        <th style="width: 140px;">Raza / Clase</th>
-                        <th>Ítems Otorgados / Asignados</th>
-                        <th style="width: 140px; text-align: center;">Acciones</th>
+                        <th style="width: 170px;">Nick del PJ</th>
+                        <th style="width: 150px;">Raza / Clase</th>
+                        <th>Ítems Asignados</th>
+                        <th style="width: 150px; text-align: center;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-clan-body">
@@ -225,19 +221,32 @@
 
     <script>
         const DATOS_FALLBACK = [
-            {"id": 1, "archivo_id": "1kr-En", "nombre": "Excellent Vine Pants", "clases": ["Elf"], "opciones": ["Additional defense +30", "[Rare] Reflect damage +3%"], "bonus_excelente": ["Increases Agility +23", "Increases Energy +29"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": null},
-            {"id": 2, "archivo_id": "1ruk-H", "nombre": "Excellent Bluewing Crossbow", "clases": ["Elf"], "opciones": ["Additional damage +30", "[Rare] Increases physical damage +7%", "[Epic] Critical damage rate +10%"], "bonus_excelente": ["Increases Agility +141", "Increases Energy +178"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": null},
-            {"id": 3, "archivo_id": "1zw2LP", "nombre": "Excellent Pad Boots", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["Luck (Success rate +25%)", "Luck (Critical +5%)", "Additional defense +30", "[Rare] Increases maximum life +3%", "[Rare] Damage decrease +3%", "[Legendary] Reflect damage +4%"], "bonus_excelente": ["Increases Energy +37", "Increases Strength +26"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": null},
-            {"id": 4, "archivo_id": "267.png", "nombre": "Excellent Scale Pants", "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord", "Rage Fighter"], "opciones": ["Additional defense +30", "[Rare] Increases maximum life +3%", "[Epic] Damage decrease +5%"], "bonus_excelente": ["Increases Strength +30", "Increases Energy +31"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": null},
-            {"id": 5, "archivo_id": "265.png", "nombre": "Excellent Sphinx Armor", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["Luck (Critical +5%)", "Additional defense +15", "[Legendary] Increases maximum life +4%", "[Rare] Increases zen drop rate +21%"], "bonus_excelente": ["Increases Energy +50", "Increases Vitality +41"], "drive_id": "1BC0k90uaW4rHp1dQM1Y-pxLwE1KfnLku", "asignado_a": null},
-            {"id": 6, "archivo_id": "264.png", "nombre": "Excellent Legendary Pants", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["Luck (Critical +5%)", "Additional defense +15", "[Epic] Reflect damage +5%", "[Epic] Critical damage resistance +10%"], "bonus_excelente": ["Increases Agility +98", "Increases Strength +110"], "drive_id": "1Jmjh8YltzfO2xBhBDGX0oYxr-WMdG4xK", "asignado_a": null},
-            {"id": 7, "archivo_id": "260.png", "nombre": "Excellent Black Dragon Pants", "clases": ["Dark Knight"], "opciones": ["Additional defense +15", "[Legendary] Reflect damage +4%", "[Epic] Increases zen drop rate +30%"], "bonus_excelente": ["Increases Energy +101", "Increases Strength +145"], "drive_id": "1iHHVi5Fr0KKdjWX1luSpI9CzuPAK5Aq5", "asignado_a": null},
-            {"id": 8, "archivo_id": "246.png", "nombre": "Excellent Bronze Gloves", "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord"], "opciones": ["[Rare] Increases maximum SD +3%", "[Rare] Damage decrease +3%", "[Legendary] Critical damage resistance +8%"], "bonus_excelente": ["Increases Strength +30", "Increases Agility +26"], "drive_id": "1u0mZvM_JmyY3NABCGCf35dj6rGVqrFHh", "asignado_a": null},
-            {"id": 9, "archivo_id": "244.png", "nombre": "Excellent Book of Samut", "clases": ["Summoner"], "opciones": ["Increases wizardry by 3%", "Luck (Critical +5%)", "[Rare] Critical damage rate +7%"], "bonus_excelente": ["Increases Energy +146", "Increases Strength +200"], "drive_id": "1f5VMBmH8o4CdKIblTkW382mnxkzj7s2U", "asignado_a": null}
+            {"id": 1, "archivo_id": "1iAU8Va4", "nombre": "Excellent Morning Star", "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord", "Rage Fighter"], "opciones": ["Falling Slash Skill", "Luck (Critical +5%)", "Additional damage +60", "[Rare] Excellent damage rate +7%", "[Rare] Increases attack speed +28", "[Rare] Critical damage rate +7%"], "bonus_excelente": ["Increases Strength +128", "Increases Agility +147"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": null},
+            {"id": 2, "archivo_id": "19MyVAmk", "nombre": "Excellent Assassin Sword", "clases": ["Dark Knight", "Magic Gladiator"], "opciones": ["Additional damage +30", "[Rare] Critical damage rate +7%"], "bonus_excelente": ["Increases Strength +132", "Increases Agility +133"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": null},
+            {"id": 3, "archivo_id": "1XcEYqEM", "nombre": "Excellent Leather Gloves", "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord"], "opciones": ["Luck (Critical +5%)", "[Rare] Increases maximum SD +3%", "[Rare] Reflect damage +3%", "[Rare] Increases zen drop rate +21%"], "bonus_excelente": ["Increases Strength +36", "Increases Energy +39"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": null},
+            {"id": 4, "archivo_id": "1kr-En", "nombre": "Excellent Vine Pants", "clases": ["Elf"], "opciones": ["Additional defense +30", "[Rare] Reflect damage +3%"], "bonus_excelente": ["Increases Agility +23", "Increases Energy +29"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": null},
+            {"id": 5, "archivo_id": "1ruk-H", "nombre": "Excellent Bluewing Crossbow", "clases": ["Elf"], "opciones": ["Additional damage +30", "[Rare] Increases physical damage +7%", "[Epic] Critical damage rate +10%"], "bonus_excelente": ["Increases Agility +141", "Increases Energy +178"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": null},
+            {"id": 6, "archivo_id": "1zw2LP", "nombre": "Excellent Pad Boots", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["Luck (Critical +5%)", "Additional defense +30", "[Rare] Increases maximum life +3%", "[Rare] Damage decrease +3%", "[Legendary] Reflect damage +4%"], "bonus_excelente": ["Increases Energy +37", "Increases Strength +26"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": null},
+            {"id": 7, "archivo_id": "267.png", "nombre": "Excellent Scale Pants", "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord", "Rage Fighter"], "opciones": ["Additional defense +30", "[Rare] Increases maximum life +3%", "[Epic] Damage decrease +5%"], "bonus_excelente": ["Increases Strength +30", "Increases Energy +31"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": null},
+            {"id": 8, "archivo_id": "265.png", "nombre": "Excellent Sphinx Armor", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["Luck (Critical +5%)", "Additional defense +15", "[Legendary] Increases maximum life +4%", "[Rare] Increases zen drop rate +21%"], "bonus_excelente": ["Increases Energy +50", "Increases Vitality +41"], "drive_id": "1BC0k90uaW4rHp1dQM1Y-pxLwE1KfnLku", "asignado_a": null},
+            {"id": 9, "archivo_id": "264.png", "nombre": "Excellent Legendary Pants", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["Luck (Critical +5%)", "Additional defense +15", "[Epic] Reflect damage +5%", "[Epic] Critical damage resistance +10%"], "bonus_excelente": ["Increases Agility +98", "Increases Strength +110"], "drive_id": "1Jmjh8YltzfO2xBhBDGX0oYxr-WMdG4xK", "asignado_a": null},
+            {"id": 10, "archivo_id": "260.png", "nombre": "Excellent Black Dragon Pants", "clases": ["Dark Knight"], "opciones": ["Additional defense +15", "[Legendary] Reflect damage +4%", "[Epic] Increases zen drop rate +30%"], "bonus_excelente": ["Increases Energy +101", "Increases Strength +145"], "drive_id": "1iHHVi5Fr0KKdjWX1luSpI9CzuPAK5Aq5", "asignado_a": null}
         ];
 
         let catalogo = [...DATOS_FALLBACK];
         let miembrosClan = [];
+        let sesionAutorizada = false;
+
+        async function chequearSesion() {
+            try {
+                const res = await fetch('/api/session');
+                const data = await res.json();
+                if (data.logged_in) {
+                    sesionAutorizada = data.autorizado;
+                    document.getElementById('session-user-badge').innerHTML = `👤 <strong>${data.user}</strong> (${data.rol})`;
+                }
+            } catch(e) {}
+        }
 
         function cambiarSeccion(sec) {
             const vItems = document.getElementById('seccion-items-view');
@@ -299,9 +308,7 @@
                 console.warn("Usando catálogo local garantizado:", e);
             }
             aplicarFiltros();
-            if (mostrarNotificacion) {
-                alert("Catálogo actualizado.");
-            }
+            if (mostrarNotificacion) alert("Catálogo actualizado en tiempo real.");
         }
 
         function renderizarTabla(items) {
@@ -336,9 +343,13 @@
                     ? bonusLista.map(b => `<div class="text-[11px] text-cyan-300 font-mono leading-tight">• ${b}</div>`).join('') 
                     : '<span class="text-gray-600 text-xs">-</span>';
 
-                const asignadoHTML = item.asignado_a 
-                    ? `<span class="bg-indigo-950 border border-indigo-700 text-indigo-200 px-2 py-0.5 rounded text-xs font-bold cursor-pointer" onclick="cambiarAsignacionItem(${item.id})">👤 ${item.asignado_a}</span>`
-                    : `<button onclick="cambiarAsignacionItem(${item.id})" class="text-gray-400 hover:text-white bg-gray-800 border border-gray-700 px-2 py-0.5 rounded text-xs">Asignar</button>`;
+                // LEYENDA CLARA DE ASIGNADO A
+                let asignadoHTML = '<span class="text-gray-600 text-xs font-semibold">Disponible</span>';
+                if (item.asignado_a) {
+                    asignadoHTML = `<span class="bg-indigo-950 border border-indigo-500 text-indigo-200 px-2.5 py-1 rounded-md text-xs font-extrabold cursor-pointer" onclick="cambiarAsignacionItem(${item.id})">Asignado a: <strong>${item.asignado_a}</strong></span>`;
+                } else if (sesionAutorizada) {
+                    asignadoHTML = `<button onclick="cambiarAsignacionItem(${item.id})" class="text-gray-400 hover:text-white bg-gray-800 border border-gray-700 px-2 py-0.5 rounded text-xs">Asignar</button>`;
+                }
 
                 return `
                     <tr>
@@ -373,7 +384,7 @@
 
                 const matchRaza = !raza || clasesLista.some(c => String(c).toLowerCase().includes(raza));
 
-                // FILTRO ESTRICTO: Solo sobre opcionesLista (JAMÁS sobre bonus_excelente)
+                // Búsqueda estricta sobre opciones (no contempla Exclusive Bonus)
                 const textoOpciones = opcionesLista.join(' ').toLowerCase();
                 let matchOpcion = true;
                 if (opcion) {
@@ -387,7 +398,8 @@
                 const nombre = String(item.nombre || '').toLowerCase();
                 const archivoId = String(item.archivo_id || '').toLowerCase();
                 const itemId = String(item.id || '');
-                const matchTexto = !busqueda || nombre.includes(busqueda) || archivoId.includes(busqueda) || itemId.includes(busqueda);
+                const asignado = String(item.asignado_a || '').toLowerCase();
+                const matchTexto = !busqueda || nombre.includes(busqueda) || archivoId.includes(busqueda) || itemId.includes(busqueda) || asignado.includes(busqueda);
 
                 return matchRaza && matchOpcion && matchTexto;
             });
@@ -396,9 +408,12 @@
         }
 
         async function cambiarAsignacionItem(id) {
+            if (!sesionAutorizada) {
+                return alert("Solo los usuarios autorizados (Pinion, tolkien, nasda) pueden asignar ítems.");
+            }
             const item = catalogo.find(x => x.id === id);
             if (!item) return;
-            const nuevo = prompt(`Asignar ${item.nombre} a qué miembro del clan? (Dejar vacío para desasignar):`, item.asignado_a || '');
+            const nuevo = prompt(`Asignar ${item.nombre} (#${item.archivo_id}) a qué miembro del clan? (Dejar vacío para desasignar):`, item.asignado_a || '');
             if (nuevo === null) return;
 
             const val = nuevo.trim() || null;
@@ -411,11 +426,10 @@
                 if (res.ok) {
                     item.asignado_a = val;
                     aplicarFiltros();
+                } else {
+                    alert("Error guardando asignación.");
                 }
-            } catch(e) {
-                item.asignado_a = val;
-                aplicarFiltros();
-            }
+            } catch(e) {}
         }
 
         // --- GESTIÓN DE MIEMBROS DEL CLAN ---
@@ -450,29 +464,34 @@
                     `;
                 }).join('');
 
+                const botonesAccion = sesionAutorizada ? `
+                    <button onclick="editarMiembroPrompt(${m.id})" class="text-indigo-300 hover:text-white bg-indigo-950 border border-indigo-700/60 px-2 py-0.5 rounded text-xs transition">
+                        ✏️ Asignar Ítems
+                    </button>
+                    <button onclick="eliminarMiembro(${m.id}, '${m.nombre_pj}')" class="text-red-400 hover:text-white bg-red-950/80 border border-red-700/60 px-2 py-0.5 rounded text-xs transition">
+                        🗑️ Sacar
+                    </button>
+                ` : '<span class="text-gray-500 text-xs">Sin permisos</span>';
+
                 return `
                     <tr>
                         <td class="font-bold text-white text-sm">${m.nombre_pj}</td>
                         <td><span class="badge-pj">${m.raza}</span></td>
                         <td><div class="flex flex-wrap">${chips || '<span class="text-gray-500 text-xs">Sin ítems otorgados</span>'}</div></td>
-                        <td class="text-center space-x-1">
-                            <button onclick="editarMiembroPrompt(${m.id})" class="text-indigo-300 hover:text-white bg-indigo-950 border border-indigo-700/60 px-2 py-0.5 rounded text-xs transition">
-                                ✏️ Asignar
-                            </button>
-                            <button onclick="eliminarMiembro(${m.id}, '${m.nombre_pj}')" class="text-red-400 hover:text-white bg-red-950/80 border border-red-700/60 px-2 py-0.5 rounded text-xs transition">
-                                🗑️ Sacar
-                            </button>
-                        </td>
+                        <td class="text-center space-x-1">${botonesAccion}</td>
                     </tr>
                 `;
             }).join('');
         }
 
         async function guardarMiembroClan() {
+            if (!sesionAutorizada) {
+                return alert("Solo los usuarios autorizados (Pinion, tolkien, nasda) pueden agregar miembros.");
+            }
             const nombre_pj = document.getElementById('clanPjNombre').value.trim();
             const raza = document.getElementById('clanPjRaza').value;
 
-            if (!nombre_pj) return alert("Ingresá el nombre o nick del personaje.");
+            if (!nombre_pj) return alert("Ingresá el nick del personaje.");
 
             try {
                 const res = await fetch('/api/miembros', {
@@ -483,29 +502,36 @@
                 if (res.ok) {
                     document.getElementById('clanPjNombre').value = '';
                     cargarMiembros();
+                } else {
+                    alert("Error al guardar miembro.");
                 }
             } catch(e) {
-                alert("Error guardando miembro.");
+                alert("Error de conexión.");
             }
         }
 
         async function eliminarMiembro(id, nombre) {
+            if (!sesionAutorizada) return alert("No autorizado.");
             if (!confirm(`¿Eliminar a ${nombre} del listado de miembros del clan?`)) return;
             try {
                 const res = await fetch('/api/miembros', {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: id })
+                    body: JSON.stringify({ id: id, nombre_pj: nombre })
                 });
-                if (res.ok) cargarMiembros();
+                if (res.ok) {
+                    cargarMiembros();
+                    cargar();
+                }
             } catch(e) {}
         }
 
         async function editarMiembroPrompt(id) {
+            if (!sesionAutorizada) return alert("No autorizado.");
             const m = miembrosClan.find(x => x.id === id);
             if (!m) return;
             const actual = parsearArray(m.items_asignados).join(', ');
-            const nuevos = prompt(`IDs de ítems otorgados a ${m.nombre_pj} (separados por coma, ej: 1kr-En, 260.png):`, actual);
+            const nuevos = prompt(`IDs de ítems otorgados a ${m.nombre_pj} (separados por coma, ej: 1iAU8Va4, 260.png):`, actual);
             if (nuevos === null) return;
 
             const listaNuevos = nuevos.split(',').map(x => x.trim()).filter(Boolean);
@@ -513,15 +539,68 @@
                 const res = await fetch('/api/miembros', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nombre_pj, raza: m.raza, items_asignados: listaNuevos })
+                    body: JSON.stringify({ nombre_pj: m.nombre_pj, raza: m.raza, items_asignados: listaNuevos })
                 });
-                if (res.ok) cargarMiembros();
+                if (res.ok) {
+                    cargarMiembros();
+                    cargar();
+                }
             } catch(e) {}
         }
 
-        // Ejecución inmediata
+        // --- IMPORTADOR DE ARCHIVO EXCEL (.XLSX / .CSV) ---
+        function importarArchivoExcel(e) {
+            if (!sesionAutorizada) {
+                alert("Solo los usuarios autorizados pueden importar planillas.");
+                return;
+            }
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const primeraHoja = workbook.SheetNames[0];
+                    const hoja = workbook.Sheets[primeraHoja];
+                    const filasJson = XLSX.utils.sheet_to_json(hoja);
+
+                    if (!filasJson || filasJson.length === 0) {
+                        return alert("La planilla de Excel está vacía.");
+                    }
+
+                    // Mapeo flexible de columnas
+                    const filasNormalizadas = filasJson.map(f => {
+                        const nick = f.Nick || f.nick || f.PJ || f.pj || f.Nombre || f.nombre || '';
+                        const raza = f.Raza || f.raza || f.Clase || f.clase || 'Dark Knight';
+                        const items = f.Items || f.items || f.ItemsAsignados || f.Item || '';
+                        return { nick, raza, items };
+                    }).filter(f => f.nick);
+
+                    const res = await fetch('/api/miembros/importar', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filas: filasNormalizadas })
+                    });
+
+                    if (res.ok) {
+                        alert(`¡Importación exitosa! ${filasNormalizadas.length} miembros procesados.`);
+                        cargarMiembros();
+                        cargar();
+                    } else {
+                        alert("Error al importar miembros.");
+                    }
+                } catch(err) {
+                    alert("Error procesando el archivo de Excel: " + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             renderizarTabla(catalogo);
+            chequearSesion();
             cargar();
         });
     </script>
