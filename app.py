@@ -2,13 +2,15 @@ import os
 import time
 import json
 import re
-import urllib.request
-import urllib.parse
+import io
+import requests
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from PIL import Image
+import pytesseract
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "multiverso_secret_key_2026")
@@ -28,19 +30,6 @@ MIEMBROS_FILE = "miembros_data.json"
 BOSSES_MANUALES = [
     "Red Dragon", "Yellow Goblin", "Blue Goblin", 
     "Red Goblin", "Santa", "White Wizard", "Skeleton King"
-]
-
-DEFAULT_ITEMS = [
-    {"id": 1, "archivo_id": "1iAU8Va4", "nombre": "Excellent Morning Star", "tipo": "Weapon", "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord", "Rage Fighter"], "opciones": ["Falling Slash Skill", "Luck (Critical +5%)", "Additional damage +60", "[Rare] Excellent damage rate +7%", "[Rare] Increases attack speed +28", "[Rare] Critical damage rate +7%"], "bonus_excelente": ["Increases Strength +128", "Increases Agility +147"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": None},
-    {"id": 2, "archivo_id": "19MyVAmk", "nombre": "Excellent Assassin Sword", "tipo": "Weapon", "clases": ["Dark Knight", "Magic Gladiator"], "opciones": ["Additional damage +30", "[Rare] Critical damage rate +7%"], "bonus_excelente": ["Increases Strength +132", "Increases Agility +133"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": None},
-    {"id": 3, "archivo_id": "1XcEYqEM", "nombre": "Excellent Leather Gloves", "tipo": "Gloves", "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord"], "opciones": ["Luck (Critical +5%)", "[Rare] Increases maximum SD +3%", "[Rare] Reflect damage +3%", "[Rare] Increases zen drop rate +21%"], "bonus_excelente": ["Increases Strength +36", "Increases Energy +39"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": None},
-    {"id": 4, "archivo_id": "1kr-En", "nombre": "Excellent Vine Pants", "tipo": "Pants", "clases": ["Elf"], "opciones": ["Additional defense +30", "[Rare] Reflect damage +3%"], "bonus_excelente": ["Increases Agility +23", "Increases Energy +29"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": None},
-    {"id": 5, "archivo_id": "1ruk-H", "nombre": "Excellent Bluewing Crossbow", "tipo": "Crossbow", "clases": ["Elf"], "opciones": ["Additional damage +30", "[Rare] Increases physical damage +7%", "[Epic] Critical damage rate +10%"], "bonus_excelente": ["Increases Agility +141", "Increases Energy +178"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": None},
-    {"id": 6, "archivo_id": "1zw2LP", "nombre": "Excellent Pad Boots", "tipo": "Boots", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["Luck (Critical +5%)", "Additional defense +30", "[Rare] Increases maximum life +3%", "[Rare] Damage decrease +3%", "[Legendary] Reflect damage +4%"], "bonus_excelente": ["Increases Energy +37", "Increases Strength +26"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": None},
-    {"id": 7, "archivo_id": "267.png", "nombre": "Excellent Scale Pants", "tipo": "Pants", "clases": ["Dark Knight", "Magic Gladiator", "Dark Lord", "Rage Fighter"], "opciones": ["Additional defense +30", "[Rare] Increases maximum life +3%", "[Epic] Damage decrease +5%"], "bonus_excelente": ["Increases Strength +30", "Increases Energy +31"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": None},
-    {"id": 8, "archivo_id": "265.png", "nombre": "Excellent Sphinx Armor", "tipo": "Armor", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["Luck (Critical +5%)", "Additional defense +15", "[Legendary] Increases maximum life +4%", "[Rare] Increases zen drop rate +21%"], "bonus_excelente": ["Increases Energy +50", "Increases Vitality +41"], "drive_id": "1BC0k90uaW4rHp1dQM1Y-pxLwE1KfnLku", "asignado_a": None},
-    {"id": 9, "archivo_id": "264.png", "nombre": "Excellent Legendary Pants", "tipo": "Pants", "clases": ["Dark Wizard", "Magic Gladiator"], "opciones": ["Luck (Critical +5%)", "Additional defense +15", "[Epic] Reflect damage +5%", "[Epic] Critical damage resistance +10%"], "bonus_excelente": ["Increases Agility +98", "Increases Strength +110"], "drive_id": "1Jmjh8YltzfO2xBhBDGX0oYxr-WMdG4xK", "asignado_a": None},
-    {"id": 10, "archivo_id": "260.png", "nombre": "Excellent Black Dragon Pants", "tipo": "Pants", "clases": ["Dark Knight"], "opciones": ["Additional defense +15", "[Legendary] Reflect damage +4%", "[Epic] Increases zen drop rate +30%"], "bonus_excelente": ["Increases Energy +101", "Increases Strength +145"], "drive_id": "1iHHVi5Fr0KKdjWX1luSpI9CzuPAK5Aq5", "asignado_a": None}
 ]
 
 def cargar_json(filepath, default_val):
@@ -63,7 +52,7 @@ status_timers = cargar_json(DATA_FILE, {"Server 1": {}, "Server 2": {}, "Server 
 status_mapas = cargar_json(MAPAS_FILE, {"1": {}, "2": {}, "3": {}})
 usuarios_db = cargar_json(USERS_FILE, {})
 donaciones_db = cargar_json(DONACIONES_FILE, [])
-items_mu_db = cargar_json(ITEMS_FILE, DEFAULT_ITEMS) or DEFAULT_ITEMS
+items_mu_db = cargar_json(ITEMS_FILE, [])
 miembros_clan_db = cargar_json(MIEMBROS_FILE, [])
 
 tarjetas_ocultas_global = set()
@@ -92,61 +81,138 @@ def normalizar_campo_json(valor, default_tipo):
     return default_tipo
 
 def usuario_es_autorizado():
-    """Valida si el usuario logueado en la sesión es Pinion, tolkien o nasda."""
     if 'user' not in session: return False
-    u = session['user'].lower()
-    return u in ['pinion', 'tolkien', 'nasda']
+    return session['user'].lower() in ['pinion', 'tolkien', 'nasda']
 
-# --- ESCÁNER CONTINUO DE GOOGLE DRIVE ---
+# --- PARSEADOR OCR DE CAPTURAS DE MU ONLINE ---
+def procesar_ocr_imagen(img_bytes):
+    try:
+        img = Image.open(io.BytesIO(img_bytes))
+        texto = pytesseract.image_to_string(img, lang='eng')
+    except Exception as e:
+        print(f"Error en OCR: {e}")
+        return "Item MU", [], [], []
+
+    lineas = [l.strip() for l in texto.split('\n') if l.strip()]
+    nombre = "Item MU"
+    clases = []
+    opciones = []
+    bonus_excelente = []
+    es_bonus = False
+
+    for l in lineas:
+        l_lower = l.lower()
+        if "exclusive excellent bonus" in l_lower:
+            es_bonus = True
+            continue
+
+        if "excellent" in l_lower and nombre == "Item MU":
+            nombre = l
+            continue
+
+        if "can be equipped by" in l_lower:
+            clase = l.split("by")[-1].strip()
+            if clase and clase not in clases:
+                clases.append(clase)
+            continue
+
+        if es_bonus:
+            if "increases" in l_lower or "+" in l:
+                bonus_excelente.append(l)
+        else:
+            if any(opt in l_lower for opt in ["damage", "defense", "luck", "life", "rate", "reflect", "sd", "speed", "wizardry"]):
+                opciones.append(l)
+
+    return nombre, clases, opciones, bonus_excelente
+
+# --- SINCRONIZACIÓN 100% DINÁMICA CON GOOGLE DRIVE ---
 def sincronizar_drive_continuo():
     global items_mu_db
+    if not FOLDER_DRIVE_ID: return
+
     archivos_detectados = []
 
+    # 1. Consulta mediante Google Drive API v3
     if GOOGLE_API_KEY:
         try:
-            q = urllib.parse.quote(f"'{FOLDER_DRIVE_ID}' in parents and trashed=false")
-            url = f"https://www.googleapis.com/drive/v3/files?q={q}&key={GOOGLE_API_KEY}&fields=files(id,name,mimeType)"
-            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req, timeout=3) as resp:
-                data = json.loads(resp.read().decode('utf-8'))
-                for f in data.get('files', []):
+            q = f"'{FOLDER_DRIVE_ID}' in parents and trashed=false"
+            url = f"https://www.googleapis.com/drive/v3/files?q={requests.utils.quote(q)}&key={GOOGLE_API_KEY}&fields=files(id,name,mimeType)"
+            res = requests.get(url, timeout=5)
+            if res.status_code == 200:
+                for f in res.json().get('files', []):
                     if 'image' in f.get('mimeType', ''):
                         archivos_detectados.append({"id": f['id'], "name": f['name']})
-        except Exception: pass
+        except Exception as e:
+            print(f"Error API Drive: {e}")
 
+    # 2. Respaldo por carpeta pública web
     if not archivos_detectados:
         try:
             url_folder = f"https://drive.google.com/embeddedfolderview?id={FOLDER_DRIVE_ID}#grid"
-            req = urllib.request.Request(url_folder, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req, timeout=3) as resp:
-                html = resp.read().decode('utf-8', errors='ignore')
-                ids = set(re.findall(r'https://drive\.google\.com/file/d/([a-zA-Z0-9_-]+)', html))
-                for fid in ids:
-                    archivos_detectados.append({"id": fid, "name": fid[:8]})
+            r = requests.get(url_folder, headers={'User-Agent': 'Mozilla/5.0'}, timeout=5)
+            ids = set(re.findall(r'https://drive\.google\.com/file/d/([a-zA-Z0-9_-]+)', r.text))
+            for fid in ids:
+                archivos_detectados.append({"id": fid, "name": fid[:8]})
+        except Exception as e:
+            print(f"Error escaneando carpeta pública: {e}")
+
+    conn = get_db()
+    existentes_ids = set()
+    if conn:
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT drive_id FROM public.items_mu;")
+                existentes_ids = {r['drive_id'] for r in cur.fetchall()}
         except Exception: pass
 
-    existentes = {it.get('drive_id') for it in items_mu_db if it.get('drive_id')}
     nuevos = 0
     for arch in archivos_detectados:
         fid = arch['id']
-        if fid not in existentes:
-            nombre_archivo = arch['name']
+        if fid not in existentes_ids:
+            img_url = f"https://drive.google.com/uc?export=download&id={fid}"
+            nombre_item = arch['name']
+            clases = ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"]
+            opciones = ["[Auto] Captura detectada en Drive"]
+            bonus = []
+
+            try:
+                img_res = requests.get(img_url, timeout=4)
+                if img_res.status_code == 200:
+                    n_ocr, c_ocr, o_ocr, b_ocr = procesar_ocr_imagen(img_res.content)
+                    if n_ocr != "Item MU": nombre_item = n_ocr
+                    if c_ocr: clases = c_ocr
+                    if o_ocr: opciones = o_ocr
+                    if b_ocr: bonus = b_ocr
+            except Exception: pass
+
             nuevo_item = {
-                "id": int(time.time() * 1000) + nuevos,
-                "archivo_id": nombre_archivo,
-                "nombre": f"Item ({nombre_archivo})",
+                "archivo_id": arch['name'],
+                "nombre": nombre_item,
                 "tipo": "Equipment",
-                "clases": ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"],
-                "opciones": ["[Auto] Captura detectada en Drive"],
-                "bonus_excelente": [],
+                "base_score": 0, "defense": 0, "durability": "-",
+                "clases": clases,
+                "opciones": opciones,
+                "bonus_excelente": bonus,
                 "drive_id": fid,
                 "asignado_a": None
             }
-            items_mu_db.insert(0, nuevo_item)
+
+            if conn:
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute("""
+                            INSERT INTO public.items_mu (archivo_id, nombre, tipo, clases, opciones, bonus_excelente, drive_id)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s)
+                            ON CONFLICT (drive_id) DO NOTHING;
+                        """, (nuevo_item["archivo_id"], nuevo_item["nombre"], nuevo_item["tipo"], json.dumps(clases), json.dumps(opciones), json.dumps(bonus), fid))
+                        conn.commit()
+                except Exception: pass
+
             nuevos += 1
 
+    if conn: conn.close()
     if nuevos > 0:
-        guardar_json(ITEMS_FILE, items_mu_db)
+        obtener_todos_items()
 
 def obtener_todos_items():
     global items_mu_db
@@ -160,36 +226,30 @@ def obtener_todos_items():
                     FROM public.items_mu ORDER BY id DESC;
                 """)
                 filas = cur.fetchall()
-                if filas and len(filas) > 0:
-                    items_formateados = []
-                    for r in filas:
-                        items_formateados.append({
-                            "id": r['id'],
-                            "archivo_id": r.get('archivo_id') or str(r['id']),
-                            "nombre": r.get('nombre') or 'Sin Nombre',
-                            "tipo": r.get('tipo') or 'Equipment',
-                            "base_score": r.get('base_score') or 0,
-                            "defense": r.get('defense') or 0,
-                            "durability": r.get('durability') or '-',
-                            "clases": normalizar_campo_json(r.get('clases'), []),
-                            "opciones": normalizar_campo_json(r.get('opciones'), []),
-                            "bonus_excelente": normalizar_campo_json(r.get('bonus_excelente'), []),
-                            "drive_id": r.get('drive_id') or '',
-                            "asignado_a": r.get('asignado_a')
-                        })
-                    items_mu_db = items_formateados
-                    guardar_json(ITEMS_FILE, items_mu_db)
+                items_formateados = []
+                for r in filas:
+                    items_formateados.append({
+                        "id": r['id'],
+                        "archivo_id": r.get('archivo_id') or str(r['id']),
+                        "nombre": r.get('nombre') or 'Sin Nombre',
+                        "tipo": r.get('tipo') or 'Equipment',
+                        "base_score": r.get('base_score') or 0,
+                        "defense": r.get('defense') or 0,
+                        "durability": r.get('durability') or '-',
+                        "clases": normalizar_campo_json(r.get('clases'), []),
+                        "opciones": normalizar_campo_json(r.get('opciones'), []),
+                        "bonus_excelente": normalizar_campo_json(r.get('bonus_excelente'), []),
+                        "drive_id": r.get('drive_id') or '',
+                        "asignado_a": r.get('asignado_a')
+                    })
+                items_mu_db = items_formateados
+                guardar_json(ITEMS_FILE, items_mu_db)
             conn.close()
         except Exception:
             try: conn.close()
             except Exception: pass
-
-    if not items_mu_db or len(items_mu_db) == 0:
-        items_mu_db = DEFAULT_ITEMS
-
-    try:
-        sincronizar_drive_continuo()
-    except Exception: pass
+    else:
+        items_mu_db = cargar_json(ITEMS_FILE, [])
 
     return items_mu_db
 
@@ -203,13 +263,13 @@ def vista_items():
 
 # --- API DE ITEMS ---
 
-@app.route('/api/items', methods=['GET', 'POST', 'PUT'])
+@app.route('/api/items', methods=['GET', 'PUT'])
 def api_items():
     global items_mu_db
     if request.method == 'GET':
+        sincronizar_drive_continuo()
         return jsonify(obtener_todos_items())
 
-    # Solo los 3 autorizados pueden modificar o asignar
     if not usuario_es_autorizado():
         return jsonify({"error": "No autorizado. Solo Pinion, tolkien o nasda pueden editar."}), 403
 
@@ -263,9 +323,8 @@ def api_miembros():
                 if conn: conn.close()
         return jsonify(miembros_clan_db)
 
-    # Solo los 3 autorizados pueden crear, asignar o eliminar miembros
     if not usuario_es_autorizado():
-        return jsonify({"error": "No autorizado. Solo Pinion, tolkien o nasda tienen permisos."}), 403
+        return jsonify({"error": "No autorizado. Solo administradores pueden gestionar miembros."}), 403
 
     if request.method == 'POST':
         data = request.json or {}
@@ -291,7 +350,7 @@ def api_miembros():
                     r = cur.fetchone()
                     if r: nuevo_id = r['id']
 
-                    # Sincronizar en cascada hacia la tabla items_mu
+                    # Sincronización en tabla items_mu
                     cur.execute("UPDATE public.items_mu SET asignado_a = NULL WHERE asignado_a = %s;", (nombre_pj,))
                     for arch_id in items_asignados:
                         cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE archivo_id = %s OR CAST(id AS TEXT) = %s;", (nombre_pj, arch_id, arch_id))
@@ -327,7 +386,7 @@ def api_miembros():
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
 
-# Importación masiva desde Excel/CSV
+# Importación masiva desde Excel
 @app.route('/api/miembros/importar', methods=['POST'])
 def importar_miembros_excel():
     if not usuario_es_autorizado():
@@ -524,7 +583,6 @@ def login():
 
     username = username_raw.lower()
 
-    # Validar primero contra Supabase
     conn = get_db()
     user_db = None
     if conn:
@@ -536,7 +594,6 @@ def login():
         except Exception:
             if conn: conn.close()
 
-    # Fallback local garantizado para los 3 usuarios autorizados
     if not user_db:
         if username == 'pinion' and password == 'G1nt0n1c':
             user_db = {'username': 'Pinion', 'password_hash': 'G1nt0n1c', 'rol': 'admin'}
@@ -549,8 +606,7 @@ def login():
         stored_pass = user_db.get("password_hash", "")
         es_valido = False
         if stored_pass.startswith("scrypt:") or stored_pass.startswith("pbkdf2:"):
-            try:
-                es_valido = check_password_hash(stored_pass, password)
+            try: es_valido = check_password_hash(stored_pass, password)
             except Exception: pass
         else:
             es_valido = (stored_pass == password)
