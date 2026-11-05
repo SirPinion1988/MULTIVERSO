@@ -8,8 +8,9 @@
     <style>
         body { background-color: #0a0814; color: #e6e1ff; font-family: 'Segoe UI', system-ui, sans-serif; }
         
+        /* Contenedor con Scroll Continuo (Roll) */
         .tabla-scroll-container {
-            max-height: 70vh;
+            max-height: 68vh;
             overflow-y: auto;
             border: 1px solid #2b214a;
             border-radius: 8px;
@@ -53,9 +54,12 @@
     <header class="w-full max-w-7xl mb-6 border-b border-purple-900/50 pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
             <h1 class="text-3xl font-extrabold text-emerald-400 drop-shadow">🛡️ MULTIVERSO - ÍTEMS & CLAN</h1>
-            <p class="text-xs text-purple-300">Inventario continuo de Drive, listado compacto y asignación a miembros</p>
+            <p class="text-xs text-purple-300">Lectura en vivo de Google Drive, listado con scroll y asignación a miembros</p>
         </div>
         <div class="flex items-center gap-3">
+            <button onclick="cargarItemsDesdeDrive()" id="btn-actualizar-drive" class="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow">
+                🔄 Actualizar Ítems
+            </button>
             <button onclick="cambiarSeccion('ITEMS')" id="btn-sec-items" class="bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">
                 📦 Catálogo de Ítems
             </button>
@@ -106,6 +110,7 @@
                 </div>
             </div>
 
+            <!-- Accesos rápidos -->
             <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-purple-900/30">
                 <span class="text-[11px] text-gray-400 font-semibold mr-1">Filtro rápido:</span>
                 <button onclick="setFiltroRapido('damage decrease')" class="px-2 py-0.5 rounded bg-red-950 hover:bg-red-900 text-red-300 border border-red-700/60 text-[11px] font-bold">🛡️ DD</button>
@@ -117,6 +122,7 @@
             </div>
         </div>
 
+        <!-- Tabla con Scroll Continuo (Roll) -->
         <div class="tabla-scroll-container">
             <table class="tabla-items">
                 <thead>
@@ -126,11 +132,11 @@
                         <th style="width: 220px;">Nombre del Ítem</th>
                         <th style="width: 150px;">Clases (PJ)</th>
                         <th>Opciones Principales</th>
-                        <th style="width: 200px;">Exclusive Bonus</th>
+                        <th style="width: 180px;">Nombre Archivo</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-items-body">
-                    <tr><td colspan="6" class="text-center py-8 text-gray-500">Cargando catálogo...</td></tr>
+                    <tr><td colspan="6" class="text-center py-8 text-gray-500">Cargando catálogo en vivo de Google Drive...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -160,7 +166,7 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-[11px] text-gray-300 font-semibold mb-1">IDs de Ítems Adicionados (ej: 246, 260):</label>
+                    <label class="block text-[11px] text-gray-300 font-semibold mb-1">IDs de Ítems Asignados (ej: 246, 260):</label>
                     <input type="text" id="clanPjItems" placeholder="246, 260, 265..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs outline-none">
                 </div>
                 <div>
@@ -247,9 +253,14 @@
             document.getElementById('modal-preview-img').classList.add('hidden');
         }
 
-        async function cargar() {
+        async function cargarItemsDesdeDrive() {
+            const btn = document.getElementById('btn-actualizar-drive');
+            const cont = document.getElementById('contador-items');
+            if (btn) btn.innerText = "⏳ Leyendo Drive...";
+            if (cont) cont.innerText = "Consultando carpeta...";
+
             try {
-                const res = await fetch('/api/items');
+                const res = await fetch('/api/items?t=' + Date.now());
                 if (res.ok) {
                     catalogo = await res.json();
                     document.getElementById('filtroRaza').value = "";
@@ -257,28 +268,21 @@
                     document.getElementById('filtroTexto').value = "";
                     renderizarTabla(catalogo);
                 } else {
-                    document.getElementById('tabla-items-body').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-400">Error al consultar datos.</td></tr>';
+                    document.getElementById('tabla-items-body').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-400">Error al consultar datos de Drive.</td></tr>';
                 }
             } catch (e) {
-                document.getElementById('tabla-items-body').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-400">Error de conexión.</td></tr>';
+                document.getElementById('tabla-items-body').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-400">Error de conexión al cargar Drive.</td></tr>';
+            } finally {
+                if (btn) btn.innerText = "🔄 Actualizar Ítems";
             }
         }
 
         function renderizarTabla(items) {
             const tbody = document.getElementById('tabla-items-body');
             const cont = document.getElementById('contador-items');
-            if (cont) cont.innerText = `${items.length} ítem(s) encontrados`;
-
-            if (!items || items.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500">No hay ítems con los filtros seleccionados.</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = items.map(item => {
-                const imgUrl = `https://lh3.googleusercontent.com/d/${item.drive_id}`;
+            if (cont) cont.innerText = `${items.length} ítem(s) encontrados`;  if (!items \vert{}\vert{} items.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500">No hay ítems con los filtros seleccionados.</td></tr>'; return; }  tbody.innerHTML = items.map(item => { const imgUrl = `https://lh3.googleusercontent.com/d/${item.drive_id}`;
                 const clasesLista = parsearArray(item.clases);
                 const opcionesLista = parsearArray(item.opciones);
-                const bonusLista = parsearArray(item.bonus_excelente);
 
                 const clasesBadges = clasesLista.map(c => `<span class="badge-pj">${c}</span>`).join('');
                 
@@ -292,10 +296,6 @@
                     return `<span class="badge-opt ${cls}">${opt}</span>`;
                 }).join('');
 
-                const bonusText = bonusLista.length > 0 
-                    ? bonusLista.map(b => `<div class="text-[11px] text-cyan-300 font-mono leading-tight">• ${b}</div>`).join('') 
-                    : '<span class="text-gray-600 text-xs">-</span>';
-
                 return `
                     <tr>
                         <td class="text-center">
@@ -308,11 +308,10 @@
                         </td>
                         <td>
                             <div class="font-bold text-emerald-400 text-sm leading-tight">${item.nombre}</div>
-                            <div class="text-[10px] text-gray-500 font-mono">ID Archivo: ${item.drive_id ? item.drive_id.substring(0, 10) + '...' : 'N/A'}</div>
                         </td>
                         <td>${clasesBadges || '<span class="text-gray-600">-</span>'}</td>
                         <td><div class="flex flex-wrap">${opcionesBadges || '<span class="text-gray-600">-</span>'}</div></td>
-                        <td>${bonusText}</td>
+                        <td class="font-mono text-xs text-gray-400">${item.archivo || item.drive_id.substring(0, 10) + '...'}</td>
                     </tr>
                 `;
             }).join('');
@@ -329,6 +328,7 @@
 
                 const matchRaza = !raza || clasesLista.some(c => String(c).toLowerCase().includes(raza));
 
+                // Búsqueda estricta sobre opciones principales (excluye Exclusive Bonus)
                 const textoOpciones = opcionesLista.join(' ').toLowerCase();
                 let matchOpcion = true;
                 if (opcion) {
@@ -341,8 +341,8 @@
 
                 const nombre = String(item.nombre || '').toLowerCase();
                 const itemId = String(item.id || '');
-                const driveId = String(item.drive_id || '').toLowerCase();
-                const matchTexto = !busqueda || nombre.includes(busqueda) || itemId.includes(busqueda) || driveId.includes(busqueda);
+                const archivo = String(item.archivo || '').toLowerCase();
+                const matchTexto = !busqueda || nombre.includes(busqueda) || itemId.includes(busqueda) || archivo.includes(busqueda);
 
                 return matchRaza && matchOpcion && matchTexto;
             });
@@ -350,6 +350,7 @@
             renderizarTabla(filtrados);
         }
 
+        // --- GESTIÓN DE MIEMBROS DEL CLAN ---
         async function cargarMiembros() {
             try {
                 const res = await fetch('/api/miembros');
@@ -371,75 +372,6 @@
                 const ids = parsearArray(m.items_asignados);
                 const chips = ids.map(id => {
                     const itemEncontrado = catalogo.find(it => String(it.id) === String(id));
-                    const nombre = itemEncontrado ? itemEncontrado.nombre : `Ítem #${id}`;
-                    const imgUrl = itemEncontrado ? `https://lh3.googleusercontent.com/d/${itemEncontrado.drive_id}` : '';
+                    const nombre = itemEncontrado ? itemEncontrado.nombre : `Ítem #${id}`; const imgUrl = itemEncontrado ? `https://lh3.googleusercontent.com/d/${itemEncontrado.drive_id}` : '';
                     return `
-                        <span class="item-chip">
-                            #${id} - ${nombre}
-                            ${imgUrl ? `<button onclick="mostrarPreviewImg('${imgUrl}')" class="text-xs hover:text-white">🖼️</button>` : ''}
-                        </span>
-                    `;
-                }).join('');
-
-                return `
-                    <tr>
-                        <td class="font-bold text-white text-sm">${m.nombre_pj}</td>
-                        <td><span class="badge-pj">${m.raza}</span></td>
-                        <td><div class="flex flex-wrap">${chips || '<span class="text-gray-500 text-xs">Sin ítems asignados</span>'}</div></td>
-                        <td class="text-center">
-                            <button onclick="editarMiembroPrompt(${m.id})" class="text-indigo-300 hover:text-white bg-indigo-950 border border-indigo-700/60 px-2.5 py-1 rounded text-xs transition">
-                                ✏️ Asignar
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        async function guardarMiembroClan() {
-            const nombre_pj = document.getElementById('clanPjNombre').value.trim();
-            const raza = document.getElementById('clanPjRaza').value;
-            const itemsRaw = document.getElementById('clanPjItems').value.trim();
-
-            if (!nombre_pj) return alert("Ingresá el nombre del personaje.");
-
-            const items_asignados = itemsRaw ? itemsRaw.split(',').map(x => x.trim()).filter(Boolean) : [];
-
-            try {
-                const res = await fetch('/api/miembros', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nombre_pj, raza, items_asignados })
-                });
-                if (res.ok) {
-                    document.getElementById('clanPjNombre').value = '';
-                    document.getElementById('clanPjItems').value = '';
-                    cargarMiembros();
-                }
-            } catch(e) {
-                alert("Error guardando miembro.");
-            }
-        }
-
-        async function editarMiembroPrompt(id) {
-            const m = miembrosClan.find(x => x.id === id);
-            if (!m) return;
-            const actual = parsearArray(m.items_asignados).join(', ');
-            const nuevos = prompt(`Editar IDs de ítems asignados para ${m.nombre_pj} (separados por coma):`, actual);
-            if (nuevos === null) return;
-
-            const listaNuevos = nuevos.split(',').map(x => x.trim()).filter(Boolean);
-            try {
-                const res = await fetch('/api/miembros', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: m.id, nombre_pj: m.nombre_pj, raza: m.raza, items_asignados: listaNuevos })
-                });
-                if (res.ok) cargarMiembros();
-            } catch(e) {}
-        }
-
-        document.addEventListener('DOMContentLoaded', cargar);
-    </script>
-</body>
-</html>
+                        <span class="item
