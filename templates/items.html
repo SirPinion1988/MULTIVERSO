@@ -3,79 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚔️ MuDream Boss Timers - Multiverso ⚔️</title>
+    <title>🛡️ Catálogo de Ítems - MuDream Multiverso</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0a0814; color: #e6e1ff; font-family: 'Segoe UI', system-ui, sans-serif; }
-        .grid-bosses { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
-
-        .map-wrapper {
-            position: relative;
-            width: 720px;
-            max-width: 95vw;
-            aspect-ratio: 1 / 1;
-            border: 2px solid #3b2d6b;
-            border-radius: 12px;
-            overflow: hidden;
-            background: #000;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
-        }
-        .map-bg { width: 100%; height: 100%; object-fit: contain; display: block; }
-
-        .spot-btn {
-            position: absolute;
-            transform: translate(-50%, -50%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            cursor: pointer;
-            z-index: 10;
-            user-select: none;
-        }
-        .spot-circle {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            border: 2px solid #747d8c;
-            background: rgba(116, 125, 140, 0.2);
-            transition: transform 0.15s, background 0.2s, border-color 0.2s;
-        }
-        .spot-btn:hover .spot-circle { transform: scale(1.2); }
-
-        .spot-timer {
-            margin-top: 4px;
-            background: rgba(10, 8, 20, 0.92);
-            border: 1px solid #3b2d6b;
-            padding: 2px 7px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: bold;
-            color: #ced6e0;
-            white-space: nowrap;
-            text-align: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.7);
-        }
-
-        .state-idle .spot-circle { border-color: #eccc68; background: rgba(236, 204, 104, 0.25); box-shadow: 0 0 6px #eccc68; }
-        .state-idle .spot-timer { color: #f1f2f6; border-color: #ffa502; background: rgba(255, 165, 2, 0.2); }
-
-        .state-waiting .spot-circle { border-color: #ff4757; background: rgba(255, 71, 87, 0.25); box-shadow: 0 0 6px #ff4757; }
-        .state-waiting .spot-timer { color: #ff6b81; border-color: #ff4757; }
-
-        .state-window .spot-circle {
-            border-color: #2ed573; background: rgba(46, 213, 115, 0.4);
-            box-shadow: 0 0 14px #2ed573;
-            animation: pulse 0.9s infinite alternate;
-        }
-        .state-window .spot-timer { color: #2ed573; border-color: #2ed573; background: rgba(46, 213, 115, 0.15); }
-
-        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.3); } }
-
-        .grid-items-mu {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 1.25rem;
-        }
+        .grid-items-mu { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 1.25rem; }
         .mu-item-card {
             background: #0f0c1b;
             border: 1px solid #2b214a;
@@ -84,7 +16,7 @@
             box-shadow: 0 8px 20px rgba(0,0,0,0.6);
             transition: transform 0.2s, border-color 0.2s;
         }
-        .mu-item-card:hover { transform: translateY(-3px); border-color: #6366f1; }
+        .mu-item-card:hover { transform: translateY(-3px); border-color: #8b5cf6; }
         .badge-pj {
             display: inline-block;
             padding: 2px 6px;
@@ -97,456 +29,209 @@
         }
     </style>
 </head>
-<body class="p-4 md:p-8 flex flex-col items-center relative">
-
-    <div id="toast-notificacion" class="fixed bottom-5 right-5 bg-purple-900 border border-purple-500 text-white px-4 py-3 rounded-xl shadow-2xl transition-all duration-300 transform translate-y-20 opacity-0 z-50 flex items-center gap-2 text-sm font-semibold">
-        <span id="toast-icono">⚠️</span>
-        <span id="toast-mensaje">Notificación</span>
-    </div>
+<body class="p-4 md:p-8 flex flex-col items-center">
 
     <header class="w-full max-w-6xl mb-6 border-b border-purple-900/50 pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
-            <h1 class="text-3xl font-extrabold text-purple-400 drop-shadow">⚔️ MONITOR MUDREAM MULTIVERSO</h1>
-            <p class="text-xs text-purple-300">Control de Bosses, Timers, Mapas, Donaciones y Catálogo de Ítems en Tiempo Real</p>
+            <h1 class="text-3xl font-extrabold text-emerald-400 drop-shadow">🛡️ CATÁLOGO DE ÍTEMS MU</h1>
+            <p class="text-xs text-purple-300">Explorador de ítems por Clase (PJ) y Opciones (DD, Reflect, HP, SD)</p>
         </div>
-        <div id="user-info-box" class="flex items-center gap-3 bg-[#141126] border border-purple-800/60 px-4 py-2 rounded-xl text-xs">
-            <span id="user-display" class="text-purple-300 font-bold">Invitado</span>
-            <span id="login-btn-container">
-                <button onclick="toggleLoginModal()" id="btn-login-trigger" class="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1 rounded font-bold transition">Ingresar</button>
-            </span>
+        <div class="flex items-center gap-3">
+            <button onclick="toggleModalNuevoItem()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow">
+                ➕ Agregar Ítem
+            </button>
+            <a href="/" class="bg-purple-900 hover:bg-purple-800 text-purple-200 border border-purple-600 px-4 py-2 rounded-lg text-xs font-bold transition">
+                ← Volver al Monitor
+            </a>
         </div>
     </header>
 
-    <div class="flex flex-wrap space-x-2 mb-6 overflow-x-auto w-full max-w-6xl justify-center gap-2">
-        <button onclick="setVista('TODOS')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-purple-700 text-white" id="tab-TODOS">👁️ Vista General</button>
-        <button onclick="setVista('Server 1')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 1">Server 1</button>
-        <button onclick="setVista('Server 2')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 2">Server 2</button>
-        <button onclick="setVista('Server 3')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 3">Server 3</button>
-        <button onclick="setVista('Server 20')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 20">Server 20</button>
+    <div class="w-full max-w-6xl space-y-6">
         
-        <button onclick="setVista('MAPA_1')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-purple-300 border border-purple-900 hover:bg-purple-950" id="tab-MAPA_1">🗺️ Mapa S1</button>
-        <button onclick="setVista('MAPA_2')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-purple-300 border border-purple-900 hover:bg-purple-950" id="tab-MAPA_2">🗺️ Mapa S2</button>
-        <button onclick="setVista('MAPA_3')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-purple-300 border border-purple-900 hover:bg-purple-950" id="tab-MAPA_3">🗺️ Mapa S3</button>
-
-        <button onclick="setVista('ITEMS')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-emerald-950/80 border border-emerald-600 text-emerald-300 hover:bg-emerald-900" id="tab-ITEMS">🛡️ Ítems MU</button>
-
-        <button onclick="setVista('BOTS')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-BOTS">🤖 Bots Activos</button>
-        <button onclick="setVista('DONACIONES')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-yellow-900/80 border border-yellow-600 text-yellow-300 hover:bg-yellow-800" id="tab-DONACIONES">💎 Donaciones</button>
-        <button onclick="setVista('USUARIOS')" id="tab-USUARIOS" class="btn-tab px-4 py-2 rounded-lg font-bold bg-indigo-900 border border-indigo-500 text-indigo-200 hidden">👥 Crear Encargados</button>
-        
-        <a id="btn-descarga-bot" href="{{ link_descarga }}" target="_blank" class="px-4 py-2 rounded-lg font-bold bg-purple-900 border border-purple-500 text-purple-200 hover:bg-purple-800 transition flex items-center gap-1 hidden">
-            ⬇️ Descargar Bot (.exe)
-        </a>
-    </div>
-
-    <!-- Panel Manual -->
-    <div id="panel-kill-manual" class="w-full max-w-6xl bg-[#141126] border border-purple-800 rounded-xl p-4 mb-6 shadow-lg">
-        <h3 class="text-center font-bold text-purple-300 mb-3 text-sm uppercase tracking-wider">⚡ Cargar Kill Manual / Iniciar Boss</h3>
-        <div class="flex flex-wrap gap-3 justify-center items-center">
-            <select id="manualServer" class="bg-[#0d0a1a] border border-purple-900 text-white text-sm rounded-lg p-2.5 outline-none">
-                <option value="Server 1">Server 1</option>
-                <option value="Server 2">Server 2</option>
-                <option value="Server 3">Server 3</option>
-                <option value="Server 20">Server 20</option>
-            </select>
-            <select id="manualBoss" class="bg-[#0d0a1a] border border-purple-900 text-white text-sm rounded-lg p-2.5 outline-none"></select>
-            <button onclick="ejecutarKillForm()" class="bg-purple-700 hover:bg-purple-600 text-white font-bold text-sm px-5 py-2.5 rounded-lg transition">⚔️ Registrar Kill</button>
-        </div>
-    </div>
-
-    <!-- Timers -->
-    <div id="seccion-timers" class="w-full max-w-6xl">
-        <div id="contenedor-bosses" class="grid-bosses">
-            <div class="text-gray-500 text-center col-span-full py-8">Cargando timers de bosses...</div>
-        </div>
-    </div>
-
-    <!-- Mapa -->
-    <div id="seccion-mapa" class="w-full max-w-6xl hidden flex flex-col items-center">
-        <div class="mb-4 text-center">
-            <h2 id="mapa-titulo" class="text-2xl font-bold text-purple-300">🗺️ Mapa de Bosses</h2>
-            <p class="text-xs text-purple-400 mt-1">Clic izquierdo: registrar muerte | Clic derecho: resetear spot a 0</p>
-        </div>
-
-        <div class="map-wrapper">
-            <img src="mapa.jpg" alt="Mapa MU" class="map-bg">
-
-            <div class="spot-btn" style="left: 8.5%; top: 17%;" onclick="registrarMuerteMapa(1)" oncontextmenu="resetearSpotMapa(event, 1)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-1">Esperando Muerte</span></div>
-            <div class="spot-btn" style="left: 14.5%; top: 9.5%;" onclick="registrarMuerteMapa(2)" oncontextmenu="resetearSpotMapa(event, 2)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-2">Esperando Muerte</span></div>
-            <div class="spot-btn" style="left: 29.5%; top: 15.5%;" onclick="registrarMuerteMapa(3)" oncontextmenu="resetearSpotMapa(event, 3)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-3">Esperando Muerte</span></div>
-            <div class="spot-btn" style="left: 42.5%; top: 16%;" onclick="registrarMuerteMapa(4)" oncontextmenu="resetearSpotMapa(event, 4)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-4">Esperando Muerte</span></div>
-
-            <div class="spot-btn" style="left: 61.5%; top: 4.5%;" onclick="registrarMuerteMapa(5)" oncontextmenu="resetearSpotMapa(event, 5)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-5">Esperando Muerte</span></div>
-            <div class="spot-btn" style="left: 59.5%; top: 14%;" onclick="registrarMuerteMapa(6)" oncontextmenu="resetearSpotMapa(event, 6)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-6">Esperando Muerte</span></div>
-
-            <div class="spot-btn" style="left: 86.5%; top: 53%;" onclick="registrarMuerteMapa(7)" oncontextmenu="resetearSpotMapa(event, 7)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-7">Esperando Muerte</span></div>
-            <div class="spot-btn" style="left: 86.5%; top: 62.5%;" onclick="registrarMuerteMapa(8)" oncontextmenu="resetearSpotMapa(event, 8)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-8">Esperando Muerte</span></div>
-            <div class="spot-btn" style="left: 86.5%; top: 76%;" onclick="registrarMuerteMapa(9)" oncontextmenu="resetearSpotMapa(event, 9)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-9">Esperando Muerte</span></div>
-            <div class="spot-btn" style="left: 86.5%; top: 85%;" onclick="registrarMuerteMapa(10)" oncontextmenu="resetearSpotMapa(event, 10)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-10">Esperando Muerte</span></div>
-        </div>
-
-        <div class="mt-4 text-xs text-gray-400 bg-[#141126] border border-purple-900/60 p-3 rounded-lg flex flex-wrap justify-center gap-6">
-            <span>🔴 <strong>Respawn:</strong> 3:00:00 a 0:00:00</span>
-            <span>🟢 <strong>Ventana:</strong> 00:00 a 60:00 min</span>
-            <span>🟡 <strong>Esperando Muerte:</strong> Detenido</span>
-        </div>
-    </div>
-
-    <!-- Catálogo de Ítems MU integrado en el panel -->
-    <div id="seccion-items" class="w-full max-w-6xl hidden space-y-6">
-        <div class="bg-[#141126] border border-emerald-600/50 rounded-xl p-5 shadow-lg flex flex-col md:flex-row justify-between items-center gap-4">
-            <div>
-                <h2 class="text-xl font-bold text-emerald-400 flex items-center gap-2">🛡️ Catálogo de Ítems e Inventario</h2>
-                <p class="text-xs text-emerald-200/70">Imágenes desde Google Drive filtradas por raza y por opciones.</p>
+        <!-- Panel de Filtros -->
+        <div class="bg-[#141126] border border-purple-900/60 p-5 rounded-xl space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1.5">Clase / Personaje (PJ):</label>
+                    <select id="filtroRaza" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-sm outline-none">
+                        <option value="">Todos los Personajes</option>
+                        <option value="Dark Knight">BK - Dark Knight</option>
+                        <option value="Dark Wizard">SM - Dark Wizard</option>
+                        <option value="Elf">ME - Fairy Elf</option>
+                        <option value="Magic Gladiator">MG - Magic Gladiator</option>
+                        <option value="Dark Lord">DL - Dark Lord</option>
+                        <option value="Summoner">SUM - Summoner</option>
+                        <option value="Rage Fighter">RF - Rage Fighter</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1.5">Opción Principal (No toma Exclusive Bonus):</label>
+                    <select id="filtroOpcion" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-sm outline-none">
+                        <option value="">Todas las Opciones</option>
+                        <option value="damage decrease">DD (Damage Decrease)</option>
+                        <option value="reflect">REFLECT (Reflect Damage)</option>
+                        <option value="maximum life">HP (Increases Life)</option>
+                        <option value="maximum sd">SD (Increases SD)</option>
+                        <option value="critical damage">CRITICAL (Critical Damage)</option>
+                        <option value="excellent damage">EXC DMG (Excellent Damage)</option>
+                        <option value="zen drop">ZEN (Zen Drop Rate)</option>
+                        <option value="attack speed">Speed (Attack Speed)</option>
+                        <option value="damage to monsters">Damage to Monsters</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1.5">Buscar por Nombre:</label>
+                    <input type="text" id="filtroTexto" oninput="aplicarFiltros()" placeholder="Ej. Sphinx, Bronze, Samut, Bow..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-sm outline-none">
+                </div>
             </div>
-            <a href="/items" target="_blank" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs px-4 py-2 rounded-lg border border-emerald-500 transition shadow flex items-center gap-2">
-                🗗 Abrir en Ventana Nueva
-            </a>
-        </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-[#141126] border border-purple-900/60 p-4 rounded-xl">
-            <div>
-                <label class="block text-xs uppercase text-purple-300 font-bold mb-1.5">Filtrar por Raza / Clase:</label>
-                <select id="filtroItemRaza" onchange="aplicarFiltrosItems()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-sm outline-none">
-                    <option value="">Todas las Razas</option>
-                    <option value="Dark Knight">Dark Knight</option>
-                    <option value="Magic Gladiator">Magic Gladiator</option>
-                    <option value="Dark Lord">Dark Lord</option>
-                    <option value="Dark Wizard">Dark Wizard</option>
-                    <option value="Elf">Fairy Elf</option>
-                    <option value="Summoner">Summoner</option>
-                    <option value="Rage Fighter">Rage Fighter</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs uppercase text-purple-300 font-bold mb-1.5">Filtrar por Opción (Excluye Exclusive Bonus):</label>
-                <select id="filtroItemOpcion" onchange="aplicarFiltrosItems()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-sm outline-none">
-                    <option value="">Todas las Opciones</option>
-                    <option value="damage decrease">DD (Damage Decrease)</option>
-                    <option value="reflect">REFLECT (Reflect Damage)</option>
-                    <option value="maximum life">HP (Increases Life)</option>
-                    <option value="maximum sd">SD (Increases SD)</option>
-                    <option value="critical damage">CRITICAL (Critical Damage)</option>
-                    <option value="excellent damage">EXC DMG (Excellent Damage)</option>
-                    <option value="zen drop">ZEN (Zen Drop Rate)</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs uppercase text-purple-300 font-bold mb-1.5">Buscar por Nombre:</label>
-                <input type="text" id="filtroItemTexto" oninput="aplicarFiltrosItems()" placeholder="Ej. Sphinx, Bronze, Samut, Bow..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-sm outline-none">
+            <!-- Accesos Rápidos de Opciones MU -->
+            <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-purple-900/40">
+                <span class="text-xs text-gray-400 font-semibold mr-1">Filtros rápidos:</span>
+                <button onclick="setFiltroRapido('damage decrease')" class="px-2.5 py-1 rounded bg-red-950/80 hover:bg-red-900 text-red-300 border border-red-700/60 text-xs font-bold transition">🛡️ DD</button>
+                <button onclick="setFiltroRapido('reflect')" class="px-2.5 py-1 rounded bg-yellow-950/80 hover:bg-yellow-900 text-yellow-300 border border-yellow-700/60 text-xs font-bold transition">⚡ Reflect</button>
+                <button onclick="setFiltroRapido('maximum life')" class="px-2.5 py-1 rounded bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-700/60 text-xs font-bold transition">❤️ HP</button>
+                <button onclick="setFiltroRapido('maximum sd')" class="px-2.5 py-1 rounded bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/60 text-xs font-bold transition">🔷 SD</button>
+                <button onclick="setFiltroRapido('critical damage')" class="px-2.5 py-1 rounded bg-purple-950/80 hover:bg-purple-900 text-purple-300 border border-purple-700/60 text-xs font-bold transition">💥 Crítico</button>
+                <button onclick="setFiltroRapido('')" class="px-2.5 py-1 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-bold transition">Limpiar</button>
             </div>
         </div>
 
-        <div id="contenedor-items-mu" class="grid-items-mu">
-            <div class="text-gray-500 text-center col-span-full py-8">Cargando inventario de ítems...</div>
+        <div class="flex justify-between items-center text-xs text-gray-400 px-1">
+            <span id="contador-items">Cargando ítems...</span>
+        </div>
+
+        <div id="contenedor-items" class="grid-items-mu">
+            <div class="text-gray-500 text-center col-span-full py-8">Cargando inventario...</div>
         </div>
     </div>
 
-    <!-- Bots -->
-    <div id="seccion-bots" class="w-full max-w-6xl hidden space-y-4">
-        <h2 class="text-xl font-bold text-purple-300 mb-4 border-b border-purple-800 pb-2">🤖 Conexión de Clientes y PCs de la Guild</h2>
-        <div id="contenedor-bots-lista" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-    </div>
+    <!-- MODAL PARA AGREGAR NUEVO ÍTEM -->
+    <div id="modal-nuevo-item" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4 overflow-y-auto">
+        <div class="bg-[#141126] border border-emerald-500 p-6 rounded-xl w-full max-w-md shadow-2xl text-left my-8">
+            <h3 class="text-lg font-bold text-emerald-400 mb-3 text-center">➕ Agregar Nuevo Ítem</h3>
+            
+            <label class="block text-xs text-purple-300 font-semibold mb-1">Enlace o ID de la imagen en Google Drive:</label>
+            <input type="text" id="nuevoItemDrive" placeholder="https://drive.google.com/file/d/..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
 
-    <!-- Donaciones -->
-    <div id="seccion-donaciones" class="w-full max-w-6xl hidden space-y-6">
-        <div class="bg-[#141126] border border-yellow-600/50 rounded-xl p-6 shadow-lg">
-            <h2 class="text-xl font-bold text-yellow-400 mb-4 flex items-center gap-2">💎 Registrar Nueva Donación</h2>
-            <div class="flex flex-wrap gap-4 items-center">
-                <input type="text" id="donacionPj" placeholder="Nombre de PJ" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-48">
-                <select id="donacionTipo" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-48">
-                    <option value="Jewel of Bless">Jewel of Bless</option>
-                    <option value="Jewel of Soul">Jewel of Soul</option>
-                    <option value="Jewel of Life">Jewel of Life</option>
-                    <option value="Jewel of Creation">Jewel of Creation</option>
-                    <option value="Zen">Zen</option>
-                    <option value="VIP Points">VIP Points</option>
-                </select>
-                <input type="number" id="donacionCantidad" placeholder="Cantidad" value="1" min="1" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-32">
-                <button onclick="guardarDonacion()" class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold px-6 py-2.5 rounded-lg text-sm transition">💾 Registrar</button>
-            </div>
-        </div>
+            <label class="block text-xs text-purple-300 font-semibold mb-1">Nombre del Ítem:</label>
+            <input type="text" id="nuevoItemNombre" placeholder="Ej. Excellent Sphinx Armor" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
 
-        <div class="bg-[#141126] border border-purple-900 rounded-xl p-6 shadow-lg">
-            <h2 class="text-xl font-bold text-purple-300 mb-4">📜 Historial de Donaciones</h2>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-purple-200">
-                    <thead class="bg-[#0d0a1a] text-purple-400 uppercase text-xs">
-                        <tr>
-                            <th class="p-3">PJ</th>
-                            <th class="p-3">Tipo</th>
-                            <th class="p-3">Cantidad</th>
-                            <th class="p-3">Registrado Por</th>
-                            <th class="p-3">Auditoría / Modificado</th>
-                            <th class="p-3 text-center">Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-donaciones-body">
-                        <tr><td colspan="6" class="p-4 text-center text-gray-500">Sin donaciones registradas</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+            <label class="block text-xs text-purple-300 font-semibold mb-1">Clases que lo equipan (separadas por coma):</label>
+            <input type="text" id="nuevoItemClases" placeholder="Dark Wizard, Magic Gladiator" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
 
-    <!-- Usuarios -->
-    <div id="seccion-usuarios" class="w-full max-w-6xl hidden space-y-6">
-        <div class="bg-[#141126] border border-indigo-600/50 rounded-xl p-6 shadow-lg">
-            <h2 class="text-xl font-bold text-indigo-400 mb-4">👑 Crear Nuevo Encargado / Usuario</h2>
-            <div class="flex flex-wrap gap-4 items-center">
-                <input type="text" id="nuevoUser" placeholder="Nombre de Usuario" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-48">
-                <input type="text" id="nuevoPass" placeholder="Contraseña Inicial" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-48">
-                <select id="nuevoRol" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-36">
-                    <option value="encargado">Encargado</option>
-                    <option value="admin">Administrador</option>
-                </select>
-                <button onclick="crearUsuario()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-6 py-2.5 rounded-lg text-sm transition">➕ Crear Usuario</button>
-            </div>
-        </div>
+            <label class="block text-xs text-purple-300 font-semibold mb-1">Opciones Principales (separadas por punto y coma ;):</label>
+            <input type="text" id="nuevoItemOpciones" placeholder="[Legendary] Increases maximum life +4%; [Rare] Increases zen drop rate +21%" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
 
-        <div class="bg-[#141126] border border-purple-900 rounded-xl p-6 shadow-lg">
-            <h2 class="text-xl font-bold text-purple-300 mb-4">👥 Lista de Usuarios Registrados</h2>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-purple-200">
-                    <thead class="bg-[#0d0a1a] text-purple-400 uppercase text-xs">
-                        <tr>
-                            <th class="p-3">Usuario</th>
-                            <th class="p-3">Rol</th>
-                            <th class="p-3">Estado Clave</th>
-                            <th class="p-3">Creado Por</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-usuarios-body"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+            <label class="block text-xs text-purple-300 font-semibold mb-1">Exclusive Excellent Bonus (separadas por punto y coma ;):</label>
+            <input type="text" id="nuevoItemBonus" placeholder="Increases Energy +50; Increases Vitality +41" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-4 text-sm outline-none">
 
-    <!-- Modales -->
-    <div id="modal-editar-donacion" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50">
-        <div class="bg-[#141126] border border-yellow-500 p-6 rounded-xl w-96 text-center shadow-2xl">
-            <h3 class="text-lg font-bold text-yellow-300 mb-4">✏️ Editar Donación</h3>
-            <input type="hidden" id="editDonacionId">
-            <input type="text" id="editDonacionPj" placeholder="PJ Name" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
-            <select id="editDonacionTipo" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
-                <option value="Jewel of Bless">Jewel of Bless</option>
-                <option value="Jewel of Soul">Jewel of Soul</option>
-                <option value="Jewel of Life">Jewel of Life</option>
-                <option value="Jewel of Creation">Jewel of Creation</option>
-                <option value="Zen">Zen</option>
-                <option value="VIP Points">VIP Points</option>
-            </select>
-            <input type="number" id="editDonacionCantidad" placeholder="Cantidad" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-4 text-sm outline-none">
             <div class="flex gap-2">
-                <button onclick="ejecutarEdicionDonacion()" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 rounded text-sm">💾 Guardar</button>
-                <button onclick="toggleEditModal()" class="w-full bg-gray-800 text-gray-400 font-bold py-2 rounded text-sm">Cancelar</button>
+                <button onclick="guardarNuevoItemDesdeWeb()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded text-sm transition">💾 Guardar Ítem</button>
+                <button onclick="toggleModalNuevoItem()" class="w-full bg-gray-800 text-gray-400 font-bold py-2 rounded text-sm">Cancelar</button>
             </div>
         </div>
     </div>
 
-    <div id="modal-cambio-clave" class="fixed inset-0 bg-black/90 flex items-center justify-center hidden z-50">
-        <div class="bg-[#141126] border-2 border-yellow-500 p-6 rounded-xl w-96 text-center shadow-2xl">
-            <h3 class="text-xl font-bold text-yellow-400 mb-2">⚠️ CAMBIO DE CLAVE</h3>
-            <input type="password" id="claveNueva1" placeholder="Nueva Contraseña" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded mb-3 text-sm outline-none">
-            <input type="password" id="claveNueva2" placeholder="Repetir Nueva Contraseña" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded mb-4 text-sm outline-none">
-            <button onclick="ejecutarCambioClave()" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2.5 rounded text-sm transition">💾 Guardar</button>
-        </div>
-    </div>
+    <!-- MODAL PARA EDITAR ÍTEM EXISTENTE -->
+    <div id="modal-editar-item" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4 overflow-y-auto">
+        <div class="bg-[#141126] border border-purple-500 p-6 rounded-xl w-full max-w-md shadow-2xl text-left my-8">
+            <h3 class="text-lg font-bold text-purple-300 mb-3 text-center">✏️ Editar Ítem</h3>
+            <input type="hidden" id="editItemId">
+            
+            <label class="block text-xs text-purple-300 font-semibold mb-1">Nombre del Ítem:</label>
+            <input type="text" id="editItemNombre" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
 
-    <div id="modal-login" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50">
-        <div class="bg-[#141126] border border-purple-600 p-6 rounded-xl w-80 text-center shadow-2xl">
-            <h3 class="text-lg font-bold text-purple-300 mb-4">🔐 Iniciar Sesión</h3>
-            <input type="text" id="loginUser" placeholder="Usuario" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
-            <input type="password" id="loginPass" placeholder="Contraseña" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-4 text-sm outline-none">
+            <label class="block text-xs text-purple-300 font-semibold mb-1">Clases (separadas por coma):</label>
+            <input type="text" id="editItemClases" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
+
+            <label class="block text-xs text-purple-300 font-semibold mb-1">Opciones (separadas por punto y coma ;):</label>
+            <input type="text" id="editItemOpciones" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
+
+            <label class="block text-xs text-purple-300 font-semibold mb-1">Bonus Excelente (separadas por punto y coma ;):</label>
+            <input type="text" id="editItemBonus" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-4 text-sm outline-none">
+
             <div class="flex gap-2">
-                <button onclick="ejecutarLogin()" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 rounded text-sm">Entrar</button>
-                <button onclick="toggleLoginModal()" class="w-full bg-gray-800 text-gray-400 font-bold py-2 rounded text-sm">Cancelar</button>
+                <button onclick="guardarEdicionItem()" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 rounded text-sm transition">💾 Actualizar</button>
+                <button onclick="toggleModalEditarItem()" class="w-full bg-gray-800 text-gray-400 font-bold py-2 rounded text-sm">Cancelar</button>
             </div>
         </div>
     </div>
 
     <script>
-        let modoVista = 'TODOS';
-        let servidorMapaActivo = 1;
-        let estadoWeb = { timers: {}, ocultos: [], heartbeats: {}, cooldowns: {}, mapas: {} };
-        let estaLogueado = false;
-        let esAdmin = false;
-        let listaDonacionesCache = [];
-        let catalogoItemsCache = [];
+        let catalogo = [];
 
-        const SPAWN_DELAY_MAPA_MS = 3 * 60 * 60 * 1000;
-        const WINDOW_DURATION_MAPA_MS = 60 * 60 * 1000;
-
-        const BOSSES_FIJOS = {
-            "Server 1": ["Muggron", "Dreadhorn", "Moltragon", "Borgar", "Kharzul", "Vescrya"],
-            "Server 2": ["Muggron", "Dreadhorn", "Moltragon", "Borgar", "Kharzul", "Vescrya"],
-            "Server 3": ["Muggron", "Dreadhorn", "Moltragon", "Borgar", "Kharzul", "Vescrya"],
-            "Server 20": ["Muggron Barracks", "Muggron Crywolf", "Kharzul", "Vescrya"]
-        };
-
-        const COOLDOWNS_LOCAL = {
-            "Muggron": 180, "Dreadhorn": 60, "Moltragon": 60, "Borgar": 120,
-            "Kharzul": 420, "Vescrya": 420, "Muggron Barracks": 180, "Muggron Crywolf": 180,
-            "Yellow Goblin": 600, "Blue Goblin": 600, "Red Goblin": 600,
-            "Red Dragon": 360, "Santa": 360, "White Wizard": 360, "Skeleton King": 360
-        };
-
-        const BOSSES_SOLO_MANUALES = [
-            "Red Dragon", "Yellow Goblin", "Blue Goblin", "Red Goblin",
-            "Santa", "White Wizard", "Skeleton King"
-        ];
-
-        function mostrarToast(mensaje, icono = "⚠️") {
-            const toast = document.getElementById('toast-notificacion');
-            document.getElementById('toast-mensaje').textContent = mensaje;
-            document.getElementById('toast-icono').textContent = icono;
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            toast.classList.add('translate-y-0', 'opacity-100');
-            setTimeout(() => {
-                toast.classList.remove('translate-y-0', 'opacity-100');
-                toast.classList.add('translate-y-20', 'opacity-0');
-            }, 3000);
+        function setFiltroRapido(opcion) {
+            document.getElementById('filtroOpcion').value = opcion;
+            aplicarFiltros();
         }
 
-        function getTimersMapaLocal() {
-            const mapasGlobal = estadoWeb.mapas || {};
-            return mapasGlobal[String(servidorMapaActivo)] || {};
+        function toggleModalNuevoItem() {
+            document.getElementById('modal-nuevo-item').classList.toggle('hidden');
         }
 
-        async function registrarMuerteMapa(spotId) {
-            try {
-                const res = await fetch('/api/mapa_kill', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ server: servidorMapaActivo, spot_id: spotId })
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.mapas) estadoWeb.mapas = data.mapas;
-                    actualizarMapaUI();
-                    mostrarToast(`Muerte en Spot #${spotId} (Server ${servidorMapaActivo})`, "⚔️");
-                }
-            } catch (e) {
-                const key = `mu_map_timers_srv_${servidorMapaActivo}`;
-                const lTimers = JSON.parse(localStorage.getItem(key)) || {};
-                lTimers[spotId] = Date.now();
-                localStorage.setItem(key, JSON.stringify(lTimers));
-                actualizarMapaUI();
-            }
+        function toggleModalEditarItem() {
+            document.getElementById('modal-editar-item').classList.toggle('hidden');
         }
 
-        async function resetearSpotMapa(event, spotId) {
-            event.preventDefault();
-            try {
-                const res = await fetch('/api/mapa_reset', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ server: servidorMapaActivo, spot_id: spotId })
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.mapas) estadoWeb.mapas = data.mapas;
-                    actualizarMapaUI();
-                    mostrarToast(`Spot #${spotId} reseteado a 0`, "🔄");
-                }
-            } catch (e) {
-                const key = `mu_map_timers_srv_${servidorMapaActivo}`;
-                const lTimers = JSON.parse(localStorage.getItem(key)) || {};
-                delete lTimers[spotId];
-                localStorage.setItem(key, JSON.stringify(lTimers));
-                actualizarMapaUI();
-            }
+        function abrirEditor(id) {
+            const it = catalogo.find(x => x.id === id);
+            if (!it) return;
+            document.getElementById('editItemId').value = it.id;
+            document.getElementById('editItemNombre').value = it.nombre || '';
+            document.getElementById('editItemClases').value = (it.clases || []).join(', ');
+            document.getElementById('editItemOpciones').value = (it.opciones || []).join('; ');
+            document.getElementById('editItemBonus').value = (it.bonus_excelente || []).join('; ');
+            toggleModalEditarItem();
         }
 
-        function formatHMS(ms) {
-            const totalSecs = Math.max(0, Math.floor(ms / 1000));
-            const h = String(Math.floor(totalSecs / 3600)).padStart(2, '0');
-            const m = String(Math.floor((totalSecs % 3600) / 60)).padStart(2, '0');
-            const s = String(totalSecs % 60).padStart(2, '0');
-            return `${h}:${m}:${s}`;
-        }
-
-        function formatMS(ms) {
-            const totalSecs = Math.max(0, Math.floor(ms / 1000));
-            const m = String(Math.floor(totalSecs / 60)).padStart(2, '0');
-            const s = String(totalSecs % 60).padStart(2, '0');
-            return `${m}:${s}`;
-        }
-
-        function actualizarMapaUI() {
-            if (!modoVista.startsWith('MAPA_')) return;
-            const timersBackend = getTimersMapaLocal();
-            const keyLocal = `mu_map_timers_srv_${servidorMapaActivo}`;
-            const timersLocal = JSON.parse(localStorage.getItem(keyLocal)) || {};
-            const timers = Object.keys(timersBackend).length > 0 ? timersBackend : timersLocal;
-            const now = Date.now();
-
-            for (let i = 1; i <= 10; i++) {
-                const el = document.getElementById(`map-t-${i}`);
-                if (!el) continue;
-                const parent = el.closest('.spot-btn');
-                parent.className = 'spot-btn';
-                const deathTime = timers[String(i)] || timers[i];
-
-                if (!deathTime) {
-                    parent.classList.add('state-idle');
-                    el.innerText = 'Esperando Muerte';
-                    continue;
-                }
-
-                const elapsed = now - deathTime;
-                if (elapsed < SPAWN_DELAY_MAPA_MS) {
-                    parent.classList.add('state-waiting');
-                    const remaining = SPAWN_DELAY_MAPA_MS - elapsed;
-                    el.innerText = `Respawn: ${formatHMS(remaining)}`;
-                } else if (elapsed < (SPAWN_DELAY_MAPA_MS + WINDOW_DURATION_MAPA_MS)) {
-                    parent.classList.add('state-window');
-                    const windowElapsed = elapsed - SPAWN_DELAY_MAPA_MS;
-                    el.innerText = `¡VENTANA! ${formatMS(windowElapsed)} / 60:00`;
-                } else {
-                    parent.classList.add('state-idle');
-                    el.innerText = 'Esperando Muerte';
-                }
-            }
-        }
-
-        async function cargarItemsMu() {
+        async function cargar() {
             try {
                 const res = await fetch('/api/items');
                 if (res.ok) {
-                    catalogoItemsCache = await res.json();
-                    renderizarItemsMu(catalogoItemsCache);
+                    catalogo = await res.json();
+                    renderizar(catalogo);
+                } else {
+                    document.getElementById('contenedor-items').innerHTML = '<div class="text-red-400 text-center col-span-full">Error al consultar el servidor.</div>';
                 }
             } catch (e) {
-                document.getElementById('contenedor-items-mu').innerHTML = `
-                    <div class="text-red-400 text-center col-span-full py-8">Error cargando el catálogo de ítems.</div>
-                `;
+                document.getElementById('contenedor-items').innerHTML = '<div class="text-red-400 text-center col-span-full">Error de red al cargar datos.</div>';
             }
         }
 
-        function renderizarItemsMu(items) {
-            const contenedor = document.getElementById('contenedor-items-mu');
+        function renderizar(items) {
+            const c = document.getElementById('contenedor-items');
+            document.getElementById('contador-items').innerText = `Mostrando ${items.length} ítem(s) de un total de ${catalogo.length}`;
+
             if (!items || items.length === 0) {
-                contenedor.innerHTML = `
-                    <div class="text-gray-500 italic text-center col-span-full py-12">No se encontraron ítems con los filtros aplicados.</div>
-                `;
+                c.innerHTML = '<div class="text-gray-500 text-center col-span-full py-12">No hay ítems con estos filtros.</div>';
                 return;
             }
 
-            contenedor.innerHTML = items.map(item => {
-                const imgUrl = `https://lh3.googleusercontent.com/d/${item.drive_id}`;
+            c.innerHTML = items.map(item => {
+                const img = `https://lh3.googleusercontent.com/d/${item.drive_id}`;
+                
                 const clasesHTML = (item.clases && item.clases.length > 0)
                     ? item.clases.map(pj => `<span class="badge-pj">${pj}</span>`).join(' ')
-                    : '<span class="text-gray-500 text-xs">Sin clase</span>';
+                    : '<span class="text-gray-500 text-xs">Sin clase definida</span>';
 
                 return `
-                    <div class="mu-item-card p-4 flex flex-col justify-between">
+                    <div class="mu-item-card p-4 flex flex-col justify-between relative">
+                        <button onclick="abrirEditor(${item.id})" title="Editar nombre o opciones" class="absolute top-3 right-3 bg-black/60 hover:bg-black/90 text-purple-300 hover:text-white px-2 py-1 rounded text-[11px] font-bold border border-purple-500/40 z-10">
+                            ✏️ Editar
+                        </button>
                         <div>
-                            <div class="w-full h-52 bg-black rounded-lg flex items-center justify-center overflow-hidden mb-3 border border-purple-950">
-                                <img src="${imgUrl}" alt="${item.nombre}" loading="lazy" class="max-h-full max-w-full object-contain" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200/0f0c1b/4ade80?text=Item+MU';">
+                            <!-- Imagen Drive -->
+                            <div class="w-full h-56 bg-black rounded-lg flex items-center justify-center overflow-hidden mb-3 border border-purple-950">
+                                <img src="${img}" alt="${item.nombre}" loading="lazy" class="max-h-full max-w-full object-contain" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200/0f0c1b/4ade80?text=Item+MU';">
                             </div>
+
+                            <!-- Nombre -->
                             <h3 class="text-center font-bold text-emerald-400 text-base mb-2">${item.nombre}</h3>
                             
+                            <!-- Estadísticas -->
                             <div class="text-xs space-y-1 text-center mb-3">
                                 ${item.base_score ? `<p class="text-amber-400 font-semibold">Base Score: ${item.base_score}</p>` : ''}
                                 ${item.grade_score ? `<p class="text-purple-400 font-semibold">Grade Score: ${item.grade_score}</p>` : ''}
@@ -557,6 +242,7 @@
                                 ${item.requisitos?.energy ? `<p class="text-cyan-300">Energy: ${item.requisitos.energy}</p>` : ''}
                             </div>
 
+                            <!-- Clases (PJ) -->
                             <div class="mb-3">
                                 <span class="text-[10px] text-gray-400 uppercase font-bold block mb-1">Equipable por:</span>
                                 <div class="flex flex-wrap gap-1">
@@ -565,7 +251,7 @@
                             </div>
                         </div>
 
-                        <!-- Opciones principales -->
+                        <!-- Opciones (Filtro activo exclusivamente en este bloque) -->
                         <div class="border-t border-purple-900/50 pt-2 text-xs space-y-1">
                             <span class="text-[10px] text-purple-300 uppercase font-bold block mb-1">Opciones:</span>
                             ${(item.opciones || []).map(opt => {
@@ -584,7 +270,7 @@
                                 return `<p class="${colorClass}">• ${opt}</p>`;
                             }).join('')}
 
-                            <!-- Exclusive Excellent Bonus: SE MUESTRA PERO NO SE FILTRA -->
+                            <!-- Exclusive Excellent Bonus: SE MUESTRA VISUALMENTE PERO EL FILTRO LO IGNORA -->
                             ${(item.bonus_excelente && item.bonus_excelente.length > 0) ? `
                                 <div class="mt-2 pt-1 border-t border-purple-950">
                                     <span class="text-[10px] text-cyan-400 font-bold block mb-0.5">Exclusive Excellent Bonus:</span>
@@ -597,15 +283,16 @@
             }).join('');
         }
 
-        function aplicarFiltrosItems() {
-            const raza = document.getElementById('filtroItemRaza').value.toLowerCase();
-            const opcion = document.getElementById('filtroItemOpcion').value.toLowerCase();
-            const busqueda = document.getElementById('filtroItemTexto').value.toLowerCase();
+        function aplicarFiltros() {
+            const raza = document.getElementById('filtroRaza').value.toLowerCase();
+            const opcion = document.getElementById('filtroOpcion').value.toLowerCase();
+            const busqueda = document.getElementById('filtroTexto').value.toLowerCase();
 
-            const filtrados = catalogoItemsCache.filter(item => {
+            const filtrados = catalogo.filter(item => {
+                // 1. Coincidencia por Clase / PJ
                 const matchRaza = !raza || (item.clases && item.clases.some(c => c.toLowerCase().includes(raza)));
-                
-                // SOLO BUSCA EN item.opciones (EXCLUYE EXCLUSIVE BONUS)
+
+                // 2. Coincidencia por Opciones: SOLO en item.opciones (EXCLUYE EXCLUSIVE EXCELLENT BONUS)
                 const textoOpciones = (item.opciones || []).join(' ').toLowerCase();
 
                 let matchOpcion = true;
@@ -615,7 +302,7 @@
                     } else if (opcion === 'reflect') {
                         matchOpcion = textoOpciones.includes('reflect');
                     } else if (opcion === 'maximum life') {
-                        matchOpcion = textoOpciones.includes('maximum life') || textoOpciones.includes('hp');
+                        matchOpcion = textoOpciones.includes('maximum life') || textoOpciones.includes('life') || textoOpciones.includes('hp');
                     } else if (opcion === 'maximum sd') {
                         matchOpcion = textoOpciones.includes('sd');
                     } else {
@@ -623,515 +310,85 @@
                     }
                 }
 
+                // 3. Coincidencia por Nombre
                 const matchTexto = !busqueda || (item.nombre && item.nombre.toLowerCase().includes(busqueda));
 
                 return matchRaza && matchOpcion && matchTexto;
             });
 
-            renderizarItemsMu(filtrados);
+            renderizar(filtrados);
         }
 
-        function setVista(vista) {
-            if (vista === 'DONACIONES' && !estaLogueado) {
-                toggleLoginModal();
+        async function guardarNuevoItemDesdeWeb() {
+            const drive_id = document.getElementById('nuevoItemDrive').value.trim();
+            const nombre = document.getElementById('nuevoItemNombre').value.trim();
+            const clasesRaw = document.getElementById('nuevoItemClases').value.trim();
+            const opcionesRaw = document.getElementById('nuevoItemOpciones').value.trim();
+            const bonusRaw = document.getElementById('nuevoItemBonus').value.trim();
+
+            if (!drive_id || !nombre) {
+                alert("Ingresá al menos el enlace de Drive y el nombre del ítem.");
                 return;
             }
 
-            modoVista = vista;
-            document.querySelectorAll('.btn-tab').forEach(b => {
-                b.className = "btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400";
-            });
-            const activeTab = document.getElementById(`tab-${vista}`);
-            if (activeTab) {
-                if (vista === 'ITEMS') {
-                    activeTab.className = "btn-tab px-4 py-2 rounded-lg font-bold bg-emerald-700 text-white";
+            const payload = {
+                drive_id: drive_id,
+                nombre: nombre,
+                clases: clasesRaw ? clasesRaw.split(',').map(s => s.trim()) : [],
+                opciones: opcionesRaw ? opcionesRaw.split(';').map(s => s.trim()) : [],
+                bonus_excelente: bonusRaw ? bonusRaw.split(';').map(s => s.trim()) : []
+            };
+
+            try {
+                const res = await fetch('/api/items', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    toggleModalNuevoItem();
+                    cargar();
                 } else {
-                    activeTab.className = "btn-tab px-4 py-2 rounded-lg font-bold bg-purple-700 text-white";
+                    alert("Error al guardar ítem.");
                 }
-            }
-
-            document.getElementById('seccion-timers').classList.add('hidden');
-            document.getElementById('seccion-mapa').classList.add('hidden');
-            document.getElementById('seccion-items').classList.add('hidden');
-            document.getElementById('seccion-bots').classList.add('hidden');
-            document.getElementById('seccion-donaciones').classList.add('hidden');
-            document.getElementById('seccion-usuarios').classList.add('hidden');
-            document.getElementById('panel-kill-manual').classList.add('hidden');
-
-            if (vista === 'DONACIONES') {
-                document.getElementById('seccion-donaciones').classList.remove('hidden');
-                cargarDonaciones();
-            } else if (vista === 'ITEMS') {
-                document.getElementById('seccion-items').classList.remove('hidden');
-                cargarItemsMu();
-            } else if (vista === 'BOTS') {
-                document.getElementById('seccion-bots').classList.remove('hidden');
-                renderizarBots();
-            } else if (vista === 'USUARIOS') {
-                document.getElementById('seccion-usuarios').classList.remove('hidden');
-                cargarUsuarios();
-            } else if (vista.startsWith('MAPA_')) {
-                servidorMapaActivo = parseInt(vista.split('_')[1]);
-                document.getElementById('mapa-titulo').textContent = `🗺️ Mapa de Bosses - Server ${servidorMapaActivo}`;
-                document.getElementById('seccion-mapa').classList.remove('hidden');
-                actualizarMapaUI();
-            } else {
-                document.getElementById('seccion-timers').classList.remove('hidden');
-                document.getElementById('panel-kill-manual').classList.remove('hidden');
-                renderizarUI();
+            } catch (e) {
+                alert("Error de red.");
             }
         }
 
-        async function ocultarTarjetaGlobal(svr, boss) {
-            try {
-                const res = await fetch('/api/reset_boss', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ server: svr, boss: boss })
-                });
-                if (res.ok) { await cargarDatos(); }
-            } catch (e) {}
-        }
+        async function guardarEdicionItem() {
+            const id = parseInt(document.getElementById('editItemId').value);
+            const nombre = document.getElementById('editItemNombre').value.trim();
+            const clasesRaw = document.getElementById('editItemClases').value.trim();
+            const opcionesRaw = document.getElementById('editItemOpciones').value.trim();
+            const bonusRaw = document.getElementById('editItemBonus').value.trim();
 
-        async function verificarSesion() {
-            try {
-                const res = await fetch('/api/session');
-                const data = await res.json();
-                estaLogueado = data.logged_in;
-                esAdmin = (data.rol === 'admin');
-
-                if (data.logged_in) {
-                    document.getElementById('user-display').innerHTML = `👤 User: <strong class="text-white">${data.user}</strong> (${data.rol})`;
-                    document.getElementById('login-btn-container').innerHTML = `<a href="/logout" class="bg-red-700 hover:bg-red-600 text-white px-3 py-1 rounded font-bold transition">Salir</a>`;
-                    document.getElementById('btn-descarga-bot').classList.remove('hidden');
-
-                    if (esAdmin) {
-                        document.getElementById('tab-USUARIOS').classList.remove('hidden');
-                    }
-                    if (data.requiere_cambio) {
-                        document.getElementById('modal-cambio-clave').classList.remove('hidden');
-                    }
-                }
-            } catch (e) {}
-        }
-
-        async function ejecutarCambioClave() {
-            const p1 = document.getElementById('claveNueva1').value;
-            const p2 = document.getElementById('claveNueva2').value;
-
-            if (!p1 || p1 !== p2) return mostrarToast("Las contraseñas no coinciden.", "❌");
+            const payload = {
+                id: id,
+                nombre: nombre,
+                clases: clasesRaw ? clasesRaw.split(',').map(s => s.trim()) : [],
+                opciones: opcionesRaw ? opcionesRaw.split(';').map(s => s.trim()) : [],
+                bonus_excelente: bonusRaw ? bonusRaw.split(';').map(s => s.trim()) : []
+            };
 
             try {
-                const res = await fetch('/api/cambiar_clave', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nueva_clave: p1 })
-                });
-                if (res.ok) {
-                    mostrarToast("Contraseña actualizada con éxito.", "✅");
-                    document.getElementById('modal-cambio-clave').classList.add('hidden');
-                    location.reload();
-                } else {
-                    mostrarToast("Error cambiando contraseña.", "❌");
-                }
-            } catch (e) {}
-        }
-
-        function poblarSelector() {
-            const select = document.getElementById('manualBoss');
-            if (select.children.length > 0) return;
-            Object.keys(COOLDOWNS_LOCAL).forEach(b => {
-                let opt = document.createElement('option');
-                opt.value = b;
-                opt.textContent = `${b} (${COOLDOWNS_LOCAL[b]}m)`;
-                select.appendChild(opt);
-            });
-        }
-
-        function formatearTiempo(segundosTotales) {
-            if (segundosTotales <= 0) return "00:00:00";
-            const h = Math.floor(segundosTotales / 3600);
-            const m = Math.floor((segundosTotales % 3600) / 60);
-            const s = segundosTotales % 60;
-            return `${h > 0 ? String(h).padStart(2, '0') + ':' : ''}${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-        }
-
-        async function cargarDatos() {
-            try {
-                const res = await fetch('/api/status_timers');
-                if (res.ok) {
-                    estadoWeb = await res.json();
-                    poblarSelector();
-                    if (modoVista === 'BOTS') renderizarBots();
-                    else if (modoVista.startsWith('MAPA_')) actualizarMapaUI();
-                    else if (modoVista !== 'DONACIONES' && modoVista !== 'USUARIOS' && modoVista !== 'ITEMS') renderizarUI();
-                }
-            } catch (e) {}
-        }
-
-        async function enviarKill(svr, boss) {
-            const timersSvr = (estadoWeb.timers || {})[svr] || {};
-            const killUnix = timersSvr[boss];
-            const ahoraUnix = Math.floor(Date.now() / 1000);
-
-            const cdMinutos = COOLDOWNS_LOCAL[boss] || 60;
-            const cdSegundos = cdMinutos * 60;
-            const ventanaSegundos = 3600;
-            const esEventoManual = BOSSES_SOLO_MANUALES.includes(boss);
-
-            if (killUnix) {
-                const targetRespawnUnix = killUnix + cdSegundos;
-                const finVentanaUnix = targetRespawnUnix + ventanaSegundos;
-
-                if (ahoraUnix < finVentanaUnix || (esEventoManual && ahoraUnix < targetRespawnUnix)) {
-                    mostrarToast(`${boss} (${svr}) ya está activo.`, "🛑");
-                    return;
-                }
-            }
-
-            try {
-                const res = await fetch('/api/kill', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ server: svr, boss: boss })
-                });
-                if (res.ok) { 
-                    mostrarToast(`Kill registrado: ${boss} (${svr})`, "⚔️");
-                    await cargarDatos(); 
-                }
-            } catch (e) {}
-        }
-
-        function ejecutarKillForm() {
-            const svr = document.getElementById('manualServer').value;
-            const boss = document.getElementById('manualBoss').value;
-            if (svr && boss) { enviarKill(svr, boss); }
-        }
-
-        function renderizarBots() {
-            const container = document.getElementById('contenedor-bots-lista');
-            container.innerHTML = '';
-            const ahoraUnix = Math.floor(Date.now() / 1000);
-            const hbMap = estadoWeb.heartbeats || {};
-
-            ["Server 1", "Server 2", "Server 3", "Server 20"].forEach(svr => {
-                const pcVal = (estadoWeb.ultimas_pcs || {})[svr];
-                const pjVal = (estadoWeb.ultimos_pjs || {})[svr];
-                const lastPing = hbMap[svr];
-                let esOnline = false;
-
-                if (lastPing) {
-                    const hbUnix = Math.floor(new Date(lastPing).getTime() / 1000);
-                    if (!isNaN(hbUnix) && Math.abs(ahoraUnix - hbUnix) <= 120) esOnline = true;
-                }
-
-                container.innerHTML += `
-                    <div class="bg-[#141126] border ${esOnline ? 'border-emerald-600' : 'border-red-900'} p-5 rounded-xl shadow-lg flex justify-between items-center">
-                        <div>
-                            <h3 class="font-bold text-lg text-white mb-1">${svr}</h3>
-                            <p class="text-xs text-purple-300">💻 PC Local: <strong class="text-white">${pcVal || 'Sin conexión'}</strong></p>
-                            <p class="text-xs text-purple-300">👤 Personaje: <strong class="text-white">${pjVal || 'N/A'}</strong></p>
-                            <p class="text-[10px] text-gray-400 mt-2">Última señal: ${lastPing ? new Date(lastPing).toLocaleTimeString() : 'Nunca'}</p>
-                        </div>
-                        <div>
-                            <span class="px-4 py-2 rounded-lg font-bold text-xs ${esOnline ? 'bg-emerald-950 text-emerald-200 border border-emerald-500' : 'bg-red-950 text-red-300 border border-red-800'}">
-                                ${esOnline ? '🟢 ONLINE' : '🔴 OFFLINE'}
-                            </span>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        function renderizarUI() {
-            const contenedor = document.getElementById('contenedor-bosses');
-            contenedor.innerHTML = '';
-            const ahoraUnix = Math.floor(Date.now() / 1000);
-            const serversAMostrar = modoVista === 'TODOS' ? ["Server 1", "Server 2", "Server 3", "Server 20"] : [modoVista];
-            const listaOcultosGlobales = estadoWeb.ocultos || [];
-
-            let listaCards = [];
-
-            serversAMostrar.forEach(svr => {
-                const timersSvr = (estadoWeb.timers || {})[svr] || {};
-                const listaFijaServidor = BOSSES_FIJOS[svr] || [];
-                const listaBossesAMostrar = new Set([...listaFijaServidor]);
-                Object.keys(timersSvr).forEach(b => listaBossesAMostrar.add(b));
-
-                listaBossesAMostrar.forEach(bossName => {
-                    const claveCard = `${svr}_${bossName}`;
-                    if (listaOcultosGlobales.includes(claveCard)) return;
-
-                    const cdMinutos = COOLDOWNS_LOCAL[bossName] || 60;
-                    const cdSegundos = cdMinutos * 60;
-                    const ventanaSegundos = 3600;
-                    const cicloTotalSegundos = cdSegundos + ventanaSegundos;
-                    const esEventoManual = BOSSES_SOLO_MANUALES.includes(bossName);
-
-                    let ordenTiempo = 99999999;
-                    let cardHTML = '';
-                    let killUnix = timersSvr[bossName];
-
-                    const btnCerrarHTML = `<button onclick="ocultarTarjetaGlobal('${svr}', '${bossName}')" title="Quitar para toda la guild" class="absolute top-2 right-2 text-white hover:text-red-400 font-extrabold text-sm bg-black/60 hover:bg-black/90 w-6 h-6 rounded-full flex items-center justify-center transition border border-purple-500/50 z-10 cursor-pointer shadow">✕</button>`;
-
-                    if (killUnix) {
-                        let transcurridoTotal = ahoraUnix - killUnix;
-
-                        if (!esEventoManual && transcurridoTotal >= cicloTotalSegundos) {
-                            const ciclosPasados = Math.floor(transcurridoTotal / cicloTotalSegundos);
-                            killUnix += (ciclosPasados * cicloTotalSegundos);
-                            transcurridoTotal = ahoraUnix - killUnix;
-                        }
-
-                        const targetRespawnUnix = killUnix + cdSegundos;
-                        const finVentanaUnix = targetRespawnUnix + ventanaSegundos;
-
-                        if (esEventoManual && ahoraUnix > finVentanaUnix) {
-                            cardHTML = '';
-                        }
-                        else if (ahoraUnix < targetRespawnUnix) {
-                            const restoSec = targetRespawnUnix - ahoraUnix;
-                            ordenTiempo = restoSec; 
-                            cardHTML = `
-                                <div class="card p-4 rounded-xl bg-red-950/70 border border-red-500 shadow-lg flex flex-col justify-between text-center min-h-[140px] relative">
-                                    ${btnCerrarHTML}
-                                    <div class="flex justify-between items-center mb-1 pr-6">
-                                        <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-purple-900 text-purple-200">${svr}</span>
-                                        <span class="text-[10px] font-bold text-red-400">COOLDOWN</span>
-                                    </div>
-                                    <h3 class="font-bold text-red-100 text-base my-1">${bossName}</h3>
-                                    <div class="my-2 py-1.5 px-2 rounded bg-red-900/60 border border-red-500 text-red-200 font-mono text-lg font-bold">
-                                        🔴 ${formatearTiempo(restoSec)}
-                                    </div>
-                                    <button type="button" onclick="enviarKill('${svr}', '${bossName}')" class="w-full bg-purple-700/50 hover:bg-purple-600/50 text-white/70 font-bold text-xs py-2 rounded transition shadow cursor-not-allowed">⚔️ EN COOLDOWN</button>
-                                </div>
-                            `;
-                        } 
-                        else if (ahoraUnix >= targetRespawnUnix && ahoraUnix <= finVentanaUnix) {
-                            const transcurridoVentana = ahoraUnix - targetRespawnUnix;
-                            ordenTiempo = -1000000 + transcurridoVentana;
-                            cardHTML = `
-                                <div class="card p-4 rounded-xl bg-emerald-950/70 border border-emerald-500 shadow-lg flex flex-col justify-between text-center min-h-[140px] relative">
-                                    ${btnCerrarHTML}
-                                    <div class="flex justify-between items-center mb-1 pr-6">
-                                        <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-purple-900 text-purple-200">${svr}</span>
-                                        <span class="text-[10px] font-bold text-emerald-400 animate-pulse">CACERÍA EN CURSO</span>
-                                    </div>
-                                    <h3 class="font-bold text-emerald-100 text-base my-1">${bossName}</h3>
-                                    <div class="my-2 py-1.5 px-2 rounded bg-emerald-900/60 border border-emerald-500 text-emerald-200 font-mono text-lg font-bold">
-                                        🟢 VENTANA (${formatearTiempo(transcurridoVentana)})
-                                    </div>
-                                    <button type="button" onclick="enviarKill('${svr}', '${bossName}')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2 rounded transition shadow">⚔️ REGISTRAR KILL</button>
-                                </div>
-                            `;
-                        }
-                    }
-
-                    if (!cardHTML && !esEventoManual) {
-                        ordenTiempo = 88888888;
-                        cardHTML = `
-                            <div class="card p-4 rounded-xl bg-purple-950/40 border border-purple-700 shadow-lg flex flex-col justify-between text-center min-h-[140px] relative">
-                                ${btnCerrarHTML}
-                                <div class="flex justify-between items-center mb-1 pr-6">
-                                    <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-purple-900 text-purple-200">${svr}</span>
-                                    <span class="text-[10px] font-bold text-purple-300">DISPONIBLE</span>
-                                </div>
-                                <h3 class="font-bold text-purple-100 text-base my-1">${bossName}</h3>
-                                <div class="my-2 py-1.5 px-2 rounded bg-purple-900/40 border border-purple-600 text-purple-200 font-mono text-xs font-bold uppercase">
-                                    ⚡ ESPERANDO KILL
-                                </div>
-                                <button type="button" onclick="enviarKill('${svr}', '${bossName}')" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold text-xs py-2 rounded transition shadow">⚔️ REGISTRAR KILL</button>
-                            </div>
-                        `;
-                    }
-
-                    if (cardHTML) {
-                        listaCards.push({ orden: ordenTiempo, html: cardHTML });
-                    }
-                });
-            });
-
-            listaCards.sort((a, b) => a.orden - b.orden);
-
-            if (listaCards.length === 0) {
-                contenedor.innerHTML = `<div class="text-gray-500 italic text-center col-span-full py-12">Sin bosses activos en pantalla.</div>`;
-            } else {
-                listaCards.forEach(c => contenedor.innerHTML += c.html);
-            }
-        }
-
-        async function cargarUsuarios() {
-            try {
-                const res = await fetch('/api/usuarios');
-                if (res.ok) {
-                    const data = await res.json();
-                    const tbody = document.getElementById('tabla-usuarios-body');
-                    tbody.innerHTML = '';
-                    data.forEach(u => {
-                        tbody.innerHTML += `
-                            <tr class="border-b border-purple-900/40">
-                                <td class="p-3 font-bold text-white">${u.username}</td>
-                                <td class="p-3 text-indigo-300">${u.rol}</td>
-                                <td class="p-3 text-xs">${u.requiere_cambio_clave ? '⚠️ Debe cambiar clave' : '✅ Clave al día'}</td>
-                                <td class="p-3 text-purple-400">${u.creado_por || 'Sistema'}</td>
-                            </tr>
-                        `;
-                    });
-                }
-            } catch (e) {}
-        }
-
-        async function crearUsuario() {
-            const username = document.getElementById('nuevoUser').value;
-            const password = document.getElementById('nuevoPass').value;
-            const rol = document.getElementById('nuevoRol').value;
-
-            if (!username || !password) return mostrarToast("Completa usuario y contraseña", "❌");
-
-            try {
-                const res = await fetch('/api/usuarios', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password, rol })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    document.getElementById('nuevoUser').value = '';
-                    document.getElementById('nuevoPass').value = '';
-                    mostrarToast(`Usuario ${username} creado con éxito.`, "👤");
-                    cargarUsuarios();
-                } else {
-                    mostrarToast(data.error || "Error creando usuario", "❌");
-                }
-            } catch (e) {}
-        }
-
-        async function cargarDonaciones() {
-            try {
-                const res = await fetch('/api/donaciones');
-                if (res.ok) {
-                    listaDonacionesCache = await res.json();
-                    const tbody = document.getElementById('tabla-donaciones-body');
-                    tbody.innerHTML = '';
-                    if (listaDonacionesCache.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-500">Sin donaciones registradas</td></tr>`;
-                        return;
-                    }
-                    listaDonacionesCache.forEach(d => {
-                        let auditoriaText = 'Sin modificaciones';
-                        if (d.modificado_por) {
-                            auditoriaText = `<span class="text-yellow-400 font-bold">Editado por ${d.modificado_por}</span> (${new Date(d.fecha_modificacion).toLocaleTimeString()})`;
-                        }
-
-                        tbody.innerHTML += `
-                            <tr class="border-b border-purple-900/40 hover:bg-purple-900/20">
-                                <td class="p-3 font-bold text-white">${d.pj_name}</td>
-                                <td class="p-3 text-yellow-300">${d.tipo_donacion}</td>
-                                <td class="p-3 font-mono">${d.cantidad}</td>
-                                <td class="p-3 text-purple-400">${d.registrado_por}</td>
-                                <td class="p-3 text-xs text-gray-300">${auditoriaText}</td>
-                                <td class="p-3 text-center">
-                                    <button onclick="abrirModalEditarDonacion(${d.id})" class="bg-yellow-700 hover:bg-yellow-600 text-white font-bold text-xs px-3 py-1 rounded transition">✏️ Editar</button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                }
-            } catch (e) {}
-        }
-
-        function abrirModalEditarDonacion(id) {
-            const don = listaDonacionesCache.find(x => x.id === id);
-            if (!don) return;
-            document.getElementById('editDonacionId').value = don.id;
-            document.getElementById('editDonacionPj').value = don.pj_name;
-            document.getElementById('editDonacionTipo').value = don.tipo_donacion;
-            document.getElementById('editDonacionCantidad').value = don.cantidad;
-            document.getElementById('modal-editar-donacion').classList.remove('hidden');
-        }
-
-        function toggleEditModal() {
-            document.getElementById('modal-editar-donacion').classList.add('hidden');
-        }
-
-        async function ejecutarEdicionDonacion() {
-            const id = document.getElementById('editDonacionId').value;
-            const pj = document.getElementById('editDonacionPj').value;
-            const tipo = document.getElementById('editDonacionTipo').value;
-            const cant = document.getElementById('editDonacionCantidad').value;
-
-            if (!pj || !tipo || !cant) return mostrarToast("Completa todos los campos", "❌");
-
-            try {
-                const res = await fetch(`/api/donaciones/${id}`, {
+                const res = await fetch('/api/items', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pj_name: pj, tipo_donacion: tipo, cantidad: cant })
+                    body: JSON.stringify(payload)
                 });
                 if (res.ok) {
-                    toggleEditModal();
-                    cargarDonaciones();
-                    mostrarToast("Donación actualizada", "💎");
+                    toggleModalEditarItem();
+                    cargar();
                 } else {
-                    mostrarToast("Error guardando modificaciones", "❌");
+                    alert("No se pudo actualizar el ítem.");
                 }
-            } catch (e) {}
+            } catch (e) {
+                alert("Error de conexión.");
+            }
         }
 
-        async function guardarDonacion() {
-            const pj = document.getElementById('donacionPj').value;
-            const tipo = document.getElementById('donacionTipo').value;
-            const cant = document.getElementById('donacionCantidad').value;
-            if (!pj || !tipo) return mostrarToast("Ingresa el PJ y el tipo de donación", "❌");
-
-            try {
-                const res = await fetch('/api/donaciones', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pj_name: pj, tipo_donacion: tipo, cantidad: cant })
-                });
-                if (res.ok) {
-                    document.getElementById('donacionPj').value = '';
-                    cargarDonaciones();
-                    mostrarToast("Donación registrada", "💎");
-                } else {
-                    mostrarToast("Debes estar logueado para cargar donaciones", "🔒");
-                }
-            } catch (e) {}
-        }
-
-        function toggleLoginModal() {
-            document.getElementById('modal-login').classList.toggle('hidden');
-        }
-
-        async function ejecutarLogin() {
-            const username = document.getElementById('loginUser').value;
-            const password = document.getElementById('loginPass').value;
-            try {
-                const res = await fetch('/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    location.reload();
-                } else {
-                    mostrarToast(data.error || "Login fallido", "🔑");
-                }
-            } catch (e) {}
-        }
-
-        setInterval(() => {
-            renderizarUI();
-            actualizarMapaUI();
-        }, 1000);
-
-        setInterval(cargarDatos, 3000);
-        
-        verificarSesion();
-        poblarSelector();
-        cargarDatos();
+        document.addEventListener('DOMContentLoaded', cargar);
     </script>
 </body>
 </html>
