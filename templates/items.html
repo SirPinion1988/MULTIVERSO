@@ -166,4 +166,428 @@
     <!-- SECCIÓN 2: MIEMBROS DEL CLAN -->
     <div id="seccion-clan-view" class="w-full max-w-7xl space-y-4 hidden">
         <div class="bg-[#141126] border border-indigo-700/60 p-4 rounded-xl shadow-lg flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end w-full md:w-auto flex-1">
+                <div>
+                    <label class="block text-[11px] text-gray-300 font-semibold mb-1">Nombre / Nick del PJ:</label>
+                    <input type="text" id="clanPjNombre" placeholder="Ej. PinionBK" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs outline-none">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-gray-300 font-semibold mb-1">Raza / Clase:</label>
+                    <select id="clanPjRaza" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs outline-none">
+                        <option value="Dark Knight">Dark Knight (BK)</option>
+                        <option value="Dark Wizard">Dark Wizard (SM)</option>
+                        <option value="Elf">Fairy Elf (ME)</option>
+                        <option value="Magic Gladiator">Magic Gladiator (MG)</option>
+                        <option value="Dark Lord">Dark Lord (DL)</option>
+                        <option value="Summoner">Summoner (SUM)</option>
+                        <option value="Rage Fighter">Rage Fighter (RF)</option>
+                    </select>
+                </div>
+                <div>
+                    <button onclick="guardarMiembroClan()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded text-xs transition shadow">
+                        ➕ Poner Miembro
+                    </button>
+                </div>
+            </div>
+
+            <div class="border-t md:border-t-0 md:border-l border-purple-900/60 pt-3 md:pt-0 md:pl-4 flex flex-col items-center">
+                <label class="text-[11px] text-yellow-300 font-bold mb-1">📥 Importar desde Excel (.xlsx / .csv)</label>
+                <input type="file" id="inputExcel" accept=".xlsx, .xls, .csv" onchange="importarArchivoExcel(event)" class="text-xs text-gray-400 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-yellow-700 file:text-white hover:file:bg-yellow-600 cursor-pointer">
+                <span class="text-[10px] text-gray-500 mt-1">Columnas esperadas: Nick, Raza, Items</span>
+            </div>
+        </div>
+
+        <div class="tabla-scroll-box">
+            <table class="tabla-items">
+                <thead>
+                    <tr>
+                        <th style="width: 170px;">Nick del PJ</th>
+                        <th style="width: 150px;">Raza / Clase</th>
+                        <th>Ítems Asignados</th>
+                        <th style="width: 150px; text-align: center;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-clan-body">
+                    <tr><td colspan="4" class="text-center py-8 text-gray-500">Sin miembros registrados aún.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MODAL DE VISTA PREVIA FLOTANTE -->
+    <div id="modal-preview-img" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4" onclick="cerrarPreviewImg()">
+        <div class="bg-[#141126] border border-purple-500 p-2 rounded-xl max-w-sm max-h-[85vh] flex flex-col items-center shadow-2xl" onclick="event.stopPropagation()">
+            <img id="preview-img-tag" src="" alt="Vista Previa" class="max-h-[75vh] object-contain rounded-lg">
+            <button onclick="cerrarPreviewImg()" class="mt-2 text-xs bg-gray-800 hover:bg-gray-700 text-white px-4 py-1 rounded">Cerrar</button>
+        </div>
+    </div>
+
+    <script>
+        let catalogo = [];
+        let miembrosClan = [];
+        let sesionAutorizada = false;
+
+        async function chequearSesion() {
+            try {
+                const res = await fetch('/api/session');
+                const data = await res.json();
+                if (data.logged_in) {
+                    sesionAutorizada = data.autorizado;
+                    document.getElementById('session-user-badge').innerHTML = `👤 <strong>${data.user}</strong> (${data.rol})`;
+                }
+            } catch(e) {}
+        }
+
+        function cambiarSeccion(sec) {
+            const vItems = document.getElementById('seccion-items-view');
+            const vClan = document.getElementById('seccion-clan-view');
+            const bItems = document.getElementById('btn-sec-items');
+            const bClan = document.getElementById('btn-sec-clan');
+
+            if (sec === 'ITEMS') {
+                vItems.classList.remove('hidden');
+                vClan.classList.add('hidden');
+                bItems.className = "bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition";
+                bClan.className = "bg-gray-800 text-gray-400 px-3 py-1.5 rounded-lg text-xs font-bold transition";
+            } else {
+                vItems.classList.add('hidden');
+                vClan.classList.remove('hidden');
+                bClan.className = "bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition";
+                bItems.className = "bg-gray-800 text-gray-400 px-3 py-1.5 rounded-lg text-xs font-bold transition";
+                cargarMiembros();
+            }
+        }
+
+        function parsearArray(val) {
+            if (!val) return [];
+            if (Array.isArray(val)) return val;
+            if (typeof val === 'string') {
+                try {
+                    const parsed = JSON.parse(val);
+                    if (Array.isArray(parsed)) return parsed;
+                } catch(e) {}
+                return [val];
+            }
+            return [];
+        }
+
+        function setFiltroRapido(opcion) {
+            document.getElementById('filtroOpcion').value = opcion;
+            aplicarFiltros();
+        }
+
+        function mostrarPreviewImg(url) {
+            document.getElementById('preview-img-tag').src = url;
+            document.getElementById('modal-preview-img').classList.remove('hidden');
+        }
+
+        function cerrarPreviewImg() {
+            document.getElementById('modal-preview-img').classList.add('hidden');
+        }
+
+        async function cargar(mostrarNotificacion = false) {
+            try {
+                const res = await fetch('/api/items');
+                if (res.ok) {
+                    catalogo = await res.json();
+                }
+            } catch (e) {
+                console.warn("Fallo en red al cargar catálogo:", e);
+            }
+            aplicarFiltros();
+            if (mostrarNotificacion) alert("Catálogo actualizado en tiempo real.");
+        }
+
+        function renderizarTabla(items) {
+            const tbody = document.getElementById('tabla-items-body');
+            const cont = document.getElementById('contador-items');
+            if (cont) cont.innerText = `${items.length} ítem(s) en lista`;
+
+            if (!items || items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-500">No hay ítems con los filtros seleccionados.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = items.map(item => {
+                const imgUrl = `https://lh3.googleusercontent.com/d/${item.drive_id}`;
+                const clasesLista = parsearArray(item.clases);
+                const opcionesLista = parsearArray(item.opciones);
+                const bonusLista = parsearArray(item.bonus_excelente);
+
+                const clasesBadges = clasesLista.map(c => `<span class="badge-pj">${c}</span>`).join('');
+                
+                const opcionesBadges = opcionesLista.map(opt => {
+                    const l = opt.toLowerCase();
+                    let cls = 'opt-gen';
+                    if (l.includes('decrease') || l.includes('dd')) cls = 'opt-dd';
+                    else if (l.includes('reflect')) cls = 'opt-ref';
+                    else if (l.includes('life') || l.includes('hp')) cls = 'opt-hp';
+                    else if (l.includes('sd')) cls = 'opt-sd';
+                    return `<span class="badge-opt ${cls}">${opt}</span>`;
+                }).join('');
+
+                const bonusText = bonusLista.length > 0 
+                    ? bonusLista.map(b => `<div class="text-[11px] text-cyan-300 font-mono leading-tight">• ${b}</div>`).join('') 
+                    : '<span class="text-gray-600 text-xs">-</span>';
+
+                let asignadoHTML = '<span class="text-gray-600 text-xs font-semibold">Disponible</span>';
+                if (item.asignado_a) {
+                    asignadoHTML = `<span class="bg-indigo-950 border border-indigo-500 text-indigo-200 px-2.5 py-1 rounded-md text-xs font-extrabold cursor-pointer" onclick="cambiarAsignacionItem(${item.id})">Asignado a: <strong>${item.asignado_a}</strong></span>`;
+                } else if (sesionAutorizada) {
+                    asignadoHTML = `<button onclick="cambiarAsignacionItem(${item.id})" class="text-gray-400 hover:text-white bg-gray-800 border border-gray-700 px-2 py-0.5 rounded text-xs">Asignar</button>`;
+                }
+
+                return `
+                    <tr>
+                        <td class="text-center">
+                            <button onclick="mostrarPreviewImg('${imgUrl}')" title="Ver captura" class="w-8 h-8 rounded bg-black/60 hover:bg-purple-900 border border-purple-800 flex items-center justify-center text-xs transition">
+                                🖼️
+                            </button>
+                        </td>
+                        <td>
+                            <span class="font-mono font-bold text-amber-400 text-xs bg-amber-950/60 px-2 py-0.5 rounded border border-amber-700/60">${item.archivo_id || ('#' + item.id)}</span>
+                        </td>
+                        <td>
+                            <div class="font-bold text-emerald-400 text-sm leading-tight">${item.nombre}</div>
+                        </td>
+                        <td>${clasesBadges || '<span class="text-gray-600">-</span>'}</td>
+                        <td><div class="flex flex-wrap">${opcionesBadges || '<span class="text-gray-600">-</span>'}</div></td>
+                        <td>${bonusText}</td>
+                        <td class="text-center">${asignadoHTML}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function aplicarFiltros() {
+            const raza = (document.getElementById('filtroRaza').value || '').toLowerCase();
+            const opcion = (document.getElementById('filtroOpcion').value || '').toLowerCase();
+            const busqueda = (document.getElementById('filtroTexto').value || '').toLowerCase();
+
+            const filtrados = catalogo.filter(item => {
+                const clasesLista = parsearArray(item.clases);
+                const opcionesLista = parsearArray(item.opciones);
+
+                const matchRaza = !raza || clasesLista.some(c => String(c).toLowerCase().includes(raza));
+
+                // Búsqueda estricta sobre opciones principales (EXCLUYE Exclusive Bonus)
+                const textoOpciones = opcionesLista.join(' ').toLowerCase();
+                let matchOpcion = true;
+                if (opcion) {
+                    if (opcion === 'damage decrease') matchOpcion = textoOpciones.includes('decrease') || textoOpciones.includes('dd');
+                    else if (opcion === 'reflect') matchOpcion = textoOpciones.includes('reflect');
+                    else if (opcion === 'maximum life') matchOpcion = textoOpciones.includes('maximum life') || textoOpciones.includes('hp');
+                    else if (opcion === 'maximum sd') matchOpcion = textoOpciones.includes('sd');
+                    else if (opcion === 'critical damage') matchOpcion = textoOpciones.includes('critical');
+                    else if (opcion === 'excellent damage') matchOpcion = textoOpciones.includes('excellent damage') || textoOpciones.includes('exc dmg');
+                    else if (opcion === 'zen drop') matchOpcion = textoOpciones.includes('zen');
+                    else matchOpcion = textoOpciones.includes(opcion);
+                }
+
+                const nombre = String(item.nombre || '').toLowerCase();
+                const archivoId = String(item.archivo_id || '').toLowerCase();
+                const itemId = String(item.id || '');
+                const asignado = String(item.asignado_a || '').toLowerCase();
+                const matchTexto = !busqueda || nombre.includes(busqueda) || archivoId.includes(busqueda) || itemId.includes(busqueda) || asignado.includes(busqueda);
+
+                return matchRaza && matchOpcion && matchTexto;
+            });
+
+            renderizarTabla(filtrados);
+        }
+
+        async function cambiarAsignacionItem(id) {
+            if (!sesionAutorizada) {
+                return alert("Solo los usuarios autorizados (Pinion, tolkien, nasda) pueden asignar ítems.");
+            }
+            const item = catalogo.find(x => x.id === id);
+            if (!item) return;
+            const nuevo = prompt(`Asignar ${item.nombre} (#${item.archivo_id}) a qué miembro del clan? (Dejar vacío para desasignar):`, item.asignado_a || '');
+            if (nuevo === null) return;
+
+            const val = nuevo.trim() || null;
+            try {
+                const res = await fetch('/api/items', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: item.id, asignado_a: val })
+                });
+                if (res.ok) {
+                    item.asignado_a = val;
+                    aplicarFiltros();
+                } else {
+                    alert("Error guardando asignación.");
+                }
+            } catch(e) {}
+        }
+
+        async function cargarMiembros() {
+            try {
+                const res = await fetch('/api/miembros');
+                if (res.ok) {
+                    miembrosClan = await res.json();
+                    renderizarMiembros();
+                }
+            } catch(e) {}
+        }
+
+        function renderizarMiembros() {
+            const tbody = document.getElementById('tabla-clan-body');
+            if (!miembrosClan || miembrosClan.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-gray-500">Sin miembros registrados aún.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = miembrosClan.map(m => {
+                const ids = parsearArray(m.items_asignados);
+                const chips = ids.map(id => {
+                    const itemEncontrado = catalogo.find(it => String(it.id) === String(id) || String(it.archivo_id).toLowerCase() === String(id).toLowerCase());
+                    const nombre = itemEncontrado ? itemEncontrado.nombre : `Ítem #${id}`;
+                    const imgUrl = itemEncontrado ? `https://lh3.googleusercontent.com/d/${itemEncontrado.drive_id}` : '';
+                    return `
+                        <span class="item-chip">
+                            #${id} - ${nombre}
+                            ${imgUrl ? `<button onclick="mostrarPreviewImg('${imgUrl}')" class="text-xs hover:text-white">🖼️</button>` : ''}
+                        </span>
+                    `;
+                }).join('');
+
+                const botonesAccion = sesionAutorizada ? `
+                    <button onclick="editarMiembroPrompt(${m.id})" class="text-indigo-300 hover:text-white bg-indigo-950 border border-indigo-700/60 px-2 py-0.5 rounded text-xs transition">
+                        ✏️ Asignar Ítems
+                    </button>
+                    <button onclick="eliminarMiembro(${m.id}, '${m.nombre_pj}')" class="text-red-400 hover:text-white bg-red-950/80 border border-red-700/60 px-2 py-0.5 rounded text-xs transition">
+                        🗑️ Sacar
+                    </button>
+                ` : '<span class="text-gray-500 text-xs">Sin permisos</span>';
+
+                return `
+                    <tr>
+                        <td class="font-bold text-white text-sm">${m.nombre_pj}</td>
+                        <td><span class="badge-pj">${m.raza}</span></td>
+                        <td><div class="flex flex-wrap">${chips || '<span class="text-gray-500 text-xs">Sin ítems otorgados</span>'}</div></td>
+                        <td class="text-center space-x-1">${botonesAccion}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function guardarMiembroClan() {
+            if (!sesionAutorizada) {
+                return alert("Solo los usuarios autorizados (Pinion, tolkien, nasda) pueden agregar miembros.");
+            }
+            const nombre_pj = document.getElementById('clanPjNombre').value.trim();
+            const raza = document.getElementById('clanPjRaza').value;
+
+            if (!nombre_pj) return alert("Ingresá el nick del personaje.");
+
+            try {
+                const res = await fetch('/api/miembros', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre_pj, raza, items_asignados: [] })
+                });
+                if (res.ok) {
+                    document.getElementById('clanPjNombre').value = '';
+                    cargarMiembros();
+                } else {
+                    alert("Error al guardar miembro.");
+                }
+            } catch(e) {
+                alert("Error de conexión.");
+            }
+        }
+
+        async function eliminarMiembro(id, nombre) {
+            if (!sesionAutorizada) return alert("No autorizado.");
+            if (!confirm(`¿Eliminar a ${nombre} del listado de miembros del clan?`)) return;
+            try {
+                const res = await fetch('/api/miembros', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id, nombre_pj: nombre })
+                });
+                if (res.ok) {
+                    cargarMiembros();
+                    cargar();
+                }
+            } catch(e) {}
+        }
+
+        async function editarMiembroPrompt(id) {
+            if (!sesionAutorizada) return alert("No autorizado.");
+            const m = miembrosClan.find(x => x.id === id);
+            if (!m) return;
+            const actual = parsearArray(m.items_asignados).join(', ');
+            const nuevos = prompt(`IDs de ítems otorgados a ${m.nombre_pj} (separados por coma, ej: 1iAU8Va4, 260.png):`, actual);
+            if (nuevos === null) return;
+
+            const listaNuevos = nuevos.split(',').map(x => x.trim()).filter(Boolean);
+            try {
+                const res = await fetch('/api/miembros', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre_pj: m.nombre_pj, raza: m.raza, items_asignados: listaNuevos })
+                });
+                if (res.ok) {
+                    cargarMiembros();
+                    cargar();
+                }
+            } catch(e) {}
+        }
+
+        function importarArchivoExcel(e) {
+            if (!sesionAutorizada) {
+                alert("Solo los usuarios autorizados pueden importar planillas.");
+                return;
+            }
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const primeraHoja = workbook.SheetNames[0];
+                    const hoja = workbook.Sheets[primeraHoja];
+                    const filasJson = XLSX.utils.sheet_to_json(hoja);
+
+                    if (!filasJson || filasJson.length === 0) {
+                        return alert("La planilla de Excel está vacía.");
+                    }
+
+                    const filasNormalizadas = filasJson.map(f => {
+                        const nick = f.Nick || f.nick || f.PJ || f.pj || f.Nombre || f.nombre || '';
+                        const raza = f.Raza || f.raza || f.Clase || f.clase || 'Dark Knight';
+                        const items = f.Items || f.items || f.ItemsAsignados || f.Item || '';
+                        return { nick, raza, items };
+                    }).filter(f => f.nick);
+
+                    const res = await fetch('/api/miembros/importar', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filas: filasNormalizadas })
+                    });
+
+                    if (res.ok) {
+                        alert(`¡Importación exitosa! ${filasNormalizadas.length} miembros procesados.`);
+                        cargarMiembros();
+                        cargar();
+                    } else {
+                        alert("Error al importar miembros.");
+                    }
+                } catch(err) {
+                    alert("Error procesando el archivo de Excel: " + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            chequearSesion();
+            cargar();
+        });
+    </script>
+</body>
+</html>
