@@ -224,7 +224,6 @@
     </div>
 
     <script>
-        // Datos base instantáneos para garantizar renderizado inmediato
         const DATOS_FALLBACK = [
             {"id": 1, "archivo_id": "1kr-En", "nombre": "Excellent Vine Pants", "clases": ["Elf"], "opciones": ["Additional defense +30", "[Rare] Reflect damage +3%"], "bonus_excelente": ["Increases Agility +23", "Increases Energy +29"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": null},
             {"id": 2, "archivo_id": "1ruk-H", "nombre": "Excellent Bluewing Crossbow", "clases": ["Elf"], "opciones": ["Additional damage +30", "[Rare] Increases physical damage +7%", "[Epic] Critical damage rate +10%"], "bonus_excelente": ["Increases Agility +141", "Increases Energy +178"], "drive_id": "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK", "asignado_a": null},
@@ -514,7 +513,7 @@
                 const res = await fetch('/api/miembros', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nombre_pj: m.nombre_pj, raza: m.raza, items_asignados: listaNuevos })
+                    body: JSON.stringify({ nombre_pj, raza: m.raza, items_asignados: listaNuevos })
                 });
                 if (res.ok) cargarMiembros();
             } catch(e) {}
