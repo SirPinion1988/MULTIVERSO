@@ -96,7 +96,7 @@ def index():
 def vista_items():
     return render_template('items.html')
 
-# --- CONSULTA DIRECTA DE ITEMS (SIN PROCESAMIENTOS PESADOS) ---
+# --- API DE ITEMS ---
 @app.route('/api/items', methods=['GET', 'PUT'])
 def api_items():
     conn = get_db()
@@ -138,11 +138,10 @@ def api_items():
                 try: conn.close()
                 except Exception: pass
 
-        # Si la base de datos aún no tiene registros, sincroniza los archivos de Drive de inmediato
         if not items_formateados:
             items_formateados = sincronizar_drive_directo()
 
-        return jsonify(items_formateados)
+        return jsonify(items_formateados), 200
 
     if not usuario_es_autorizado():
         return jsonify({"error": "No autorizado"}), 403
@@ -162,7 +161,6 @@ def api_items():
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
 
-# --- SINCRONIZACIÓN AUTOMÁTICA DIRECTA DE METADATOS DE DRIVE ---
 def sincronizar_drive_directo():
     if not FOLDER_DRIVE_ID or not GOOGLE_API_KEY:
         return []
@@ -188,7 +186,7 @@ def sincronizar_drive_directo():
             else:
                 break
     except Exception as e:
-        print(f"Error listando Drive: {e}")
+        print(f"Error Drive: {e}")
 
     conn = get_db()
     items_retorno = []
@@ -237,8 +235,6 @@ def sincronizar_drive_directo():
             except Exception: pass
 
     if conn: conn.close()
-    
-    # Ordenar numéricamente del menor al mayor (del ID 2 en adelante)
     items_retorno.sort(key=lambda x: int(re.search(r'\d+', x['archivo_id']).group(0)) if re.search(r'\d+', x['archivo_id']) else 999999)
     return items_retorno
 
@@ -328,7 +324,6 @@ def api_miembros():
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
 
-# Importación masiva desde Excel
 @app.route('/api/miembros/importar', methods=['POST'])
 def importar_miembros_excel():
     if not usuario_es_autorizado():
@@ -451,4 +446,163 @@ def reset_boss():
                 try:
                     with conn.cursor() as cur:
                         cur.execute("UPDATE public.timers_bosses SET timers = %s WHERE server = %s;", 
-                                    (json.dumps(status
+                                    (json.dumps(status_timers.get(server, {})), server))
+                        conn.commit()
+                    conn.close()
+                except Exception:
+                    if conn: conn.close()
+
+        return jsonify({"status": "ok", "message": f"{boss} ocultado"}), 200
+    return jsonify({"error": "Datos inválidos"}), 400
+
+@app.route('/api/mapa_kill', methods=['POST'])
+def mapa_kill():
+    data = request.json or {}
+    server_num = str(data.get('server', '1'))
+    spot_id = str(data.get('spot_id'))
+
+    if not spot_id: return jsonify({"error": "Spot requerido"}), 400
+    if server_num not in status_mapas: status_mapas[server_num] = {}
+    status_mapas[server_num][spot_id] = int(time.time() * 1000)
+    guardar_json(MAPAS_FILE, status_mapas)
+    return jsonify({"status": "ok", "mapas": status_mapas}), 200
+
+@app.route('/api/mapa_reset', methods=['POST'])
+def mapa_reset():
+    data = request.json or {}
+    server_num = str(data.get('server', '1'))
+    spot_id = str(data.get('spot_id'))
+
+    if server_num in status_mapas and spot_id in status_mapas[server_num]:
+        del status_mapas[server_num][spot_id]
+        guardar_json(MAPAS_FILE, status_mapas)
+    return jsonify({"status": "ok", "mapas": status_mapas}), 200
+
+@app.route('/api/heartbeat', methods=['POST'])
+def registrar_heartbeat():
+    data = request.json or {}
+    server = data.get('server')
+    pc_id = data.get('pc_id', 'Desconocido')
+    pj_name = data.get('pj_name', 'Desconocido')
+
+    if server:
+        heartbeats[server] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        ultimas_pcs[server] = pc_id
+        ultimos_pjs[server] = pj_name
+        conn = get_db()
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        INSERT INTO public.timers_bosses (server, last_pc, last_pj, last_heartbeat)
+                        VALUES (%s, %s, %s, NOW())
+                        ON CONFLICT (server) DO UPDATE 
+                        SET last_pc = EXCLUDED.last_pc, last_pj = EXCLUDED.last_pj, last_heartbeat = NOW();
+                    """, (server, pc_id, pj_name))
+                    conn.commit()
+                conn.close()
+            except Exception:
+                if conn: conn.close()
+        return jsonify({"status": "ok"}), 200
+    return jsonify({"error": "Servidor requerido"}), 400
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json or {}
+    username_raw = data.get('username', '').strip()
+    password = data.get('password', '').strip()
+
+    if not username_raw or not password:
+        return jsonify({"error": "Completá usuario y contraseña"}), 400
+
+    username = username_raw.lower()
+
+    conn = get_db()
+    user_db = None
+    if conn:
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT username, password_hash, rol FROM public.usuarios WHERE LOWER(username) = %s;", (username,))
+                user_db = cur.fetchone()
+            conn.close()
+        except Exception:
+            if conn: conn.close()
+
+    if not user_db:
+        if username == 'pinion' and password == 'G1nt0n1c':
+            user_db = {'username': 'Pinion', 'password_hash': 'G1nt0n1c', 'rol': 'admin'}
+        elif username == 'tolkien' and password == 'tolkien123':
+            user_db = {'username': 'tolkien', 'password_hash': 'tolkien123', 'rol': 'encargado'}
+        elif username == 'nasda' and password == 'nasda123':
+            user_db = {'username': 'nasda', 'password_hash': 'nasda123', 'rol': 'encargado'}
+
+    if user_db:
+        stored_pass = user_db.get("password_hash", "")
+        es_valido = False
+        if stored_pass.startswith("scrypt:") or stored_pass.startswith("pbkdf2:"):
+            try: es_valido = check_password_hash(stored_pass, password)
+            except Exception: pass
+        else:
+            es_valido = (stored_pass == password)
+
+        if es_valido:
+            session['user'] = user_db.get('username', username_raw)
+            session['rol'] = user_db.get('rol', 'encargado')
+            return jsonify({
+                "status": "ok",
+                "user": session['user'],
+                "rol": session['rol']
+            }), 200
+
+    return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('index'))
+
+@app.route('/api/session')
+def api_session():
+    if 'user' in session:
+        return jsonify({
+            "logged_in": True,
+            "user": session['user'],
+            "rol": session.get('rol', 'encargado'),
+            "autorizado": usuario_es_autorizado()
+        })
+    return jsonify({"logged_in": False, "autorizado": False})
+
+@app.route('/api/donaciones', methods=['GET', 'POST'])
+def donaciones():
+    if request.method == 'GET':
+        return jsonify(donaciones_db)
+    if request.method == 'POST':
+        if 'user' not in session: return jsonify({"error": "No autorizado"}), 401
+        data = request.json or {}
+        pj_name = data.get('pj_name')
+        tipo_donacion = data.get('tipo_donacion')
+        cantidad = data.get('cantidad', 1)
+        if not pj_name or not tipo_donacion: return jsonify({"error": "Faltan datos"}), 400
+
+        nueva_donacion = {
+            "id": int(time.time() * 1000), "pj_name": pj_name, "tipo_donacion": tipo_donacion,
+            "cantidad": int(cantidad), "registrado_por": session['user'],
+            "fecha_registro": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        donaciones_db.insert(0, nueva_donacion)
+        guardar_json(DONACIONES_FILE, donaciones_db)
+
+        conn = get_db()
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("INSERT INTO public.donaciones (pj_name, tipo_donacion, cantidad, registrado_por) VALUES (%s, %s, %s, %s);", (pj_name, tipo_donacion, int(cantidad), session['user']))
+                    conn.commit()
+                conn.close()
+            except Exception:
+                if conn: conn.close()
+        return jsonify({"status": "ok", "donacion": nueva_donacion}), 201
+
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
