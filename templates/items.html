@@ -3,86 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚔️ MuDream Boss Timers - Multiverso ⚔️</title>
+    <title>🛡️ Catálogo de Armaduras & Clan - MuDream Multiverso</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { background-color: #0a0814; color: #e6e1ff; font-family: 'Segoe UI', system-ui, sans-serif; }
-        .grid-bosses { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
-
-        .map-wrapper {
-            position: relative;
-            width: 720px;
-            max-width: 95vw;
-            aspect-ratio: 1 / 1;
-            border: 2px solid #3b2d6b;
-            border-radius: 12px;
-            overflow: hidden;
-            background: #000;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
-        }
-        .map-bg { width: 100%; height: 100%; object-fit: contain; display: block; }
-
-        .spot-btn {
-            position: absolute;
-            transform: translate(-50%, -50%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            cursor: pointer;
-            z-index: 10;
-            user-select: none;
-        }
-        .spot-circle {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            border: 2px solid #747d8c;
-            background: rgba(116, 125, 140, 0.2);
-            transition: transform 0.15s, background 0.2s, border-color 0.2s;
-        }
-        .spot-btn:hover .spot-circle { transform: scale(1.2); }
-
-        .spot-timer {
-            margin-top: 4px;
-            background: rgba(10, 8, 20, 0.92);
-            border: 1px solid #3b2d6b;
-            padding: 2px 7px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: bold;
-            color: #ced6e0;
-            white-space: nowrap;
-            text-align: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.7);
-        }
-
-        .state-idle .spot-circle { border-color: #eccc68; background: rgba(236, 204, 104, 0.25); box-shadow: 0 0 6px #eccc68; }
-        .state-idle .spot-timer { color: #f1f2f6; border-color: #ffa502; background: rgba(255, 165, 2, 0.2); }
-
-        .state-waiting .spot-circle { border-color: #ff4757; background: rgba(255, 71, 87, 0.25); box-shadow: 0 0 6px #ff4757; }
-        .state-waiting .spot-timer { color: #ff6b81; border-color: #ff4757; }
-
-        .state-window .spot-circle {
-            border-color: #2ed573; background: rgba(46, 213, 115, 0.4);
-            box-shadow: 0 0 14px #2ed573;
-            animation: pulse 0.9s infinite alternate;
-        }
-        .state-window .spot-timer { color: #2ed573; border-color: #2ed573; background: rgba(46, 213, 115, 0.15); }
-
-        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.3); } }
-
-        /* Estilos de la tabla de ítems integrada */
+        
         .tabla-scroll-box {
-            height: 520px;
-            overflow-y: auto;
+            height: 540px !important;
+            overflow-y: scroll !important;
             border: 1px solid #3b2d6b;
             border-radius: 8px;
             background: #0d0a1a;
+            position: relative;
         }
-        .tabla-scroll-box::-webkit-scrollbar { width: 8px; }
-        .tabla-scroll-box::-webkit-scrollbar-track { background: #0d0a1a; }
-        .tabla-scroll-box::-webkit-scrollbar-thumb { background: #6d28d9; border-radius: 4px; }
+
+        .tabla-scroll-box::-webkit-scrollbar { width: 10px; }
+        .tabla-scroll-box::-webkit-scrollbar-track { background: #0d0a1a; border-left: 1px solid #2b214a; }
+        .tabla-scroll-box::-webkit-scrollbar-thumb { background: #6d28d9; border-radius: 5px; }
+        .tabla-scroll-box::-webkit-scrollbar-thumb:hover { background: #8b5cf6; }
 
         .tabla-items { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
         .tabla-items th { 
@@ -98,10 +37,10 @@
             z-index: 10; 
         }
         .tabla-items td { padding: 8px 12px; border-bottom: 1px solid #1f1838; vertical-align: middle; }
-        .tabla-items tr:hover { background: rgba(139, 92, 246, 0.08); }
+        .tabla-items tr:hover { background: rgba(139, 92, 246, 0.1); }
 
         .badge-pj { display: inline-block; padding: 1px 5px; border-radius: 4px; font-size: 10px; font-weight: 700; background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.4); color: #c4b5fd; margin-right: 2px; }
-        .badge-opt { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 4px; margin-bottom: 2px; }
+        .badge-opt { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 4px; margin-bottom: 3px; }
         .opt-dd { background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #fca5a5; }
         .opt-ref { background: rgba(234, 179, 8, 0.15); border: 1px solid #eab308; color: #fde047; }
         .opt-hp { background: rgba(34, 197, 94, 0.15); border: 1px solid #22c55e; color: #86efac; }
@@ -122,279 +61,166 @@
         }
     </style>
 </head>
-<body class="p-4 md:p-8 flex flex-col items-center relative">
+<body class="p-4 md:p-8 flex flex-col items-center">
 
-    <div id="toast-notificacion" class="fixed bottom-5 right-5 bg-purple-900 border border-purple-500 text-white px-4 py-3 rounded-xl shadow-2xl transition-all duration-300 transform translate-y-20 opacity-0 z-50 flex items-center gap-2 text-sm font-semibold">
-        <span id="toast-icono">⚠️</span>
-        <span id="toast-mensaje">Notificación</span>
-    </div>
-
-    <!-- CABECERA PRINCIPAL ÚNICA -->
-    <header class="w-full max-w-6xl mb-6 border-b border-purple-900/50 pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
+    <!-- CABECERA PRINCIPAL -->
+    <header class="w-full max-w-7xl mb-6 border-b border-purple-900/50 pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
-            <h1 class="text-3xl font-extrabold text-purple-400 drop-shadow">⚔️ MONITOR MUDREAM MULTIVERSO</h1>
-            <p class="text-xs text-purple-300">Control de Bosses, Timers, Mapas, Donaciones y Catálogo de Ítems en Tiempo Real</p>
+            <h1 class="text-3xl font-extrabold text-emerald-400 drop-shadow">🛡️ MULTIVERSO - ARMADURAS & CLAN</h1>
+            <p class="text-xs text-purple-300">Catálogo ordenado ascendentemente (desde el ID 2), sin armas</p>
         </div>
-        <div id="user-info-box" class="flex items-center gap-3 bg-[#141126] border border-purple-800/60 px-4 py-2 rounded-xl text-xs">
-            <span id="user-display" class="text-purple-300 font-bold">Invitado</span>
-            <span id="login-btn-container">
-                <button onclick="toggleLoginModal()" id="btn-login-trigger" class="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1 rounded font-bold transition">Ingresar</button>
+        <div class="flex items-center gap-3">
+            <span id="session-user-badge" class="text-xs text-purple-300 font-bold bg-[#141126] px-3 py-1.5 rounded-lg border border-purple-900">
+                Invitado
             </span>
+            <a href="/" class="bg-purple-900 hover:bg-purple-800 text-purple-200 border border-purple-600 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow">
+                ← Volver al Monitor
+            </a>
         </div>
     </header>
 
-    <!-- BOTONERA DE NAVEGACIÓN -->
-    <div class="flex flex-wrap space-x-2 mb-6 overflow-x-auto w-full max-w-6xl justify-center gap-2">
-        <button onclick="setVista('TODOS')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-purple-700 text-white" id="tab-TODOS">👁️ Vista General</button>
-        <button onclick="setVista('Server 1')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 1">Server 1</button>
-        <button onclick="setVista('Server 2')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 2">Server 2</button>
-        <button onclick="setVista('Server 3')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 3">Server 3</button>
-        <button onclick="setVista('Server 20')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 20">Server 20</button>
-        
-        <button onclick="setVista('MAPA_1')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-purple-300 border border-purple-900 hover:bg-purple-950" id="tab-MAPA_1">🗺️ Mapa S1</button>
-        <button onclick="setVista('MAPA_2')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-purple-300 border border-purple-900 hover:bg-purple-950" id="tab-MAPA_2">🗺️ Mapa S2</button>
-        <button onclick="setVista('MAPA_3')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-purple-300 border border-purple-900 hover:bg-purple-950" id="tab-MAPA_3">🗺️ Mapa S3</button>
-
-        <button onclick="setVista('ITEMS')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-emerald-950/80 border border-emerald-600 text-emerald-300 hover:bg-emerald-900" id="tab-ITEMS">🛡️ Ítems & Clan</button>
-
-        <button onclick="setVista('BOTS')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-BOTS">🤖 Bots Activos</button>
-        <button onclick="setVista('DONACIONES')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-yellow-900/80 border border-yellow-600 text-yellow-300 hover:bg-yellow-800" id="tab-DONACIONES">💎 Donaciones</button>
+    <!-- BOTONERA CENTRADA DE ACCESO -->
+    <div class="flex flex-wrap items-center justify-center gap-3 mb-6 w-full max-w-7xl">
+        <button onclick="cambiarSeccion('ITEMS')" id="btn-sec-items" class="bg-emerald-700 text-white px-5 py-2 rounded-lg text-sm font-bold transition shadow">
+            📋 Listado de Armaduras
+        </button>
+        <button onclick="cambiarSeccion('CLAN')" id="btn-sec-clan" class="bg-gray-800 text-gray-400 px-5 py-2 rounded-lg text-sm font-bold transition">
+            👥 Miembros del Clan
+        </button>
+        <button onclick="cargar(true)" class="bg-purple-700 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow flex items-center gap-1.5">
+            🔄 Actualizar Ahora
+        </button>
     </div>
 
-    <!-- Panel de Kill Manual -->
-    <div id="panel-kill-manual" class="w-full max-w-6xl bg-[#141126] border border-purple-800 rounded-xl p-4 mb-6 shadow-lg">
-        <h3 class="text-center font-bold text-purple-300 mb-3 text-sm uppercase tracking-wider">⚡ Cargar Kill Manual / Iniciar Boss</h3>
-        <div class="flex flex-wrap gap-3 justify-center items-center">
-            <select id="manualServer" class="bg-[#0d0a1a] border border-purple-900 text-white text-sm rounded-lg p-2.5 outline-none">
-                <option value="Server 1">Server 1</option>
-                <option value="Server 2">Server 2</option>
-                <option value="Server 3">Server 3</option>
-                <option value="Server 20">Server 20</option>
-            </select>
-            <select id="manualBoss" class="bg-[#0d0a1a] border border-purple-900 text-white text-sm rounded-lg p-2.5 outline-none"></select>
-            <button onclick="ejecutarKillForm()" class="bg-purple-700 hover:bg-purple-600 text-white font-bold text-sm px-5 py-2.5 rounded-lg transition">⚔️ Registrar Kill</button>
-        </div>
-    </div>
-
-    <!-- SECCIÓN DE TIMERS -->
-    <div id="seccion-timers" class="w-full max-w-6xl">
-        <div id="contenedor-bosses" class="grid-bosses">
-            <div class="text-gray-500 text-center col-span-full py-8">Cargando timers de bosses...</div>
-        </div>
-    </div>
-
-    <!-- SECCIÓN DE MAPAS -->
-    <div id="seccion-mapa" class="w-full max-w-6xl hidden flex flex-col items-center">
-        <div class="mb-4 text-center">
-            <h2 id="mapa-titulo" class="text-2xl font-bold text-purple-300">🗺️ Mapa de Bosses</h2>
-            <p class="text-xs text-purple-400 mt-1">Clic izquierdo: registrar muerte | Clic derecho: resetear spot</p>
-        </div>
-        <div class="map-wrapper">
-            <img src="mapa.jpg" alt="Mapa MU" class="map-bg">
-            <div class="spot-btn" style="left: 8.5%; top: 17%;" onclick="registrarMuerteMapa(1)" oncontextmenu="resetearSpotMapa(event, 1)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-1">Esperando</span></div>
-            <div class="spot-btn" style="left: 14.5%; top: 9.5%;" onclick="registrarMuerteMapa(2)" oncontextmenu="resetearSpotMapa(event, 2)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-2">Esperando</span></div>
-            <div class="spot-btn" style="left: 29.5%; top: 15.5%;" onclick="registrarMuerteMapa(3)" oncontextmenu="resetearSpotMapa(event, 3)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-3">Esperando</span></div>
-            <div class="spot-btn" style="left: 42.5%; top: 16%;" onclick="registrarMuerteMapa(4)" oncontextmenu="resetearSpotMapa(event, 4)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-4">Esperando</span></div>
-            <div class="spot-btn" style="left: 61.5%; top: 4.5%;" onclick="registrarMuerteMapa(5)" oncontextmenu="resetearSpotMapa(event, 5)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-5">Esperando</span></div>
-            <div class="spot-btn" style="left: 59.5%; top: 14%;" onclick="registrarMuerteMapa(6)" oncontextmenu="resetearSpotMapa(event, 6)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-6">Esperando</span></div>
-            <div class="spot-btn" style="left: 86.5%; top: 53%;" onclick="registrarMuerteMapa(7)" oncontextmenu="resetearSpotMapa(event, 7)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-7">Esperando</span></div>
-            <div class="spot-btn" style="left: 86.5%; top: 62.5%;" onclick="registrarMuerteMapa(8)" oncontextmenu="resetearSpotMapa(event, 8)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-8">Esperando</span></div>
-            <div class="spot-btn" style="left: 86.5%; top: 76%;" onclick="registrarMuerteMapa(9)" oncontextmenu="resetearSpotMapa(event, 9)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-9">Esperando</span></div>
-            <div class="spot-btn" style="left: 86.5%; top: 85%;" onclick="registrarMuerteMapa(10)" oncontextmenu="resetearSpotMapa(event, 10)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-10">Esperando</span></div>
-        </div>
-    </div>
-
-    <!-- SECCIÓN ÍTEMS & CLAN INTEGRADA (DIRECTA, SIN IFRAME NI RECUADROS EXTRA) -->
-    <div id="seccion-items" class="w-full max-w-6xl hidden space-y-4">
-        <!-- Sub-navegación centrada -->
-        <div class="flex justify-center items-center gap-3">
-            <button onclick="cambiarSubSeccionItems('LISTA')" id="btn-sub-lista" class="bg-emerald-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition shadow">
-                📋 Listado de Armaduras
-            </button>
-            <button onclick="cambiarSubSeccionItems('CLAN')" id="btn-sub-clan" class="bg-gray-800 text-gray-400 px-4 py-1.5 rounded-lg text-xs font-bold transition">
-                👥 Miembros del Clan
-            </button>
-            <button onclick="cargarItemsCatalogo(true)" class="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow flex items-center gap-1">
-                🔄 Actualizar Ahora
-            </button>
-        </div>
-
-        <!-- VISTA DE CATÁLOGO DE ARMADURAS -->
-        <div id="subvista-catalogo-armaduras" class="space-y-4">
-            <div class="bg-[#141126] border border-purple-900/60 p-4 rounded-xl space-y-3 shadow">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-xs uppercase text-purple-300 font-bold mb-1">Buscar por Clase / Raza (PJ):</label>
-                        <select id="filtroRaza" onchange="aplicarFiltrosItems()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded-lg text-xs outline-none">
-                            <option value="">Todas las Razas</option>
-                            <option value="Dark Knight">BK - Dark Knight</option>
-                            <option value="Dark Wizard">SM - Dark Wizard</option>
-                            <option value="Elf">ME - Fairy Elf</option>
-                            <option value="Magic Gladiator">MG - Magic Gladiator</option>
-                            <option value="Dark Lord">DL - Dark Lord</option>
-                            <option value="Summoner">SUM - Summoner</option>
-                            <option value="Rage Fighter">RF - Rage Fighter</option>
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-xs uppercase text-purple-300 font-bold mb-1">Buscar por Opción Principal:</label>
-                        <select id="filtroOpcion" onchange="aplicarFiltrosItems()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded-lg text-xs outline-none">
-                            <option value="">Todas las Opciones</option>
-                            <option value="damage decrease">DD (Damage Decrease)</option>
-                            <option value="reflect">REFLECT (Reflect Damage)</option>
-                            <option value="maximum life">HP (Increases Life)</option>
-                            <option value="maximum sd">SD (Increases SD)</option>
-                            <option value="critical damage">CRITICAL (Critical Damage)</option>
-                            <option value="excellent damage">EXC DMG (Excellent Damage)</option>
-                            <option value="zen drop">ZEN (Zen Drop Rate)</option>
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-xs uppercase text-purple-300 font-bold mb-1">Buscar por Nombre o ID:</label>
-                        <input type="text" id="filtroTexto" oninput="aplicarFiltrosItems()" placeholder="Ej. Sphinx, Scale, 260.png, Helm, Pants..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded-lg text-xs outline-none">
-                    </div>
+    <!-- SECCIÓN 1: LISTADO DE ARMADURAS -->
+    <div id="seccion-items-view" class="w-full max-w-7xl space-y-4">
+        <div class="bg-[#141126] border border-purple-900/60 p-4 rounded-xl space-y-3 shadow">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">Buscar por Clase / Raza (PJ):</label>
+                    <select id="filtroRaza" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded-lg text-xs outline-none">
+                        <option value="">Todas las Razas</option>
+                        <option value="Dark Knight">BK - Dark Knight</option>
+                        <option value="Dark Wizard">SM - Dark Wizard</option>
+                        <option value="Elf">ME - Fairy Elf</option>
+                        <option value="Magic Gladiator">MG - Magic Gladiator</option>
+                        <option value="Dark Lord">DL - Dark Lord</option>
+                        <option value="Summoner">SUM - Summoner</option>
+                        <option value="Rage Fighter">RF - Rage Fighter</option>
+                    </select>
                 </div>
-
-                <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-purple-900/30">
-                    <span class="text-[11px] text-gray-400 font-semibold mr-1">Filtros rápidos:</span>
-                    <button onclick="setFiltroRapido('damage decrease')" class="px-2.5 py-1 rounded bg-red-950 hover:bg-red-900 text-red-300 border border-red-700/60 text-xs font-bold transition">🛡️ DD</button>
-                    <button onclick="setFiltroRapido('reflect')" class="px-2.5 py-1 rounded bg-yellow-950 hover:bg-yellow-900 text-yellow-300 border border-yellow-700/60 text-xs font-bold transition">⚡ Reflect</button>
-                    <button onclick="setFiltroRapido('maximum life')" class="px-2.5 py-1 rounded bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-700/60 text-xs font-bold transition">❤️ HP</button>
-                    <button onclick="setFiltroRapido('maximum sd')" class="px-2.5 py-1 rounded bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/60 text-xs font-bold transition">🔷 SD</button>
-                    <button onclick="setFiltroRapido('critical damage')" class="px-2.5 py-1 rounded bg-indigo-950 hover:bg-indigo-900 text-indigo-300 border border-indigo-700/60 text-xs font-bold transition">🎯 Critical</button>
-                    <button onclick="setFiltroRapido('excellent damage')" class="px-2.5 py-1 rounded bg-purple-950 hover:bg-purple-900 text-purple-300 border border-purple-700/60 text-xs font-bold transition">💥 Exc Dmg</button>
-                    <button onclick="setFiltroRapido('zen drop')" class="px-2.5 py-1 rounded bg-amber-950 hover:bg-amber-900 text-amber-300 border border-amber-700/60 text-xs font-bold transition">💰 Zen</button>
-                    <button onclick="setFiltroRapido('')" class="px-2.5 py-1 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-bold transition">Limpiar</button>
-                    <span id="contador-armaduras" class="ml-auto text-xs text-purple-300 font-mono font-semibold">Cargando...</span>
+                
+                <div>
+                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">Buscar por Opción Principal:</label>
+                    <select id="filtroOpcion" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded-lg text-xs outline-none">
+                        <option value="">Todas las Opciones</option>
+                        <option value="damage decrease">DD (Damage Decrease)</option>
+                        <option value="reflect">REFLECT (Reflect Damage)</option>
+                        <option value="maximum life">HP (Increases Life)</option>
+                        <option value="maximum sd">SD (Increases SD)</option>
+                        <option value="critical damage">CRITICAL (Critical Damage)</option>
+                        <option value="excellent damage">EXC DMG (Excellent Damage)</option>
+                        <option value="zen drop">ZEN (Zen Drop Rate)</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">Buscar por Nombre o ID:</label>
+                    <input type="text" id="filtroTexto" oninput="aplicarFiltros()" placeholder="Ej. Sphinx, Scale, 260.png, Helm, Pants..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded-lg text-xs outline-none">
                 </div>
             </div>
 
-            <div class="tabla-scroll-box">
-                <table class="tabla-items">
-                    <thead>
-                        <tr>
-                            <th style="width: 50px; text-align: center;">Ver</th>
-                            <th style="width: 130px;">ID / Archivo</th>
-                            <th style="width: 230px;">Nombre del Ítem</th>
-                            <th style="width: 170px;">Clases que lo equipan</th>
-                            <th>Opciones Principales de Combate</th>
-                            <th style="width: 200px;">Exclusive Excellent Bonus</th>
-                            <th style="width: 160px; text-align: center;">Estado / Asignado</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-items-body">
-                        <tr><td colspan="7" class="text-center py-8 text-gray-500">Cargando catálogo...</td></tr>
-                    </tbody>
-                </table>
+            <!-- BOTONES RÁPIDOS SEGUROS -->
+            <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-purple-900/30">
+                <span class="text-[11px] text-gray-400 font-semibold mr-1">Filtros rápidos:</span>
+                <button onclick="setFiltroRapido('damage decrease')" class="px-2.5 py-1 rounded bg-red-950 hover:bg-red-900 text-red-300 border border-red-700/60 text-xs font-bold transition">🛡️ DD</button>
+                <button onclick="setFiltroRapido('reflect')" class="px-2.5 py-1 rounded bg-yellow-950 hover:bg-yellow-900 text-yellow-300 border border-yellow-700/60 text-xs font-bold transition">⚡ Reflect</button>
+                <button onclick="setFiltroRapido('maximum life')" class="px-2.5 py-1 rounded bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-700/60 text-xs font-bold transition">❤️ HP</button>
+                <button onclick="setFiltroRapido('maximum sd')" class="px-2.5 py-1 rounded bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/60 text-xs font-bold transition">🔷 SD</button>
+                <button onclick="setFiltroRapido('critical damage')" class="px-2.5 py-1 rounded bg-indigo-950 hover:bg-indigo-900 text-indigo-300 border border-indigo-700/60 text-xs font-bold transition">🎯 Critical</button>
+                <button onclick="setFiltroRapido('excellent damage')" class="px-2.5 py-1 rounded bg-purple-950 hover:bg-purple-900 text-purple-300 border border-purple-700/60 text-xs font-bold transition">💥 Exc Dmg</button>
+                <button onclick="setFiltroRapido('zen drop')" class="px-2.5 py-1 rounded bg-amber-950 hover:bg-amber-900 text-amber-300 border border-amber-700/60 text-xs font-bold transition">💰 Zen</button>
+                <button onclick="setFiltroRapido('')" class="px-2.5 py-1 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-bold transition">Limpiar</button>
+                <span id="contador-items" class="ml-auto text-xs text-purple-300 font-mono font-semibold">Cargando...</span>
             </div>
         </div>
 
-        <!-- VISTA DE MIEMBROS DEL CLAN -->
-        <div id="subvista-miembros-clan" class="space-y-4 hidden">
-            <div class="bg-[#141126] border border-indigo-700/60 p-4 rounded-xl shadow-lg flex flex-col md:flex-row justify-between items-center gap-4">
-                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end w-full flex-1">
-                    <div>
-                        <label class="block text-[11px] text-gray-300 font-semibold mb-1">NICK:</label>
-                        <input type="text" id="clanPjNombre" placeholder="Ej. PinionBK" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] text-gray-300 font-semibold mb-1">RAZA:</label>
-                        <select id="clanPjRaza" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs outline-none">
-                            <option value="Dark Knight">Dark Knight (BK)</option>
-                            <option value="Dark Wizard">Dark Wizard (SM)</option>
-                            <option value="Elf">Fairy Elf (ME)</option>
-                            <option value="Magic Gladiator">Magic Gladiator (MG)</option>
-                            <option value="Dark Lord">Dark Lord (DL)</option>
-                            <option value="Summoner">Summoner (SUM)</option>
-                            <option value="Rage Fighter">Rage Fighter (RF)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[11px] text-gray-300 font-semibold mb-1">ITEMS ASIGNADOS:</label>
-                        <input type="text" id="clanPjItems" placeholder="Ej. 260.png, 334.png" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs outline-none">
-                    </div>
-                    <div>
-                        <button onclick="guardarMiembroClan()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded text-xs transition shadow">
-                            ➕ Agregar Miembro
-                        </button>
-                    </div>
-                </div>
-
-                <div class="border-t md:border-t-0 md:border-l border-purple-900/60 pt-3 md:pt-0 md:pl-4 flex flex-col items-center">
-                    <label class="text-[11px] text-yellow-300 font-bold mb-1">📥 Importar desde Excel (.xlsx / .csv)</label>
-                    <input type="file" id="inputExcel" accept=".xlsx, .xls, .csv" onchange="importarArchivoExcel(event)" class="text-xs text-gray-400 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-yellow-700 file:text-white hover:file:bg-yellow-600 cursor-pointer">
-                    <span class="text-[10px] text-gray-500 mt-1">Columnas: Nick, Raza, Items</span>
-                </div>
-            </div>
-
-            <div class="tabla-scroll-box">
-                <table class="tabla-items">
-                    <thead>
-                        <tr>
-                            <th style="width: 170px;">Nick del PJ</th>
-                            <th style="width: 150px;">Raza / Clase</th>
-                            <th>Ítems Asignados</th>
-                            <th style="width: 150px; text-align: center;">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-clan-body">
-                        <tr><td colspan="4" class="text-center py-8 text-gray-500">Sin miembros registrados aún.</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bots -->
-    <div id="seccion-bots" class="w-full max-w-6xl hidden space-y-4">
-        <h2 class="text-xl font-bold text-purple-300 mb-4 border-b border-purple-800 pb-2">🤖 Conexión de Clientes y PCs de la Guild</h2>
-        <div id="contenedor-bots-lista" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-    </div>
-
-    <!-- Donaciones -->
-    <div id="seccion-donaciones" class="w-full max-w-6xl hidden space-y-6">
-        <div class="bg-[#141126] border border-yellow-600/50 rounded-xl p-6 shadow-lg">
-            <h2 class="text-xl font-bold text-yellow-400 mb-4">💎 Registrar Nueva Donación</h2>
-            <div class="flex flex-wrap gap-4 items-center">
-                <input type="text" id="donacionPj" placeholder="Nombre de PJ" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-48">
-                <select id="donacionTipo" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-48">
-                    <option value="Jewel of Bless">Jewel of Bless</option>
-                    <option value="Jewel of Soul">Jewel of Soul</option>
-                    <option value="Jewel of Life">Jewel of Life</option>
-                    <option value="Jewel of Creation">Jewel of Creation</option>
-                    <option value="Zen">Zen</option>
-                    <option value="VIP Points">VIP Points</option>
-                </select>
-                <input type="number" id="donacionCantidad" placeholder="Cantidad" value="1" min="1" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-32">
-                <button onclick="guardarDonacion()" class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold px-6 py-2.5 rounded-lg text-sm transition">💾 Registrar</button>
-            </div>
-        </div>
-        <div class="bg-[#141126] border border-purple-900 rounded-xl p-6 shadow-lg">
-            <table class="w-full text-left text-sm text-purple-200">
-                <thead class="bg-[#0d0a1a] text-purple-400 uppercase text-xs">
-                    <tr><th class="p-3">PJ</th><th class="p-3">Tipo</th><th class="p-3">Cantidad</th><th class="p-3">Registrado Por</th></tr>
+        <div class="tabla-scroll-box">
+            <table class="tabla-items">
+                <thead>
+                    <tr>
+                        <th style="width: 50px; text-align: center;">Ver</th>
+                        <th style="width: 130px;">ID / Archivo</th>
+                        <th style="width: 230px;">Nombre del Ítem</th>
+                        <th style="width: 170px;">Clases que lo equipan</th>
+                        <th>Opciones Principales de Combate</th>
+                        <th style="width: 200px;">Exclusive Excellent Bonus</th>
+                        <th style="width: 160px; text-align: center;">Estado / Asignado</th>
+                    </tr>
                 </thead>
-                <tbody id="tabla-donaciones-body"></tbody>
+                <tbody id="tabla-items-body">
+                    <tr><td colspan="7" class="text-center py-8 text-gray-500">Cargando catálogo...</td></tr>
+                </tbody>
             </table>
         </div>
     </div>
 
-    <!-- Login Modal -->
-    <div id="modal-login" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50">
-        <div class="bg-[#141126] border border-purple-600 p-6 rounded-xl w-80 text-center shadow-2xl">
-            <h3 class="text-lg font-bold text-purple-300 mb-4">🔐 Iniciar Sesión</h3>
-            <input type="text" id="loginUser" placeholder="Usuario (Pinion, tolkien, nasda)" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
-            <input type="password" id="loginPass" placeholder="Contraseña" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-4 text-sm outline-none">
-            <div class="flex gap-2">
-                <button onclick="ejecutarLogin()" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 rounded text-sm">Entrar</button>
-                <button onclick="toggleLoginModal()" class="w-full bg-gray-800 text-gray-400 font-bold py-2 rounded text-sm">Cancelar</button>
+    <!-- SECCIÓN 2: MIEMBROS DEL CLAN -->
+    <div id="seccion-clan-view" class="w-full max-w-7xl space-y-4 hidden">
+        <div class="bg-[#141126] border border-indigo-700/60 p-4 rounded-xl shadow-lg flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end w-full flex-1">
+                <div>
+                    <label class="block text-[11px] text-gray-300 font-semibold mb-1">NICK:</label>
+                    <input type="text" id="clanPjNombre" placeholder="Ej. PinionBK" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs outline-none">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-gray-300 font-semibold mb-1">RAZA:</label>
+                    <select id="clanPjRaza" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs outline-none">
+                        <option value="Dark Knight">Dark Knight (BK)</option>
+                        <option value="Dark Wizard">Dark Wizard (SM)</option>
+                        <option value="Elf">Fairy Elf (ME)</option>
+                        <option value="Magic Gladiator">Magic Gladiator (MG)</option>
+                        <option value="Dark Lord">Dark Lord (DL)</option>
+                        <option value="Summoner">Summoner (SUM)</option>
+                        <option value="Rage Fighter">Rage Fighter (RF)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] text-gray-300 font-semibold mb-1">ITEMS ASIGNADOS:</label>
+                    <input type="text" id="clanPjItems" placeholder="Ej. 260.png, 334.png" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs outline-none">
+                </div>
+                <div>
+                    <button onclick="guardarMiembroClan()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded text-xs transition shadow">
+                        ➕ Agregar Miembro
+                    </button>
+                </div>
             </div>
+
+            <div class="border-t md:border-t-0 md:border-l border-purple-900/60 pt-3 md:pt-0 md:pl-4 flex flex-col items-center">
+                <label class="text-[11px] text-yellow-300 font-bold mb-1">📥 Importar desde Excel (.xlsx / .csv)</label>
+                <input type="file" id="inputExcel" accept=".xlsx, .xls, .csv" onchange="importarArchivoExcel(event)" class="text-xs text-gray-400 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-yellow-700 file:text-white hover:file:bg-yellow-600 cursor-pointer">
+                <span class="text-[10px] text-gray-500 mt-1">Columnas: Nick, Raza, Items</span>
+            </div>
+        </div>
+
+        <div class="tabla-scroll-box">
+            <table class="tabla-items">
+                <thead>
+                    <tr>
+                        <th style="width: 170px;">Nick del PJ</th>
+                        <th style="width: 150px;">Raza / Clase</th>
+                        <th>Ítems Asignados</th>
+                        <th style="width: 150px; text-align: center;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-clan-body">
+                    <tr><td colspan="4" class="text-center py-8 text-gray-500">Sin miembros registrados aún.</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <!-- Modal de vista previa de imagen -->
+    <!-- MODAL DE VISTA PREVIA FLOTANTE -->
     <div id="modal-preview-img" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4" onclick="cerrarPreviewImg()">
         <div class="bg-[#141126] border border-purple-500 p-2 rounded-xl max-w-sm max-h-[85vh] flex flex-col items-center shadow-2xl" onclick="event.stopPropagation()">
             <img id="preview-img-tag" src="" alt="Vista Previa" class="max-h-[75vh] object-contain rounded-lg">
@@ -403,38 +229,51 @@
     </div>
 
     <script>
-        let modoVista = 'TODOS';
-        let servidorMapaActivo = 1;
-        let estadoWeb = { timers: {}, ocultos: [], heartbeats: {} };
-        let estaLogueado = false;
-        let esAdminAutorizado = false;
+        let catalogo = [];
+        let miembrosClan = [];
+        let sesionAutorizada = false;
 
-        let catalogoArmaduras = [];
-        let listaMiembrosClan = [];
-
-        const BOSSES_FIJOS = {
-            "Server 1": ["Muggron", "Dreadhorn", "Moltragon", "Borgar", "Kharzul", "Vescrya"],
-            "Server 2": ["Muggron", "Dreadhorn", "Moltragon", "Borgar", "Kharzul", "Vescrya"],
-            "Server 3": ["Muggron", "Dreadhorn", "Moltragon", "Borgar", "Kharzul", "Vescrya"],
-            "Server 20": ["Muggron Barracks", "Muggron Crywolf", "Kharzul", "Vescrya"]
-        };
-        const COOLDOWNS_LOCAL = {
-            "Muggron": 180, "Dreadhorn": 60, "Moltragon": 60, "Borgar": 120,
-            "Kharzul": 420, "Vescrya": 420, "Muggron Barracks": 180, "Muggron Crywolf": 180,
-            "Yellow Goblin": 600, "Blue Goblin": 600, "Red Goblin": 600,
-            "Red Dragon": 360, "Santa": 360, "White Wizard": 360, "Skeleton King": 360
-        };
-
-        const ARMAS_DESCARTADAS = ["sword", "blade", "staff", "crossbow", "bow", "stick", "book", "claw", "scepter", "mace", "morning star", "axe", "spear", "dread", "two-hand"];
+        const ARMAS = ["sword", "blade", "staff", "crossbow", "bow", "stick", "book", "claw", "scepter", "mace", "morning star", "axe", "spear", "dread", "two-hand"];
 
         function esSoloArmadura(item) {
             const nom = String(item.nombre || '').toLowerCase();
-            return !ARMAS_DESCARTADAS.some(w => nom.includes(w));
+            return !ARMAS.some(w => nom.includes(w));
         }
 
         function extraerNumeroArchivo(item) {
             const match = String(item.archivo_id || item.id).match(/\d+/);
             return match ? parseInt(match[0], 10) : 999999;
+        }
+
+        async function chequearSesion() {
+            try {
+                const res = await fetch('/api/session');
+                const data = await res.json();
+                if (data.logged_in) {
+                    sesionAutorizada = data.autorizado;
+                    document.getElementById('session-user-badge').innerHTML = `👤 <strong>${data.user}</strong> (${data.rol})`;
+                }
+            } catch(e) {}
+        }
+
+        function cambiarSeccion(sec) {
+            const vItems = document.getElementById('seccion-items-view');
+            const vClan = document.getElementById('seccion-clan-view');
+            const bItems = document.getElementById('btn-sec-items');
+            const bClan = document.getElementById('btn-sec-clan');
+
+            if (sec === 'ITEMS') {
+                vItems.classList.remove('hidden');
+                vClan.classList.add('hidden');
+                bItems.className = "bg-emerald-700 text-white px-5 py-2 rounded-lg text-sm font-bold transition shadow";
+                bClan.className = "bg-gray-800 text-gray-400 px-5 py-2 rounded-lg text-sm font-bold transition";
+            } else {
+                vItems.classList.add('hidden');
+                vClan.classList.remove('hidden');
+                bClan.className = "bg-indigo-700 text-white px-5 py-2 rounded-lg text-sm font-bold transition shadow";
+                bItems.className = "bg-gray-800 text-gray-400 px-5 py-2 rounded-lg text-sm font-bold transition";
+                cargarMiembros();
+            }
         }
 
         function parsearArray(val) {
@@ -450,175 +289,43 @@
             return [];
         }
 
-        function setVista(vista) {
-            modoVista = vista;
-            document.querySelectorAll('.btn-tab').forEach(b => b.className = "btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400");
-            const activeTab = document.getElementById(`tab-${vista}`);
-            if (activeTab) activeTab.className = "btn-tab px-4 py-2 rounded-lg font-bold bg-purple-700 text-white";
-
-            document.getElementById('seccion-timers').classList.add('hidden');
-            document.getElementById('seccion-mapa').classList.add('hidden');
-            document.getElementById('seccion-items').classList.add('hidden');
-            document.getElementById('seccion-bots').classList.add('hidden');
-            document.getElementById('seccion-donaciones').classList.add('hidden');
-            document.getElementById('panel-kill-manual').classList.add('hidden');
-
-            if (vista === 'ITEMS') {
-                document.getElementById('seccion-items').classList.remove('hidden');
-                cargarItemsCatalogo();
-            } else if (vista === 'DONACIONES') {
-                document.getElementById('seccion-donaciones').classList.remove('hidden');
-                cargarDonaciones();
-            } else if (vista === 'BOTS') {
-                document.getElementById('seccion-bots').classList.remove('hidden');
-            } else if (vista.startsWith('MAPA_')) {
-                servidorMapaActivo = parseInt(vista.split('_')[1]);
-                document.getElementById('mapa-titulo').textContent = `🗺️ Mapa Server ${servidorMapaActivo}`;
-                document.getElementById('seccion-mapa').classList.remove('hidden');
-            } else {
-                document.getElementById('seccion-timers').classList.remove('hidden');
-                document.getElementById('panel-kill-manual').classList.remove('hidden');
-                renderizarUI();
-            }
+        function setFiltroRapido(opcion) {
+            document.getElementById('filtroOpcion').value = opcion;
+            aplicarFiltros();
         }
 
-        function cambiarSubSeccionItems(sub) {
-            const vLista = document.getElementById('subvista-catalogo-armaduras');
-            const vClan = document.getElementById('subvista-miembros-clan');
-            const bLista = document.getElementById('btn-sub-lista');
-            const bClan = document.getElementById('btn-sub-clan');
-
-            if (sub === 'LISTA') {
-                vLista.classList.remove('hidden');
-                vClan.classList.add('hidden');
-                bLista.className = "bg-emerald-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition shadow";
-                bClan.className = "bg-gray-800 text-gray-400 px-4 py-1.5 rounded-lg text-xs font-bold transition";
-            } else {
-                vLista.classList.add('hidden');
-                vClan.classList.remove('hidden');
-                bClan.className = "bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition shadow";
-                bLista.className = "bg-gray-800 text-gray-400 px-4 py-1.5 rounded-lg text-xs font-bold transition";
-                cargarMiembrosClan();
-            }
+        function mostrarPreviewImg(url) {
+            document.getElementById('preview-img-tag').src = url;
+            document.getElementById('modal-preview-img').classList.remove('hidden');
         }
 
-        async function verificarSesion() {
-            try {
-                const res = await fetch('/api/session');
-                const data = await res.json();
-                estaLogueado = data.logged_in;
-                esAdminAutorizado = data.autorizado;
-                if (data.logged_in) {
-                    document.getElementById('user-display').innerHTML = `👤 <strong>${data.user}</strong> (${data.rol})`;
-                    document.getElementById('login-btn-container').innerHTML = `<a href="/logout" class="bg-red-700 px-3 py-1 rounded font-bold">Salir</a>`;
-                }
-            } catch (e) {}
+        function cerrarPreviewImg() {
+            document.getElementById('modal-preview-img').classList.add('hidden');
         }
 
-        function toggleLoginModal() { document.getElementById('modal-login').classList.toggle('hidden'); }
-
-        async function ejecutarLogin() {
-            const username = document.getElementById('loginUser').value;
-            const password = document.getElementById('loginPass').value;
-            const res = await fetch('/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            if (res.ok) location.reload();
-            else alert("Usuario o contraseña incorrectos.");
-        }
-
-        async function cargarDatos() {
-            try {
-                const res = await fetch('/api/status_timers');
-                if (res.ok) {
-                    estadoWeb = await res.json();
-                    if (!modoVista.startsWith('MAPA_') && modoVista !== 'DONACIONES' && modoVista !== 'ITEMS') {
-                        renderizarUI();
-                    }
-                }
-            } catch (e) {}
-        }
-
-        function renderizarUI() {
-            const c = document.getElementById('contenedor-bosses');
-            c.innerHTML = '';
-            const ahoraUnix = Math.floor(Date.now() / 1000);
-            const servers = modoVista === 'TODOS' ? ["Server 1", "Server 2", "Server 3", "Server 20"] : [modoVista];
-            servers.forEach(svr => {
-                const timers = (estadoWeb.timers || {})[svr] || {};
-                (BOSSES_FIJOS[svr] || []).forEach(boss => {
-                    const k = timers[boss];
-                    const cd = (COOLDOWNS_LOCAL[boss] || 60) * 60;
-                    let txt = "DISPONIBLE";
-                    let bg = "bg-purple-950/40 border-purple-700";
-                    if (k && ahoraUnix < k + cd) {
-                        txt = `Respawn en: ${Math.floor((k + cd - ahoraUnix)/60)}m`;
-                        bg = "bg-red-950/70 border-red-500";
-                    }
-                    c.innerHTML += `
-                        <div class="card p-4 rounded-xl ${bg} border shadow text-center">
-                            <span class="text-[10px] font-bold text-purple-300">${svr}</span>
-                            <h3 class="font-bold text-white text-base my-1">${boss}</h3>
-                            <div class="text-sm font-mono font-bold">${txt}</div>
-                        </div>
-                    `;
-                });
-            });
-        }
-
-        function poblarSelector() {
-            const select = document.getElementById('manualBoss');
-            if (select.children.length > 0) return;
-            Object.keys(COOLDOWNS_LOCAL).forEach(b => {
-                let opt = document.createElement('option');
-                opt.value = b;
-                opt.textContent = `${b} (${COOLDOWNS_LOCAL[b]}m)`;
-                select.appendChild(opt);
-            });
-        }
-
-        async function ejecutarKillForm() {
-            const svr = document.getElementById('manualServer').value;
-            const boss = document.getElementById('manualBoss').value;
-            await fetch('/api/kill', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ server: svr, boss: boss })
-            });
-            cargarDatos();
-        }
-
-        /* --- FUNCIONES DEL CATÁLOGO DE ARMADURAS --- */
-        async function cargarItemsCatalogo(mostrarAlerta = false) {
+        async function cargar(mostrarNotificacion = false) {
             try {
                 const res = await fetch('/api/items');
                 if (res.ok) {
                     const data = await res.json();
-                    catalogoArmaduras = (data || [])
+                    catalogo = (data || [])
                         .filter(esSoloArmadura)
                         .sort((a, b) => extraerNumeroArchivo(a) - extraerNumeroArchivo(b));
                 }
             } catch (e) {
                 console.warn("Fallo cargando armaduras:", e);
             }
-            aplicarFiltrosItems();
-            if (mostrarAlerta) alert("Catálogo sincronizado.");
+            aplicarFiltros();
+            if (mostrarNotificacion) alert("Catálogo sincronizado.");
         }
 
-        function setFiltroRapido(opcion) {
-            document.getElementById('filtroOpcion').value = opcion;
-            aplicarFiltrosItems();
-        }
-
-        function renderizarTablaArmaduras(items) {
+        function renderizarTabla(items) {
             const tbody = document.getElementById('tabla-items-body');
-            const cont = document.getElementById('contador-armaduras');
+            const cont = document.getElementById('contador-items');
             if (cont) cont.innerText = `${items.length} armadura(s) en lista`;
 
             if (!items || items.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-500">No hay armaduras para mostrar con los filtros aplicados.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-500">No hay armaduras para mostrar.</td></tr>';
                 return;
             }
 
@@ -647,7 +354,7 @@
                 let asignadoHTML = '<span class="text-gray-600 text-xs font-semibold">Disponible</span>';
                 if (item.asignado_a) {
                     asignadoHTML = `<span class="bg-indigo-950 border border-indigo-500 text-indigo-200 px-2.5 py-1 rounded-md text-xs font-extrabold cursor-pointer" onclick="cambiarAsignacionItem(${item.id})">Asignado a: <strong>${item.asignado_a}</strong></span>`;
-                } else if (esAdminAutorizado) {
+                } else if (sesionAutorizada) {
                     asignadoHTML = `<button onclick="cambiarAsignacionItem(${item.id})" class="text-gray-400 hover:text-white bg-gray-800 border border-gray-700 px-2 py-0.5 rounded text-xs">Asignar</button>`;
                 }
 
@@ -673,12 +380,12 @@
             }).join('');
         }
 
-        function aplicarFiltrosItems() {
+        function aplicarFiltros() {
             const raza = (document.getElementById('filtroRaza').value || '').toLowerCase();
             const opcion = (document.getElementById('filtroOpcion').value || '').toLowerCase();
             const busqueda = (document.getElementById('filtroTexto').value || '').toLowerCase();
 
-            const filtrados = catalogoArmaduras.filter(item => {
+            const filtrados = catalogo.filter(item => {
                 const clasesLista = parsearArray(item.clases);
                 const opcionesLista = parsearArray(item.opciones);
 
@@ -706,14 +413,14 @@
                 return matchRaza && matchOpcion && matchTexto;
             });
 
-            renderizarTablaArmaduras(filtrados);
+            renderizarTabla(filtrados);
         }
 
         async function cambiarAsignacionItem(id) {
-            if (!esAdminAutorizado) {
+            if (!sesionAutorizada) {
                 return alert("Solo los usuarios autorizados (Pinion, tolkien, nasda) pueden asignar ítems.");
             }
-            const item = catalogoArmaduras.find(x => x.id === id);
+            const item = catalogo.find(x => x.id === id);
             if (!item) return;
             const nuevo = prompt(`Asignar ${item.nombre} (#${item.archivo_id}) a qué miembro del clan? (Dejar vacío para desasignar):`, item.asignado_a || '');
             if (nuevo === null) return;
@@ -727,35 +434,34 @@
                 });
                 if (res.ok) {
                     item.asignado_a = val;
-                    aplicarFiltrosItems();
+                    aplicarFiltros();
                 } else {
                     alert("Error guardando asignación.");
                 }
             } catch(e) {}
         }
 
-        /* --- FUNCIONES DE MIEMBROS DEL CLAN --- */
-        async function cargarMiembrosClan() {
+        async function cargarMiembros() {
             try {
                 const res = await fetch('/api/miembros');
                 if (res.ok) {
-                    listaMiembrosClan = await res.json();
-                    renderizarTablaMiembros();
+                    miembrosClan = await res.json();
+                    renderizarMiembros();
                 }
             } catch(e) {}
         }
 
-        function renderizarTablaMiembros() {
+        function renderizarMiembros() {
             const tbody = document.getElementById('tabla-clan-body');
-            if (!listaMiembrosClan || listaMiembrosClan.length === 0) {
+            if (!miembrosClan || miembrosClan.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-gray-500">Sin miembros registrados aún.</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = listaMiembrosClan.map(m => {
+            tbody.innerHTML = miembrosClan.map(m => {
                 const ids = parsearArray(m.items_asignados);
                 const chips = ids.map(id => {
-                    const itemEncontrado = catalogoArmaduras.find(it => String(it.id) === String(id) || String(it.archivo_id).toLowerCase() === String(id).toLowerCase());
+                    const itemEncontrado = catalogo.find(it => String(it.id) === String(id) || String(it.archivo_id).toLowerCase() === String(id).toLowerCase());
                     const nombre = itemEncontrado ? itemEncontrado.nombre : `Ítem #${id}`;
                     const imgUrl = itemEncontrado ? `https://lh3.googleusercontent.com/d/${itemEncontrado.drive_id}` : '';
                     return `
@@ -766,7 +472,7 @@
                     `;
                 }).join('');
 
-                const botonesAccion = esAdminAutorizado ? `
+                const botonesAccion = sesionAutorizada ? `
                     <button onclick="editarMiembroPrompt(${m.id})" class="text-indigo-300 hover:text-white bg-indigo-950 border border-indigo-700/60 px-2 py-0.5 rounded text-xs transition">
                         ✏️ Asignar Ítems
                     </button>
@@ -787,7 +493,7 @@
         }
 
         async function guardarMiembroClan() {
-            if (!esAdminAutorizado) {
+            if (!sesionAutorizada) {
                 return alert("Solo los usuarios autorizados (Pinion, tolkien, nasda) pueden agregar miembros.");
             }
             const nombre_pj = document.getElementById('clanPjNombre').value.trim();
@@ -806,8 +512,8 @@
                 if (res.ok) {
                     document.getElementById('clanPjNombre').value = '';
                     document.getElementById('clanPjItems').value = '';
-                    cargarMiembrosClan();
-                    cargarItemsCatalogo();
+                    cargarMiembros();
+                    cargar();
                 } else {
                     alert("Error al guardar miembro.");
                 }
@@ -817,7 +523,7 @@
         }
 
         async function eliminarMiembro(id, nombre) {
-            if (!esAdminAutorizado) return alert("No autorizado.");
+            if (!sesionAutorizada) return alert("No autorizado.");
             if (!confirm(`¿Eliminar a ${nombre} del listado de miembros del clan?`)) return;
             try {
                 const res = await fetch('/api/miembros', {
@@ -826,15 +532,15 @@
                     body: JSON.stringify({ id: id, nombre_pj: nombre })
                 });
                 if (res.ok) {
-                    cargarMiembrosClan();
-                    cargarItemsCatalogo();
+                    cargarMiembros();
+                    cargar();
                 }
             } catch(e) {}
         }
 
         async function editarMiembroPrompt(id) {
-            if (!esAdminAutorizado) return alert("No autorizado.");
-            const m = listaMiembrosClan.find(x => x.id === id);
+            if (!sesionAutorizada) return alert("No autorizado.");
+            const m = miembrosClan.find(x => x.id === id);
             if (!m) return;
             const actual = parsearArray(m.items_asignados).join(', ');
             const nuevos = prompt(`IDs de ítems otorgados a ${m.nombre_pj} (separados por coma, ej: 260.png, 334.png):`, actual);
@@ -848,14 +554,14 @@
                     body: JSON.stringify({ nombre_pj: m.nombre_pj, raza: m.raza, items_asignados: listaNuevos })
                 });
                 if (res.ok) {
-                    cargarMiembrosClan();
-                    cargarItemsCatalogo();
+                    cargarMiembros();
+                    cargar();
                 }
             } catch(e) {}
         }
 
         function importarArchivoExcel(e) {
-            if (!esAdminAutorizado) {
+            if (!sesionAutorizada) {
                 alert("Solo los usuarios autorizados pueden importar planillas.");
                 return;
             }
@@ -890,8 +596,8 @@
 
                     if (res.ok) {
                         alert(`¡Importación exitosa! ${filasNormalizadas.length} miembros procesados.`);
-                        cargarMiembrosClan();
-                        cargarItemsCatalogo();
+                        cargarMiembros();
+                        cargar();
                     } else {
                         alert("Error al importar miembros.");
                     }
@@ -902,51 +608,10 @@
             reader.readAsArrayBuffer(file);
         }
 
-        /* --- VISOR DE IMÁGENES FLOTANTE --- */
-        function mostrarPreviewImg(url) {
-            document.getElementById('preview-img-tag').src = url;
-            document.getElementById('modal-preview-img').classList.remove('hidden');
-        }
-
-        function cerrarPreviewImg() {
-            document.getElementById('modal-preview-img').classList.add('hidden');
-        }
-
-        /* --- DONACIONES --- */
-        async function cargarDonaciones() {
-            const res = await fetch('/api/donaciones');
-            if (res.ok) {
-                const data = await res.json();
-                const tbody = document.getElementById('tabla-donaciones-body');
-                tbody.innerHTML = data.map(d => `
-                    <tr class="border-b border-purple-900/40">
-                        <td class="p-3 font-bold text-white">${d.pj_name}</td>
-                        <td class="p-3 text-yellow-300">${d.tipo_donacion}</td>
-                        <td class="p-3">${d.cantidad}</td>
-                        <td class="p-3 text-purple-400">${d.registrado_por}</td>
-                    </tr>
-                `).join('');
-            }
-        }
-
-        async function guardarDonacion() {
-            const pj = document.getElementById('donacionPj').value;
-            const tipo = document.getElementById('donacionTipo').value;
-            const cant = document.getElementById('donacionCantidad').value;
-            await fetch('/api/donaciones', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pj_name: pj, tipo_donacion: tipo, cantidad: cant })
-            });
-            document.getElementById('donacionPj').value = '';
-            cargarDonaciones();
-        }
-
-        // Inicialización
-        verificarSesion();
-        poblarSelector();
-        cargarDatos();
-        setInterval(cargarDatos, 3000);
+        document.addEventListener('DOMContentLoaded', () => {
+            chequearSesion();
+            cargar();
+        });
     </script>
 </body>
 </html>
