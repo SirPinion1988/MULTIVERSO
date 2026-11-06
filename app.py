@@ -85,10 +85,73 @@ def usuario_es_autorizado():
     if 'user' not in session: return False
     return session['user'].lower() in ['pinion', 'tolkien', 'nasda']
 
-def es_solo_armadura(nombre, archivo_id):
-    texto = f"{nombre} {archivo_id}".lower()
-    return not any(w in texto for w in PALABRAS_ARMAS)
+# --- OCR REMOTO EN LA NUBE CON GOOGLE VISION (SIN INSTALAR LIBRERÍAS EN RENDER) ---
+def leer_texto_imagen_vision(drive_id):
+    """Descarga la imagen del Drive y le pide a Google Cloud Vision que extraiga todo el texto."""
+    if not GOOGLE_API_KEY:
+        return ""
+    try:
+        img_url = f"https://drive.google.com/uc?export=download&id={drive_id}"
+        r_img = requests.get(img_url, timeout=5)
+        if r_img.status_code != 200:
+            return ""
 
+        import base64
+        img_b64 = base64.b64encode(r_img.content).decode('utf-8')
+
+        payload = {
+            "requests": [{
+                "image": {"content": img_b64},
+                "features": [{"type": "TEXT_DETECTION", "maxResults": 1}]
+            }]
+        }
+
+        url_vision = f"https://vision.googleapis.com/v1/images:annotate?key={GOOGLE_API_KEY}"
+        res = requests.post(url_vision, json=payload, timeout=6)
+        if res.status_code == 200:
+            data = res.json()
+            respuestas = data.get("responses", [])
+            if respuestas and "fullTextAnnotation" in respuestas[0]:
+                return respuestas[0]["fullTextAnnotation"].get("text", "")
+    except Exception as e:
+        print(f"Error procesando OCR Vision: {e}")
+    return ""
+
+def procesar_texto_mu(texto_completo, nombre_archivo):
+    """Parsea las líneas del texto extraído por Google Vision para MU Online."""
+    lineas = [l.strip() for l in texto_completo.split('\n') if l.strip()]
+    nombre_item = f"Item {nombre_archivo}"
+    clases = []
+    opciones = []
+    bonus = []
+    es_bonus = False
+
+    for l in lineas:
+        l_lower = l.lower()
+        if "exclusive excellent bonus" in l_lower:
+            es_bonus = True
+            continue
+
+        if "excellent" in l_lower and nombre_item.startswith("Item"):
+            nombre_item = l
+            continue
+
+        if "can be equipped by" in l_lower:
+            clase = l.split("by")[-1].strip()
+            if clase and clase not in clases:
+                clases.append(clase)
+            continue
+
+        if es_bonus:
+            if "increases" in l_lower or "+" in l:
+                bonus.append(l)
+        else:
+            if any(opt in l_lower for opt in ["damage", "defense", "reflect", "life", "sd", "rate", "luck", "speed"]):
+                opciones.append(l)
+
+    return nombre_item, clases, opciones, bonus
+
+# --- SINCRONIZACIÓN AUTOMÁTICA TOTAL DE DRIVE ---
 def sincronizar_drive_continuo():
     global items_mu_db
     if not FOLDER_DRIVE_ID or not GOOGLE_API_KEY: return
@@ -114,7 +177,7 @@ def sincronizar_drive_continuo():
             else:
                 break
     except Exception as e:
-        print(f"Error API Drive: {e}")
+        print(f"Error listando Drive: {e}")
 
     conn = get_db()
     existentes_ids = set()
@@ -128,22 +191,28 @@ def sincronizar_drive_continuo():
     nuevos = 0
     for arch in archivos_detectados:
         fid = arch['id']
+        fname = arch['name']
         if fid not in existentes_ids:
-            nombre_limpio = re.sub(r'\.[a-zA-Z0-9]+$', '', arch['name']).replace('_', ' ')
-            if not nombre_limpio or nombre_limpio.isdigit():
-                nombre_limpio = f"Item #{nombre_limpio}"
+            # 1. Leer el texto de la imagen de forma automática
+            texto_ocr = leer_texto_imagen_vision(fid)
+            nom_item, clases_item, opt_item, bonus_item = procesar_texto_mu(texto_ocr, fname)
 
-            if not es_solo_armadura(nombre_limpio, arch['name']):
+            # 2. Descartar armas automáticamente
+            es_arma = any(w in nom_item.lower() for w in PALABRAS_ARMAS)
+            if es_arma:
                 continue
 
+            if not clases_item:
+                clases_item = ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"]
+
             nuevo_item = {
-                "archivo_id": arch['name'],
-                "nombre": nombre_limpio,
+                "archivo_id": fname,
+                "nombre": nom_item,
                 "tipo": "Armor",
                 "base_score": 0, "defense": 0, "durability": "-",
-                "clases": ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"],
-                "opciones": ["[Auto] Captura sincronizada de Drive"],
-                "bonus_excelente": [],
+                "clases": clases_item,
+                "opciones": opt_item,
+                "bonus_excelente": bonus_item,
                 "drive_id": fid,
                 "asignado_a": None
             }
@@ -179,10 +248,15 @@ def obtener_todos_items():
     if conn:
         try:
             with conn.cursor() as cur:
+                # Ordenamiento numérico del ID 2 en adelante
                 cur.execute("""
                     SELECT id, archivo_id, nombre, tipo, base_score, defense, durability,
                            clases, opciones, bonus_excelente, drive_id, asignado_a
                     FROM public.items_mu
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM unnest(ARRAY['sword', 'blade', 'staff', 'crossbow', 'bow', 'stick', 'book', 'claw', 'scepter', 'mace', 'morning star', 'axe', 'spear', 'dread', 'two-hand']) AS w
+                        WHERE LOWER(nombre) LIKE '%%' || w || '%%'
+                    )
                     ORDER BY 
                         NULLIF(regexp_replace(archivo_id, '\D', '', 'g'), '')::numeric ASC NULLS LAST,
                         id ASC;
@@ -190,15 +264,10 @@ def obtener_todos_items():
                 filas = cur.fetchall()
                 items_formateados = []
                 for r in filas:
-                    nom = r.get('nombre') or 'Sin Nombre'
-                    arch = r.get('archivo_id') or str(r['id'])
-                    if not es_solo_armadura(nom, arch):
-                        continue
-
                     items_formateados.append({
                         "id": r['id'],
-                        "archivo_id": arch,
-                        "nombre": nom,
+                        "archivo_id": r.get('archivo_id') or str(r['id']),
+                        "nombre": r.get('nombre') or 'Sin Nombre',
                         "tipo": r.get('tipo') or 'Armor',
                         "base_score": r.get('base_score') or 0,
                         "defense": r.get('defense') or 0,
@@ -225,6 +294,7 @@ def index():
 def vista_items():
     return render_template('items.html')
 
+# --- API DE ITEMS ---
 @app.route('/api/items', methods=['GET', 'PUT'])
 def api_items():
     global items_mu_db
@@ -233,7 +303,7 @@ def api_items():
         return jsonify(obtener_todos_items())
 
     if not usuario_es_autorizado():
-        return jsonify({"error": "No autorizado."}), 403
+        return jsonify({"error": "No autorizado. Inicia sesión como administrador."}), 403
 
     conn = get_db()
     if request.method == 'PUT':
@@ -255,6 +325,7 @@ def api_items():
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
 
+# --- API DE MIEMBROS DEL CLAN ---
 @app.route('/api/miembros', methods=['GET', 'POST', 'DELETE'])
 def api_miembros():
     global miembros_clan_db
@@ -308,6 +379,7 @@ def api_miembros():
                     r = cur.fetchone()
                     if r: nuevo_id = r['id']
 
+                    # Sincronizar en la tabla de ítems la leyenda de asignación
                     cur.execute("UPDATE public.items_mu SET asignado_a = NULL WHERE asignado_a = %s;", (nombre_pj,))
                     for arch_id in items_asignados:
                         cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE archivo_id = %s OR CAST(id AS TEXT) = %s;", (nombre_pj, str(arch_id), str(arch_id)))
@@ -340,6 +412,7 @@ def api_miembros():
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
 
+# Importación masiva desde Excel
 @app.route('/api/miembros/importar', methods=['POST'])
 def importar_miembros_excel():
     if not usuario_es_autorizado():
@@ -377,6 +450,7 @@ def importar_miembros_excel():
     if conn: conn.close()
     return jsonify({"status": "ok", "message": f"{len(filas)} filas procesadas"}), 200
 
+# --- TIMERS Y BOTS ---
 @app.route('/api/status_timers')
 @app.route('/api/timers')
 def get_status_timers():
