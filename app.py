@@ -28,11 +28,6 @@ BOSSES_MANUALES = [
     "Red Goblin", "Santa", "White Wizard", "Skeleton King"
 ]
 
-# Palabras clave de piezas de armadura
-PALABRAS_ARMADURA = ["helm", "armor", "pants", "gloves", "boots", "shield", "buckler"]
-# Palabras clave de armas para exclusión estricta
-PALABRAS_ARMAS = ["sword", "blade", "staff", "crossbow", "bow", "stick", "book", "claw", "scepter", "mace", "morning star", "axe", "spear"]
-
 def cargar_json(filepath, default_val):
     if os.path.exists(filepath):
         try:
@@ -85,58 +80,33 @@ def usuario_es_autorizado():
     if 'user' not in session: return False
     return session['user'].lower() in ['pinion', 'tolkien', 'nasda']
 
-def es_item_armadura(nombre, archivo_id):
-    texto = f"{nombre} {archivo_id}".lower()
-    # Si contiene término de arma, queda descartado
-    if any(a in texto for a in PALABRAS_ARMAS):
-        return False
-    # Si contiene término de armadura, se acepta
-    if any(arm in texto for arm in PALABRAS_ARMADURA):
-        return True
-    return True
-
-# --- LECTURA TOTAL Y SIN LÍMITES DESDE GOOGLE DRIVE ---
+# --- ESCÁNER CON PAGINACIÓN COMPLETA DESDE GOOGLE DRIVE ---
 def sincronizar_drive_continuo():
     global items_mu_db
-    if not FOLDER_DRIVE_ID: return
+    if not FOLDER_DRIVE_ID or not GOOGLE_API_KEY: return
 
     archivos_detectados = []
-
-    if GOOGLE_API_KEY:
-        try:
-            page_token = None
-            q = f"'{FOLDER_DRIVE_ID}' in parents and trashed=false"
-            while True:
-                url = f"https://www.googleapis.com/drive/v3/files?q={requests.utils.quote(q)}&key={GOOGLE_API_KEY}&fields=nextPageToken,files(id,name,mimeType)&pageSize=100"
-                if page_token:
-                    url += f"&pageToken={page_token}"
-                res = requests.get(url, timeout=7)
-                if res.status_code == 200:
-                    data = res.json()
-                    for f in data.get('files', []):
-                        nombre = f.get('name', '')
-                        if 'image' in f.get('mimeType', '') or any(nombre.lower().endswith(ext) for ext in ['.png', '.jpg', '.jpeg', '.webp']):
-                            archivos_detectados.append({"id": f['id'], "name": nombre})
-                    page_token = data.get('nextPageToken')
-                    if not page_token:
-                        break
-                else:
+    try:
+        page_token = None
+        q = f"'{FOLDER_DRIVE_ID}' in parents and trashed=false"
+        while True:
+            url = f"https://www.googleapis.com/drive/v3/files?q={requests.utils.quote(q)}&key={GOOGLE_API_KEY}&fields=nextPageToken,files(id,name,mimeType)&pageSize=100"
+            if page_token:
+                url += f"&pageToken={page_token}"
+            res = requests.get(url, timeout=7)
+            if res.status_code == 200:
+                data = res.json()
+                for f in data.get('files', []):
+                    nombre = f.get('name', '')
+                    if 'image' in f.get('mimeType', '') or any(nombre.lower().endswith(ext) for ext in ['.png', '.jpg', '.jpeg', '.webp']):
+                        archivos_detectados.append({"id": f['id'], "name": nombre})
+                page_token = data.get('nextPageToken')
+                if not page_token:
                     break
-        except Exception as e:
-            print(f"Error API Drive: {e}")
-
-    # Respaldo por raspado web si la API falla
-    if not archivos_detectados:
-        try:
-            url_folder = f"https://drive.google.com/embeddedfolderview?id={FOLDER_DRIVE_ID}#list"
-            r = requests.get(url_folder, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}, timeout=7)
-            matches = set(re.findall(r'https://drive\.google\.com/file/d/([a-zA-Z0-9_-]+)', r.text))
-            matches_entry = set(re.findall(r'\["([a-zA-Z0-9_-]{25,})"', r.text))
-            for fid in matches.union(matches_entry):
-                if len(fid) >= 20:
-                    archivos_detectados.append({"id": fid, "name": fid[:8]})
-        except Exception as e:
-            print(f"Error raspando carpeta pública: {e}")
+            else:
+                break
+    except Exception as e:
+        print(f"Error API Drive: {e}")
 
     conn = get_db()
     existentes_ids = set()
@@ -153,22 +123,7 @@ def sincronizar_drive_continuo():
         if fid not in existentes_ids:
             nombre_limpio = re.sub(r'\.[a-zA-Z0-9]+$', '', arch['name']).replace('_', ' ')
             if not nombre_limpio or nombre_limpio.isdigit():
-                nombre_limpio = f"Item {nombre_limpio}"
-
-            if not es_item_armadura(nombre_limpio, arch['name']):
-                continue
-
-            nuevo_item = {
-                "archivo_id": arch['name'],
-                "nombre": nombre_limpio,
-                "tipo": "Armor",
-                "base_score": 0, "defense": 0, "durability": "-",
-                "clases": ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"],
-                "opciones": ["[Auto] Captura sincronizada de Drive"],
-                "bonus_excelente": [],
-                "drive_id": fid,
-                "asignado_a": None
-            }
+                nombre_limpio = f"Item #{nombre_limpio}"
 
             if conn:
                 try:
@@ -177,7 +132,15 @@ def sincronizar_drive_continuo():
                             INSERT INTO public.items_mu (archivo_id, nombre, tipo, clases, opciones, bonus_excelente, drive_id)
                             VALUES (%s, %s, %s, %s, %s, %s, %s)
                             ON CONFLICT (drive_id) DO NOTHING;
-                        """, (nuevo_item["archivo_id"], nuevo_item["nombre"], nuevo_item["tipo"], json.dumps(nuevo_item["clases"]), json.dumps(nuevo_item["opciones"]), json.dumps(nuevo_item["bonus_excelente"]), fid))
+                        """, (
+                            arch['name'],
+                            nombre_limpio,
+                            "Armor",
+                            json.dumps(["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"]),
+                            json.dumps([]),
+                            json.dumps([]),
+                            fid
+                        ))
                         conn.commit()
                 except Exception: pass
 
@@ -193,7 +156,7 @@ def obtener_todos_items():
     if conn:
         try:
             with conn.cursor() as cur:
-                # Ordenamiento numérico natural por archivo_id y luego por id (del 2 en adelante)
+                # Ordenamiento numérico estricto del ID 2 en adelante
                 cur.execute("""
                     SELECT id, archivo_id, nombre, tipo, base_score, defense, durability,
                            clases, opciones, bonus_excelente, drive_id, asignado_a
@@ -205,15 +168,10 @@ def obtener_todos_items():
                 filas = cur.fetchall()
                 items_formateados = []
                 for r in filas:
-                    nom = r.get('nombre') or 'Sin Nombre'
-                    arch = r.get('archivo_id') or str(r['id'])
-                    if not es_item_armadura(nom, arch):
-                        continue
-
                     items_formateados.append({
                         "id": r['id'],
-                        "archivo_id": arch,
-                        "nombre": nom,
+                        "archivo_id": r.get('archivo_id') or str(r['id']),
+                        "nombre": r.get('nombre') or 'Sin Nombre',
                         "tipo": r.get('tipo') or 'Armor',
                         "base_score": r.get('base_score') or 0,
                         "defense": r.get('defense') or 0,
@@ -346,7 +304,6 @@ def api_miembros():
                     r = cur.fetchone()
                     if r: nuevo_id = r['id']
 
-                    # Sincronizar en tabla items_mu
                     cur.execute("UPDATE public.items_mu SET asignado_a = NULL WHERE asignado_a = %s;", (nombre_pj,))
                     for arch_id in items_asignados:
                         cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE archivo_id = %s OR CAST(id AS TEXT) = %s;", (nombre_pj, arch_id, arch_id))
