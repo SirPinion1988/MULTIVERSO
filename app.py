@@ -96,7 +96,7 @@ def index():
 def vista_items():
     return render_template('items.html')
 
-# --- LECTURA DE DRIVE SIN DESCARGAR IMÁGENES ---
+# --- LECTURA RÁPIDA DE DRIVE CUANDO LA TABLA ESTÁ VACÍA ---
 def sincronizar_drive_rapido():
     if not FOLDER_DRIVE_ID or not GOOGLE_API_KEY:
         return []
@@ -174,29 +174,52 @@ def sincronizar_drive_rapido():
     items_retorno.sort(key=lambda x: int(re.search(r'\d+', x['archivo_id']).group(0)) if re.search(r'\d+', x['archivo_id']) else 999999)
     return items_retorno
 
-# --- API DE ITEMS ---
+# --- API DE ITEMS CON SOPORTE GRADUAL ---
 @app.route('/api/items', methods=['GET', 'PUT'])
 def api_items():
     conn = get_db()
     if request.method == 'GET':
+        limit = request.args.get('limit', default=20, type=int)
+        offset = request.args.get('offset', default=0, type=int)
+
         items_formateados = []
+        total_items = 0
+
         if conn:
             try:
                 with conn.cursor() as cur:
+                    # Conteo total de armaduras sin armas
+                    cur.execute("""
+                        SELECT COUNT(*) as total 
+                        FROM public.items_mu 
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM unnest(ARRAY['sword', 'blade', 'staff', 'crossbow', 'bow', 'stick', 'book', 'claw', 'scepter', 'mace', 'morning star', 'axe', 'spear', 'dread', 'two-hand']) AS w
+                            WHERE LOWER(nombre) LIKE '%%' || w || '%%'
+                        );
+                    """)
+                    row_count = cur.fetchone()
+                    if row_count:
+                        total_items = row_count['total']
+
+                    # Traer el lote exacto ordenado por número de menor a mayor
                     cur.execute("""
                         SELECT id, archivo_id, nombre, tipo, base_score, defense, durability,
                                clases, opciones, bonus_excelente, drive_id, asignado_a
                         FROM public.items_mu
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM unnest(ARRAY['sword', 'blade', 'staff', 'crossbow', 'bow', 'stick', 'book', 'claw', 'scepter', 'mace', 'morning star', 'axe', 'spear', 'dread', 'two-hand']) AS w
+                            WHERE LOWER(nombre) LIKE '%%' || w || '%%'
+                        )
                         ORDER BY 
                             NULLIF(regexp_replace(archivo_id, '\D', '', 'g'), '')::numeric ASC NULLS LAST,
-                            id ASC;
-                    """)
+                            id ASC
+                        LIMIT %s OFFSET %s;
+                    """, (limit, offset))
                     filas = cur.fetchall()
+
                     for r in filas:
                         nom = r.get('nombre') or 'Sin Nombre'
                         arch = r.get('archivo_id') or str(r['id'])
-                        if not es_solo_armadura(nom, arch):
-                            continue
                         items_formateados.append({
                             "id": r['id'],
                             "archivo_id": arch,
@@ -212,14 +235,24 @@ def api_items():
                             "asignado_a": r.get('asignado_a')
                         })
                 conn.close()
-            except Exception:
+            except Exception as e:
+                print(f"Error consultando items: {e}")
                 try: conn.close()
                 except Exception: pass
 
-        if not items_formateados:
-            items_formateados = sincronizar_drive_rapido()
+        # Si la tabla está en cero, sincroniza rápido de Drive
+        if not items_formateados and offset == 0:
+            todos = sincronizar_drive_rapido()
+            total_items = len(todos)
+            items_formateados = todos[offset:offset+limit]
 
-        return jsonify(items_formateados), 200
+        return jsonify({
+            "items": items_formateados,
+            "total": total_items,
+            "offset": offset,
+            "limit": limit,
+            "has_more": (offset + len(items_formateados)) < total_items
+        }), 200
 
     if not usuario_es_autorizado():
         return jsonify({"error": "No autorizado"}), 403
@@ -239,7 +272,7 @@ def api_items():
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
 
-# --- API DE MIEMBROS ---
+# --- API DE MIEMBROS DEL CLAN ---
 @app.route('/api/miembros', methods=['GET', 'POST', 'DELETE'])
 def api_miembros():
     global miembros_clan_db
@@ -267,7 +300,7 @@ def api_miembros():
         return jsonify(miembros_clan_db)
 
     if not usuario_es_autorizado():
-        return jsonify({"error": "No autorizado"}), 403
+        return jsonify({"error": "No autorizado. Inicia sesión como Pinion, tolkien o nasda."}), 403
 
     if request.method == 'POST':
         data = request.json or {}
@@ -293,6 +326,7 @@ def api_miembros():
                     r = cur.fetchone()
                     if r: nuevo_id = r['id']
 
+                    # Sincronización automática de asignación en items_mu
                     cur.execute("UPDATE public.items_mu SET asignado_a = NULL WHERE asignado_a = %s;", (nombre_pj,))
                     for arch_id in items_asignados:
                         cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE archivo_id = %s OR CAST(id AS TEXT) = %s;", (nombre_pj, str(arch_id), str(arch_id)))
@@ -325,6 +359,7 @@ def api_miembros():
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
 
+# Importación masiva desde Excel
 @app.route('/api/miembros/importar', methods=['POST'])
 def importar_miembros_excel():
     if not usuario_es_autorizado():
