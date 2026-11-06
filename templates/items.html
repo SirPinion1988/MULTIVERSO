@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🛡️ Catálogo de Ítems & Clan - MuDream Multiverso</title>
+    <title>🛡️ Catálogo de Armaduras & Clan - MuDream Multiverso</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
@@ -66,8 +66,8 @@
 
     <header class="w-full max-w-7xl mb-6 border-b border-purple-900/50 pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
-            <h1 class="text-3xl font-extrabold text-emerald-400 drop-shadow">🛡️ MULTIVERSO - ÍTEMS & CLAN</h1>
-            <p class="text-xs text-purple-300">Catálogo continuo de Google Drive, filtrado estricto y miembros del clan</p>
+            <h1 class="text-3xl font-extrabold text-emerald-400 drop-shadow">🛡️ MULTIVERSO - ARMADURAS & SETS</h1>
+            <p class="text-xs text-purple-300">Catálogo ordenado ascendentemente (desde el ID 2), sin armas y con filtrado estricto</p>
         </div>
         <div class="flex items-center gap-3">
             <span id="session-user-badge" class="text-xs text-purple-300 font-bold bg-[#141126] px-3 py-1.5 rounded-lg border border-purple-900">
@@ -77,7 +77,7 @@
                 🔄 Actualizar Ahora
             </button>
             <button onclick="cambiarSeccion('ITEMS')" id="btn-sec-items" class="bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">
-                📋 Listado de Ítems
+                📋 Listado de Armaduras
             </button>
             <button onclick="cambiarSeccion('CLAN')" id="btn-sec-clan" class="bg-gray-800 text-gray-400 px-3 py-1.5 rounded-lg text-xs font-bold transition">
                 👥 Miembros del Clan
@@ -88,7 +88,7 @@
         </div>
     </header>
 
-    <!-- SECCIÓN 1: LISTADO DE ÍTEMS -->
+    <!-- SECCIÓN 1: LISTADO DE ARMADURAS -->
     <div id="seccion-items-view" class="w-full max-w-7xl space-y-4">
         <div class="bg-[#141126] border border-purple-900/60 p-4 rounded-xl space-y-3 shadow">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -106,7 +106,7 @@
                     </select>
                 </div>
                 
-                <!-- SELECTOR CON LAS OPCIONES SEGURAS DE TU CAPTURA -->
+                <!-- SELECTOR FIJO CON TUS 7 OPCIONES DE COMBATE -->
                 <div>
                     <label class="block text-xs uppercase text-purple-300 font-bold mb-1">Buscar por Opción Principal:</label>
                     <select id="filtroOpcion" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded-lg text-xs outline-none">
@@ -123,11 +123,11 @@
                 
                 <div>
                     <label class="block text-xs uppercase text-purple-300 font-bold mb-1">Buscar por Nombre o ID:</label>
-                    <input type="text" id="filtroTexto" oninput="aplicarFiltros()" placeholder="Ej. Morning Star, 1iAU8Va4, Vine, 246..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded-lg text-xs outline-none">
+                    <input type="text" id="filtroTexto" oninput="aplicarFiltros()" placeholder="Ej. Sphinx, Scale, 260.png, Helm, Pants..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded-lg text-xs outline-none">
                 </div>
             </div>
 
-            <!-- BOTONES RÁPIDOS CON LAS OPCIONES CLAVE -->
+            <!-- BOTONES RÁPIDOS -->
             <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-purple-900/30">
                 <span class="text-[11px] text-gray-400 font-semibold mr-1">Filtros rápidos:</span>
                 <button onclick="setFiltroRapido('damage decrease')" class="px-2.5 py-1 rounded bg-red-950 hover:bg-red-900 text-red-300 border border-red-700/60 text-xs font-bold transition">🛡️ DD</button>
@@ -142,7 +142,7 @@
             </div>
         </div>
 
-        <!-- TABLA COMPACTA CON SCROLL VERTICAL FORZADO -->
+        <!-- TABLA COMPACTA CON SCROLL -->
         <div class="tabla-scroll-box">
             <table class="tabla-items">
                 <thead>
@@ -193,7 +193,7 @@
             <div class="border-t md:border-t-0 md:border-l border-purple-900/60 pt-3 md:pt-0 md:pl-4 flex flex-col items-center">
                 <label class="text-[11px] text-yellow-300 font-bold mb-1">📥 Importar desde Excel (.xlsx / .csv)</label>
                 <input type="file" id="inputExcel" accept=".xlsx, .xls, .csv" onchange="importarArchivoExcel(event)" class="text-xs text-gray-400 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-yellow-700 file:text-white hover:file:bg-yellow-600 cursor-pointer">
-                <span class="text-[10px] text-gray-500 mt-1">Columnas esperadas: Nick, Raza, Items</span>
+                <span class="text-[10px] text-gray-500 mt-1">Columnas: Nick, Raza, Items</span>
             </div>
         </div>
 
@@ -226,6 +226,19 @@
         let catalogo = [];
         let miembrosClan = [];
         let sesionAutorizada = false;
+
+        // Palabras de armas para exclusión estricta en el navegador
+        const ARMAS = ["sword", "blade", "staff", "crossbow", "bow", "stick", "book", "claw", "scepter", "mace", "morning star", "axe", "spear"];
+
+        function esSoloArmadura(item) {
+            const txt = `${item.nombre} ${item.archivo_id}`.toLowerCase();
+            return !ARMAS.some(w => txt.includes(w));
+        }
+
+        function extraerNumeroArchivo(item) {
+            const match = String(item.archivo_id || item.id).match(/\d+/);
+            return match ? parseInt(match[0], 10) : 999999;
+        }
 
         async function chequearSesion() {
             try {
@@ -289,7 +302,11 @@
             try {
                 const res = await fetch('/api/items');
                 if (res.ok) {
-                    catalogo = await res.json();
+                    const data = await res.json();
+                    // Filtra solo armaduras y ordena ascendentemente del ID 2 hacia adelante
+                    catalogo = (data || [])
+                        .filter(esSoloArmadura)
+                        .sort((a, b) => extraerNumeroArchivo(a) - extraerNumeroArchivo(b));
                 }
             } catch (e) {
                 console.warn("Fallo en red al cargar catálogo:", e);
@@ -301,10 +318,10 @@
         function renderizarTabla(items) {
             const tbody = document.getElementById('tabla-items-body');
             const cont = document.getElementById('contador-items');
-            if (cont) cont.innerText = `${items.length} ítem(s) en lista`;
+            if (cont) cont.innerText = `${items.length} armadura(s) en lista`;
 
             if (!items || items.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-500">No hay ítems con los filtros seleccionados.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-500">No hay armaduras con los filtros seleccionados.</td></tr>';
                 return;
             }
 
@@ -519,7 +536,7 @@
             const m = miembrosClan.find(x => x.id === id);
             if (!m) return;
             const actual = parsearArray(m.items_asignados).join(', ');
-            const nuevos = prompt(`IDs de ítems otorgados a ${m.nombre_pj} (separados por coma, ej: 1iAU8Va4, 260.png):`, actual);
+            const nuevos = prompt(`IDs de ítems otorgados a ${m.nombre_pj} (separados por coma, ej: 260.png, 334.png):`, actual);
             if (nuevos === null) return;
 
             const listaNuevos = nuevos.split(',').map(x => x.trim()).filter(Boolean);
