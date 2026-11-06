@@ -96,50 +96,53 @@ def index():
 def vista_items():
     return render_template('items.html')
 
-# --- API DE ITEMS (RÁPIDA, SIN DESCARGAS PESADAS, NO CONSUME MEMORIA) ---
+# --- CONSULTA DIRECTA DE ITEMS (SIN PROCESAMIENTOS PESADOS) ---
 @app.route('/api/items', methods=['GET', 'PUT'])
 def api_items():
     conn = get_db()
     if request.method == 'GET':
-        if not conn:
-            return jsonify([])
-        try:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    SELECT id, archivo_id, nombre, tipo, base_score, defense, durability,
-                           clases, opciones, bonus_excelente, drive_id, asignado_a
-                    FROM public.items_mu
-                    ORDER BY 
-                        NULLIF(regexp_replace(archivo_id, '\D', '', 'g'), '')::numeric ASC NULLS LAST,
-                        id ASC;
-                """)
-                filas = cur.fetchall()
-                items_formateados = []
-                for r in filas:
-                    nom = r.get('nombre') or 'Sin Nombre'
-                    arch = r.get('archivo_id') or str(r['id'])
-                    if not es_solo_armadura(nom, arch):
-                        continue
-                    items_formateados.append({
-                        "id": r['id'],
-                        "archivo_id": arch,
-                        "nombre": nom,
-                        "tipo": r.get('tipo') or 'Armor',
-                        "base_score": r.get('base_score') or 0,
-                        "defense": r.get('defense') or 0,
-                        "durability": r.get('durability') or '-',
-                        "clases": normalizar_campo_json(r.get('clases'), []),
-                        "opciones": normalizar_campo_json(r.get('opciones'), []),
-                        "bonus_excelente": normalizar_campo_json(r.get('bonus_excelente'), []),
-                        "drive_id": r.get('drive_id') or '',
-                        "asignado_a": r.get('asignado_a')
-                    })
-            conn.close()
-            return jsonify(items_formateados)
-        except Exception as e:
-            try: conn.close()
-            except Exception: pass
-            return jsonify([])
+        items_formateados = []
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        SELECT id, archivo_id, nombre, tipo, base_score, defense, durability,
+                               clases, opciones, bonus_excelente, drive_id, asignado_a
+                        FROM public.items_mu
+                        ORDER BY 
+                            NULLIF(regexp_replace(archivo_id, '\D', '', 'g'), '')::numeric ASC NULLS LAST,
+                            id ASC;
+                    """)
+                    filas = cur.fetchall()
+                    for r in filas:
+                        nom = r.get('nombre') or 'Sin Nombre'
+                        arch = r.get('archivo_id') or str(r['id'])
+                        if not es_solo_armadura(nom, arch):
+                            continue
+                        items_formateados.append({
+                            "id": r['id'],
+                            "archivo_id": arch,
+                            "nombre": nom,
+                            "tipo": r.get('tipo') or 'Armor',
+                            "base_score": r.get('base_score') or 0,
+                            "defense": r.get('defense') or 0,
+                            "durability": r.get('durability') or '-',
+                            "clases": normalizar_campo_json(r.get('clases'), []),
+                            "opciones": normalizar_campo_json(r.get('opciones'), []),
+                            "bonus_excelente": normalizar_campo_json(r.get('bonus_excelente'), []),
+                            "drive_id": r.get('drive_id') or '',
+                            "asignado_a": r.get('asignado_a')
+                        })
+                conn.close()
+            except Exception:
+                try: conn.close()
+                except Exception: pass
+
+        # Si la base de datos aún no tiene registros, sincroniza los archivos de Drive de inmediato
+        if not items_formateados:
+            items_formateados = sincronizar_drive_directo()
+
+        return jsonify(items_formateados)
 
     if not usuario_es_autorizado():
         return jsonify({"error": "No autorizado"}), 403
@@ -159,11 +162,10 @@ def api_items():
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
 
-# --- RUTA DE SINCRONIZACIÓN LIVIANA DE GOOGLE DRIVE ---
-@app.route('/api/sincronizar', methods=['GET', 'POST'])
-def sincronizar_drive_lote():
+# --- SINCRONIZACIÓN AUTOMÁTICA DIRECTA DE METADATOS DE DRIVE ---
+def sincronizar_drive_directo():
     if not FOLDER_DRIVE_ID or not GOOGLE_API_KEY:
-        return jsonify({"error": "Faltan variables de Drive"}), 400
+        return []
 
     archivos_detectados = []
     try:
@@ -186,31 +188,36 @@ def sincronizar_drive_lote():
             else:
                 break
     except Exception as e:
-        return jsonify({"error": f"Error Drive: {e}"}), 500
+        print(f"Error listando Drive: {e}")
 
     conn = get_db()
-    if not conn:
-        return jsonify({"error": "Error base de datos"}), 500
+    items_retorno = []
 
-    existentes_ids = set()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("SELECT drive_id FROM public.items_mu;")
-            existentes_ids = {r['drive_id'] for r in cur.fetchall()}
-    except Exception: pass
-
-    nuevos = 0
-    for arch in archivos_detectados:
+    for idx, arch in enumerate(archivos_detectados):
         fid = arch['id']
         fname = arch['name']
-        if fid not in existentes_ids:
-            num_match = re.search(r'\d+', fname)
-            tag_num = f"#{num_match.group(0)}" if num_match else fname
-            nombre_mostrar = f"Armadura {tag_num}"
+        num_match = re.search(r'\d+', fname)
+        num_val = int(num_match.group(0)) if num_match else idx + 2
+        nombre_item = f"Armadura #{num_val}"
 
-            if not es_solo_armadura(nombre_mostrar, fname):
-                continue
+        if not es_solo_armadura(nombre_item, fname):
+            continue
 
+        item_dict = {
+            "id": num_val,
+            "archivo_id": fname,
+            "nombre": nombre_item,
+            "tipo": "Armor",
+            "base_score": 0, "defense": 0, "durability": "-",
+            "clases": ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"],
+            "opciones": ["[Auto] Captura sincronizada de Drive"],
+            "bonus_excelente": [],
+            "drive_id": fid,
+            "asignado_a": None
+        }
+        items_retorno.append(item_dict)
+
+        if conn:
             try:
                 with conn.cursor() as cur:
                     cur.execute("""
@@ -219,19 +226,21 @@ def sincronizar_drive_lote():
                         ON CONFLICT (drive_id) DO NOTHING;
                     """, (
                         fname,
-                        nombre_mostrar,
+                        nombre_item,
                         "Armor",
-                        json.dumps(["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"]),
-                        json.dumps([]),
-                        json.dumps([]),
+                        json.dumps(item_dict["clases"]),
+                        json.dumps(item_dict["opciones"]),
+                        json.dumps(item_dict["bonus_excelente"]),
                         fid
                     ))
                     conn.commit()
-                    nuevos += 1
             except Exception: pass
 
-    conn.close()
-    return jsonify({"status": "ok", "total_drive": len(archivos_detectados), "nuevos_insertados": nuevos})
+    if conn: conn.close()
+    
+    # Ordenar numéricamente del menor al mayor (del ID 2 en adelante)
+    items_retorno.sort(key=lambda x: int(re.search(r'\d+', x['archivo_id']).group(0)) if re.search(r'\d+', x['archivo_id']) else 999999)
+    return items_retorno
 
 # --- API DE MIEMBROS DEL CLAN ---
 @app.route('/api/miembros', methods=['GET', 'POST', 'DELETE'])
@@ -442,163 +451,4 @@ def reset_boss():
                 try:
                     with conn.cursor() as cur:
                         cur.execute("UPDATE public.timers_bosses SET timers = %s WHERE server = %s;", 
-                                    (json.dumps(status_timers.get(server, {})), server))
-                        conn.commit()
-                    conn.close()
-                except Exception:
-                    if conn: conn.close()
-
-        return jsonify({"status": "ok", "message": f"{boss} ocultado"}), 200
-    return jsonify({"error": "Datos inválidos"}), 400
-
-@app.route('/api/mapa_kill', methods=['POST'])
-def mapa_kill():
-    data = request.json or {}
-    server_num = str(data.get('server', '1'))
-    spot_id = str(data.get('spot_id'))
-
-    if not spot_id: return jsonify({"error": "Spot requerido"}), 400
-    if server_num not in status_mapas: status_mapas[server_num] = {}
-    status_mapas[server_num][spot_id] = int(time.time() * 1000)
-    guardar_json(MAPAS_FILE, status_mapas)
-    return jsonify({"status": "ok", "mapas": status_mapas}), 200
-
-@app.route('/api/mapa_reset', methods=['POST'])
-def mapa_reset():
-    data = request.json or {}
-    server_num = str(data.get('server', '1'))
-    spot_id = str(data.get('spot_id'))
-
-    if server_num in status_mapas and spot_id in status_mapas[server_num]:
-        del status_mapas[server_num][spot_id]
-        guardar_json(MAPAS_FILE, status_mapas)
-    return jsonify({"status": "ok", "mapas": status_mapas}), 200
-
-@app.route('/api/heartbeat', methods=['POST'])
-def registrar_heartbeat():
-    data = request.json or {}
-    server = data.get('server')
-    pc_id = data.get('pc_id', 'Desconocido')
-    pj_name = data.get('pj_name', 'Desconocido')
-
-    if server:
-        heartbeats[server] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        ultimas_pcs[server] = pc_id
-        ultimos_pjs[server] = pj_name
-        conn = get_db()
-        if conn:
-            try:
-                with conn.cursor() as cur:
-                    cur.execute("""
-                        INSERT INTO public.timers_bosses (server, last_pc, last_pj, last_heartbeat)
-                        VALUES (%s, %s, %s, NOW())
-                        ON CONFLICT (server) DO UPDATE 
-                        SET last_pc = EXCLUDED.last_pc, last_pj = EXCLUDED.last_pj, last_heartbeat = NOW();
-                    """, (server, pc_id, pj_name))
-                    conn.commit()
-                conn.close()
-            except Exception:
-                if conn: conn.close()
-        return jsonify({"status": "ok"}), 200
-    return jsonify({"error": "Servidor requerido"}), 400
-
-@app.route('/login', methods=['POST'])
-def login():
-    data = request.json or {}
-    username_raw = data.get('username', '').strip()
-    password = data.get('password', '').strip()
-
-    if not username_raw or not password:
-        return jsonify({"error": "Completá usuario y contraseña"}), 400
-
-    username = username_raw.lower()
-
-    conn = get_db()
-    user_db = None
-    if conn:
-        try:
-            with conn.cursor() as cur:
-                cur.execute("SELECT username, password_hash, rol FROM public.usuarios WHERE LOWER(username) = %s;", (username,))
-                user_db = cur.fetchone()
-            conn.close()
-        except Exception:
-            if conn: conn.close()
-
-    if not user_db:
-        if username == 'pinion' and password == 'G1nt0n1c':
-            user_db = {'username': 'Pinion', 'password_hash': 'G1nt0n1c', 'rol': 'admin'}
-        elif username == 'tolkien' and password == 'tolkien123':
-            user_db = {'username': 'tolkien', 'password_hash': 'tolkien123', 'rol': 'encargado'}
-        elif username == 'nasda' and password == 'nasda123':
-            user_db = {'username': 'nasda', 'password_hash': 'nasda123', 'rol': 'encargado'}
-
-    if user_db:
-        stored_pass = user_db.get("password_hash", "")
-        es_valido = False
-        if stored_pass.startswith("scrypt:") or stored_pass.startswith("pbkdf2:"):
-            try: es_valido = check_password_hash(stored_pass, password)
-            except Exception: pass
-        else:
-            es_valido = (stored_pass == password)
-
-        if es_valido:
-            session['user'] = user_db.get('username', username_raw)
-            session['rol'] = user_db.get('rol', 'encargado')
-            return jsonify({
-                "status": "ok",
-                "user": session['user'],
-                "rol": session['rol']
-            }), 200
-
-    return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('index'))
-
-@app.route('/api/session')
-def api_session():
-    if 'user' in session:
-        return jsonify({
-            "logged_in": True,
-            "user": session['user'],
-            "rol": session.get('rol', 'encargado'),
-            "autorizado": usuario_es_autorizado()
-        })
-    return jsonify({"logged_in": False, "autorizado": False})
-
-@app.route('/api/donaciones', methods=['GET', 'POST'])
-def donaciones():
-    if request.method == 'GET':
-        return jsonify(donaciones_db)
-    if request.method == 'POST':
-        if 'user' not in session: return jsonify({"error": "No autorizado"}), 401
-        data = request.json or {}
-        pj_name = data.get('pj_name')
-        tipo_donacion = data.get('tipo_donacion')
-        cantidad = data.get('cantidad', 1)
-        if not pj_name or not tipo_donacion: return jsonify({"error": "Faltan datos"}), 400
-
-        nueva_donacion = {
-            "id": int(time.time() * 1000), "pj_name": pj_name, "tipo_donacion": tipo_donacion,
-            "cantidad": int(cantidad), "registrado_por": session['user'],
-            "fecha_registro": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-        donaciones_db.insert(0, nueva_donacion)
-        guardar_json(DONACIONES_FILE, donaciones_db)
-
-        conn = get_db()
-        if conn:
-            try:
-                with conn.cursor() as cur:
-                    cur.execute("INSERT INTO public.donaciones (pj_name, tipo_donacion, cantidad, registrado_por) VALUES (%s, %s, %s, %s);", (pj_name, tipo_donacion, int(cantidad), session['user']))
-                    conn.commit()
-                conn.close()
-            except Exception:
-                if conn: conn.close()
-        return jsonify({"status": "ok", "donacion": nueva_donacion}), 201
-
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+                                    (json.dumps(status
