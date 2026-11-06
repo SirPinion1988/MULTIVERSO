@@ -9,6 +9,7 @@
     <style>
         body { background-color: #0a0814; color: #e6e1ff; font-family: 'Segoe UI', system-ui, sans-serif; }
         
+        /* Contenedor obligatorio de barra de desplazamiento (Scroll / Roll) */
         .tabla-scroll-box {
             height: 540px !important;
             overflow-y: scroll !important;
@@ -61,35 +62,35 @@
         }
     </style>
 </head>
-<body class="p-4 md:p-8 flex flex-col items-center">
+<body class="p-3 md:p-6 flex flex-col items-center">
 
-    <header class="w-full max-w-7xl mb-6 border-b border-purple-900/50 pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
+    <!-- SUB-BARRA DE ESTADO DEL CATÁLOGO -->
+    <header class="w-full max-w-7xl mb-4 pb-3 border-b border-purple-900/50 flex flex-col sm:flex-row justify-between items-center gap-3">
         <div>
-            <h1 class="text-3xl font-extrabold text-emerald-400 drop-shadow">🛡️ MULTIVERSO - ARMADURAS & SETS</h1>
-            <p class="text-xs text-purple-300">Catálogo ordenado del ID 2 hacia adelante (solo armaduras, sin armas)</p>
+            <h1 class="text-2xl font-extrabold text-emerald-400 drop-shadow flex items-center gap-2">
+                🛡️ CATÁLOGO DE ARMADURAS & SETS
+            </h1>
+            <p class="text-xs text-purple-300">Ordenado ascendentemente (desde el ID 2), sin armas</p>
         </div>
-        <div class="flex items-center gap-3">
-            <span id="session-user-badge" class="text-xs text-purple-300 font-bold bg-[#141126] px-3 py-1.5 rounded-lg border border-purple-900">
+        <div class="flex items-center gap-2">
+            <span id="session-user-badge" class="text-xs text-purple-300 font-bold bg-[#141126] px-2.5 py-1 rounded border border-purple-900">
                 Invitado
             </span>
-            <button onclick="cargar(true)" class="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow">
+            <button onclick="cargar(true)" class="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1 rounded text-xs font-bold transition flex items-center gap-1 shadow">
                 🔄 Actualizar Ahora
             </button>
-            <button onclick="cambiarSeccion('ITEMS')" id="btn-sec-items" class="bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">
+            <button onclick="cambiarSeccion('ITEMS')" id="btn-sec-items" class="bg-emerald-700 text-white px-3 py-1 rounded text-xs font-bold transition">
                 📋 Listado de Armaduras
             </button>
-            <button onclick="cambiarSeccion('CLAN')" id="btn-sec-clan" class="bg-gray-800 text-gray-400 px-3 py-1.5 rounded-lg text-xs font-bold transition">
+            <button onclick="cambiarSeccion('CLAN')" id="btn-sec-clan" class="bg-gray-800 text-gray-400 px-3 py-1 rounded text-xs font-bold transition">
                 👥 Miembros del Clan
             </button>
-            <a href="/" class="bg-purple-900 hover:bg-purple-800 text-purple-200 border border-purple-600 px-3 py-1.5 rounded-lg text-xs font-bold transition">
-                ← Volver al Monitor
-            </a>
         </div>
     </header>
 
     <!-- SECCIÓN 1: LISTADO DE ARMADURAS -->
-    <div id="seccion-items-view" class="w-full max-w-7xl space-y-4">
-        <div class="bg-[#141126] border border-purple-900/60 p-4 rounded-xl space-y-3 shadow">
+    <div id="seccion-items-view" class="w-full max-w-7xl space-y-3">
+        <div class="bg-[#141126] border border-purple-900/60 p-3 rounded-xl space-y-2.5 shadow">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                     <label class="block text-xs uppercase text-purple-300 font-bold mb-1">Buscar por Clase / Raza (PJ):</label>
@@ -125,6 +126,7 @@
                 </div>
             </div>
 
+            <!-- BOTONES RÁPIDOS SEGUROS -->
             <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-purple-900/30">
                 <span class="text-[11px] text-gray-400 font-semibold mr-1">Filtros rápidos:</span>
                 <button onclick="setFiltroRapido('damage decrease')" class="px-2.5 py-1 rounded bg-red-950 hover:bg-red-900 text-red-300 border border-red-700/60 text-xs font-bold transition">🛡️ DD</button>
@@ -139,6 +141,7 @@
             </div>
         </div>
 
+        <!-- TABLA COMPACTA CON SCROLL -->
         <div class="tabla-scroll-box">
             <table class="tabla-items">
                 <thead>
@@ -153,7 +156,7 @@
                     </tr>
                 </thead>
                 <tbody id="tabla-items-body">
-                    <tr><td colspan="7" class="text-center py-8 text-gray-500">Cargando catálogo...</td></tr>
+                    <tr><td colspan="7" class="text-center py-8 text-gray-500">Cargando armaduras...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -255,13 +258,13 @@
             if (sec === 'ITEMS') {
                 vItems.classList.remove('hidden');
                 vClan.classList.add('hidden');
-                bItems.className = "bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition";
-                bClan.className = "bg-gray-800 text-gray-400 px-3 py-1.5 rounded-lg text-xs font-bold transition";
+                bItems.className = "bg-emerald-700 text-white px-3 py-1 rounded text-xs font-bold transition";
+                bClan.className = "bg-gray-800 text-gray-400 px-3 py-1 rounded text-xs font-bold transition";
             } else {
                 vItems.classList.add('hidden');
                 vClan.classList.remove('hidden');
-                bClan.className = "bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition";
-                bItems.className = "bg-gray-800 text-gray-400 px-3 py-1.5 rounded-lg text-xs font-bold transition";
+                bClan.className = "bg-indigo-700 text-white px-3 py-1 rounded text-xs font-bold transition";
+                bItems.className = "bg-gray-800 text-gray-400 px-3 py-1 rounded text-xs font-bold transition";
                 cargarMiembros();
             }
         }
@@ -303,10 +306,10 @@
                         .sort((a, b) => extraerNumeroArchivo(a) - extraerNumeroArchivo(b));
                 }
             } catch (e) {
-                console.warn("Fallo en red al cargar catálogo:", e);
+                console.warn("Fallo cargando armaduras:", e);
             }
             aplicarFiltros();
-            if (mostrarNotificacion) alert("Catálogo actualizado en tiempo real.");
+            if (mostrarNotificacion) alert("Catálogo sincronizado.");
         }
 
         function renderizarTabla(items) {
@@ -315,7 +318,7 @@
             if (cont) cont.innerText = `${items.length} armadura(s) en lista`;
 
             if (!items || items.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-500">No hay armaduras cargadas aún.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-500">No hay armaduras para mostrar.</td></tr>';
                 return;
             }
 
@@ -483,9 +486,7 @@
         }
 
         async function guardarMiembroClan() {
-            if (!sesionAutorizada) {
-                return alert("Solo los usuarios autorizados (Pinion, tolkien, nasda) pueden agregar miembros.");
-            }
+            if (!sesionAutorizada) return alert("No autorizado.");
             const nombre_pj = document.getElementById('clanPjNombre').value.trim();
             const raza = document.getElementById('clanPjRaza').value;
 
