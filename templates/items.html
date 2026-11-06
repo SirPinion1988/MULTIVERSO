@@ -9,7 +9,6 @@
     <style>
         body { background-color: #0a0814; color: #e6e1ff; font-family: 'Segoe UI', system-ui, sans-serif; }
         
-        /* Contenedor obligatorio de barra de desplazamiento (Scroll / Roll) */
         .tabla-scroll-box {
             height: 540px !important;
             overflow-y: scroll !important;
@@ -67,7 +66,7 @@
     <header class="w-full max-w-7xl mb-6 border-b border-purple-900/50 pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
             <h1 class="text-3xl font-extrabold text-emerald-400 drop-shadow">🛡️ MULTIVERSO - ARMADURAS & SETS</h1>
-            <p class="text-xs text-purple-300">Catálogo ordenado ascendentemente (desde el ID 2), sin armas y con filtrado estricto</p>
+            <p class="text-xs text-purple-300">Catálogo ordenado del ID 2 hacia adelante (solo armaduras, sin armas)</p>
         </div>
         <div class="flex items-center gap-3">
             <span id="session-user-badge" class="text-xs text-purple-300 font-bold bg-[#141126] px-3 py-1.5 rounded-lg border border-purple-900">
@@ -106,7 +105,6 @@
                     </select>
                 </div>
                 
-                <!-- SELECTOR FIJO CON TUS 7 OPCIONES DE COMBATE -->
                 <div>
                     <label class="block text-xs uppercase text-purple-300 font-bold mb-1">Buscar por Opción Principal:</label>
                     <select id="filtroOpcion" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded-lg text-xs outline-none">
@@ -127,7 +125,6 @@
                 </div>
             </div>
 
-            <!-- BOTONES RÁPIDOS -->
             <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-purple-900/30">
                 <span class="text-[11px] text-gray-400 font-semibold mr-1">Filtros rápidos:</span>
                 <button onclick="setFiltroRapido('damage decrease')" class="px-2.5 py-1 rounded bg-red-950 hover:bg-red-900 text-red-300 border border-red-700/60 text-xs font-bold transition">🛡️ DD</button>
@@ -142,7 +139,6 @@
             </div>
         </div>
 
-        <!-- TABLA COMPACTA CON SCROLL -->
         <div class="tabla-scroll-box">
             <table class="tabla-items">
                 <thead>
@@ -227,12 +223,11 @@
         let miembrosClan = [];
         let sesionAutorizada = false;
 
-        // Palabras de armas para exclusión estricta en el navegador
         const ARMAS = ["sword", "blade", "staff", "crossbow", "bow", "stick", "book", "claw", "scepter", "mace", "morning star", "axe", "spear"];
 
         function esSoloArmadura(item) {
-            const txt = `${item.nombre} ${item.archivo_id}`.toLowerCase();
-            return !ARMAS.some(w => txt.includes(w));
+            const nom = String(item.nombre || '').toLowerCase();
+            return !ARMAS.some(w => nom.includes(w));
         }
 
         function extraerNumeroArchivo(item) {
@@ -303,7 +298,6 @@
                 const res = await fetch('/api/items');
                 if (res.ok) {
                     const data = await res.json();
-                    // Filtra solo armaduras y ordena ascendentemente del ID 2 hacia adelante
                     catalogo = (data || [])
                         .filter(esSoloArmadura)
                         .sort((a, b) => extraerNumeroArchivo(a) - extraerNumeroArchivo(b));
@@ -321,7 +315,7 @@
             if (cont) cont.innerText = `${items.length} armadura(s) en lista`;
 
             if (!items || items.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-500">No hay armaduras con los filtros seleccionados.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-500">No hay armaduras cargadas aún.</td></tr>';
                 return;
             }
 
@@ -387,7 +381,6 @@
 
                 const matchRaza = !raza || clasesLista.some(c => String(c).toLowerCase().includes(raza));
 
-                // Búsqueda estricta sobre opciones principales (EXCLUYE Exclusive Bonus)
                 const textoOpciones = opcionesLista.join(' ').toLowerCase();
                 let matchOpcion = true;
                 if (opcion) {
