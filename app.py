@@ -96,151 +96,52 @@ def index():
 def vista_items():
     return render_template('items.html')
 
-# --- PARSEO RÁPIDO DE LÍNEAS DE MU ONLINE ---
-def parsear_texto_mu(raw_text, fname):
-    lineas = [l.strip() for l in raw_text.split('\n') if l.strip()]
-    nombre_item = ""
-    clases = []
-    opciones = []
-    bonus = []
-    es_bonus = False
-
-    for l in lineas:
-        l_low = l.lower()
-        if "exclusive excellent bonus" in l_low:
-            es_bonus = True
-            continue
-
-        if "excellent" in l_low and not nombre_item:
-            nombre_item = l
-            continue
-
-        if "can be equipped by" in l_low:
-            c = l.split("by")[-1].strip()
-            if c and c not in clases:
-                clases.append(c)
-            continue
-
-        if es_bonus:
-            if "increases" in l_low or "+" in l:
-                bonus.append(l)
-        else:
-            if any(k in l_low for k in ["damage", "defense", "reflect", "life", "sd", "rate", "luck", "speed"]):
-                opciones.append(l)
-
-    if not nombre_item:
-        num_m = re.search(r'\d+', fname)
-        nombre_item = f"Armadura #{num_m.group(0)}" if num_m else fname
-
-    return nombre_item, clases, opciones, bonus
-
-# --- LECTURA AUTOMÁTICA DE DRIVE SIN DESCARGAR FOTOS (JSON LIVIANO) ---
-def sincronizar_drive_directo():
-    if not FOLDER_DRIVE_ID or not GOOGLE_API_KEY:
-        return []
-
-    archivos_detectados = []
-    try:
-        page_token = None
-        q = f"'{FOLDER_DRIVE_ID}' in parents and trashed=false"
-        while True:
-            # Trae id, name, description en puro texto JSON (no descarga fotos)
-            url = f"https://www.googleapis.com/drive/v3/files?q={requests.utils.quote(q)}&key={GOOGLE_API_KEY}&fields=nextPageToken,files(id,name,description,mimeType)&pageSize=100"
-            if page_token:
-                url += f"&pageToken={page_token}"
-            res = requests.get(url, timeout=7)
-            if res.status_code == 200:
-                data = res.json()
-                for f in data.get('files', []):
-                    nombre = f.get('name', '')
-                    if 'image' in f.get('mimeType', '') or any(nombre.lower().endswith(ext) for ext in ['.png', '.jpg', '.jpeg', '.webp']):
-                        archivos_detectados.append(f)
-                page_token = data.get('nextPageToken')
-                if not page_token:
-                    break
-            else:
-                break
-    except Exception as e:
-        print(f"Error Drive: {e}")
-
-    conn = get_db()
-    items_retorno = []
-
-    for idx, arch in enumerate(archivos_detectados):
-        fid = arch['id']
-        fname = arch['name']
-        fdesc = arch.get('description', '')
-
-        # Si Drive tiene el texto indexado, lo lee. Si no, usa el número de archivo.
-        nom_item, clases, opts, bonus = parsear_texto_mu(fdesc, fname)
-
-        if not es_solo_armadura(nom_item, fname):
-            continue
-
-        num_m = re.search(r'\d+', fname)
-        num_val = int(num_m.group(0)) if num_m else (idx + 2)
-
-        item_dict = {
-            "id": num_val,
-            "archivo_id": fname,
-            "nombre": nom_item,
-            "tipo": "Armor",
-            "base_score": 0, "defense": 0, "durability": "-",
-            "clases": clases or ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"],
-            "opciones": opts or ["[Auto] Captura sincronizada de Drive"],
-            "bonus_excelente": bonus,
-            "drive_id": fid,
-            "asignado_a": None
-        }
-        items_retorno.append(item_dict)
-
-        if conn:
-            try:
-                with conn.cursor() as cur:
-                    cur.execute("""
-                        INSERT INTO public.items_mu (archivo_id, nombre, tipo, clases, opciones, bonus_excelente, drive_id)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s)
-                        ON CONFLICT (drive_id) DO UPDATE 
-                        SET nombre = EXCLUDED.nombre, clases = EXCLUDED.clases, opciones = EXCLUDED.opciones, bonus_excelente = EXCLUDED.bonus_excelente;
-                    """, (
-                        fname,
-                        nom_item,
-                        "Armor",
-                        json.dumps(item_dict["clases"]),
-                        json.dumps(item_dict["opciones"]),
-                        json.dumps(item_dict["bonus_excelente"]),
-                        fid
-                    ))
-                    conn.commit()
-            except Exception: pass
-
-    if conn: conn.close()
-    items_retorno.sort(key=lambda x: int(re.search(r'\d+', x['archivo_id']).group(0)) if re.search(r'\d+', x['archivo_id']) else 999999)
-    return items_retorno
-
-# --- API DE ITEMS ---
+# --- API DE ITEMS PAGINADA (LOTE DE A 20) ---
 @app.route('/api/items', methods=['GET', 'PUT'])
 def api_items():
     conn = get_db()
     if request.method == 'GET':
+        limit = request.args.get('limit', default=20, type=int)
+        offset = request.args.get('offset', default=0, type=int)
+
         items_formateados = []
+        total_items = 0
+
         if conn:
             try:
                 with conn.cursor() as cur:
+                    # Conteo total para paginación
+                    cur.execute("""
+                        SELECT COUNT(*) as total 
+                        FROM public.items_mu 
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM unnest(ARRAY['sword', 'blade', 'staff', 'crossbow', 'bow', 'stick', 'book', 'claw', 'scepter', 'mace', 'morning star', 'axe', 'spear', 'dread', 'two-hand']) AS w
+                            WHERE LOWER(nombre) LIKE '%%' || w || '%%'
+                        );
+                    """)
+                    row_count = cur.fetchone()
+                    if row_count:
+                        total_items = row_count['total']
+
+                    # Trae exactamente el lote de a 20 ordenado numéricamente
                     cur.execute("""
                         SELECT id, archivo_id, nombre, tipo, base_score, defense, durability,
                                clases, opciones, bonus_excelente, drive_id, asignado_a
                         FROM public.items_mu
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM unnest(ARRAY['sword', 'blade', 'staff', 'crossbow', 'bow', 'stick', 'book', 'claw', 'scepter', 'mace', 'morning star', 'axe', 'spear', 'dread', 'two-hand']) AS w
+                            WHERE LOWER(nombre) LIKE '%%' || w || '%%'
+                        )
                         ORDER BY 
                             NULLIF(regexp_replace(archivo_id, '\D', '', 'g'), '')::numeric ASC NULLS LAST,
-                            id ASC;
-                    """)
+                            id ASC
+                        LIMIT %s OFFSET %s;
+                    """, (limit, offset))
                     filas = cur.fetchall()
+
                     for r in filas:
                         nom = r.get('nombre') or 'Sin Nombre'
                         arch = r.get('archivo_id') or str(r['id'])
-                        if not es_solo_armadura(nom, arch):
-                            continue
                         items_formateados.append({
                             "id": r['id'],
                             "archivo_id": arch,
@@ -256,15 +157,18 @@ def api_items():
                             "asignado_a": r.get('asignado_a')
                         })
                 conn.close()
-            except Exception:
+            except Exception as e:
+                print(f"Error consultando items: {e}")
                 try: conn.close()
                 except Exception: pass
 
-        # Si la tabla está vacía, sincroniza desde Drive directamente
-        if not items_formateados:
-            items_formateados = sincronizar_drive_directo()
-
-        return jsonify(items_formateados), 200
+        return jsonify({
+            "items": items_formateados,
+            "total": total_items,
+            "offset": offset,
+            "limit": limit,
+            "has_more": (offset + len(items_formateados)) < total_items
+        }), 200
 
     if not usuario_es_autorizado():
         return jsonify({"error": "No autorizado"}), 403
@@ -283,12 +187,6 @@ def api_items():
             except Exception:
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
-
-# --- RUTA PARA FORZAR RE-SINCRONIZACIÓN AUTOMÁTICA DESDE DRIVE ---
-@app.route('/api/resincronizar_todo')
-def resincronizar_todo():
-    items = sincronizar_drive_directo()
-    return jsonify({"status": "ok", "total_armaduras": len(items)})
 
 # --- API DE MIEMBROS DEL CLAN ---
 @app.route('/api/miembros', methods=['GET', 'POST', 'DELETE'])
@@ -318,7 +216,7 @@ def api_miembros():
         return jsonify(miembros_clan_db)
 
     if not usuario_es_autorizado():
-        return jsonify({"error": "No autorizado. Inicia sesión como Pinion, tolkien o nasda."}), 403
+        return jsonify({"error": "No autorizado"}), 403
 
     if request.method == 'POST':
         data = request.json or {}
@@ -344,7 +242,6 @@ def api_miembros():
                     r = cur.fetchone()
                     if r: nuevo_id = r['id']
 
-                    # Sincronización automática de asignaciones en items_mu
                     cur.execute("UPDATE public.items_mu SET asignado_a = NULL WHERE asignado_a = %s;", (nombre_pj,))
                     for arch_id in items_asignados:
                         cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE archivo_id = %s OR CAST(id AS TEXT) = %s;", (nombre_pj, str(arch_id), str(arch_id)))
@@ -377,7 +274,6 @@ def api_miembros():
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
 
-# Importación masiva desde Excel
 @app.route('/api/miembros/importar', methods=['POST'])
 def importar_miembros_excel():
     if not usuario_es_autorizado():
