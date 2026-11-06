@@ -10,7 +10,7 @@
         body { background-color: #0a0814; color: #e6e1ff; font-family: 'Segoe UI', system-ui, sans-serif; }
         
         .tabla-scroll-box {
-            height: 540px !important;
+            height: 520px !important;
             overflow-y: scroll !important;
             border: 1px solid #3b2d6b;
             border-radius: 8px;
@@ -66,7 +66,7 @@
     <header class="w-full max-w-7xl mb-6 border-b border-purple-900/50 pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
             <h1 class="text-3xl font-extrabold text-emerald-400 drop-shadow">🛡️ MULTIVERSO - ARMADURAS & CLAN</h1>
-            <p class="text-xs text-purple-300">Catálogo ordenado ascendentemente (desde el ID 2), sin armas</p>
+            <p class="text-xs text-purple-300">Carga progresiva de a 20 armaduras | Orden numérico ascendente</p>
         </div>
         <div class="flex items-center gap-3">
             <span id="session-user-badge" class="text-xs text-purple-300 font-bold bg-[#141126] px-3 py-1.5 rounded-lg border border-purple-900">
@@ -85,8 +85,8 @@
         <button onclick="cambiarSeccion('CLAN')" id="btn-sec-clan" class="bg-gray-800 text-gray-400 px-5 py-2 rounded-lg text-sm font-bold transition">
             👥 Miembros del Clan
         </button>
-        <button onclick="forzarSincronizacionTotal()" id="btn-sync" class="bg-purple-700 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow flex items-center gap-1.5">
-            🔄 Sincronizar Todo con Drive
+        <button onclick="recargarDesdeCero()" class="bg-purple-700 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow flex items-center gap-1.5">
+            🔄 Recargar Inicio
         </button>
     </div>
 
@@ -142,7 +142,7 @@
             </div>
         </div>
 
-        <div class="tabla-scroll-box">
+        <div class="tabla-scroll-box" id="scrollBox">
             <table class="tabla-items">
                 <thead>
                     <tr>
@@ -156,9 +156,16 @@
                     </tr>
                 </thead>
                 <tbody id="tabla-items-body">
-                    <tr><td colspan="7" class="text-center py-8 text-gray-500">Cargando catálogo...</td></tr>
+                    <tr><td colspan="7" class="text-center py-8 text-gray-500">Cargando primeras 20 armaduras...</td></tr>
                 </tbody>
             </table>
+        </div>
+
+        <!-- BOTÓN DE CARGA PROGRESIVA DE A 20 -->
+        <div class="flex justify-center pt-2">
+            <button onclick="cargarSiguienteLote()" id="btn-cargar-mas" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-xl text-xs font-bold transition shadow flex items-center gap-2">
+                📥 Cargar 20 armaduras más
+            </button>
         </div>
     </div>
 
@@ -230,6 +237,13 @@
         let miembrosClan = [];
         let sesionAutorizada = false;
 
+        // Variables de paginación de a 20
+        let currentOffset = 0;
+        const pageSize = 20;
+        let totalItemsEnDB = 0;
+        let hayMasParaCargar = true;
+        let cargandoLote = false;
+
         const ARMAS = ["sword", "blade", "staff", "crossbow", "bow", "stick", "book", "claw", "scepter", "mace", "morning star", "axe", "spear", "dread", "two-hand"];
 
         function esSoloArmadura(item) {
@@ -300,41 +314,59 @@
             document.getElementById('modal-preview-img').classList.add('hidden');
         }
 
-        async function cargar(mostrarNotificacion = false) {
-            try {
-                const res = await fetch('/api/items');
-                if (res.ok) {
-                    const data = await res.json();
-                    catalogo = (data || [])
-                        .filter(esSoloArmadura)
-                        .sort((a, b) => extraerNumeroArchivo(a) - extraerNumeroArchivo(b));
-                }
-            } catch (e) {
-                console.warn("Fallo cargando armaduras:", e);
-            }
-            aplicarFiltros();
-            if (mostrarNotificacion) alert("Catálogo sincronizado.");
+        async function recargarDesdeCero() {
+            catalogo = [];
+            currentOffset = 0;
+            hayMasParaCargar = true;
+            await cargarSiguienteLote();
         }
 
-        async function forzarSincronizacionTotal() {
-            const btn = document.getElementById('btn-sync');
-            const original = btn.innerText;
-            btn.innerText = "⏳ Sincronizando con Drive...";
-            btn.disabled = true;
+        // CARGA EL SIGUIENTE BLOQUE DE 20
+        async function cargarSiguienteLote() {
+            if (cargandoLote || !hayMasParaCargar) return;
+            cargandoLote = true;
+
+            const btn = document.getElementById('btn-cargar-mas');
+            if (btn) btn.innerText = "⏳ Cargando 20 armaduras...";
 
             try {
-                const res = await fetch('/api/resincronizar_todo');
-                const data = await res.json();
-                if (data.status === 'ok') {
-                    await cargar(false);
-                    alert(`Sincronización completa: ${data.total_armaduras} armaduras cargadas desde Drive.`);
-                } else {
-                    alert("Error sincronizando.");
+                const res = await fetch(`/api/items?limit=${pageSize}&offset=${currentOffset}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const nuevosItems = (data.items || []).filter(esSoloArmadura);
+                    
+                    // Añadir sin duplicados
+                    nuevosItems.forEach(item => {
+                        if (!catalogo.some(c => c.id === item.id)) {
+                            catalogo.push(item);
+                        }
+                    });
+
+                    totalItemsEnDB = data.total || catalogo.length;
+                    hayMasParaCargar = data.has_more;
+                    currentOffset += pageSize;
+
+                    catalogo.sort((a, b) => extraerNumeroArchivo(a) - extraerNumeroArchivo(b));
                 }
             } catch (e) {
-                alert("Error de red.");
+                console.warn("Fallo en red al paginar:", e);
             } finally {
-                btn.innerText = original;
+                cargandoLote = false;
+                aplicarFiltros();
+                actualizarEstadoBotonCargarMas();
+            }
+        }
+
+        function actualizarEstadoBotonCargarMas() {
+            const btn = document.getElementById('btn-cargar-mas');
+            if (!btn) return;
+            if (!hayMasParaCargar) {
+                btn.innerText = `✅ Todo el catálogo cargado (${totalItemsEnDB} armaduras)`;
+                btn.className = "bg-gray-800 text-gray-500 px-6 py-2 rounded-xl text-xs font-bold cursor-not-allowed";
+                btn.disabled = true;
+            } else {
+                btn.innerText = `📥 Cargar 20 armaduras más (${catalogo.length} de ${totalItemsEnDB})`;
+                btn.className = "bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-xl text-xs font-bold transition shadow cursor-pointer";
                 btn.disabled = false;
             }
         }
@@ -342,7 +374,7 @@
         function renderizarTabla(items) {
             const tbody = document.getElementById('tabla-items-body');
             const cont = document.getElementById('contador-items');
-            if (cont) cont.innerText = `${items.length} armadura(s) en lista`;
+            if (cont) cont.innerText = `${items.length} de ${totalItemsEnDB} armaduras visibles`;
 
             if (!items || items.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-500">No hay armaduras para mostrar.</td></tr>';
@@ -533,7 +565,7 @@
                     document.getElementById('clanPjNombre').value = '';
                     document.getElementById('clanPjItems').value = '';
                     cargarMiembros();
-                    cargar();
+                    aplicarFiltros();
                 } else {
                     alert("Error al guardar miembro.");
                 }
@@ -553,7 +585,7 @@
                 });
                 if (res.ok) {
                     cargarMiembros();
-                    cargar();
+                    aplicarFiltros();
                 }
             } catch(e) {}
         }
@@ -575,7 +607,7 @@
                 });
                 if (res.ok) {
                     cargarMiembros();
-                    cargar();
+                    aplicarFiltros();
                 }
             } catch(e) {}
         }
@@ -617,7 +649,7 @@
                     if (res.ok) {
                         alert(`¡Importación exitosa! ${filasNormalizadas.length} miembros procesados.`);
                         cargarMiembros();
-                        cargar();
+                        aplicarFiltros();
                     } else {
                         alert("Error al importar miembros.");
                     }
@@ -630,7 +662,17 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             chequearSesion();
-            cargar();
+            cargarSiguienteLote();
+
+            // Auto-carga al llegar al final del scroll de la tabla
+            const scrollBox = document.getElementById('scrollBox');
+            if (scrollBox) {
+                scrollBox.addEventListener('scroll', () => {
+                    if (scrollBox.scrollTop + scrollBox.clientHeight >= scrollBox.scrollHeight - 30) {
+                        cargarSiguienteLote();
+                    }
+                });
+            }
         });
     </script>
 </body>
