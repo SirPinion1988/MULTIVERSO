@@ -54,7 +54,6 @@ status_mapas = cargar_json(MAPAS_FILE, {"1": {}, "2": {}, "3": {}})
 usuarios_db = cargar_json(USERS_FILE, {})
 donaciones_db = cargar_json(DONACIONES_FILE, [])
 miembros_clan_db = cargar_json(MIEMBROS_FILE, [])
-items_mu_db = []
 
 tarjetas_ocultas_global = set()
 heartbeats = {}
@@ -85,76 +84,86 @@ def usuario_es_autorizado():
     if 'user' not in session: return False
     return session['user'].lower() in ['pinion', 'tolkien', 'nasda']
 
-# --- OCR REMOTO EN LA NUBE CON GOOGLE VISION (SIN INSTALAR LIBRERÍAS EN RENDER) ---
-def leer_texto_imagen_vision(drive_id):
-    """Descarga la imagen del Drive y le pide a Google Cloud Vision que extraiga todo el texto."""
-    if not GOOGLE_API_KEY:
-        return ""
-    try:
-        img_url = f"https://drive.google.com/uc?export=download&id={drive_id}"
-        r_img = requests.get(img_url, timeout=5)
-        if r_img.status_code != 200:
-            return ""
+def es_solo_armadura(nombre, archivo_id):
+    texto = f"{nombre} {archivo_id}".lower()
+    return not any(w in texto for w in PALABRAS_ARMAS)
 
-        import base64
-        img_b64 = base64.b64encode(r_img.content).decode('utf-8')
+@app.route('/')
+def index():
+    return render_template('index.html', link_descarga=LINK_DESCARGA_BOT)
 
-        payload = {
-            "requests": [{
-                "image": {"content": img_b64},
-                "features": [{"type": "TEXT_DETECTION", "maxResults": 1}]
-            }]
-        }
+@app.route('/items')
+def vista_items():
+    return render_template('items.html')
 
-        url_vision = f"https://vision.googleapis.com/v1/images:annotate?key={GOOGLE_API_KEY}"
-        res = requests.post(url_vision, json=payload, timeout=6)
-        if res.status_code == 200:
-            data = res.json()
-            respuestas = data.get("responses", [])
-            if respuestas and "fullTextAnnotation" in respuestas[0]:
-                return respuestas[0]["fullTextAnnotation"].get("text", "")
-    except Exception as e:
-        print(f"Error procesando OCR Vision: {e}")
-    return ""
+# --- API DE ITEMS (RÁPIDA, SIN DESCARGAS PESADAS, NO CONSUME MEMORIA) ---
+@app.route('/api/items', methods=['GET', 'PUT'])
+def api_items():
+    conn = get_db()
+    if request.method == 'GET':
+        if not conn:
+            return jsonify([])
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT id, archivo_id, nombre, tipo, base_score, defense, durability,
+                           clases, opciones, bonus_excelente, drive_id, asignado_a
+                    FROM public.items_mu
+                    ORDER BY 
+                        NULLIF(regexp_replace(archivo_id, '\D', '', 'g'), '')::numeric ASC NULLS LAST,
+                        id ASC;
+                """)
+                filas = cur.fetchall()
+                items_formateados = []
+                for r in filas:
+                    nom = r.get('nombre') or 'Sin Nombre'
+                    arch = r.get('archivo_id') or str(r['id'])
+                    if not es_solo_armadura(nom, arch):
+                        continue
+                    items_formateados.append({
+                        "id": r['id'],
+                        "archivo_id": arch,
+                        "nombre": nom,
+                        "tipo": r.get('tipo') or 'Armor',
+                        "base_score": r.get('base_score') or 0,
+                        "defense": r.get('defense') or 0,
+                        "durability": r.get('durability') or '-',
+                        "clases": normalizar_campo_json(r.get('clases'), []),
+                        "opciones": normalizar_campo_json(r.get('opciones'), []),
+                        "bonus_excelente": normalizar_campo_json(r.get('bonus_excelente'), []),
+                        "drive_id": r.get('drive_id') or '',
+                        "asignado_a": r.get('asignado_a')
+                    })
+            conn.close()
+            return jsonify(items_formateados)
+        except Exception as e:
+            try: conn.close()
+            except Exception: pass
+            return jsonify([])
 
-def procesar_texto_mu(texto_completo, nombre_archivo):
-    """Parsea las líneas del texto extraído por Google Vision para MU Online."""
-    lineas = [l.strip() for l in texto_completo.split('\n') if l.strip()]
-    nombre_item = f"Item {nombre_archivo}"
-    clases = []
-    opciones = []
-    bonus = []
-    es_bonus = False
+    if not usuario_es_autorizado():
+        return jsonify({"error": "No autorizado"}), 403
 
-    for l in lineas:
-        l_lower = l.lower()
-        if "exclusive excellent bonus" in l_lower:
-            es_bonus = True
-            continue
+    if request.method == 'PUT':
+        data = request.json or {}
+        item_id = data.get('id')
+        asignado_a = data.get('asignado_a')
 
-        if "excellent" in l_lower and nombre_item.startswith("Item"):
-            nombre_item = l
-            continue
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE id = %s;", (asignado_a, item_id))
+                    conn.commit()
+                conn.close()
+            except Exception:
+                if conn: conn.close()
+        return jsonify({"status": "ok"}), 200
 
-        if "can be equipped by" in l_lower:
-            clase = l.split("by")[-1].strip()
-            if clase and clase not in clases:
-                clases.append(clase)
-            continue
-
-        if es_bonus:
-            if "increases" in l_lower or "+" in l:
-                bonus.append(l)
-        else:
-            if any(opt in l_lower for opt in ["damage", "defense", "reflect", "life", "sd", "rate", "luck", "speed"]):
-                opciones.append(l)
-
-    return nombre_item, clases, opciones, bonus
-
-# --- SINCRONIZACIÓN AUTOMÁTICA TOTAL DE DRIVE ---
-def sincronizar_drive_continuo():
-    global items_mu_db
-    if not FOLDER_DRIVE_ID or not GOOGLE_API_KEY: return
+# --- RUTA DE SINCRONIZACIÓN LIVIANA DE GOOGLE DRIVE ---
+@app.route('/api/sincronizar', methods=['GET', 'POST'])
+def sincronizar_drive_lote():
+    if not FOLDER_DRIVE_ID or not GOOGLE_API_KEY:
+        return jsonify({"error": "Faltan variables de Drive"}), 400
 
     archivos_detectados = []
     try:
@@ -177,153 +186,52 @@ def sincronizar_drive_continuo():
             else:
                 break
     except Exception as e:
-        print(f"Error listando Drive: {e}")
+        return jsonify({"error": f"Error Drive: {e}"}), 500
 
     conn = get_db()
+    if not conn:
+        return jsonify({"error": "Error base de datos"}), 500
+
     existentes_ids = set()
-    if conn:
-        try:
-            with conn.cursor() as cur:
-                cur.execute("SELECT drive_id FROM public.items_mu;")
-                existentes_ids = {r['drive_id'] for r in cur.fetchall()}
-        except Exception: pass
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT drive_id FROM public.items_mu;")
+            existentes_ids = {r['drive_id'] for r in cur.fetchall()}
+    except Exception: pass
 
     nuevos = 0
     for arch in archivos_detectados:
         fid = arch['id']
         fname = arch['name']
         if fid not in existentes_ids:
-            # 1. Leer el texto de la imagen de forma automática
-            texto_ocr = leer_texto_imagen_vision(fid)
-            nom_item, clases_item, opt_item, bonus_item = procesar_texto_mu(texto_ocr, fname)
+            num_match = re.search(r'\d+', fname)
+            tag_num = f"#{num_match.group(0)}" if num_match else fname
+            nombre_mostrar = f"Armadura {tag_num}"
 
-            # 2. Descartar armas automáticamente
-            es_arma = any(w in nom_item.lower() for w in PALABRAS_ARMAS)
-            if es_arma:
+            if not es_solo_armadura(nombre_mostrar, fname):
                 continue
 
-            if not clases_item:
-                clases_item = ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"]
-
-            nuevo_item = {
-                "archivo_id": fname,
-                "nombre": nom_item,
-                "tipo": "Armor",
-                "base_score": 0, "defense": 0, "durability": "-",
-                "clases": clases_item,
-                "opciones": opt_item,
-                "bonus_excelente": bonus_item,
-                "drive_id": fid,
-                "asignado_a": None
-            }
-
-            if conn:
-                try:
-                    with conn.cursor() as cur:
-                        cur.execute("""
-                            INSERT INTO public.items_mu (archivo_id, nombre, tipo, clases, opciones, bonus_excelente, drive_id)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s)
-                            ON CONFLICT (drive_id) DO NOTHING;
-                        """, (
-                            nuevo_item["archivo_id"],
-                            nuevo_item["nombre"],
-                            nuevo_item["tipo"],
-                            json.dumps(nuevo_item["clases"]),
-                            json.dumps(nuevo_item["opciones"]),
-                            json.dumps(nuevo_item["bonus_excelente"]),
-                            fid
-                        ))
-                        conn.commit()
-                except Exception: pass
-
-            nuevos += 1
-
-    if conn: conn.close()
-    if nuevos > 0:
-        obtener_todos_items()
-
-def obtener_todos_items():
-    global items_mu_db
-    conn = get_db()
-    if conn:
-        try:
-            with conn.cursor() as cur:
-                # Ordenamiento numérico del ID 2 en adelante
-                cur.execute("""
-                    SELECT id, archivo_id, nombre, tipo, base_score, defense, durability,
-                           clases, opciones, bonus_excelente, drive_id, asignado_a
-                    FROM public.items_mu
-                    WHERE NOT EXISTS (
-                        SELECT 1 FROM unnest(ARRAY['sword', 'blade', 'staff', 'crossbow', 'bow', 'stick', 'book', 'claw', 'scepter', 'mace', 'morning star', 'axe', 'spear', 'dread', 'two-hand']) AS w
-                        WHERE LOWER(nombre) LIKE '%%' || w || '%%'
-                    )
-                    ORDER BY 
-                        NULLIF(regexp_replace(archivo_id, '\D', '', 'g'), '')::numeric ASC NULLS LAST,
-                        id ASC;
-                """)
-                filas = cur.fetchall()
-                items_formateados = []
-                for r in filas:
-                    items_formateados.append({
-                        "id": r['id'],
-                        "archivo_id": r.get('archivo_id') or str(r['id']),
-                        "nombre": r.get('nombre') or 'Sin Nombre',
-                        "tipo": r.get('tipo') or 'Armor',
-                        "base_score": r.get('base_score') or 0,
-                        "defense": r.get('defense') or 0,
-                        "durability": r.get('durability') or '-',
-                        "clases": normalizar_campo_json(r.get('clases'), []),
-                        "opciones": normalizar_campo_json(r.get('opciones'), []),
-                        "bonus_excelente": normalizar_campo_json(r.get('bonus_excelente'), []),
-                        "drive_id": r.get('drive_id') or '',
-                        "asignado_a": r.get('asignado_a')
-                    })
-                items_mu_db = items_formateados
-            conn.close()
-        except Exception:
-            try: conn.close()
-            except Exception: pass
-
-    return items_mu_db
-
-@app.route('/')
-def index():
-    return render_template('index.html', link_descarga=LINK_DESCARGA_BOT)
-
-@app.route('/items')
-def vista_items():
-    return render_template('items.html')
-
-# --- API DE ITEMS ---
-@app.route('/api/items', methods=['GET', 'PUT'])
-def api_items():
-    global items_mu_db
-    if request.method == 'GET':
-        sincronizar_drive_continuo()
-        return jsonify(obtener_todos_items())
-
-    if not usuario_es_autorizado():
-        return jsonify({"error": "No autorizado. Inicia sesión como administrador."}), 403
-
-    conn = get_db()
-    if request.method == 'PUT':
-        data = request.json or {}
-        item_id = data.get('id')
-        asignado_a = data.get('asignado_a')
-
-        for it in items_mu_db:
-            if it.get('id') == item_id:
-                it['asignado_a'] = asignado_a
-
-        if conn:
             try:
                 with conn.cursor() as cur:
-                    cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE id = %s;", (asignado_a, item_id))
+                    cur.execute("""
+                        INSERT INTO public.items_mu (archivo_id, nombre, tipo, clases, opciones, bonus_excelente, drive_id)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                        ON CONFLICT (drive_id) DO NOTHING;
+                    """, (
+                        fname,
+                        nombre_mostrar,
+                        "Armor",
+                        json.dumps(["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"]),
+                        json.dumps([]),
+                        json.dumps([]),
+                        fid
+                    ))
                     conn.commit()
-                conn.close()
-            except Exception:
-                if conn: conn.close()
-        return jsonify({"status": "ok"}), 200
+                    nuevos += 1
+            except Exception: pass
+
+    conn.close()
+    return jsonify({"status": "ok", "total_drive": len(archivos_detectados), "nuevos_insertados": nuevos})
 
 # --- API DE MIEMBROS DEL CLAN ---
 @app.route('/api/miembros', methods=['GET', 'POST', 'DELETE'])
@@ -379,7 +287,6 @@ def api_miembros():
                     r = cur.fetchone()
                     if r: nuevo_id = r['id']
 
-                    # Sincronizar en la tabla de ítems la leyenda de asignación
                     cur.execute("UPDATE public.items_mu SET asignado_a = NULL WHERE asignado_a = %s;", (nombre_pj,))
                     for arch_id in items_asignados:
                         cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE archivo_id = %s OR CAST(id AS TEXT) = %s;", (nombre_pj, str(arch_id), str(arch_id)))
