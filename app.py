@@ -2,10 +2,11 @@ import os
 import time
 import json
 import re
+import base64
 import requests
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
@@ -96,7 +97,7 @@ def index():
 def vista_items():
     return render_template('items.html')
 
-# --- API DE ITEMS ---
+# --- CONSULTA RÁPIDA DE ITEMS PARA LA TABLA ---
 @app.route('/api/items', methods=['GET', 'PUT'])
 def api_items():
     conn = get_db()
@@ -139,7 +140,7 @@ def api_items():
                 except Exception: pass
 
         if not items_formateados:
-            items_formateados = sincronizar_drive_directo()
+            items_formateados = sincronizar_drive_metadatos()
 
         return jsonify(items_formateados), 200
 
@@ -161,7 +162,8 @@ def api_items():
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
 
-def sincronizar_drive_directo():
+# --- LECTURA RÁPIDA DE METADATOS DE DRIVE ---
+def sincronizar_drive_metadatos():
     if not FOLDER_DRIVE_ID or not GOOGLE_API_KEY:
         return []
 
@@ -173,7 +175,7 @@ def sincronizar_drive_directo():
             url = f"https://www.googleapis.com/drive/v3/files?q={requests.utils.quote(q)}&key={GOOGLE_API_KEY}&fields=nextPageToken,files(id,name,mimeType)&pageSize=100"
             if page_token:
                 url += f"&pageToken={page_token}"
-            res = requests.get(url, timeout=7)
+            res = requests.get(url, timeout=6)
             if res.status_code == 200:
                 data = res.json()
                 for f in data.get('files', []):
@@ -195,7 +197,7 @@ def sincronizar_drive_directo():
         fid = arch['id']
         fname = arch['name']
         num_match = re.search(r'\d+', fname)
-        num_val = int(num_match.group(0)) if num_match else idx + 2
+        num_val = int(num_match.group(0)) if num_match else (idx + 2)
         nombre_item = f"Armadura #{num_val}"
 
         if not es_solo_armadura(nombre_item, fname):
@@ -237,6 +239,121 @@ def sincronizar_drive_directo():
     if conn: conn.close()
     items_retorno.sort(key=lambda x: int(re.search(r'\d+', x['archivo_id']).group(0)) if re.search(r'\d+', x['archivo_id']) else 999999)
     return items_retorno
+
+# --- OCR EN SEGUNDO PLANO MEDIANTE GOOGLE CLOUD VISION (EN LOTES PEQUEÑOS) ---
+@app.route('/api/escanear_opciones')
+def escanear_opciones_pendientes():
+    if not GOOGLE_API_KEY:
+        return jsonify({"error": "Falta GOOGLE_API_KEY"}), 400
+
+    conn = get_db()
+    if not conn:
+        return jsonify({"error": "Error base de datos"}), 500
+
+    items_pendientes = []
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id, drive_id, archivo_id 
+                FROM public.items_mu 
+                WHERE opciones @> '["[Auto] Captura sincronizada de Drive"]'::jsonb
+                   OR nombre LIKE 'Armadura #%'
+                ORDER BY id ASC 
+                LIMIT 10;
+            """)
+            items_pendientes = cur.fetchall()
+    except Exception as e:
+        conn.close()
+        return jsonify({"error": str(e)}), 500
+
+    if not items_pendientes:
+        conn.close()
+        return jsonify({"status": "ok", "message": "Todas las armaduras ya tienen sus nombres y opciones reales."})
+
+    procesados = 0
+    url_vision = f"https://vision.googleapis.com/v1/images:annotate?key={GOOGLE_API_KEY}"
+
+    for it in items_pendientes:
+        fid = it['drive_id']
+        fname = it['archivo_id']
+        img_url = f"https://drive.google.com/uc?export=download&id={fid}"
+        
+        try:
+            r_img = requests.get(img_url, timeout=5)
+            if r_img.status_code != 200:
+                continue
+
+            img_b64 = base64.b64encode(r_img.content).decode('utf-8')
+            payload = {
+                "requests": [{
+                    "image": {"content": img_b64},
+                    "features": [{"type": "TEXT_DETECTION", "maxResults": 1}]
+                }]
+            }
+
+            res = requests.post(url_vision, json=payload, timeout=6)
+            if res.status_code == 200:
+                data = res.json()
+                respuestas = data.get("responses", [])
+                texto = respuestas[0].get("fullTextAnnotation", {}).get("text", "") if respuestas else ""
+
+                if texto:
+                    lineas = [l.strip() for l in texto.split('\n') if l.strip()]
+                    nombre_real = f"Item #{fname}"
+                    clases = []
+                    opciones = []
+                    bonus = []
+                    es_bonus = False
+
+                    for l in lineas:
+                        l_low = l.lower()
+                        if "exclusive excellent bonus" in l_low:
+                            es_bonus = True
+                            continue
+                        if "excellent" in l_low and (nombre_real.startswith("Item") or nombre_real.startswith("Armadura")):
+                            nombre_real = l
+                            continue
+                        if "can be equipped by" in l_low:
+                            c = l.split("by")[-1].strip()
+                            if c and c not in clases:
+                                clases.append(c)
+                            continue
+                        if es_bonus:
+                            if "increases" in l_low or "+" in l:
+                                bonus.append(l)
+                        else:
+                            if any(k in l_low for k in ["damage", "defense", "reflect", "life", "sd", "rate", "luck"]):
+                                opciones.append(l)
+
+                    # Si era un arma, se retira de la lista de armaduras
+                    if any(w in nombre_real.lower() for w in PALABRAS_ARMAS):
+                        with conn.cursor() as cur:
+                            cur.execute("DELETE FROM public.items_mu WHERE id = %s;", (it['id'],))
+                            conn.commit()
+                        continue
+
+                    with conn.cursor() as cur:
+                        cur.execute("""
+                            UPDATE public.items_mu 
+                            SET nombre = %s,
+                                clases = %s,
+                                opciones = %s,
+                                bonus_excelente = %s
+                            WHERE id = %s;
+                        """, (
+                            nombre_real,
+                            json.dumps(clases or ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"]),
+                            json.dumps(opciones),
+                            json.dumps(bonus),
+                            it['id']
+                        ))
+                        conn.commit()
+                    procesados += 1
+        except Exception:
+            continue
+
+    conn.close()
+    return jsonify({"status": "ok", "procesados_en_este_lote": procesados, "restantes_aprox": len(items_pendientes)})
 
 # --- API DE MIEMBROS DEL CLAN ---
 @app.route('/api/miembros', methods=['GET', 'POST', 'DELETE'])
@@ -292,6 +409,7 @@ def api_miembros():
                     r = cur.fetchone()
                     if r: nuevo_id = r['id']
 
+                    # Sincronización automática de asignación en items_mu
                     cur.execute("UPDATE public.items_mu SET asignado_a = NULL WHERE asignado_a = %s;", (nombre_pj,))
                     for arch_id in items_asignados:
                         cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE archivo_id = %s OR CAST(id AS TEXT) = %s;", (nombre_pj, str(arch_id), str(arch_id)))
@@ -324,6 +442,7 @@ def api_miembros():
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
 
+# Importación masiva desde Excel
 @app.route('/api/miembros/importar', methods=['POST'])
 def importar_miembros_excel():
     if not usuario_es_autorizado():
