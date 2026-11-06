@@ -2,6 +2,7 @@ import os
 import time
 import json
 import re
+import base64
 import requests
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
@@ -96,85 +97,136 @@ def index():
 def vista_items():
     return render_template('items.html')
 
-# --- LECTURA RÁPIDA DE DRIVE CUANDO LA TABLA ESTÁ VACÍA ---
-def sincronizar_drive_rapido():
-    if not FOLDER_DRIVE_ID or not GOOGLE_API_KEY:
-        return []
+# --- LECTURA OCR CON GOOGLE VISION PARA FOTOS NUEVAS ---
+def procesar_ocr_imagen_nueva(fid, fname):
+    if not GOOGLE_API_KEY:
+        return None
 
-    archivos_detectados = []
+    img_url = f"https://drive.google.com/uc?export=download&id={fid}"
     try:
-        page_token = None
-        q = f"'{FOLDER_DRIVE_ID}' in parents and trashed=false"
-        while True:
-            url = f"https://www.googleapis.com/drive/v3/files?q={requests.utils.quote(q)}&key={GOOGLE_API_KEY}&fields=nextPageToken,files(id,name,mimeType)&pageSize=100"
-            if page_token:
-                url += f"&pageToken={page_token}"
-            res = requests.get(url, timeout=6)
-            if res.status_code == 200:
-                data = res.json()
-                for f in data.get('files', []):
-                    nombre = f.get('name', '')
-                    if 'image' in f.get('mimeType', '') or any(nombre.lower().endswith(ext) for ext in ['.png', '.jpg', '.jpeg', '.webp']):
-                        archivos_detectados.append(f)
-                page_token = data.get('nextPageToken')
-                if not page_token:
-                    break
-            else:
-                break
+        r_img = requests.get(img_url, timeout=5)
+        if r_img.status_code != 200:
+            return None
+
+        img_b64 = base64.b64encode(r_img.content).decode('utf-8')
+        payload = {
+            "requests": [{
+                "image": {"content": img_b64},
+                "features": [{"type": "TEXT_DETECTION", "maxResults": 1}]
+            }]
+        }
+
+        url_vision = f"https://vision.googleapis.com/v1/images:annotate?key={GOOGLE_API_KEY}"
+        res = requests.post(url_vision, json=payload, timeout=6)
+        if res.status_code == 200:
+            data = res.json()
+            respuestas = data.get("responses", [])
+            texto = respuestas[0].get("fullTextAnnotation", {}).get("text", "") if respuestas else ""
+
+            if texto:
+                lineas = [l.strip() for l in texto.split('\n') if l.strip()]
+                nombre_real = ""
+                clases = []
+                opciones = []
+                bonus = []
+                es_bonus = False
+
+                for l in lineas:
+                    l_low = l.lower()
+                    if "exclusive excellent bonus" in l_low:
+                        es_bonus = True
+                        continue
+                    if "excellent" in l_low and not nombre_real:
+                        nombre_real = l
+                        continue
+                    if "can be equipped by" in l_low:
+                        c = l.split("by")[-1].strip()
+                        if c and c not in clases:
+                            clases.append(c)
+                        continue
+                    if es_bonus:
+                        if "increases" in l_low or "+" in l:
+                            bonus.append(l)
+                    else:
+                        if any(k in l_low for k in ["damage", "defense", "reflect", "life", "sd", "rate", "luck", "speed"]):
+                            opciones.append(l)
+
+                if any(w in nombre_real.lower() for w in PALABRAS_ARMAS):
+                    return "ES_ARMA"
+
+                num_m = re.search(r'\d+', fname)
+                nom_final = nombre_real if nombre_real else (f"Armadura #{num_m.group(0)}" if num_m else fname)
+
+                return {
+                    "nombre": nom_final,
+                    "clases": clases or ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"],
+                    "opciones": opciones,
+                    "bonus": bonus
+                }
     except Exception as e:
-        print(f"Error Drive: {e}")
+        print(f"Error OCR {fname}: {e}")
+    return None
+
+# --- REVISIÓN Y REGISTRO AUTOMÁTICO DE ARCHIVOS NUEVOS EN DRIVE ---
+def revisar_archivos_nuevos_drive():
+    if not FOLDER_DRIVE_ID or not GOOGLE_API_KEY:
+        return 0
 
     conn = get_db()
-    items_retorno = []
+    if not conn:
+        return 0
 
-    for idx, arch in enumerate(archivos_detectados):
+    existentes_ids = set()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT drive_id FROM public.items_mu;")
+            existentes_ids = {r['drive_id'] for r in cur.fetchall()}
+    except Exception: pass
+
+    archivos_pendientes = []
+    try:
+        # Consulta los últimos 30 archivos agregados a la carpeta
+        url = f"https://www.googleapis.com/drive/v3/files?q='{FOLDER_DRIVE_ID}'+in+parents+and+trashed=false&key={GOOGLE_API_KEY}&fields=files(id,name,mimeType)&orderBy=createdTime+desc&pageSize=30"
+        res = requests.get(url, timeout=6)
+        if res.status_code == 200:
+            for f in res.json().get('files', []):
+                if f['id'] not in existentes_ids and any(f['name'].lower().endswith(ext) for ext in ['.png', '.jpg', '.jpeg', '.webp']):
+                    archivos_pendientes.append(f)
+    except Exception as e:
+        print(f"Error listando Drive nuevos: {e}")
+
+    nuevos_procesados = 0
+    # Procesa como máximo 3 ítems nuevos por consulta para mantener bajo el uso de RAM
+    for arch in archivos_pendientes[:3]:
         fid = arch['id']
         fname = arch['name']
-        num_m = re.search(r'\d+', fname)
-        num_val = int(num_m.group(0)) if num_m else (idx + 2)
-        nombre_item = f"Armadura #{num_val}"
 
-        if not es_solo_armadura(nombre_item, fname):
+        resultado_ocr = procesar_ocr_imagen_nueva(fid, fname)
+        if resultado_ocr == "ES_ARMA":
             continue
 
-        item_dict = {
-            "id": num_val,
-            "archivo_id": fname,
-            "nombre": nombre_item,
-            "tipo": "Armor",
-            "base_score": 0, "defense": 0, "durability": "-",
-            "clases": ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"],
-            "opciones": ["[Auto] Sincronizado"],
-            "bonus_excelente": [],
-            "drive_id": fid,
-            "asignado_a": None
-        }
-        items_retorno.append(item_dict)
+        num_m = re.search(r'\d+', fname)
+        nom_item = resultado_ocr['nombre'] if resultado_ocr else f"Armadura #{num_m.group(0) if num_m else fname}"
+        clases = resultado_ocr['clases'] if resultado_ocr else ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"]
+        opciones = resultado_ocr['opciones'] if resultado_ocr else ["[Auto] Sincronizado"]
+        bonus = resultado_ocr['bonus'] if resultado_ocr else []
 
-        if conn:
-            try:
-                with conn.cursor() as cur:
-                    cur.execute("""
-                        INSERT INTO public.items_mu (archivo_id, nombre, tipo, clases, opciones, bonus_excelente, drive_id)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s)
-                        ON CONFLICT (drive_id) DO NOTHING;
-                    """, (
-                        fname,
-                        nombre_item,
-                        "Armor",
-                        json.dumps(item_dict["clases"]),
-                        json.dumps(item_dict["opciones"]),
-                        json.dumps(item_dict["bonus_excelente"]),
-                        fid
-                    ))
-                    conn.commit()
-            except Exception: pass
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO public.items_mu (archivo_id, nombre, tipo, clases, opciones, bonus_excelente, drive_id)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (drive_id) DO UPDATE 
+                    SET nombre = EXCLUDED.nombre, clases = EXCLUDED.clases, opciones = EXCLUDED.opciones, bonus_excelente = EXCLUDED.bonus_excelente;
+                """, (fname, nom_item, "Armor", json.dumps(clases), json.dumps(opciones), json.dumps(bonus), fid))
+                conn.commit()
+                nuevos_procesados += 1
+        except Exception: pass
 
-    if conn: conn.close()
-    items_retorno.sort(key=lambda x: int(re.search(r'\d+', x['archivo_id']).group(0)) if re.search(r'\d+', x['archivo_id']) else 999999)
-    return items_retorno
+    conn.close()
+    return nuevos_procesados
 
-# --- API DE ITEMS CON SOPORTE GRADUAL ---
+# --- API DE ITEMS PAGINADA ---
 @app.route('/api/items', methods=['GET', 'PUT'])
 def api_items():
     conn = get_db()
@@ -182,13 +234,16 @@ def api_items():
         limit = request.args.get('limit', default=20, type=int)
         offset = request.args.get('offset', default=0, type=int)
 
+        # En la primera página, revisa si ingresó algún archivo nuevo
+        if offset == 0:
+            revisar_archivos_nuevos_drive()
+
         items_formateados = []
         total_items = 0
 
         if conn:
             try:
                 with conn.cursor() as cur:
-                    # Conteo total de armaduras sin armas
                     cur.execute("""
                         SELECT COUNT(*) as total 
                         FROM public.items_mu 
@@ -197,11 +252,9 @@ def api_items():
                             WHERE LOWER(nombre) LIKE '%%' || w || '%%'
                         );
                     """)
-                    row_count = cur.fetchone()
-                    if row_count:
-                        total_items = row_count['total']
+                    row_c = cur.fetchone()
+                    if row_c: total_items = row_c['total']
 
-                    # Traer el lote exacto ordenado por número de menor a mayor
                     cur.execute("""
                         SELECT id, archivo_id, nombre, tipo, base_score, defense, durability,
                                clases, opciones, bonus_excelente, drive_id, asignado_a
@@ -235,16 +288,9 @@ def api_items():
                             "asignado_a": r.get('asignado_a')
                         })
                 conn.close()
-            except Exception as e:
-                print(f"Error consultando items: {e}")
+            except Exception:
                 try: conn.close()
                 except Exception: pass
-
-        # Si la tabla está en cero, sincroniza rápido de Drive
-        if not items_formateados and offset == 0:
-            todos = sincronizar_drive_rapido()
-            total_items = len(todos)
-            items_formateados = todos[offset:offset+limit]
 
         return jsonify({
             "items": items_formateados,
@@ -326,7 +372,7 @@ def api_miembros():
                     r = cur.fetchone()
                     if r: nuevo_id = r['id']
 
-                    # Sincronización automática de asignación en items_mu
+                    # Sincronización automática de asignaciones
                     cur.execute("UPDATE public.items_mu SET asignado_a = NULL WHERE asignado_a = %s;", (nombre_pj,))
                     for arch_id in items_asignados:
                         cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE archivo_id = %s OR CAST(id AS TEXT) = %s;", (nombre_pj, str(arch_id), str(arch_id)))
