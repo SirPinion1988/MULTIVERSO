@@ -81,34 +81,47 @@ def usuario_es_autorizado():
     if 'user' not in session: return False
     return session['user'].lower() in ['pinion', 'tolkien', 'nasda']
 
-# --- SINCRONIZACIÓN DIRECTA CON GOOGLE DRIVE ---
+# --- ESCÁNER CON PAGINACIÓN COMPLETA (LEE TODOS LOS ARCHIVOS) ---
 def sincronizar_drive_continuo():
     global items_mu_db
     if not FOLDER_DRIVE_ID: return
 
     archivos_detectados = []
 
-    # 1. API Google Drive
+    # 1. Consulta mediante Google Drive API con bucle de paginación
     if GOOGLE_API_KEY:
         try:
+            page_token = None
             q = f"'{FOLDER_DRIVE_ID}' in parents and trashed=false"
-            url = f"https://www.googleapis.com/drive/v3/files?q={requests.utils.quote(q)}&key={GOOGLE_API_KEY}&fields=files(id,name,mimeType)"
-            res = requests.get(url, timeout=5)
-            if res.status_code == 200:
-                for f in res.json().get('files', []):
-                    if 'image' in f.get('mimeType', ''):
-                        archivos_detectados.append({"id": f['id'], "name": f['name']})
+            while True:
+                url = f"https://www.googleapis.com/drive/v3/files?q={requests.utils.quote(q)}&key={GOOGLE_API_KEY}&fields=nextPageToken,files(id,name,mimeType)&pageSize=100"
+                if page_token:
+                    url += f"&pageToken={page_token}"
+                res = requests.get(url, timeout=7)
+                if res.status_code == 200:
+                    data = res.json()
+                    for f in data.get('files', []):
+                        if 'image' in f.get('mimeType', '') or any(f.get('name', '').lower().endswith(ext) for ext in ['.png', '.jpg', '.jpeg', '.webp']):
+                            archivos_detectados.append({"id": f['id'], "name": f['name']})
+                    page_token = data.get('nextPageToken')
+                    if not page_token:
+                        break
+                else:
+                    break
         except Exception as e:
             print(f"Error API Drive: {e}")
 
-    # 2. Carpeta pública
+    # 2. Respaldo por vista pública completa
     if not archivos_detectados:
         try:
-            url_folder = f"https://drive.google.com/embeddedfolderview?id={FOLDER_DRIVE_ID}#grid"
-            r = requests.get(url_folder, headers={'User-Agent': 'Mozilla/5.0'}, timeout=5)
-            ids = set(re.findall(r'https://drive\.google\.com/file/d/([a-zA-Z0-9_-]+)', r.text))
-            for fid in ids:
-                archivos_detectados.append({"id": fid, "name": fid[:8]})
+            url_folder = f"https://drive.google.com/embeddedfolderview?id={FOLDER_DRIVE_ID}#list"
+            r = requests.get(url_folder, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}, timeout=7)
+            matches = set(re.findall(r'https://drive\.google\.com/file/d/([a-zA-Z0-9_-]+)', r.text))
+            matches_entry = set(re.findall(r'\["([a-zA-Z0-9_-]{25,})"', r.text))
+            todos_los_ids = matches.union(matches_entry)
+            for fid in todos_los_ids:
+                if len(fid) >= 20:
+                    archivos_detectados.append({"id": fid, "name": fid[:8]})
         except Exception as e:
             print(f"Error escaneando carpeta pública: {e}")
 
@@ -120,6 +133,8 @@ def sincronizar_drive_continuo():
                 cur.execute("SELECT drive_id FROM public.items_mu;")
                 existentes_ids = {r['drive_id'] for r in cur.fetchall()}
         except Exception: pass
+    else:
+        existentes_ids = {it.get('drive_id') for it in items_mu_db if it.get('drive_id')}
 
     nuevos = 0
     for arch in archivos_detectados:
@@ -240,7 +255,7 @@ def api_items():
         if conn:
             try:
                 with conn.cursor() as cur:
-                    if nombre or clases is not None or opciones is not None:
+                    if nombre or clases is not None or opciones is not None or bonus_excelente is not None:
                         cur.execute("""
                             UPDATE public.items_mu 
                             SET nombre = COALESCE(%s, nombre),
@@ -288,7 +303,7 @@ def api_miembros():
         return jsonify(miembros_clan_db)
 
     if not usuario_es_autorizado():
-        return jsonify({"error": "No autorizado. Solo administradores pueden gestionar miembros."}), 403
+        return jsonify({"error": "No autorizado"}), 403
 
     if request.method == 'POST':
         data = request.json or {}
