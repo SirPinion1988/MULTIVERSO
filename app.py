@@ -15,7 +15,7 @@ app.secret_key = os.environ.get("SECRET_KEY", "multiverso_secret_key_2026")
 DATABASE_URL = os.environ.get("DATABASE_URL")
 LINK_DESCARGA_BOT = "https://drive.google.com/uc?export=download&id=TU_ID_DE_GOOGLE_DRIVE"
 FOLDER_DRIVE_ID = os.environ.get("DRIVE_FOLDER_ID", "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK")
-GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "")
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "AIzaSyDA99w81Z7LDtsA-gX_MmZLdVDFxmqEmlk")
 
 DATA_FILE = "timers_data.json"
 USERS_FILE = "users_data.json"
@@ -26,6 +26,11 @@ MIEMBROS_FILE = "miembros_data.json"
 BOSSES_MANUALES = [
     "Red Dragon", "Yellow Goblin", "Blue Goblin", 
     "Red Goblin", "Santa", "White Wizard", "Skeleton King"
+]
+
+PALABRAS_ARMAS = [
+    "sword", "blade", "staff", "crossbow", "bow", "stick", "book", 
+    "claw", "scepter", "mace", "morning star", "axe", "spear", "dread", "two-hand"
 ]
 
 def cargar_json(filepath, default_val):
@@ -80,7 +85,11 @@ def usuario_es_autorizado():
     if 'user' not in session: return False
     return session['user'].lower() in ['pinion', 'tolkien', 'nasda']
 
-# --- ESCÁNER CON PAGINACIÓN COMPLETA DESDE GOOGLE DRIVE ---
+def es_solo_armadura(nombre, archivo_id):
+    texto = f"{nombre} {archivo_id}".lower()
+    return not any(w in texto for w in PALABRAS_ARMAS)
+
+# --- ESCÁNER AUTOMÁTICO DE GOOGLE DRIVE (TODOS LOS ARCHIVOS) ---
 def sincronizar_drive_continuo():
     global items_mu_db
     if not FOLDER_DRIVE_ID or not GOOGLE_API_KEY: return
@@ -90,7 +99,7 @@ def sincronizar_drive_continuo():
         page_token = None
         q = f"'{FOLDER_DRIVE_ID}' in parents and trashed=false"
         while True:
-            url = f"https://www.googleapis.com/drive/v3/files?q={requests.utils.quote(q)}&key={GOOGLE_API_KEY}&fields=nextPageToken,files(id,name,mimeType)&pageSize=100"
+            url = f"https://www.googleapis.com/drive/v3/files?q={requests.utils.quote(q)}&key={GOOGLE_API_KEY}&fields=nextPageToken,files(id,name,mimeType,description)&pageSize=100"
             if page_token:
                 url += f"&pageToken={page_token}"
             res = requests.get(url, timeout=7)
@@ -99,7 +108,11 @@ def sincronizar_drive_continuo():
                 for f in data.get('files', []):
                     nombre = f.get('name', '')
                     if 'image' in f.get('mimeType', '') or any(nombre.lower().endswith(ext) for ext in ['.png', '.jpg', '.jpeg', '.webp']):
-                        archivos_detectados.append({"id": f['id'], "name": nombre})
+                        archivos_detectados.append({
+                            "id": f['id'], 
+                            "name": nombre,
+                            "desc": f.get('description', '')
+                        })
                 page_token = data.get('nextPageToken')
                 if not page_token:
                     break
@@ -125,6 +138,21 @@ def sincronizar_drive_continuo():
             if not nombre_limpio or nombre_limpio.isdigit():
                 nombre_limpio = f"Item #{nombre_limpio}"
 
+            if not es_solo_armadura(nombre_limpio, arch['name']):
+                continue
+
+            nuevo_item = {
+                "archivo_id": arch['name'],
+                "nombre": nombre_limpio,
+                "tipo": "Armor",
+                "base_score": 0, "defense": 0, "durability": "-",
+                "clases": ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"],
+                "opciones": ["[Auto] Captura sincronizada de Drive"],
+                "bonus_excelente": [],
+                "drive_id": fid,
+                "asignado_a": None
+            }
+
             if conn:
                 try:
                     with conn.cursor() as cur:
@@ -133,12 +161,12 @@ def sincronizar_drive_continuo():
                             VALUES (%s, %s, %s, %s, %s, %s, %s)
                             ON CONFLICT (drive_id) DO NOTHING;
                         """, (
-                            arch['name'],
-                            nombre_limpio,
-                            "Armor",
-                            json.dumps(["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"]),
-                            json.dumps([]),
-                            json.dumps([]),
+                            nuevo_item["archivo_id"],
+                            nuevo_item["nombre"],
+                            nuevo_item["tipo"],
+                            json.dumps(nuevo_item["clases"]),
+                            json.dumps(nuevo_item["opciones"]),
+                            json.dumps(nuevo_item["bonus_excelente"]),
                             fid
                         ))
                         conn.commit()
@@ -156,7 +184,6 @@ def obtener_todos_items():
     if conn:
         try:
             with conn.cursor() as cur:
-                # Ordenamiento numérico estricto del ID 2 en adelante
                 cur.execute("""
                     SELECT id, archivo_id, nombre, tipo, base_score, defense, durability,
                            clases, opciones, bonus_excelente, drive_id, asignado_a
@@ -168,10 +195,15 @@ def obtener_todos_items():
                 filas = cur.fetchall()
                 items_formateados = []
                 for r in filas:
+                    nom = r.get('nombre') or 'Sin Nombre'
+                    arch = r.get('archivo_id') or str(r['id'])
+                    if not es_solo_armadura(nom, arch):
+                        continue
+
                     items_formateados.append({
                         "id": r['id'],
-                        "archivo_id": r.get('archivo_id') or str(r['id']),
-                        "nombre": r.get('nombre') or 'Sin Nombre',
+                        "archivo_id": arch,
+                        "nombre": nom,
                         "tipo": r.get('tipo') or 'Armor',
                         "base_score": r.get('base_score') or 0,
                         "defense": r.get('defense') or 0,
@@ -215,34 +247,15 @@ def api_items():
         data = request.json or {}
         item_id = data.get('id')
         asignado_a = data.get('asignado_a')
-        nombre = data.get('nombre')
-        clases = data.get('clases')
-        opciones = data.get('opciones')
-        bonus_excelente = data.get('bonus_excelente')
 
         for it in items_mu_db:
             if it.get('id') == item_id:
-                if asignado_a is not None or 'asignado_a' in data: it['asignado_a'] = asignado_a
-                if nombre: it['nombre'] = nombre
-                if clases is not None: it['clases'] = clases
-                if opciones is not None: it['opciones'] = opciones
-                if bonus_excelente is not None: it['bonus_excelente'] = bonus_excelente
+                it['asignado_a'] = asignado_a
 
         if conn:
             try:
                 with conn.cursor() as cur:
-                    if nombre or clases is not None or opciones is not None or bonus_excelente is not None:
-                        cur.execute("""
-                            UPDATE public.items_mu 
-                            SET nombre = COALESCE(%s, nombre),
-                                clases = COALESCE(%s, clases),
-                                opciones = COALESCE(%s, opciones),
-                                bonus_excelente = COALESCE(%s, bonus_excelente),
-                                asignado_a = %s
-                            WHERE id = %s;
-                        """, (nombre, json.dumps(clases) if clases is not None else None, json.dumps(opciones) if opciones is not None else None, json.dumps(bonus_excelente) if bonus_excelente is not None else None, asignado_a, item_id))
-                    else:
-                        cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE id = %s;", (asignado_a, item_id))
+                    cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE id = %s;", (asignado_a, item_id))
                     conn.commit()
                 conn.close()
             except Exception:
@@ -278,7 +291,7 @@ def api_miembros():
         return jsonify(miembros_clan_db)
 
     if not usuario_es_autorizado():
-        return jsonify({"error": "No autorizado"}), 403
+        return jsonify({"error": "No autorizado. Inicia sesión como Pinion, tolkien o nasda."}), 403
 
     if request.method == 'POST':
         data = request.json or {}
@@ -304,9 +317,10 @@ def api_miembros():
                     r = cur.fetchone()
                     if r: nuevo_id = r['id']
 
+                    # Sincronización automática de la leyenda 'Asignado a' en items_mu
                     cur.execute("UPDATE public.items_mu SET asignado_a = NULL WHERE asignado_a = %s;", (nombre_pj,))
                     for arch_id in items_asignados:
-                        cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE archivo_id = %s OR CAST(id AS TEXT) = %s;", (nombre_pj, arch_id, arch_id))
+                        cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE archivo_id = %s OR CAST(id AS TEXT) = %s;", (nombre_pj, str(arch_id), str(arch_id)))
 
                     conn.commit()
                 conn.close()
@@ -367,7 +381,7 @@ def importar_miembros_excel():
                     
                     cur.execute("UPDATE public.items_mu SET asignado_a = NULL WHERE asignado_a = %s;", (pj,))
                     for arch_id in items_lista:
-                        cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE archivo_id = %s OR CAST(id AS TEXT) = %s;", (pj, arch_id, arch_id))
+                        cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE archivo_id = %s OR CAST(id AS TEXT) = %s;", (pj, str(arch_id), str(arch_id)))
                     conn.commit()
             except Exception: pass
 
