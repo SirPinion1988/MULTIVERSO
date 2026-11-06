@@ -85,11 +85,8 @@
         <button onclick="cambiarSeccion('CLAN')" id="btn-sec-clan" class="bg-gray-800 text-gray-400 px-5 py-2 rounded-lg text-sm font-bold transition">
             👥 Miembros del Clan
         </button>
-        <button onclick="cargar(true)" class="bg-purple-700 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow flex items-center gap-1.5">
-            🔄 Actualizar Ahora
-        </button>
-        <button onclick="escanearLoteOpciones()" id="btn-ocr" class="bg-cyan-700 hover:bg-cyan-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow flex items-center gap-1.5">
-            ⚡ Leer Nombres & Opciones
+        <button onclick="forzarSincronizacionTotal()" id="btn-sync" class="bg-purple-700 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow flex items-center gap-1.5">
+            🔄 Sincronizar Todo con Drive
         </button>
     </div>
 
@@ -319,25 +316,25 @@
             if (mostrarNotificacion) alert("Catálogo sincronizado.");
         }
 
-        async function escanearLoteOpciones() {
-            const btn = document.getElementById('btn-ocr');
-            const textoOriginal = btn.innerText;
-            btn.innerText = "⏳ Leyendo fotos con IA...";
+        async function forzarSincronizacionTotal() {
+            const btn = document.getElementById('btn-sync');
+            const original = btn.innerText;
+            btn.innerText = "⏳ Sincronizando con Drive...";
             btn.disabled = true;
 
             try {
-                const res = await fetch('/api/escanear_opciones');
+                const res = await fetch('/api/resincronizar_todo');
                 const data = await res.json();
                 if (data.status === 'ok') {
                     await cargar(false);
-                    alert(`Lote completado: ${data.procesados_en_este_lote || 0} armaduras actualizadas.`);
+                    alert(`Sincronización completa: ${data.total_armaduras} armaduras cargadas desde Drive.`);
                 } else {
-                    alert("Aviso: " + (data.error || "No se pudo procesar el lote"));
+                    alert("Error sincronizando.");
                 }
             } catch (e) {
-                alert("Error de conexión durante el escaneo.");
+                alert("Error de red.");
             } finally {
-                btn.innerText = textoOriginal;
+                btn.innerText = original;
                 btn.disabled = false;
             }
         }
