@@ -223,7 +223,7 @@ def index():
 
 @app.route('/items')
 def vista_items():
-    return redirect(url_for('index'))
+    return render_template('items.html')
 
 @app.route('/api/items', methods=['GET', 'PUT'])
 def api_items():
@@ -233,7 +233,7 @@ def api_items():
         return jsonify(obtener_todos_items())
 
     if not usuario_es_autorizado():
-        return jsonify({"error": "No autorizado. Solo administradores pueden modificar asignaciones."}), 403
+        return jsonify({"error": "No autorizado."}), 403
 
     conn = get_db()
     if request.method == 'PUT':
