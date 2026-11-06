@@ -89,7 +89,6 @@ def es_solo_armadura(nombre, archivo_id):
     texto = f"{nombre} {archivo_id}".lower()
     return not any(w in texto for w in PALABRAS_ARMAS)
 
-# --- ESCÁNER AUTOMÁTICO DE GOOGLE DRIVE (TODOS LOS ARCHIVOS) ---
 def sincronizar_drive_continuo():
     global items_mu_db
     if not FOLDER_DRIVE_ID or not GOOGLE_API_KEY: return
@@ -99,7 +98,7 @@ def sincronizar_drive_continuo():
         page_token = None
         q = f"'{FOLDER_DRIVE_ID}' in parents and trashed=false"
         while True:
-            url = f"https://www.googleapis.com/drive/v3/files?q={requests.utils.quote(q)}&key={GOOGLE_API_KEY}&fields=nextPageToken,files(id,name,mimeType,description)&pageSize=100"
+            url = f"https://www.googleapis.com/drive/v3/files?q={requests.utils.quote(q)}&key={GOOGLE_API_KEY}&fields=nextPageToken,files(id,name,mimeType)&pageSize=100"
             if page_token:
                 url += f"&pageToken={page_token}"
             res = requests.get(url, timeout=7)
@@ -108,11 +107,7 @@ def sincronizar_drive_continuo():
                 for f in data.get('files', []):
                     nombre = f.get('name', '')
                     if 'image' in f.get('mimeType', '') or any(nombre.lower().endswith(ext) for ext in ['.png', '.jpg', '.jpeg', '.webp']):
-                        archivos_detectados.append({
-                            "id": f['id'], 
-                            "name": nombre,
-                            "desc": f.get('description', '')
-                        })
+                        archivos_detectados.append({"id": f['id'], "name": nombre})
                 page_token = data.get('nextPageToken')
                 if not page_token:
                     break
@@ -228,9 +223,7 @@ def index():
 
 @app.route('/items')
 def vista_items():
-    return render_template('items.html')
-
-# --- API DE ITEMS ---
+    return redirect(url_for('index'))
 
 @app.route('/api/items', methods=['GET', 'PUT'])
 def api_items():
@@ -261,8 +254,6 @@ def api_items():
             except Exception:
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
-
-# --- API DE MIEMBROS DEL CLAN ---
 
 @app.route('/api/miembros', methods=['GET', 'POST', 'DELETE'])
 def api_miembros():
@@ -317,7 +308,6 @@ def api_miembros():
                     r = cur.fetchone()
                     if r: nuevo_id = r['id']
 
-                    # Sincronización automática de la leyenda 'Asignado a' en items_mu
                     cur.execute("UPDATE public.items_mu SET asignado_a = NULL WHERE asignado_a = %s;", (nombre_pj,))
                     for arch_id in items_asignados:
                         cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE archivo_id = %s OR CAST(id AS TEXT) = %s;", (nombre_pj, str(arch_id), str(arch_id)))
@@ -350,7 +340,6 @@ def api_miembros():
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
 
-# Importación masiva desde Excel
 @app.route('/api/miembros/importar', methods=['POST'])
 def importar_miembros_excel():
     if not usuario_es_autorizado():
@@ -387,8 +376,6 @@ def importar_miembros_excel():
 
     if conn: conn.close()
     return jsonify({"status": "ok", "message": f"{len(filas)} filas procesadas"}), 200
-
-# --- TIMERS Y BOTS ---
 
 @app.route('/api/status_timers')
 @app.route('/api/timers')
@@ -533,8 +520,6 @@ def registrar_heartbeat():
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
     return jsonify({"error": "Servidor requerido"}), 400
-
-# --- AUTENTICACIÓN ---
 
 @app.route('/login', methods=['POST'])
 def login():
