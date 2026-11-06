@@ -9,9 +9,8 @@
     <style>
         body { background-color: #0a0814; color: #e6e1ff; font-family: 'Segoe UI', system-ui, sans-serif; }
         
-        /* Contenedor obligatorio de barra de desplazamiento (Scroll / Roll) */
         .tabla-scroll-box {
-            height: 540px !important;
+            height: 520px !important;
             overflow-y: scroll !important;
             border: 1px solid #3b2d6b;
             border-radius: 8px;
@@ -64,11 +63,11 @@
 </head>
 <body class="p-3 md:p-6 flex flex-col items-center">
 
-    <!-- SUB-BARRA DE ESTADO DEL CATÁLOGO -->
+    <!-- BARRA ÚNICA DE NAVEGACIÓN DENTRO DEL PANEL -->
     <header class="w-full max-w-7xl mb-4 pb-3 border-b border-purple-900/50 flex flex-col sm:flex-row justify-between items-center gap-3">
         <div>
             <h1 class="text-2xl font-extrabold text-emerald-400 drop-shadow flex items-center gap-2">
-                🛡️ CATÁLOGO DE ARMADURAS & SETS
+                🛡️ CATÁLOGO DE ARMADURAS & CLAN
             </h1>
             <p class="text-xs text-purple-300">Ordenado ascendentemente (desde el ID 2), sin armas</p>
         </div>
@@ -126,7 +125,6 @@
                 </div>
             </div>
 
-            <!-- BOTONES RÁPIDOS SEGUROS -->
             <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-purple-900/30">
                 <span class="text-[11px] text-gray-400 font-semibold mr-1">Filtros rápidos:</span>
                 <button onclick="setFiltroRapido('damage decrease')" class="px-2.5 py-1 rounded bg-red-950 hover:bg-red-900 text-red-300 border border-red-700/60 text-xs font-bold transition">🛡️ DD</button>
@@ -141,7 +139,6 @@
             </div>
         </div>
 
-        <!-- TABLA COMPACTA CON SCROLL -->
         <div class="tabla-scroll-box">
             <table class="tabla-items">
                 <thead>
@@ -162,16 +159,16 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 2: MIEMBROS DEL CLAN -->
+    <!-- SECCIÓN 2: MIEMBROS DEL CLAN (FORMULARIO CON NICK, RAZA E ITEMS ASIGNADOS) -->
     <div id="seccion-clan-view" class="w-full max-w-7xl space-y-4 hidden">
         <div class="bg-[#141126] border border-indigo-700/60 p-4 rounded-xl shadow-lg flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end w-full md:w-auto flex-1">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end w-full flex-1">
                 <div>
-                    <label class="block text-[11px] text-gray-300 font-semibold mb-1">Nombre / Nick del PJ:</label>
+                    <label class="block text-[11px] text-gray-300 font-semibold mb-1">NICK:</label>
                     <input type="text" id="clanPjNombre" placeholder="Ej. PinionBK" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs outline-none">
                 </div>
                 <div>
-                    <label class="block text-[11px] text-gray-300 font-semibold mb-1">Raza / Clase:</label>
+                    <label class="block text-[11px] text-gray-300 font-semibold mb-1">RAZA:</label>
                     <select id="clanPjRaza" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs outline-none">
                         <option value="Dark Knight">Dark Knight (BK)</option>
                         <option value="Dark Wizard">Dark Wizard (SM)</option>
@@ -183,8 +180,12 @@
                     </select>
                 </div>
                 <div>
+                    <label class="block text-[11px] text-gray-300 font-semibold mb-1">ITEMS ASIGNADOS:</label>
+                    <input type="text" id="clanPjItems" placeholder="Ej. 260.png, 334.png" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs outline-none">
+                </div>
+                <div>
                     <button onclick="guardarMiembroClan()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded text-xs transition shadow">
-                        ➕ Poner Miembro
+                        ➕ Agregar Miembro
                     </button>
                 </div>
             </div>
@@ -226,7 +227,7 @@
         let miembrosClan = [];
         let sesionAutorizada = false;
 
-        const ARMAS = ["sword", "blade", "staff", "crossbow", "bow", "stick", "book", "claw", "scepter", "mace", "morning star", "axe", "spear"];
+        const ARMAS = ["sword", "blade", "staff", "crossbow", "bow", "stick", "book", "claw", "scepter", "mace", "morning star", "axe", "spear", "dread", "two-hand"];
 
         function esSoloArmadura(item) {
             const nom = String(item.nombre || '').toLowerCase();
@@ -486,21 +487,27 @@
         }
 
         async function guardarMiembroClan() {
-            if (!sesionAutorizada) return alert("No autorizado.");
+            if (!sesionAutorizada) {
+                return alert("Solo los usuarios autorizados (Pinion, tolkien, nasda) pueden agregar miembros.");
+            }
             const nombre_pj = document.getElementById('clanPjNombre').value.trim();
             const raza = document.getElementById('clanPjRaza').value;
+            const itemsRaw = document.getElementById('clanPjItems').value.trim();
+            const itemsLista = itemsRaw ? itemsRaw.split(',').map(x => x.trim()).filter(Boolean) : [];
 
-            if (!nombre_pj) return alert("Ingresá el nick del personaje.");
+            if (!nombre_pj) return alert("Ingresá el NICK del personaje.");
 
             try {
                 const res = await fetch('/api/miembros', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nombre_pj, raza, items_asignados: [] })
+                    body: JSON.stringify({ nombre_pj, raza, items_asignados: itemsLista })
                 });
                 if (res.ok) {
                     document.getElementById('clanPjNombre').value = '';
+                    document.getElementById('clanPjItems').value = '';
                     cargarMiembros();
+                    cargar();
                 } else {
                     alert("Error al guardar miembro.");
                 }
