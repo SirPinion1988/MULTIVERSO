@@ -1,21 +1,7 @@
-# Vamos a reescribir y actualizar app_manual.py para incorporar exactamente lo que pidió el usuario:
-# 1. Scroll 1: Select/Dropdown con todos los sets de armaduras agrupados por clase (Dark Knight, Dark Wizard, Fairy Elf, Magic Gladiator, Dark Lord, Summoner, Rage Fighter).
-# 2. Scroll 2: Tipo de pieza (Armor, Pants, Gloves, Helm, Boots, Shield).
-# 3. Checkboxes para las opciones Excellent reales del MU:
-#    - Aumento de HP máximo (3-5%)
-#    - Aumento de SD máximo (3-5%)
-#    - Reducción de daño (Damage Decrease: 3-5%)
-#    - Reflejo de daño (Reflect Damage: 3-5%)
-#    - Resistencia a daño crítico (7-10%)
-#    - Tasa de drop de Zen (21-30%)
-# 4. Textbox para el nombre del baúl (Warehouse).
-# 5. Textbox para "Asignado a" (miembro del clan).
-# 6. Mantiene el control de acceso estricto para los 3 administradores y el buscador avanzado.
-
-code_update = '''from flask import Flask, render_template_string, request, redirect, url_for, session
+from flask import Flask, render_template_string, request, redirect, url_for, session
 
 app = Flask(__name__)
-app.secret_key = 'multiverso_mu_final_secret'
+app.secret_key = 'multiverso_mu_produccion_secret'
 
 # Los 3 usuarios autorizados
 USUARIOS_AUTORIZADOS = {
@@ -24,13 +10,12 @@ USUARIOS_AUTORIZADOS = {
     "soporte": "MultiversoSecure"
 }
 
-# Estructura del catálogo manual con almacenamiento en memoria
+# Catálogo manual inicial en memoria (rápido, sin caídas de base de datos)
 CATALOGO_MANUAL = [
     {
         "id": "1", 
-        "nombre": "Dragon Armor", 
+        "nombre": "Excellent Dragon Armor", 
         "tipo": "Armor", 
-        "clase": "Dark Knight (BK)", 
         "baul": "Baúl Principal", 
         "asignado": "SirPinion",
         "opciones": ["Reducción de daño (Damage Decrease: 4%)", "Aumento de HP máximo (4%)"], 
@@ -38,7 +23,6 @@ CATALOGO_MANUAL = [
     }
 ]
 
-# Listado oficial de sets agrupados por clase para el Scroll 1
 SETS_POR_CLASE = {
     "Dark Knight (BK / Guerrero)": ["Leather", "Bronze", "Scale", "Brass", "Plate", "Dragon", "Phoenix", "Great Dragon", "Black Dragon", "Dragon Knight", "Titan", "Brave"],
     "Dark Wizard (SM / Mago)": ["Pad", "Bone", "Sphinx", "Legendary", "Grand Soul", "Dark Soul", "Eclipse", "Hades"],
@@ -54,51 +38,51 @@ TEMPLATE_HTML = """
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Gestión Manual de Baúles - MULTIVERSO MU</title>
+    <title>MULTIVERSO - Armaduras & Clan</title>
     <style>
-        body { background-color: #0b0c10; color: #c5c6c7; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; }
-        h1, h2 { color: #66fcf1; text-align: center; }
-        .container { max-width: 1100px; margin: 0 auto; background: #1f2833; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.7); }
+        body { background-color: #0f0f1a; color: #e0e0e0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; }
+        h1, h2 { color: #00d2ff; text-align: center; }
+        .container { max-width: 1100px; margin: 0 auto; background: #1a1a2e; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.7); }
         
-        .user-bar { display: flex; justify-content: space-between; align-items: center; background: #0b0c10; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #45a29e; }
-        .user-bar span { color: #66fcf1; font-weight: bold; }
-        .btn-logout { background: #e63946; color: #fff; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 14px; }
-        .btn-login { background: #45a29e; color: #0b0c10; padding: 6px 15px; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        .user-bar { display: flex; justify-content: space-between; align-items: center; background: #0f0f1a; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #4a4e69; }
+        .user-bar span { color: #00d2ff; font-weight: bold; }
+        .btn-logout { background: #ff4d4d; color: #fff; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 14px; }
+        .btn-login { background: #00d2ff; color: #0f0f1a; padding: 6px 15px; text-decoration: none; border-radius: 4px; font-weight: bold; }
 
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .form-group { margin-bottom: 15px; }
         .form-group.full { grid-column: span 2; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: #45a29e; }
-        input[type="text"], input[type="password"], select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #45a29e; background: #0b0c10; color: #fff; box-sizing: border-box; }
-        .checkbox-container { display: flex; gap: 15px; flex-wrap: wrap; background: #0b0c10; padding: 10px; border-radius: 6px; border: 1px solid #45a29e; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #a29bfe; }
+        input[type="text"], input[type="password"], select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #4a4e69; background: #16213e; color: #fff; box-sizing: border-box; }
+        .checkbox-container { display: flex; gap: 15px; flex-wrap: wrap; background: #16213e; padding: 10px; border-radius: 6px; border: 1px solid #4a4e69; }
         .checkbox-container label { color: #fff; font-weight: normal; display: flex; align-items: center; gap: 6px; cursor: pointer; }
-        button { background: #66fcf1; color: #0b0c10; border: none; padding: 12px 20px; font-size: 16px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; transition: 0.3s; margin-top: 10px; }
-        button:hover { background: #45a29e; color: #fff; }
+        button { background: linear-gradient(135deg, #00b4d8, #0077b6); color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; transition: 0.3s; margin-top: 10px; }
+        button:hover { background: linear-gradient(135deg, #0077b6, #03045e); }
         
         .alert-error { background: #ff4d4d; color: #fff; padding: 10px; border-radius: 6px; margin-bottom: 15px; text-align: center; font-weight: bold; }
         .alert-success { background: #2ec4b6; color: #000; padding: 10px; border-radius: 6px; margin-bottom: 15px; text-align: center; font-weight: bold; }
 
         .filters-bar { display: flex; gap: 15px; margin-top: 30px; margin-bottom: 20px; flex-wrap: wrap; }
-        .filters-bar input, .filters-bar select { flex: 1; min-width: 200px; }
+        .filters-bar input, .filters-bar select { flex: 1; min-width: 200px; padding: 10px; border-radius: 6px; border: 1px solid #4a4e69; background: #16213e; color: #fff; }
         
         .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
-        .item-card { background: #0b0c10; border: 1px solid #45a29e; border-radius: 8px; padding: 15px; position: relative; }
-        .item-card h3 { margin: 0 0 10px 0; color: #66fcf1; font-size: 18px; }
-        .tag { background: #1f2833; color: #66fcf1; padding: 3px 8px; border-radius: 4px; font-size: 12px; display: inline-block; margin-right: 5px; margin-bottom: 5px; }
-        .badge-opt { background: #45a29e; color: #0b0c10; }
-        .badge-bonus { background: #c5c6c7; color: #0b0c10; }
+        .item-card { background: #16213e; border: 1px solid #4a4e69; border-radius: 8px; padding: 15px; position: relative; }
+        .item-card h3 { margin: 0 0 10px 0; color: #00d2ff; font-size: 18px; }
+        .tag { background: #0f3460; color: #00d2ff; padding: 3px 8px; border-radius: 4px; font-size: 12px; display: inline-block; margin-right: 5px; margin-bottom: 5px; }
+        .badge-opt { background: #00b4d8; color: #000; }
+        .badge-bonus { background: #a29bfe; color: #000; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🛡️ Gestión Manual de Baúles - MULTIVERSO MU</h1>
+        <h1>🛡️ MULTIVERSO - ARMADURAS & CLAN</h1>
 
         <div class="user-bar">
             {% if session.get('usuario') %}
                 <span>👤 Admin Activo: <strong>{{ session['usuario'] }}</strong></span>
                 <a href="/logout" class="btn-logout">Cerrar Sesión</a>
             {% else %}
-                <span>🔒 Modo Lectura (Solo los 3 admins pueden agregar ítems)</span>
+                <span>🔒 Modo Lectura (Edición restringida a administradores)</span>
                 <a href="/login" class="btn-login">🔑 Login Admin</a>
             {% endif %}
         </div>
@@ -111,12 +95,11 @@ TEMPLATE_HTML = """
         {% endif %}
 
         {% if session.get('usuario') %}
-        <div style="background: #16213e; padding: 20px; border-radius: 8px; border: 1px dashed #66fcf1; margin-bottom: 30px;">
+        <div style="background: #16213e; padding: 20px; border-radius: 8px; border: 1px dashed #00d2ff; margin-bottom: 30px;">
             <h2>➕ Agregar Ítem al Listado Manual</h2>
             <form method="POST" action="/guardar-manual">
                 <div class="form-grid">
                     
-                    <!-- SCROLL 1: Sets predeterminados por clase -->
                     <div class="form-group">
                         <label for="set_base">📜 Scroll 1: Seleccionar Set de Armadura:</label>
                         <select id="set_base" name="set_base" required>
@@ -131,7 +114,6 @@ TEMPLATE_HTML = """
                         </select>
                     </div>
 
-                    <!-- SCROLL 2: Tipo de Pieza -->
                     <div class="form-group">
                         <label for="tipo">📦 Scroll 2: Tipo de Pieza:</label>
                         <select id="tipo" name="tipo" required>
@@ -144,19 +126,16 @@ TEMPLATE_HTML = """
                         </select>
                     </div>
 
-                    <!-- Textbox Baúl -->
                     <div class="form-group">
                         <label for="baul">🏰 Nombre del Baúl:</label>
-                        <input type="text" id="baul" name="baul" required placeholder="Ej: Baúl Principal / Warehouse 1">
+                        <input type="text" id="baul" name="baul" required placeholder="Ej: Baúl Principal">
                     </div>
 
-                    <!-- Textbox Asignado a -->
                     <div class="form-group">
                         <label for="asignado">👤 Asignado a (Miembro del Clan):</label>
-                        <input type="text" id="asignado" name="asignado" required placeholder="Ej: SirPinion / Sin asignar">
+                        <input type="text" id="asignado" name="asignado" required placeholder="Ej: SirPinion">
                     </div>
 
-                    <!-- CHECKBOXES OPCIONES EXCELLENT -->
                     <div class="form-group full">
                         <label>✨ Opciones Excellent (Exc):</label>
                         <div class="checkbox-container">
@@ -169,7 +148,6 @@ TEMPLATE_HTML = """
                         </div>
                     </div>
 
-                    <!-- CHECKBOXES / INPUTS BONUS EXCELENTE -->
                     <div class="form-group full">
                         <label>💪 Atributos y Bonus (Fuerza, Agilidad, Vitalidad, Energía, Command):</label>
                         <div class="checkbox-container">
@@ -182,12 +160,11 @@ TEMPLATE_HTML = """
                     </div>
 
                 </div>
-                <button type="submit">💾 Guardar Ítem al Listado</button>
+                <button type="submit">💾 Guardar Ítem</button>
             </form>
         </div>
         {% endif %}
 
-        <!-- BUSCADOR VISUAL Y FILTROS -->
         <h2>🔍 Buscador de Baúles e Inventario</h2>
         <div class="filters-bar">
             <input type="text" id="inputBuscador" placeholder="Buscar por nombre, baúl o asignado..." onkeyup="filtrarItems()">
@@ -207,7 +184,7 @@ TEMPLATE_HTML = """
             <div class="item-card" data-nombre="{{ item.nombre | lower }}" data-tipo="{{ item.tipo }}" data-baul="{{ item.baul | lower }}" data-asignado="{{ item.asignado | lower }}">
                 <h3>{{ item.nombre }}</h3>
                 <p><strong>Tipo:</strong> <span class="tag">{{ item.tipo }}</span> | <strong>Baúl:</strong> <span class="tag">{{ item.baul }}</span></p>
-                <p><strong>Asignado a:</strong> <span style="color: #66fcf1;">{{ item.asignado }}</span></p>
+                <p><strong>Asignado a:</strong> <span style="color: #00d2ff;">{{ item.asignado }}</span></p>
                 <p><strong>Opciones Exc:</strong><br>
                     {% for opt in item.opciones %}
                         <span class="tag badge-opt">{{ opt }}</span>
@@ -253,16 +230,16 @@ TEMPLATE_LOGIN = """
     <meta charset="UTF-8">
     <title>Login - Administradores</title>
     <style>
-        body { background-color: #0b0c10; color: #c5c6c7; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-box { background: #1f2833; padding: 40px; border-radius: 12px; width: 320px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); border: 1px solid #45a29e; }
-        h2 { color: #66fcf1; text-align: center; margin-bottom: 20px; }
+        body { background-color: #0f0f1a; color: #e0e0e0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-box { background: #1a1a2e; padding: 40px; border-radius: 12px; width: 320px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); border: 1px solid #4a4e69; }
+        h2 { color: #00d2ff; text-align: center; margin-bottom: 20px; }
         .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; color: #45a29e; font-weight: bold; }
-        input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #45a29e; background: #0b0c10; color: #fff; box-sizing: border-box; }
-        button { background: #66fcf1; color: #0b0c10; border: none; padding: 12px; width: 100%; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 10px; }
-        button:hover { background: #45a29e; color: #fff; }
+        label { display: block; margin-bottom: 5px; color: #a29bfe; font-weight: bold; }
+        input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #4a4e69; background: #16213e; color: #fff; box-sizing: border-box; }
+        button { background: linear-gradient(135deg, #00b4d8, #0077b6); color: white; border: none; padding: 12px; width: 100%; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 10px; }
+        button:hover { background: linear-gradient(135deg, #0077b6, #03045e); }
         .error { color: #ff4d4d; font-size: 14px; text-align: center; margin-top: 10px; }
-        .back { display: block; text-align: center; margin-top: 15px; color: #66fcf1; text-decoration: none; font-size: 14px; }
+        .back { display: block; text-align: center; margin-top: 15px; color: #00d2ff; text-decoration: none; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -292,7 +269,7 @@ TEMPLATE_LOGIN = """
 def index():
     return render_template_string(TEMPLATE_HTML, items=CATALOGO_MANUAL, sets_clases=SETS_POR_CLASE)
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET, 'POST']) if False else app.route('/login', methods=['GET', 'POST'])
 def login():
     error = None
     if request.method == 'POST':
@@ -334,13 +311,7 @@ def guardar_manual():
         "bonus": bonus
     }
     CATALOGO_MANUAL.insert(0, nuevo_item)
-    return render_template_string(TEMPLATE_HTML, items=CATALOGO_MANUAL, sets_clases=SETS_POR_CLASE, mensaje="¡Ítem agregado con éxito al listado!")
+    return render_template_string(TEMPLATE_HTML, items=CATALOGO_MANUAL, sets_clases=SETS_POR_CLASE, mensaje="¡Ítem agregado con éxito!")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
-'''
-
-with open('app_manual.py', 'w', encoding='utf-8') as f:
-    f.write(code_update)
-
-print("Archivo app_manual.py actualizado exitosamente con los scrolls, checks y textboxes solicitados.")
