@@ -1,19 +1,17 @@
 from flask import Flask, render_template_string, request, redirect, url_for, session
 
 app = Flask(__name__)
-# Clave secreta para manejar la sesión de usuarios seguros
-app.secret_key = 'multiverso_mu_secret_key_secure'
+# Clave secreta para manejar las sesiones de los administradores
+app.secret_key = 'multiverso_github_secret_key'
 
 # ================= 1. LOS 3 USUARIOS AUTORIZADOS =================
-# Solo estos 3 usuarios podrán agregar, modificar o eliminar ítems del catálogo.
 USUARIOS_AUTORIZADOS = {
     "admin1": "Mistermagu2022*",
     "admin2": "MuOnline2026",
     "soporte": "MultiversoSecure"
 }
 
-# ================= 2. CATÁLOGO INICIAL EN MEMORIA =================
-# Lista estática inicial que puedes modificar libremente de forma manual.
+# ================= 2. CATÁLOGO MANUAL EN MEMORIA =================
 CATALOGO_MANUAL = [
     {"id": "1", "nombre": "Excellent Dragon Armor", "tipo": "Armor", "opciones": ["Damage Decrease +4%", "Reflect Damage +4%"], "bonus": ["Strength +50", "Vitality +30"]},
     {"id": "2", "nombre": "Excellent Dragon Pants", "tipo": "Pants", "opciones": ["Max Life +3%"], "bonus": ["Strength +40", "Agility +20"]},
@@ -26,13 +24,12 @@ TEMPLATE_HTML = """
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Gestión Manual Segura - MULTIVERSO MU Online</title>
+    <title>MULTIVERSO - Gestión Manual (GitHub)</title>
     <style>
         body { background-color: #0b0c10; color: #c5c6c7; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; }
         h1, h2 { color: #66fcf1; text-align: center; }
         .container { max-width: 1000px; margin: 0 auto; background: #1f2833; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.7); }
         
-        /* Barra de Sesión */
         .user-bar { display: flex; justify-content: space-between; align-items: center; background: #0b0c10; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #45a29e; }
         .user-bar span { color: #66fcf1; font-weight: bold; }
         .btn-logout { background: #e63946; color: #fff; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 14px; }
@@ -51,11 +48,9 @@ TEMPLATE_HTML = """
         .alert-error { background: #ff4d4d; color: #fff; padding: 10px; border-radius: 6px; margin-bottom: 15px; text-align: center; font-weight: bold; }
         .alert-success { background: #2ec4b6; color: #000; padding: 10px; border-radius: 6px; margin-bottom: 15px; text-align: center; font-weight: bold; }
 
-        /* Filtros y Buscador */
         .filters-bar { display: flex; gap: 15px; margin-top: 30px; margin-bottom: 20px; flex-wrap: wrap; }
         .filters-bar input, .filters-bar select { flex: 1; min-width: 200px; }
         
-        /* Grilla Visual de Ítems */
         .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
         .item-card { background: #0b0c10; border: 1px solid #45a29e; border-radius: 8px; padding: 15px; position: relative; }
         .item-card h3 { margin: 0 0 10px 0; color: #66fcf1; font-size: 18px; }
@@ -66,16 +61,15 @@ TEMPLATE_HTML = """
 </head>
 <body>
     <div class="container">
-        <h1>🛡️ Catálogo y Gestión Manual - Multiverso MU</h1>
+        <h1>🛡️ MULTIVERSO - Gestión y Catálogo Manual</h1>
 
-        <!-- Barra de Estado de Usuario Autorizado -->
         <div class="user-bar">
             {% if session.get('usuario') %}
-                <span>👤 Conectado como Administrador: <strong>{{ session['usuario'] }}</strong></span>
+                <span>👤 Administrador Activo: <strong>{{ session['usuario'] }}</strong></span>
                 <a href="/logout" class="btn-logout">Cerrar Sesión</a>
             {% else %}
-                <span>🔒 Modo Lectura (Solo usuarios autorizados pueden agregar ítems)</span>
-                <a href="/login" class="btn-login">🔑 Login Administrador</a>
+                <span>🔒 Modo Lectura (Edición restringida a los 3 administradores)</span>
+                <a href="/login" class="btn-login">🔑 Login Admin</a>
             {% endif %}
         </div>
 
@@ -86,16 +80,14 @@ TEMPLATE_HTML = """
             <div class="alert-success">{{ mensaje }}</div>
         {% endif %}
 
-        <!-- Formulario de Carga Manual (Solo visible para los 3 usuarios) -->
         {% if session.get('usuario') %}
         <div style="background: #16213e; padding: 20px; border-radius: 8px; border: 1px dashed #66fcf1; margin-bottom: 30px;">
-            <h2>➕ Agregar Nuevo Ítem Manualmente</h2>
+            <h2>➕ Agregar Nuevo Ítem al Listado</h2>
             <form method="POST" action="/guardar-manual">
                 <div class="form-grid">
                     
-                    <!-- Scroll / Autocompletado de nombres -->
                     <div class="form-group">
-                        <label for="nombre">Nombre del Ítem (Escribe o Selecciona):</label>
+                        <label for="nombre">Nombre del Ítem (Escribe o Autocompleta):</label>
                         <input type="text" id="nombre" name="nombre" list="lista-nombres" required placeholder="Ej: Excellent Vine Armor">
                         <datalist id="lista-nombres">
                             <option value="Excellent Vine Armor">
@@ -107,7 +99,6 @@ TEMPLATE_HTML = """
                         </datalist>
                     </div>
 
-                    <!-- Tipo de Pieza (para filtros rápidos: Armor, Boots, etc.) -->
                     <div class="form-group">
                         <label for="tipo">Tipo de Pieza:</label>
                         <select id="tipo" name="tipo" required>
@@ -120,7 +111,6 @@ TEMPLATE_HTML = """
                         </select>
                     </div>
 
-                    <!-- Opciones Exc (Checkboxes) -->
                     <div class="form-group full">
                         <label>Opciones Excellent (Exc):</label>
                         <div class="checkbox-container">
@@ -132,7 +122,6 @@ TEMPLATE_HTML = """
                         </div>
                     </div>
 
-                    <!-- Opciones Extra / Bonus (Fuerza, Agilidad, Vitalidad, Energía, Command) -->
                     <div class="form-group full">
                         <label>Atributos y Bonus Exc (Fuerza, Agility, Vitality, Energy, Command):</label>
                         <div class="checkbox-container">
@@ -145,12 +134,11 @@ TEMPLATE_HTML = """
                     </div>
 
                 </div>
-                <button type="submit">💾 Guardar Ítem en el Listado</button>
+                <button type="submit">💾 Agregar al Listado</button>
             </form>
         </div>
         {% endif %}
 
-        <!-- Barra de Búsqueda Visual Combinada -->
         <h2>🔍 Buscador y Filtros del Inventario</h2>
         <div class="filters-bar">
             <input type="text" id="inputBuscador" placeholder="Buscar por nombre (ej. Vine, Dragon, Helm)..." onkeyup="filtrarItems()">
@@ -165,7 +153,6 @@ TEMPLATE_HTML = """
             </select>
         </div>
 
-        <!-- Grilla Visual de Ítems -->
         <div class="items-grid" id="grillaItems">
             {% for item in items %}
             <div class="item-card" data-nombre="{{ item.nombre | lower }}" data-tipo="{{ item.tipo }}">
@@ -195,15 +182,10 @@ TEMPLATE_HTML = """
             for (let card of tarjetas) {
                 let nombre = card.getAttribute('data-nombre');
                 let tipo = card.getAttribute('data-tipo');
-
                 let coincideTexto = nombre.includes(texto);
                 let coincideTipo = (tipoSeleccionado === "" || tipo === tipoSeleccionado);
 
-                if (coincideTexto && coincideTipo) {
-                    card.style.display = "block";
-                } else {
-                    card.style.display = "none";
-                }
+                card.style.display = (coincideTexto && coincideTipo) ? "block" : "none";
             }
         }
     </script>
@@ -211,13 +193,12 @@ TEMPLATE_HTML = """
 </html>
 """
 
-# HTML para la pantalla de Login de los 3 administradores
 TEMPLATE_LOGIN = """
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Login - Administradores Autorizados</title>
+    <title>Login - Administradores</title>
     <style>
         body { background-color: #0b0c10; color: #c5c6c7; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .login-box { background: #1f2833; padding: 40px; border-radius: 12px; width: 320px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); border: 1px solid #45a29e; }
@@ -233,17 +214,17 @@ TEMPLATE_LOGIN = """
 </head>
 <body>
     <div class="login-box">
-        <h2>🔑 Acceso Restringido</h2>
+        <h2>🔑 Acceso Administrador</h2>
         <form method="POST">
             <div class="form-group">
-                <label>Usuario Autorizado:</label>
+                <label>Usuario:</label>
                 <input type="text" name="username" required autocomplete="off">
             </div>
             <div class="form-group">
                 <label>Contraseña:</label>
                 <input type="password" name="password" required>
             </div>
-            <button type="submit">Ingresar al Panel</button>
+            <button type="submit">Ingresar</button>
             {% if error %}
                 <div class="error">{{ error }}</div>
             {% endif %}
@@ -264,14 +245,11 @@ def login():
     if request.method == 'POST':
         user = request.form.get('username')
         pwd = request.form.get('password')
-        
-        # Validar exclusivamente contra los 3 usuarios autorizados
         if user in USUARIOS_AUTORIZADOS and USUARIOS_AUTORIZADOS[user] == pwd:
             session['usuario'] = user
             return redirect(url_for('index'))
         else:
-            error = "Usuario o contraseña incorrectos. Acceso denegado."
-            
+            error = "Credenciales incorrectas."
     return render_template_string(TEMPLATE_LOGIN, error=error)
 
 @app.route('/logout')
@@ -281,7 +259,6 @@ def logout():
 
 @app.route('/guardar-manual', methods=['POST'])
 def guardar_manual():
-    # Verificar estrictamente que esté logueado uno de los 3 usuarios
     if 'usuario' not in session:
         return redirect(url_for('login'))
         
@@ -297,11 +274,8 @@ def guardar_manual():
         "opciones": opciones,
         "bonus": bonus
     }
-    
-    # Se agrega al listado visual en tiempo real
     CATALOGO_MANUAL.insert(0, nuevo_item)
-    
-    return render_template_string(TEMPLATE_HTML, items=CATALOGO_MANUAL, mensaje="¡Ítem agregado con éxito al listado!")
+    return render_template_string(TEMPLATE_HTML, items=CATALOGO_MANUAL, mensaje="¡Ítem agregado con éxito!")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
