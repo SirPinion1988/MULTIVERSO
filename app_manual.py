@@ -1,34 +1,64 @@
-from flask import Flask, render_template_string, request, redirect, url_for, session
+# Vamos a reescribir y actualizar app_manual.py para incorporar exactamente lo que pidió el usuario:
+# 1. Scroll 1: Select/Dropdown con todos los sets de armaduras agrupados por clase (Dark Knight, Dark Wizard, Fairy Elf, Magic Gladiator, Dark Lord, Summoner, Rage Fighter).
+# 2. Scroll 2: Tipo de pieza (Armor, Pants, Gloves, Helm, Boots, Shield).
+# 3. Checkboxes para las opciones Excellent reales del MU:
+#    - Aumento de HP máximo (3-5%)
+#    - Aumento de SD máximo (3-5%)
+#    - Reducción de daño (Damage Decrease: 3-5%)
+#    - Reflejo de daño (Reflect Damage: 3-5%)
+#    - Resistencia a daño crítico (7-10%)
+#    - Tasa de drop de Zen (21-30%)
+# 4. Textbox para el nombre del baúl (Warehouse).
+# 5. Textbox para "Asignado a" (miembro del clan).
+# 6. Mantiene el control de acceso estricto para los 3 administradores y el buscador avanzado.
+
+code_update = '''from flask import Flask, render_template_string, request, redirect, url_for, session
 
 app = Flask(__name__)
-# Clave secreta para manejar las sesiones de los administradores
-app.secret_key = 'multiverso_github_secret_key'
+app.secret_key = 'multiverso_mu_final_secret'
 
-# ================= 1. LOS 3 USUARIOS AUTORIZADOS =================
+# Los 3 usuarios autorizados
 USUARIOS_AUTORIZADOS = {
     "admin1": "Mistermagu2022*",
     "admin2": "MuOnline2026",
     "soporte": "MultiversoSecure"
 }
 
-# ================= 2. CATÁLOGO MANUAL EN MEMORIA =================
+# Estructura del catálogo manual con almacenamiento en memoria
 CATALOGO_MANUAL = [
-    {"id": "1", "nombre": "Excellent Dragon Armor", "tipo": "Armor", "opciones": ["Damage Decrease +4%", "Reflect Damage +4%"], "bonus": ["Strength +50", "Vitality +30"]},
-    {"id": "2", "nombre": "Excellent Dragon Pants", "tipo": "Pants", "opciones": ["Max Life +3%"], "bonus": ["Strength +40", "Agility +20"]},
-    {"id": "3", "nombre": "Excellent Legendary Helm", "tipo": "Helm", "opciones": ["Luck (+25%)", "Critical Damage Resistance +10%"], "bonus": ["Energy +60", "Vitality +40"]},
-    {"id": "4", "nombre": "Excellent Vine Boots", "tipo": "Boots", "opciones": ["Zen Drop Rate +30%"], "bonus": ["Agility +30", "Energy +15"]},
+    {
+        "id": "1", 
+        "nombre": "Dragon Armor", 
+        "tipo": "Armor", 
+        "clase": "Dark Knight (BK)", 
+        "baul": "Baúl Principal", 
+        "asignado": "SirPinion",
+        "opciones": ["Reducción de daño (Damage Decrease: 4%)", "Aumento de HP máximo (4%)"], 
+        "bonus": ["Fuerza +50", "Vitalidad +30"]
+    }
 ]
+
+# Listado oficial de sets agrupados por clase para el Scroll 1
+SETS_POR_CLASE = {
+    "Dark Knight (BK / Guerrero)": ["Leather", "Bronze", "Scale", "Brass", "Plate", "Dragon", "Phoenix", "Great Dragon", "Black Dragon", "Dragon Knight", "Titan", "Brave"],
+    "Dark Wizard (SM / Mago)": ["Pad", "Bone", "Sphinx", "Legendary", "Grand Soul", "Dark Soul", "Eclipse", "Hades"],
+    "Fairy Elf (ELF / Arquera)": ["Vine", "Silk", "Wind", "Spirit", "Guardian", "Divine", "Iris", "Seraphim"],
+    "Magic Gladiator (MG)": ["Scale", "Dragon", "Legendary", "Storm Crow", "Thunder Hawk", "Valiant", "Destroyer"],
+    "Dark Lord (DL)": ["Light Plate", "Adamantine", "Dark Steel", "Glorious", "Sovereign", "Emperor"],
+    "Summoner (SU)": ["Mystery", "Red Wing", "Ancient", "Demonic", "Queen"],
+    "Rage Fighter (RF)": ["Sacred", "Holly Storm", "Piercing", "Phoenix Soul"]
+}
 
 TEMPLATE_HTML = """
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>MULTIVERSO - Gestión Manual (GitHub)</title>
+    <title>Gestión Manual de Baúles - MULTIVERSO MU</title>
     <style>
         body { background-color: #0b0c10; color: #c5c6c7; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; }
         h1, h2 { color: #66fcf1; text-align: center; }
-        .container { max-width: 1000px; margin: 0 auto; background: #1f2833; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.7); }
+        .container { max-width: 1100px; margin: 0 auto; background: #1f2833; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.7); }
         
         .user-bar { display: flex; justify-content: space-between; align-items: center; background: #0b0c10; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #45a29e; }
         .user-bar span { color: #66fcf1; font-weight: bold; }
@@ -51,7 +81,7 @@ TEMPLATE_HTML = """
         .filters-bar { display: flex; gap: 15px; margin-top: 30px; margin-bottom: 20px; flex-wrap: wrap; }
         .filters-bar input, .filters-bar select { flex: 1; min-width: 200px; }
         
-        .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+        .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
         .item-card { background: #0b0c10; border: 1px solid #45a29e; border-radius: 8px; padding: 15px; position: relative; }
         .item-card h3 { margin: 0 0 10px 0; color: #66fcf1; font-size: 18px; }
         .tag { background: #1f2833; color: #66fcf1; padding: 3px 8px; border-radius: 4px; font-size: 12px; display: inline-block; margin-right: 5px; margin-bottom: 5px; }
@@ -61,14 +91,14 @@ TEMPLATE_HTML = """
 </head>
 <body>
     <div class="container">
-        <h1>🛡️ MULTIVERSO - Gestión y Catálogo Manual</h1>
+        <h1>🛡️ Gestión Manual de Baúles - MULTIVERSO MU</h1>
 
         <div class="user-bar">
             {% if session.get('usuario') %}
-                <span>👤 Administrador Activo: <strong>{{ session['usuario'] }}</strong></span>
+                <span>👤 Admin Activo: <strong>{{ session['usuario'] }}</strong></span>
                 <a href="/logout" class="btn-logout">Cerrar Sesión</a>
             {% else %}
-                <span>🔒 Modo Lectura (Edición restringida a los 3 administradores)</span>
+                <span>🔒 Modo Lectura (Solo los 3 admins pueden agregar ítems)</span>
                 <a href="/login" class="btn-login">🔑 Login Admin</a>
             {% endif %}
         </div>
@@ -82,25 +112,28 @@ TEMPLATE_HTML = """
 
         {% if session.get('usuario') %}
         <div style="background: #16213e; padding: 20px; border-radius: 8px; border: 1px dashed #66fcf1; margin-bottom: 30px;">
-            <h2>➕ Agregar Nuevo Ítem al Listado</h2>
+            <h2>➕ Agregar Ítem al Listado Manual</h2>
             <form method="POST" action="/guardar-manual">
                 <div class="form-grid">
                     
+                    <!-- SCROLL 1: Sets predeterminados por clase -->
                     <div class="form-group">
-                        <label for="nombre">Nombre del Ítem (Escribe o Autocompleta):</label>
-                        <input type="text" id="nombre" name="nombre" list="lista-nombres" required placeholder="Ej: Excellent Vine Armor">
-                        <datalist id="lista-nombres">
-                            <option value="Excellent Vine Armor">
-                            <option value="Excellent Vine Boots">
-                            <option value="Excellent Dragon Armor">
-                            <option value="Excellent Dragon Pants">
-                            <option value="Excellent Legendary Helm">
-                            <option value="Excellent Sphinx Armor">
-                        </datalist>
+                        <label for="set_base">📜 Scroll 1: Seleccionar Set de Armadura:</label>
+                        <select id="set_base" name="set_base" required>
+                            <option value="">-- Seleccionar Set --</option>
+                            {% for clase, sets in sets_clases.items() %}
+                                <optgroup label="{{ clase }}">
+                                    {% for s in sets %}
+                                        <option value="{{ s }} ({{ clase.split(' ')[0] }})">Set {{ s }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                            {% endfor %}
+                        </select>
                     </div>
 
+                    <!-- SCROLL 2: Tipo de Pieza -->
                     <div class="form-group">
-                        <label for="tipo">Tipo de Pieza:</label>
+                        <label for="tipo">📦 Scroll 2: Tipo de Pieza:</label>
                         <select id="tipo" name="tipo" required>
                             <option value="Armor">Armor (Pechera)</option>
                             <option value="Pants">Pants (Pantalón)</option>
@@ -111,37 +144,53 @@ TEMPLATE_HTML = """
                         </select>
                     </div>
 
+                    <!-- Textbox Baúl -->
+                    <div class="form-group">
+                        <label for="baul">🏰 Nombre del Baúl:</label>
+                        <input type="text" id="baul" name="baul" required placeholder="Ej: Baúl Principal / Warehouse 1">
+                    </div>
+
+                    <!-- Textbox Asignado a -->
+                    <div class="form-group">
+                        <label for="asignado">👤 Asignado a (Miembro del Clan):</label>
+                        <input type="text" id="asignado" name="asignado" required placeholder="Ej: SirPinion / Sin asignar">
+                    </div>
+
+                    <!-- CHECKBOXES OPCIONES EXCELLENT -->
                     <div class="form-group full">
-                        <label>Opciones Excellent (Exc):</label>
+                        <label>✨ Opciones Excellent (Exc):</label>
                         <div class="checkbox-container">
-                            <label><input type="checkbox" name="opciones" value="Luck (+25%)"> Luck (+25%)</label>
-                            <label><input type="checkbox" name="opciones" value="Damage Decrease +4%"> Damage Decrease +4%</label>
-                            <label><input type="checkbox" name="opciones" value="Reflect Damage +4%"> Reflect Damage +4%</label>
-                            <label><input type="checkbox" name="opciones" value="Max Life +3%"> Max Life +3%</label>
-                            <label><input type="checkbox" name="opciones" value="Zen Drop Rate +30%"> Zen Drop Rate +30%</label>
+                            <label><input type="checkbox" name="opciones" value="Aumento de HP máximo (3-5%)"> Aumento de HP máximo (3-5%)</label>
+                            <label><input type="checkbox" name="opciones" value="Aumento de SD máximo (3-5%)"> Aumento de SD máximo (3-5%)</label>
+                            <label><input type="checkbox" name="opciones" value="Reducción de daño (Damage Decrease: 3-5%)"> Reducción de daño (Damage Decrease: 3-5%)</label>
+                            <label><input type="checkbox" name="opciones" value="Reflejo de daño (Reflect Damage: 3-5%)"> Reflejo de daño (Reflect Damage: 3-5%)</label>
+                            <label><input type="checkbox" name="opciones" value="Resistencia a daño crítico (7-10%)"> Resistencia a daño crítico (7-10%)</label>
+                            <label><input type="checkbox" name="opciones" value="Tasa de drop de Zen (21-30%)"> Tasa de drop de Zen (21-30%)</label>
                         </div>
                     </div>
 
+                    <!-- CHECKBOXES / INPUTS BONUS EXCELENTE -->
                     <div class="form-group full">
-                        <label>Atributos y Bonus Exc (Fuerza, Agility, Vitality, Energy, Command):</label>
+                        <label>💪 Atributos y Bonus (Fuerza, Agilidad, Vitalidad, Energía, Command):</label>
                         <div class="checkbox-container">
-                            <label><input type="checkbox" name="bonus" value="Strength +50"> Strength +50</label>
-                            <label><input type="checkbox" name="bonus" value="Agility +50"> Agility +50</label>
-                            <label><input type="checkbox" name="bonus" value="Vitality +150"> Vitality +150</label>
-                            <label><input type="checkbox" name="bonus" value="Energy +50"> Energy +50</label>
-                            <label><input type="checkbox" name="bonus" value="Command +25"> Command +25</label>
+                            <label><input type="checkbox" name="bonus" value="Fuerza (Strength) +50"> Fuerza +50</label>
+                            <label><input type="checkbox" name="bonus" value="Agilidad (Agility) +50"> Agilidad +50</label>
+                            <label><input type="checkbox" name="bonus" value="Vitalidad (Vitality) +150"> Vitalidad +150</label>
+                            <label><input type="checkbox" name="bonus" value="Energía (Energy) +50"> Energía +50</label>
+                            <label><input type="checkbox" name="bonus" value="Command (DL) +25"> Command (DL) +25</label>
                         </div>
                     </div>
 
                 </div>
-                <button type="submit">💾 Agregar al Listado</button>
+                <button type="submit">💾 Guardar Ítem al Listado</button>
             </form>
         </div>
         {% endif %}
 
-        <h2>🔍 Buscador y Filtros del Inventario</h2>
+        <!-- BUSCADOR VISUAL Y FILTROS -->
+        <h2>🔍 Buscador de Baúles e Inventario</h2>
         <div class="filters-bar">
-            <input type="text" id="inputBuscador" placeholder="Buscar por nombre (ej. Vine, Dragon, Helm)..." onkeyup="filtrarItems()">
+            <input type="text" id="inputBuscador" placeholder="Buscar por nombre, baúl o asignado..." onkeyup="filtrarItems()">
             <select id="filtroTipo" onchange="filtrarItems()">
                 <option value="">-- Filtrar por Tipo de Pieza --</option>
                 <option value="Armor">Armor</option>
@@ -155,9 +204,10 @@ TEMPLATE_HTML = """
 
         <div class="items-grid" id="grillaItems">
             {% for item in items %}
-            <div class="item-card" data-nombre="{{ item.nombre | lower }}" data-tipo="{{ item.tipo }}">
+            <div class="item-card" data-nombre="{{ item.nombre | lower }}" data-tipo="{{ item.tipo }}" data-baul="{{ item.baul | lower }}" data-asignado="{{ item.asignado | lower }}">
                 <h3>{{ item.nombre }}</h3>
-                <p><strong>Tipo:</strong> <span class="tag">{{ item.tipo }}</span></p>
+                <p><strong>Tipo:</strong> <span class="tag">{{ item.tipo }}</span> | <strong>Baúl:</strong> <span class="tag">{{ item.baul }}</span></p>
+                <p><strong>Asignado a:</strong> <span style="color: #66fcf1;">{{ item.asignado }}</span></p>
                 <p><strong>Opciones Exc:</strong><br>
                     {% for opt in item.opciones %}
                         <span class="tag badge-opt">{{ opt }}</span>
@@ -182,7 +232,10 @@ TEMPLATE_HTML = """
             for (let card of tarjetas) {
                 let nombre = card.getAttribute('data-nombre');
                 let tipo = card.getAttribute('data-tipo');
-                let coincideTexto = nombre.includes(texto);
+                let baul = card.getAttribute('data-baul');
+                let asignado = card.getAttribute('data-asignado');
+
+                let coincideTexto = nombre.includes(texto) || baul.includes(texto) || asignado.includes(texto);
                 let coincideTipo = (tipoSeleccionado === "" || tipo === tipoSeleccionado);
 
                 card.style.display = (coincideTexto && coincideTipo) ? "block" : "none";
@@ -237,7 +290,7 @@ TEMPLATE_LOGIN = """
 
 @app.route('/')
 def index():
-    return render_template_string(TEMPLATE_HTML, items=CATALOGO_MANUAL)
+    return render_template_string(TEMPLATE_HTML, items=CATALOGO_MANUAL, sets_clases=SETS_POR_CLASE)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -262,20 +315,32 @@ def guardar_manual():
     if 'usuario' not in session:
         return redirect(url_for('login'))
         
-    nombre = request.form.get('nombre')
+    set_base = request.form.get('set_base')
     tipo = request.form.get('tipo')
+    baul = request.form.get('baul')
+    asignado = request.form.get('asignado')
     opciones = request.form.getlist('opciones')
     bonus = request.form.getlist('bonus')
     
+    nombre_completo = f"Excellent {set_base} {tipo}"
+    
     nuevo_item = {
         "id": str(len(CATALOGO_MANUAL) + 1),
-        "nombre": nombre,
+        "nombre": nombre_completo,
         "tipo": tipo,
+        "baul": baul,
+        "asignado": asignado,
         "opciones": opciones,
         "bonus": bonus
     }
     CATALOGO_MANUAL.insert(0, nuevo_item)
-    return render_template_string(TEMPLATE_HTML, items=CATALOGO_MANUAL, mensaje="¡Ítem agregado con éxito!")
+    return render_template_string(TEMPLATE_HTML, items=CATALOGO_MANUAL, sets_clases=SETS_POR_CLASE, mensaje="¡Ítem agregado con éxito al listado!")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
+'''
+
+with open('app_manual.py', 'w', encoding='utf-8') as f:
+    f.write(code_update)
+
+print("Archivo app_manual.py actualizado exitosamente con los scrolls, checks y textboxes solicitados.")
