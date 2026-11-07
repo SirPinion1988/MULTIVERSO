@@ -97,134 +97,51 @@ def index():
 def vista_items():
     return render_template('items.html')
 
-# --- LECTURA OCR CON GOOGLE VISION PARA FOTOS NUEVAS ---
-def procesar_ocr_imagen_nueva(fid, fname):
-    if not GOOGLE_API_KEY:
-        return None
+# --- REGISTRO MANUAL O AUTOMÁTICO DE ÍTEMS Y BAÚLES ---
+@app.route('/api/items/agregar-manual', methods=['POST'])
+def agregar_item_manual():
+    if not usuario_es_autorizado():
+        return jsonify({"error": "No autorizado. Solo administradores."}), 403
 
-    img_url = f"https://drive.google.com/uc?export=download&id={fid}"
-    try:
-        r_img = requests.get(img_url, timeout=5)
-        if r_img.status_code != 200:
-            return None
+    data = request.json or {}
+    set_base = data.get('set_base', '').strip()
+    tipo = data.get('tipo', 'Armor').strip()
+    baul = data.get('baul', 'Baúl Principal').strip()
+    asignado = data.get('asignado', 'Sin asignar').strip()
+    opciones = data.get('opciones', [])
+    bonus = data.get('bonus', [])
 
-        img_b64 = base64.b64encode(r_img.content).decode('utf-8')
-        payload = {
-            "requests": [{
-                "image": {"content": img_b64},
-                "features": [{"type": "TEXT_DETECTION", "maxResults": 1}]
-            }]
-        }
+    if not set_base:
+        return jsonify({"error": "Falta seleccionar el set de armadura"}), 400
 
-        url_vision = f"https://vision.googleapis.com/v1/images:annotate?key={GOOGLE_API_KEY}"
-        res = requests.post(url_vision, json=payload, timeout=6)
-        if res.status_code == 200:
-            data = res.json()
-            respuestas = data.get("responses", [])
-            texto = respuestas[0].get("fullTextAnnotation", {}).get("text", "") if respuestas else ""
-
-            if texto:
-                lineas = [l.strip() for l in texto.split('\n') if l.strip()]
-                nombre_real = ""
-                clases = []
-                opciones = []
-                bonus = []
-                es_bonus = False
-
-                for l in lineas:
-                    l_low = l.lower()
-                    if "exclusive excellent bonus" in l_low:
-                        es_bonus = True
-                        continue
-                    if "excellent" in l_low and not nombre_real:
-                        nombre_real = l
-                        continue
-                    if "can be equipped by" in l_low:
-                        c = l.split("by")[-1].strip()
-                        if c and c not in clases:
-                            clases.append(c)
-                        continue
-                    if es_bonus:
-                        if "increases" in l_low or "+" in l:
-                            bonus.append(l)
-                    else:
-                        if any(k in l_low for k in ["damage", "defense", "reflect", "life", "sd", "rate", "luck", "speed"]):
-                            opciones.append(l)
-
-                if any(w in nombre_real.lower() for w in PALABRAS_ARMAS):
-                    return "ES_ARMA"
-
-                num_m = re.search(r'\d+', fname)
-                nom_final = nombre_real if nombre_real else (f"Armadura #{num_m.group(0)}" if num_m else fname)
-
-                return {
-                    "nombre": nom_final,
-                    "clases": clases or ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"],
-                    "opciones": opciones,
-                    "bonus": bonus
-                }
-    except Exception as e:
-        print(f"Error OCR {fname}: {e}")
-    return None
-
-# --- REVISIÓN Y REGISTRO AUTOMÁTICO DE ARCHIVOS NUEVOS EN DRIVE ---
-def revisar_archivos_nuevos_drive():
-    if not FOLDER_DRIVE_ID or not GOOGLE_API_KEY:
-        return 0
+    nombre_completo = f"Excellent {set_base} {tipo} [Baúl: {baul}]"
+    archivo_id_generado = f"manual_{int(time.time())}.png"
+    clases_default = ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"]
 
     conn = get_db()
-    if not conn:
-        return 0
-
-    existentes_ids = set()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("SELECT drive_id FROM public.items_mu;")
-            existentes_ids = {r['drive_id'] for r in cur.fetchall()}
-    except Exception: pass
-
-    archivos_pendientes = []
-    try:
-        # Consulta los últimos 30 archivos agregados a la carpeta
-        url = f"https://www.googleapis.com/drive/v3/files?q='{FOLDER_DRIVE_ID}'+in+parents+and+trashed=false&key={GOOGLE_API_KEY}&fields=files(id,name,mimeType)&orderBy=createdTime+desc&pageSize=30"
-        res = requests.get(url, timeout=6)
-        if res.status_code == 200:
-            for f in res.json().get('files', []):
-                if f['id'] not in existentes_ids and any(f['name'].lower().endswith(ext) for ext in ['.png', '.jpg', '.jpeg', '.webp']):
-                    archivos_pendientes.append(f)
-    except Exception as e:
-        print(f"Error listando Drive nuevos: {e}")
-
-    nuevos_procesados = 0
-    # Procesa como máximo 3 ítems nuevos por consulta para mantener bajo el uso de RAM
-    for arch in archivos_pendientes[:3]:
-        fid = arch['id']
-        fname = arch['name']
-
-        resultado_ocr = procesar_ocr_imagen_nueva(fid, fname)
-        if resultado_ocr == "ES_ARMA":
-            continue
-
-        num_m = re.search(r'\d+', fname)
-        nom_item = resultado_ocr['nombre'] if resultado_ocr else f"Armadura #{num_m.group(0) if num_m else fname}"
-        clases = resultado_ocr['clases'] if resultado_ocr else ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"]
-        opciones = resultado_ocr['opciones'] if resultado_ocr else ["[Auto] Sincronizado"]
-        bonus = resultado_ocr['bonus'] if resultado_ocr else []
-
+    if conn:
         try:
             with conn.cursor() as cur:
                 cur.execute("""
-                    INSERT INTO public.items_mu (archivo_id, nombre, tipo, clases, opciones, bonus_excelente, drive_id)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
-                    ON CONFLICT (drive_id) DO UPDATE 
-                    SET nombre = EXCLUDED.nombre, clases = EXCLUDED.clases, opciones = EXCLUDED.opciones, bonus_excelente = EXCLUDED.bonus_excelente;
-                """, (fname, nom_item, "Armor", json.dumps(clases), json.dumps(opciones), json.dumps(bonus), fid))
+                    INSERT INTO public.items_mu (archivo_id, nombre, tipo, clases, opciones, bonus_excelente, drive_id, asignado_a)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
+                """, (
+                    archivo_id_generado, 
+                    nombre_completo, 
+                    tipo, 
+                    json.dumps(clases_default), 
+                    json.dumps(opciones), 
+                    json.dumps(bonus), 
+                    "placeholder_drive_id", 
+                    asignado if asignado != "Sin asignar" else None
+                ))
                 conn.commit()
-                nuevos_procesados += 1
-        except Exception: pass
+            conn.close()
+        except Exception as e:
+            if conn: conn.close()
+            return jsonify({"error": f"Error en base de datos: {str(e)}"}), 500
 
-    conn.close()
-    return nuevos_procesados
+    return jsonify({"status": "ok", "message": "Ítem agregado con éxito al inventario manual."}), 201
 
 # --- API DE ITEMS PAGINADA ---
 @app.route('/api/items', methods=['GET', 'PUT'])
@@ -233,10 +150,6 @@ def api_items():
     if request.method == 'GET':
         limit = request.args.get('limit', default=20, type=int)
         offset = request.args.get('offset', default=0, type=int)
-
-        # En la primera página, revisa si ingresó algún archivo nuevo
-        if offset == 0:
-            revisar_archivos_nuevos_drive()
 
         items_formateados = []
         total_items = 0
@@ -346,7 +259,7 @@ def api_miembros():
         return jsonify(miembros_clan_db)
 
     if not usuario_es_autorizado():
-        return jsonify({"error": "No autorizado. Inicia sesión como Pinion, tolkien o nasda."}), 403
+        return jsonify({"error": "No autorizado."}), 403
 
     if request.method == 'POST':
         data = request.json or {}
@@ -371,12 +284,6 @@ def api_miembros():
                     """, (nombre_pj, raza, json.dumps(items_asignados)))
                     r = cur.fetchone()
                     if r: nuevo_id = r['id']
-
-                    # Sincronización automática de asignaciones
-                    cur.execute("UPDATE public.items_mu SET asignado_a = NULL WHERE asignado_a = %s;", (nombre_pj,))
-                    for arch_id in items_asignados:
-                        cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE archivo_id = %s OR CAST(id AS TEXT) = %s;", (nombre_pj, str(arch_id), str(arch_id)))
-
                     conn.commit()
                 conn.close()
             except Exception:
@@ -397,251 +304,11 @@ def api_miembros():
             try:
                 with conn.cursor() as cur:
                     cur.execute("DELETE FROM public.miembros_clan WHERE id = %s;", (m_id,))
-                    if nombre_pj:
-                        cur.execute("UPDATE public.items_mu SET asignado_a = NULL WHERE asignado_a = %s;", (nombre_pj,))
                     conn.commit()
                 conn.close()
             except Exception:
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
-
-# Importación masiva desde Excel
-@app.route('/api/miembros/importar', methods=['POST'])
-def importar_miembros_excel():
-    if not usuario_es_autorizado():
-        return jsonify({"error": "No autorizado"}), 403
-
-    filas = (request.json or {}).get('filas', [])
-    if not filas:
-        return jsonify({"error": "No se enviaron datos"}), 400
-
-    conn = get_db()
-    for row in filas:
-        pj = str(row.get('nick', '')).strip()
-        raza = str(row.get('raza', 'Dark Knight')).strip()
-        items_raw = str(row.get('items', '')).strip()
-        items_lista = [x.strip() for x in items_raw.split(',') if x.strip()]
-
-        if not pj: continue
-
-        if conn:
-            try:
-                with conn.cursor() as cur:
-                    cur.execute("""
-                        INSERT INTO public.miembros_clan (nombre_pj, raza, items_asignados)
-                        VALUES (%s, %s, %s)
-                        ON CONFLICT (nombre_pj) DO UPDATE 
-                        SET raza = EXCLUDED.raza, items_asignados = EXCLUDED.items_asignados;
-                    """, (pj, raza, json.dumps(items_lista)))
-                    
-                    cur.execute("UPDATE public.items_mu SET asignado_a = NULL WHERE asignado_a = %s;", (pj,))
-                    for arch_id in items_lista:
-                        cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE archivo_id = %s OR CAST(id AS TEXT) = %s;", (pj, str(arch_id), str(arch_id)))
-                    conn.commit()
-            except Exception: pass
-
-    if conn: conn.close()
-    return jsonify({"status": "ok", "message": f"{len(filas)} filas procesadas"}), 200
-
-# --- TIMERS Y BOTS ---
-@app.route('/api/status_timers')
-@app.route('/api/timers')
-def get_status_timers():
-    return jsonify({
-        "timers": status_timers,
-        "ocultos": list(tarjetas_ocultas_global),
-        "heartbeats": heartbeats,
-        "ultimas_pcs": ultimas_pcs,
-        "ultimos_pjs": ultimos_pjs,
-        "mapas": status_mapas
-    })
-
-@app.route('/api/kill', methods=['POST'])
-def registrar_kill():
-    data = request.json or {}
-    server = data.get('server')
-    boss_raw = data.get('boss', '').strip()
-    pc_id = data.get('pc_id', 'Manual Web')
-    pj_name = data.get('pj_name', 'Manual Web')
-
-    if not server or not boss_raw: return jsonify({"error": "Faltan datos"}), 400
-    boss = re.sub(r'\s+\d+$', '', boss_raw)
-    es_manual_web = (pc_id == 'Manual Web') or ('user' in session)
-
-    if boss in BOSSES_MANUALES and not es_manual_web:
-        return jsonify({"status": "ignored", "message": f"El boss '{boss}' es manual."}), 200
-
-    now_unix = int(time.time())
-    clave_cartel = f"{server}_{boss}_{pj_name}"
-
-    if pc_id != 'Manual Web':
-        ultimo_registro = ultimos_kills_recientes.get(clave_cartel, 0)
-        if (now_unix - ultimo_registro) < 120:
-            return jsonify({"status": "ignored", "message": "Cartel duplicado ignorado."}), 200
-        ultimos_kills_recientes[clave_cartel] = now_unix
-
-    if server not in status_timers: status_timers[server] = {}
-    status_timers[server][boss] = now_unix
-    clave_card = f"{server}_{boss}"
-    if clave_card in tarjetas_ocultas_global: tarjetas_ocultas_global.remove(clave_card)
-    guardar_json(DATA_FILE, status_timers)
-
-    if pc_id != 'Manual Web':
-        heartbeats[server] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        ultimas_pcs[server] = pc_id
-        ultimos_pjs[server] = pj_name
-
-    conn = get_db()
-    if conn:
-        try:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    INSERT INTO public.timers_bosses (server, timers, last_pc, last_pj, last_heartbeat)
-                    VALUES (%s, %s, %s, %s, NOW())
-                    ON CONFLICT (server) DO UPDATE 
-                    SET timers = EXCLUDED.timers, last_pc = EXCLUDED.last_pc, last_pj = EXCLUDED.last_pj, last_heartbeat = NOW();
-                """, (server, json.dumps(status_timers.get(server, {})), pc_id, pj_name))
-                conn.commit()
-            conn.close()
-        except Exception:
-            if conn: conn.close()
-
-    return jsonify({"status": "ok", "message": f"Kill de {boss} registrado"}), 200
-
-@app.route('/api/reset_boss', methods=['POST'])
-def reset_boss():
-    data = request.json or {}
-    server = data.get('server')
-    boss = data.get('boss')
-
-    if server and boss:
-        clave_card = f"{server}_{boss}"
-        tarjetas_ocultas_global.add(clave_card)
-        keys_a_borrar = [k for k in ultimos_kills_recientes if k.startswith(f"{server}_{boss}_")]
-        for k in keys_a_borrar: ultimos_kills_recientes.pop(k, None)
-
-        if server in status_timers and boss in status_timers[server]:
-            del status_timers[server][boss]
-            guardar_json(DATA_FILE, status_timers)
-            conn = get_db()
-            if conn:
-                try:
-                    with conn.cursor() as cur:
-                        cur.execute("UPDATE public.timers_bosses SET timers = %s WHERE server = %s;", 
-                                    (json.dumps(status_timers.get(server, {})), server))
-                        conn.commit()
-                    conn.close()
-                except Exception:
-                    if conn: conn.close()
-
-        return jsonify({"status": "ok", "message": f"{boss} ocultado"}), 200
-    return jsonify({"error": "Datos inválidos"}), 400
-
-@app.route('/api/mapa_kill', methods=['POST'])
-def mapa_kill():
-    data = request.json or {}
-    server_num = str(data.get('server', '1'))
-    spot_id = str(data.get('spot_id'))
-
-    if not spot_id: return jsonify({"error": "Spot requerido"}), 400
-    if server_num not in status_mapas: status_mapas[server_num] = {}
-    status_mapas[server_num][spot_id] = int(time.time() * 1000)
-    guardar_json(MAPAS_FILE, status_mapas)
-    return jsonify({"status": "ok", "mapas": status_mapas}), 200
-
-@app.route('/api/mapa_reset', methods=['POST'])
-def mapa_reset():
-    data = request.json or {}
-    server_num = str(data.get('server', '1'))
-    spot_id = str(data.get('spot_id'))
-
-    if server_num in status_mapas and spot_id in status_mapas[server_num]:
-        del status_mapas[server_num][spot_id]
-        guardar_json(MAPAS_FILE, status_mapas)
-    return jsonify({"status": "ok", "mapas": status_mapas}), 200
-
-@app.route('/api/heartbeat', methods=['POST'])
-def registrar_heartbeat():
-    data = request.json or {}
-    server = data.get('server')
-    pc_id = data.get('pc_id', 'Desconocido')
-    pj_name = data.get('pj_name', 'Desconocido')
-
-    if server:
-        heartbeats[server] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        ultimas_pcs[server] = pc_id
-        ultimos_pjs[server] = pj_name
-        conn = get_db()
-        if conn:
-            try:
-                with conn.cursor() as cur:
-                    cur.execute("""
-                        INSERT INTO public.timers_bosses (server, last_pc, last_pj, last_heartbeat)
-                        VALUES (%s, %s, %s, NOW())
-                        ON CONFLICT (server) DO UPDATE 
-                        SET last_pc = EXCLUDED.last_pc, last_pj = EXCLUDED.last_pj, last_heartbeat = NOW();
-                    """, (server, pc_id, pj_name))
-                    conn.commit()
-                conn.close()
-            except Exception:
-                if conn: conn.close()
-        return jsonify({"status": "ok"}), 200
-    return jsonify({"error": "Servidor requerido"}), 400
-
-@app.route('/login', methods=['POST'])
-def login():
-    data = request.json or {}
-    username_raw = data.get('username', '').strip()
-    password = data.get('password', '').strip()
-
-    if not username_raw or not password:
-        return jsonify({"error": "Completá usuario y contraseña"}), 400
-
-    username = username_raw.lower()
-
-    conn = get_db()
-    user_db = None
-    if conn:
-        try:
-            with conn.cursor() as cur:
-                cur.execute("SELECT username, password_hash, rol FROM public.usuarios WHERE LOWER(username) = %s;", (username,))
-                user_db = cur.fetchone()
-            conn.close()
-        except Exception:
-            if conn: conn.close()
-
-    if not user_db:
-        if username == 'pinion' and password == 'G1nt0n1c':
-            user_db = {'username': 'Pinion', 'password_hash': 'G1nt0n1c', 'rol': 'admin'}
-        elif username == 'tolkien' and password == 'tolkien123':
-            user_db = {'username': 'tolkien', 'password_hash': 'tolkien123', 'rol': 'encargado'}
-        elif username == 'nasda' and password == 'nasda123':
-            user_db = {'username': 'nasda', 'password_hash': 'nasda123', 'rol': 'encargado'}
-
-    if user_db:
-        stored_pass = user_db.get("password_hash", "")
-        es_valido = False
-        if stored_pass.startswith("scrypt:") or stored_pass.startswith("pbkdf2:"):
-            try: es_valido = check_password_hash(stored_pass, password)
-            except Exception: pass
-        else:
-            es_valido = (stored_pass == password)
-
-        if es_valido:
-            session['user'] = user_db.get('username', username_raw)
-            session['rol'] = user_db.get('rol', 'encargado')
-            return jsonify({
-                "status": "ok",
-                "user": session['user'],
-                "rol": session['rol']
-            }), 200
-
-    return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('index'))
 
 @app.route('/api/session')
 def api_session():
@@ -654,36 +321,36 @@ def api_session():
         })
     return jsonify({"logged_in": False, "autorizado": False})
 
-@app.route('/api/donaciones', methods=['GET', 'POST'])
-def donaciones():
-    if request.method == 'GET':
-        return jsonify(donaciones_db)
-    if request.method == 'POST':
-        if 'user' not in session: return jsonify({"error": "No autorizado"}), 401
-        data = request.json or {}
-        pj_name = data.get('pj_name')
-        tipo_donacion = data.get('tipo_donacion')
-        cantidad = data.get('cantidad', 1)
-        if not pj_name or not tipo_donacion: return jsonify({"error": "Faltan datos"}), 400
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json or {}
+    username_raw = data.get('username', '').strip()
+    password = data.get('password', '').strip()
 
-        nueva_donacion = {
-            "id": int(time.time() * 1000), "pj_name": pj_name, "tipo_donacion": tipo_donacion,
-            "cantidad": int(cantidad), "registrado_por": session['user'],
-            "fecha_registro": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-        donaciones_db.insert(0, nueva_donacion)
-        guardar_json(DONACIONES_FILE, donaciones_db)
+    if not username_raw or not password:
+        return jsonify({"error": "Completá usuario y contraseña"}), 400
 
-        conn = get_db()
-        if conn:
-            try:
-                with conn.cursor() as cur:
-                    cur.execute("INSERT INTO public.donaciones (pj_name, tipo_donacion, cantidad, registrado_por) VALUES (%s, %s, %s, %s);", (pj_name, tipo_donacion, int(cantidad), session['user']))
-                    conn.commit()
-                conn.close()
-            except Exception:
-                if conn: conn.close()
-        return jsonify({"status": "ok", "donacion": nueva_donacion}), 201
+    username = username_raw.lower()
+    user_db = None
+
+    if username == 'pinion' and password == 'G1nt0n1c':
+        user_db = {'username': 'Pinion', 'rol': 'admin'}
+    elif username == 'tolkien' and password == 'tolkien123':
+        user_db = {'username': 'tolkien', 'rol': 'encargado'}
+    elif username == 'nasda' and password == 'nasda123':
+        user_db = {'username': 'nasda', 'rol': 'encargado'}
+
+    if user_db:
+        session['user'] = user_db.get('username')
+        session['rol'] = user_db.get('rol')
+        return jsonify({"status": "ok", "user": session['user'], "rol": session['rol']}), 200
+
+    return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
