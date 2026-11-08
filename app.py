@@ -84,7 +84,6 @@ def usuario_es_admin():
     rol = session.get('rol', '').lower()
     return usr == 'pinion' or rol == 'admin'
 
-# --- ÚNICA RUTA PRINCIPAL (EVITA EL ERROR DE ENDPOINT DUPLICADO) ---
 @app.route('/')
 def index():
     return render_template('index.html', link_descarga=LINK_DESCARGA_BOT)
