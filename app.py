@@ -81,8 +81,7 @@ def usuario_es_autorizado():
 def usuario_es_admin():
     if 'user' not in session: return False
     usr = session['user'].lower()
-    rol = session.get('rol', '').lower()
-    return usr == 'pinion' or rol == 'admin'
+    return usr == 'pinion'
 
 @app.route('/')
 def index():
@@ -92,7 +91,6 @@ def index():
 def vista_items():
     return render_template('items.html')
 
-# --- SINCRONIZAR ASIGNACIÓN DE ÍTEMS CON MIEMBROS EN DB ---
 def actualizar_asignacion_miembro_db(cur, item_id, nuevo_asignado):
     cur.execute("SELECT id, asignado_a FROM public.items_mu WHERE id = %s;", (item_id,))
     item_row = cur.fetchone()
@@ -117,11 +115,10 @@ def actualizar_asignacion_miembro_db(cur, item_id, nuevo_asignado):
                 items_arr.append(str(item_id))
                 cur.execute("UPDATE public.miembros_clan SET items_asignados = %s WHERE id = %s;", (json.dumps(items_arr), miembro_nuevo['id']))
 
-# --- REGISTRO MANUAL DE ÍTEMS CON ID DESDE 2 E INCREMENTAL ---
 @app.route('/api/items/agregar-manual', methods=['POST'])
 def agregar_item_manual():
     if not usuario_es_autorizado():
-        return jsonify({"error": "No autorizado. Inicie sesión como operador o administrador."}), 403
+        return jsonify({"error": "No autorizado."}), 403
 
     data = request.json or {}
     set_base = data.get('set_base', '').strip()
@@ -132,7 +129,7 @@ def agregar_item_manual():
     bonus = data.get('bonus', [])
 
     if not set_base:
-        return jsonify({"error": "Falta seleccionar el set de armadura"}), 400
+        return jsonify({"error": "Falta seleccionar el set"}), 400
 
     nombre_completo = f"Excellent {set_base} {tipo} [Baúl: {baul}]"
     clases_default = ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"]
@@ -168,19 +165,18 @@ def agregar_item_manual():
             conn.close()
         except Exception as e:
             if conn: conn.close()
-            return jsonify({"error": f"Error en base de datos: {str(e)}"}), 500
+            return jsonify({"error": str(e)}), 500
 
-    return jsonify({"status": "ok", "message": "Ítem agregado con éxito."}), 201
+    return jsonify({"status": "ok"}), 201
 
 @app.route('/api/items/eliminar', methods=['POST'])
 def eliminar_item_manual():
     if not usuario_es_autorizado():
-        return jsonify({"error": "No autorizado. Solo operadores y administradores."}), 403
+        return jsonify({"error": "No autorizado."}), 403
 
     data = request.json or {}
     item_id = data.get('id')
-    if not item_id:
-        return jsonify({"error": "ID requerido"}), 400
+    if not item_id: return jsonify({"error": "ID requerido"}), 400
 
     conn = get_db()
     if conn:
@@ -194,16 +190,14 @@ def eliminar_item_manual():
             if conn: conn.close()
             return jsonify({"error": str(e)}), 500
 
-    return jsonify({"status": "ok", "message": "Ítem eliminado correctamente."}), 200
+    return jsonify({"status": "ok"}), 200
 
-# --- API DE ITEMS PAGINADA ---
 @app.route('/api/items', methods=['GET', 'PUT'])
 def api_items():
     conn = get_db()
     if request.method == 'GET':
         limit = request.args.get('limit', default=500, type=int)
         offset = request.args.get('offset', default=0, type=int)
-
         items_formateados = []
         total_items = 0
 
@@ -224,16 +218,11 @@ def api_items():
                     filas = cur.fetchall()
 
                     for r in filas:
-                        nom = r.get('nombre') or 'Sin Nombre'
-                        arch = r.get('archivo_id') or str(r['id'])
                         items_formateados.append({
                             "id": r['id'],
-                            "archivo_id": arch,
-                            "nombre": nom,
+                            "archivo_id": r.get('archivo_id') or str(r['id']),
+                            "nombre": r.get('nombre') or 'Sin Nombre',
                             "tipo": r.get('tipo') or 'Armor',
-                            "base_score": r.get('base_score') or 0,
-                            "defense": r.get('defense') or 0,
-                            "durability": r.get('durability') or '-',
                             "clases": normalizar_campo_json(r.get('clases'), []),
                             "opciones": normalizar_campo_json(r.get('opciones'), []),
                             "bonus_excelente": normalizar_campo_json(r.get('bonus_excelente'), []),
@@ -242,19 +231,16 @@ def api_items():
                         })
                 conn.close()
             except Exception:
-                try: conn.close()
-                except Exception: pass
+                if conn: conn.close()
 
         return jsonify({
             "items": items_formateados,
             "total": total_items,
-            "offset": offset,
-            "limit": limit,
             "has_more": (offset + len(items_formateados)) < total_items
         }), 200
 
     if not usuario_es_autorizado():
-        return jsonify({"error": "No autorizado para modificar asignaciones."}), 403
+        return jsonify({"error": "No autorizado."}), 403
 
     if request.method == 'PUT':
         data = request.json or {}
@@ -274,9 +260,15 @@ def api_items():
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
 
-# --- API DE GESTIÓN DE USUARIOS (SOLO PINION) ---
 @app.route('/api/usuarios', methods=['GET', 'POST', 'DELETE'])
 def api_usuarios():
+    # Pinion puede ver y gestionar todo; los operadores (tolkien, nasda) pueden listar y crear SOLAMENTE usuarios con rol 'lector'.
+    es_pinion = usuario_es_admin()
+    es_op = usuario_es_autorizado()
+
+    if not es_pinion and not es_op:
+        return jsonify({"error": "No autorizado."}), 403
+
     conn = get_db()
     if request.method == 'GET':
         usuarios = []
@@ -290,9 +282,6 @@ def api_usuarios():
                 if conn: conn.close()
         return jsonify(usuarios)
 
-    if not usuario_es_admin():
-        return jsonify({"error": "Solo el administrador Pinion puede gestionar usuarios."}), 403
-
     data = request.json or {}
     if request.method == 'POST':
         username = data.get('username', '').strip()
@@ -302,6 +291,11 @@ def api_usuarios():
         if not username or not password:
             if conn: conn.close()
             return jsonify({"error": "Usuario y contraseña requeridos"}), 400
+
+        # Si no es Pinion, NO puede crear un usuario con rol operador o admin
+        if not es_pinion and rol != 'lector':
+            if conn: conn.close()
+            return jsonify({"error": "Solo el administrador Pinion puede crear operadores."}), 403
 
         if conn:
             try:
@@ -317,13 +311,18 @@ def api_usuarios():
             except Exception as e:
                 if conn: conn.close()
                 return jsonify({"error": str(e)}), 500
-        return jsonify({"status": "ok", "message": "Usuario guardado."}), 201
+        return jsonify({"status": "ok"}), 201
 
     if request.method == 'DELETE':
+        # Solo Pinion puede eliminar usuarios
+        if not es_pinion:
+            if conn: conn.close()
+            return jsonify({"error": "Solo el administrador Pinion puede eliminar usuarios."}), 403
+
         uid = data.get('id')
         uname = data.get('username')
         if uname and uname.lower() == 'pinion':
-            return jsonify({"error": "No se puede eliminar al admin principal."}), 400
+            return jsonify({"error": "No se puede eliminar a Pinion."}), 400
 
         if conn:
             try:
@@ -335,7 +334,6 @@ def api_usuarios():
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
 
-# --- API DE MIEMBROS DEL CLAN ---
 @app.route('/api/miembros', methods=['GET', 'POST', 'DELETE'])
 def api_miembros():
     global miembros_clan_db
