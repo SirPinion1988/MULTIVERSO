@@ -77,25 +77,25 @@
                     <select id="inputSetBase" required class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
                         <option value="">-- Seleccionar Set --</option>
                         <optgroup label="Dark Knight (BK)">
-                            <option value="Leather">Leather</option><option value="Bronze">Bronze</option><option value="Scale">Scale</option><option value="Brass">Brass</option><option value="Plate">Plate</option><option value="Dragon">Dragon</option><option value="Phoenix">Phoenix</option><option value="Black Dragon">Black Dragon</option><option value="Brave">Brave</option>
+                            <option value="Leather">Leather</option><option value="Bronze">Bronze</option><option value="Scale">Scale</option><option value="Brass">Brass</option><option value="Plate">Plate</option><option value="Dragon">Dragon</option><option value="Black Dragon">Black Dragon</option><option value="Dark Phoenix">Dark Phoenix</option><option value="Great Dragon">Great Dragon</option><option value="Dragon Knight">Dragon Knight</option><option value="Titan">Titan</option><option value="Brave">Brave</option>
                         </optgroup>
                         <optgroup label="Dark Wizard (SM)">
-                            <option value="Pad">Pad</option><option value="Bone">Bone</option><option value="Sphinx">Sphinx</option><option value="Legendary">Legendary</option><option value="Grand Soul">Grand Soul</option><option value="Hades">Hades</option>
+                            <option value="Pad">Pad</option><option value="Bone">Bone</option><option value="Sphinx">Sphinx</option><option value="Legendary">Legendary</option><option value="Grand Soul">Grand Soul</option><option value="Dark Soul">Dark Soul</option><option value="Venom Mist">Venom Mist</option><option value="Hades">Hades</option>
                         </optgroup>
                         <optgroup label="Fairy Elf (ELF)">
-                            <option value="Vine">Vine</option><option value="Silk">Silk</option><option value="Wind">Wind</option><option value="Spirit">Spirit</option><option value="Guardian">Guardian</option><option value="Seraphim">Seraphim</option>
+                            <option value="Vine">Vine</option><option value="Silk">Silk</option><option value="Wind">Wind</option><option value="Spirit">Spirit</option><option value="Guardian">Guardian</option><option value="Divine">Divine</option><option value="Red Spirit">Red Spirit</option><option value="Sylphid Ray">Sylphid Ray</option><option value="Seraphim">Seraphim</option>
                         </optgroup>
                         <optgroup label="Magic Gladiator (MG)">
-                            <option value="Storm Crow">Storm Crow</option><option value="Thunder Hawk">Thunder Hawk</option><option value="Valiant">Valiant</option>
+                            <option value="Storm Crow">Storm Crow</option><option value="Unicorn">Unicorn</option><option value="Thunder Hawk">Thunder Hawk</option><option value="Hurricane">Hurricane</option><option value="Volcano">Volcano</option><option value="Destroyer">Destroyer</option><option value="Phantom">Phantom</option>
                         </optgroup>
                         <optgroup label="Dark Lord (DL)">
-                            <option value="Adamantine">Adamantine</option><option value="Glorious">Glorious</option><option value="Sovereign">Sovereign</option>
+                            <option value="Light Plate">Light Plate</option><option value="Adamantine">Adamantine</option><option value="Dark Steel">Dark Steel</option><option value="Dark Master">Dark Master</option><option value="Glorious">Glorious</option><option value="Emperor">Emperor</option><option value="Royal">Royal</option>
                         </optgroup>
                         <optgroup label="Summoner (SUMM)">
-                            <option value="Red Wing">Red Wing</option><option value="Demonic">Demonic</option>
+                            <option value="Mystery">Mystery</option><option value="Red Wing">Red Wing</option><option value="Ancient">Ancient</option><option value="Black Rose">Black Rose</option><option value="Aura">Aura</option><option value="Lilium">Lilium</option><option value="Queen">Queen</option>
                         </optgroup>
                         <optgroup label="Rage Fighter (RF)">
-                            <option value="Sacred">Sacred</option><option value="Phoenix Soul">Phoenix Soul</option>
+                            <option value="Sacred">Sacred</option><option value="Piercing">Piercing</option><option value="Phoenix Soul">Phoenix Soul</option>
                         </optgroup>
                     </select>
                 </div>
@@ -270,6 +270,21 @@
         </div>
     </div>
 
+    <!-- MODAL SELECTOR PARA ASIGNAR MIEMBRO (REEMPLAZA AL PROMPT VIEJO) -->
+    <div id="modal-asignar-item" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-[#141126] border border-purple-500 p-6 rounded-xl max-w-sm w-full flex flex-col shadow-2xl">
+            <h3 id="modal-asignar-titulo" class="text-lg font-bold text-emerald-400 mb-3">Asignar Ítem</h3>
+            <p class="text-xs text-purple-200 mb-3">Selecciona el miembro del clan para este ítem (o déjalo vacío para devolverlo al baúl):</p>
+            <select id="selectMiembroModal" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none mb-4">
+                <option value="">-- Sin asignar (Disponible en Baúl) --</option>
+            </select>
+            <div class="flex gap-2 justify-end">
+                <button onclick="confirmarAsignacionModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded text-xs font-bold">Guardar</button>
+                <button onclick="cerrarModalAsignar()" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded text-xs font-bold">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL DETALLES DEL MIEMBRO (ITEMS QUE POSEE) -->
     <div id="modal-miembro-detalles" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4">
         <div class="bg-[#141126] border border-purple-500 p-6 rounded-xl max-w-lg w-full flex flex-col shadow-2xl">
@@ -299,6 +314,7 @@
         let miembrosClan = [];
         let sesionAutorizada = false;
         let esAdmin = false;
+        let itemIdEnEdicion = null;
 
         async function chequearSesion() {
             try {
@@ -377,13 +393,15 @@
                 if (res.ok) {
                     miembrosClan = await res.json();
                     const selectAsignado = document.getElementById('inputAsignado');
-                    if (selectAsignado) {
-                        let opts = '<option value="">-- Sin asignar (Libre en Baúl) --</option>';
-                        miembrosClan.forEach(m => {
-                            opts += `<option value="${m.nombre_pj}">${m.nombre_pj} (${m.raza})</option>`;
-                        });
-                        selectAsignado.innerHTML = opts;
-                    }
+                    const selectModal = document.getElementById('selectMiembroModal');
+                    
+                    let opts = '<option value="">-- Sin asignar (Libre en Baúl) --</option>';
+                    miembrosClan.forEach(m => {
+                        opts += `<option value="${m.nombre_pj}">${m.nombre_pj} (${m.raza})</option>`;
+                    });
+                    
+                    if (selectAsignado) selectAsignado.innerHTML = opts;
+                    if (selectModal) selectModal.innerHTML = opts;
                 }
             } catch(e) {}
         }
@@ -414,7 +432,7 @@
                     asignadoHTML = `<span class="bg-indigo-950 border border-indigo-500 text-indigo-200 px-2 py-0.5 rounded text-xs font-bold">${item.asignado_a}</span>`;
                 }
                 if (sesionAutorizada) {
-                    asignadoHTML += ` <button onclick="cambiarAsignacionItem(${item.id})" class="text-[10px] bg-gray-800 hover:bg-gray-700 text-purple-300 px-1.5 py-0.5 rounded ml-1">✏️</button>`;
+                    asignadoHTML += ` <button onclick="abrirModalAsignar(${item.id})" class="text-[10px] bg-gray-800 hover:bg-gray-700 text-purple-300 px-1.5 py-0.5 rounded ml-1">✏️</button>`;
                 }
 
                 let borrarHTML = '';
@@ -433,6 +451,46 @@
                     </tr>
                 `;
             }).join('');
+        }
+
+        function abrirModalAsignar(id) {
+            if (!sesionAutorizada) return alert("No autorizado.");
+            const item = catalogo.find(x => x.id === id);
+            if (!item) return;
+
+            itemIdEnEdicion = id;
+            document.getElementById('modal-asignar-titulo').textContent = `Asignar Ítems #${item.id} (${item.nombre})`;
+            document.getElementById('selectMiembroModal').value = item.asignado_a || "";
+            document.getElementById('modal-asignar-item').classList.remove('hidden');
+        }
+
+        function cerrarModalAsignar() {
+            document.getElementById('modal-asignar-item').classList.add('hidden');
+            itemIdEnEdicion = null;
+        }
+
+        async function confirmarAsignacionModal() {
+            if (!itemIdEnEdicion) return;
+            const nuevoVal = document.getElementById('selectMiembroModal').value || null;
+
+            try {
+                const res = await fetch('/api/items', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: itemIdEnEdicion, asignado_a: nuevoVal })
+                });
+                if (res.ok) {
+                    const item = catalogo.find(x => x.id === itemIdEnEdicion);
+                    if (item) item.asignado_a = nuevoVal;
+                    cerrarModalAsignar();
+                    aplicarFiltros();
+                    cargarMiembros();
+                } else {
+                    alert("Error al actualizar asignación.");
+                }
+            } catch(e) {
+                alert("Error de red.");
+            }
         }
 
         async function guardarItemManual(e) {
@@ -486,28 +544,6 @@
                     cargarMiembros();
                 } else {
                     alert("Error al eliminar el ítem.");
-                }
-            } catch(e) {}
-        }
-
-        async function cambiarAsignacionItem(id) {
-            if (!sesionAutorizada) return alert("Solo los operadores o admin pueden asignar ítems.");
-            const item = catalogo.find(x => x.id === id);
-            if (!item) return;
-            const nuevo = prompt(`Asignar ítem #${item.id} (${item.nombre}) a qué miembro? (Dejar en blanco para devolver al baúl):`, item.asignado_a || '');
-            if (nuevo === null) return;
-
-            const val = nuevo.trim() || null;
-            try {
-                const res = await fetch('/api/items', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: item.id, asignado_a: val })
-                });
-                if (res.ok) {
-                    item.asignado_a = val;
-                    aplicarFiltros();
-                    cargarMiembros();
                 }
             } catch(e) {}
         }
