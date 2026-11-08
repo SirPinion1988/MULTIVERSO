@@ -6,7 +6,7 @@ import base64
 import requests
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
-from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.security import check_password_hash
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
@@ -15,11 +15,8 @@ app.secret_key = os.environ.get("SECRET_KEY", "multiverso_secret_key_2026")
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 LINK_DESCARGA_BOT = "https://drive.google.com/uc?export=download&id=TU_ID_DE_GOOGLE_DRIVE"
-FOLDER_DRIVE_ID = os.environ.get("DRIVE_FOLDER_ID", "1nSqaWKAsEc7s6BYT8xg22MoITXLT7IIK")
-GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "AIzaSyDA99w81Z7LDtsA-gX_MmZLdVDFxmqEmlk")
 
 DATA_FILE = "timers_data.json"
-USERS_FILE = "users_data.json"
 DONACIONES_FILE = "donaciones_data.json"
 MAPAS_FILE = "mapas_data.json"
 MIEMBROS_FILE = "miembros_data.json"
@@ -27,11 +24,6 @@ MIEMBROS_FILE = "miembros_data.json"
 BOSSES_MANUALES = [
     "Red Dragon", "Yellow Goblin", "Blue Goblin", 
     "Red Goblin", "Santa", "White Wizard", "Skeleton King"
-]
-
-PALABRAS_ARMAS = [
-    "sword", "blade", "staff", "crossbow", "bow", "stick", "book", 
-    "claw", "scepter", "mace", "morning star", "axe", "spear", "dread", "two-hand"
 ]
 
 def cargar_json(filepath, default_val):
@@ -52,7 +44,6 @@ def guardar_json(filepath, data):
 
 status_timers = cargar_json(DATA_FILE, {"Server 1": {}, "Server 2": {}, "Server 3": {}, "Server 20": {}})
 status_mapas = cargar_json(MAPAS_FILE, {"1": {}, "2": {}, "3": {}})
-usuarios_db = cargar_json(USERS_FILE, {})
 donaciones_db = cargar_json(DONACIONES_FILE, [])
 miembros_clan_db = cargar_json(MIEMBROS_FILE, [])
 
@@ -101,7 +92,7 @@ def index():
 def vista_items():
     return render_template('items.html')
 
-# --- REGISTRO MANUAL DE ÍTEMS CON ID DESDE 2 E INCREMENTAL Y BORRADO ---
+# --- REGISTRO MANUAL DE ÍTEMS CON ID DESDE 2 E INCREMENTAL ---
 @app.route('/api/items/agregar-manual', methods=['POST'])
 def agregar_item_manual():
     if not usuario_es_autorizado():
@@ -125,7 +116,6 @@ def agregar_item_manual():
     if conn:
         try:
             with conn.cursor() as cur:
-                # Obtener el siguiente ID numérico empezando desde 2
                 cur.execute("SELECT COALESCE(MAX(id), 1) as max_id FROM public.items_mu;")
                 row = cur.fetchone()
                 next_id = 2 if row['max_id'] < 2 else row['max_id'] + 1
@@ -181,7 +171,7 @@ def eliminar_item_manual():
 def api_items():
     conn = get_db()
     if request.method == 'GET':
-        limit = request.args.get('limit', default=20, type=int)
+        limit = request.args.get('limit', default=500, type=int)
         offset = request.args.get('offset', default=0, type=int)
 
         items_formateados = []
@@ -251,7 +241,7 @@ def api_items():
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
 
-# --- API DE GESTIÓN DE USUARIOS (SOLO PINION / ADMIN) ---
+# --- API DE GESTIÓN DE USUARIOS (SOLO PINION) ---
 @app.route('/api/usuarios', methods=['GET', 'POST', 'DELETE'])
 def api_usuarios():
     conn = get_db()
@@ -268,7 +258,7 @@ def api_usuarios():
         return jsonify(usuarios)
 
     if not usuario_es_admin():
-        return jsonify({"error": "Solo el administrador Pinion puede crear o gestionar usuarios."}), 403
+        return jsonify({"error": "Solo el administrador Pinion puede gestionar usuarios."}), 403
 
     data = request.json or {}
     if request.method == 'POST':
@@ -294,13 +284,13 @@ def api_usuarios():
             except Exception as e:
                 if conn: conn.close()
                 return jsonify({"error": str(e)}), 500
-        return jsonify({"status": "ok", "message": "Usuario guardado exitosamente."}), 201
+        return jsonify({"status": "ok", "message": "Usuario guardado."}), 201
 
     if request.method == 'DELETE':
         uid = data.get('id')
         uname = data.get('username')
         if uname and uname.lower() == 'pinion':
-            return jsonify({"error": "No se puede eliminar al administrador principal Pinion."}), 400
+            return jsonify({"error": "No se puede eliminar al admin principal."}), 400
 
         if conn:
             try:
@@ -340,12 +330,12 @@ def api_miembros():
         return jsonify(miembros_clan_db)
 
     if not usuario_es_autorizado():
-        return jsonify({"error": "No autorizado para registrar miembros."}), 403
+        return jsonify({"error": "No autorizado."}), 403
 
     if request.method == 'POST':
         data = request.json or {}
         nombre_pj = data.get('nombre_pj', '').strip()
-        raza = data.get('raza', 'Dark Knight').strip()
+        raza = data.get('raza', 'DK').strip()
         items_asignados = data.get('items_asignados', [])
 
         if not nombre_pj:
@@ -455,13 +445,31 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
-@app.route('/')
-def index():
-    return render_template('index.html', link_descarga=LINK_DESCARGA_BOT)
+@app.route('/api/status_timers')
+@app.route('/api/timers')
+def get_status_timers():
+    return jsonify({
+        "timers": status_timers,
+        "ocultos": list(tarjetas_ocultas_global),
+        "heartbeats": heartbeats,
+        "ultimas_pcs": ultimas_pcs,
+        "ultimos_pjs": ultimos_pjs,
+        "mapas": status_mapas
+    })
 
-@app.route('/items')
-def vista_items():
-    return render_template('items.html')
+@app.route('/api/kill', methods=['POST'])
+def registrar_kill():
+    data = request.json or {}
+    server = data.get('server')
+    boss_raw = data.get('boss', '').strip()
+    if not server or not boss_raw: return jsonify({"error": "Faltan datos"}), 400
+    boss = re.sub(r'\s+\d+$', '', boss_raw)
+    now_unix = int(time.time())
+
+    if server not in status_timers: status_timers[server] = {}
+    status_timers[server][boss] = now_unix
+    guardar_json(DATA_FILE, status_timers)
+    return jsonify({"status": "ok"}), 200
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
