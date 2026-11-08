@@ -92,6 +92,31 @@ def index():
 def vista_items():
     return render_template('items.html')
 
+# --- SINCRONIZAR ASIGNACIÓN DE ÍTEMS CON MIEMBROS EN DB ---
+def actualizar_asignacion_miembro_db(cur, item_id, nuevo_asignado):
+    cur.execute("SELECT id, asignado_a FROM public.items_mu WHERE id = %s;", (item_id,))
+    item_row = cur.fetchone()
+    if not item_row: return
+    
+    viejo_asignado = item_row['asignado_a']
+    
+    if viejo_asignado and viejo_asignado != nuevo_asignado:
+        cur.execute("SELECT id, nombre_pj, items_asignados FROM public.miembros_clan WHERE LOWER(nombre_pj) = LOWER(%s);", (viejo_asignado,))
+        miembro_viejo = cur.fetchone()
+        if miembro_viejo:
+            items_arr = normalizar_campo_json(miembro_viejo['items_asignados'], [])
+            items_arr = [str(x) for x in items_arr if str(x) != str(item_id)]
+            cur.execute("UPDATE public.miembros_clan SET items_asignados = %s WHERE id = %s;", (json.dumps(items_arr), miembro_viejo['id']))
+
+    if nuevo_asignado and nuevo_asignado != "Sin asignar":
+        cur.execute("SELECT id, nombre_pj, items_asignados FROM public.miembros_clan WHERE LOWER(nombre_pj) = LOWER(%s);", (nuevo_asignado,))
+        miembro_nuevo = cur.fetchone()
+        if miembro_nuevo:
+            items_arr = normalizar_campo_json(miembro_nuevo['items_asignados'], [])
+            if str(item_id) not in [str(x) for x in items_arr]:
+                items_arr.append(str(item_id))
+                cur.execute("UPDATE public.miembros_clan SET items_asignados = %s WHERE id = %s;", (json.dumps(items_arr), miembro_nuevo['id']))
+
 # --- REGISTRO MANUAL DE ÍTEMS CON ID DESDE 2 E INCREMENTAL ---
 @app.route('/api/items/agregar-manual', methods=['POST'])
 def agregar_item_manual():
@@ -101,8 +126,8 @@ def agregar_item_manual():
     data = request.json or {}
     set_base = data.get('set_base', '').strip()
     tipo = data.get('tipo', 'Armor').strip()
-    baul = data.get('baul', 'Baúl Principal').strip()
-    asignado = data.get('asignado', 'Sin asignar').strip()
+    baul = data.get('baul', '').strip() or 'Baúl General'
+    asignado = data.get('asignado', '').strip() or None
     opciones = data.get('opciones', [])
     bonus = data.get('bonus', [])
 
@@ -135,6 +160,10 @@ def agregar_item_manual():
                     f"manual_drive_{next_id}",
                     asignado if asignado != "Sin asignar" else None
                 ))
+
+                if asignado and asignado != "Sin asignar":
+                    actualizar_asignacion_miembro_db(cur, next_id, asignado)
+
                 conn.commit()
             conn.close()
         except Exception as e:
@@ -157,6 +186,7 @@ def eliminar_item_manual():
     if conn:
         try:
             with conn.cursor() as cur:
+                actualizar_asignacion_miembro_db(cur, item_id, None)
                 cur.execute("DELETE FROM public.items_mu WHERE id = %s;", (item_id,))
                 conn.commit()
             conn.close()
@@ -230,10 +260,13 @@ def api_items():
         data = request.json or {}
         item_id = data.get('id')
         asignado_a = data.get('asignado_a')
+        if asignado_a == "Sin asignar" or not asignado_a:
+            asignado_a = None
 
         if conn:
             try:
                 with conn.cursor() as cur:
+                    actualizar_asignacion_miembro_db(cur, item_id, asignado_a)
                     cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE id = %s;", (asignado_a, item_id))
                     conn.commit()
                 conn.close()
@@ -355,6 +388,10 @@ def api_miembros():
                     """, (nombre_pj, raza, json.dumps(items_asignados)))
                     r = cur.fetchone()
                     if r: nuevo_id = r['id']
+                    
+                    for item_id in items_asignados:
+                        cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE id = %s;", (nombre_pj, item_id))
+
                     conn.commit()
                 conn.close()
             except Exception:
@@ -374,6 +411,8 @@ def api_miembros():
         if conn:
             try:
                 with conn.cursor() as cur:
+                    if nombre_pj:
+                        cur.execute("UPDATE public.items_mu SET asignado_a = NULL WHERE LOWER(asignado_a) = LOWER(%s);", (nombre_pj,))
                     cur.execute("DELETE FROM public.miembros_clan WHERE id = %s;", (m_id,))
                     conn.commit()
                 conn.close()
@@ -445,31 +484,13 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
-@app.route('/api/status_timers')
-@app.route('/api/timers')
-def get_status_timers():
-    return jsonify({
-        "timers": status_timers,
-        "ocultos": list(tarjetas_ocultas_global),
-        "heartbeats": heartbeats,
-        "ultimas_pcs": ultimas_pcs,
-        "ultimos_pjs": ultimos_pjs,
-        "mapas": status_mapas
-    })
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-@app.route('/api/kill', methods=['POST'])
-def registrar_kill():
-    data = request.json or {}
-    server = data.get('server')
-    boss_raw = data.get('boss', '').strip()
-    if not server or not boss_raw: return jsonify({"error": "Faltan datos"}), 400
-    boss = re.sub(r'\s+\d+$', '', boss_raw)
-    now_unix = int(time.time())
-
-    if server not in status_timers: status_timers[server] = {}
-    status_timers[server][boss] = now_unix
-    guardar_json(DATA_FILE, status_timers)
-    return jsonify({"status": "ok"}), 200
+@app.route('/items')
+def vista_items():
+    return render_template('items.html')
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
