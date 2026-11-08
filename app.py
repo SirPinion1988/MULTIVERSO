@@ -6,7 +6,7 @@ import base64
 import requests
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
@@ -83,11 +83,15 @@ def normalizar_campo_json(valor, default_tipo):
 
 def usuario_es_autorizado():
     if 'user' not in session: return False
-    return session['user'].lower() in ['pinion', 'tolkien', 'nasda']
+    usr = session['user'].lower()
+    rol = session.get('rol', '').lower()
+    return usr in ['pinion', 'tolkien', 'nasda'] or rol in ['admin', 'operador']
 
-def es_solo_armadura(nombre, archivo_id):
-    texto = f"{nombre} {archivo_id}".lower()
-    return not any(w in texto for w in PALABRAS_ARMAS)
+def usuario_es_admin():
+    if 'user' not in session: return False
+    usr = session['user'].lower()
+    rol = session.get('rol', '').lower()
+    return usr == 'pinion' or rol == 'admin'
 
 @app.route('/')
 def index():
@@ -97,11 +101,11 @@ def index():
 def vista_items():
     return render_template('items.html')
 
-# --- REGISTRO MANUAL O AUTOMÁTICO DE ÍTEMS Y BAÚLES ---
+# --- REGISTRO MANUAL DE ÍTEMS CON ID DESDE 2 E INCREMENTAL Y BORRADO ---
 @app.route('/api/items/agregar-manual', methods=['POST'])
 def agregar_item_manual():
     if not usuario_es_autorizado():
-        return jsonify({"error": "No autorizado. Solo administradores."}), 403
+        return jsonify({"error": "No autorizado. Inicie sesión como operador o administrador."}), 403
 
     data = request.json or {}
     set_base = data.get('set_base', '').strip()
@@ -115,24 +119,30 @@ def agregar_item_manual():
         return jsonify({"error": "Falta seleccionar el set de armadura"}), 400
 
     nombre_completo = f"Excellent {set_base} {tipo} [Baúl: {baul}]"
-    archivo_id_generado = f"manual_{int(time.time())}.png"
     clases_default = ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"]
 
     conn = get_db()
     if conn:
         try:
             with conn.cursor() as cur:
+                # Obtener el siguiente ID numérico empezando desde 2
+                cur.execute("SELECT COALESCE(MAX(id), 1) as max_id FROM public.items_mu;")
+                row = cur.fetchone()
+                next_id = 2 if row['max_id'] < 2 else row['max_id'] + 1
+                archivo_id_gen = f"{next_id}.png"
+
                 cur.execute("""
-                    INSERT INTO public.items_mu (archivo_id, nombre, tipo, clases, opciones, bonus_excelente, drive_id, asignado_a)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
+                    INSERT INTO public.items_mu (id, archivo_id, nombre, tipo, clases, opciones, bonus_excelente, drive_id, asignado_a)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
                 """, (
-                    archivo_id_generado, 
-                    nombre_completo, 
-                    tipo, 
-                    json.dumps(clases_default), 
-                    json.dumps(opciones), 
-                    json.dumps(bonus), 
-                    "placeholder_drive_id", 
+                    next_id,
+                    archivo_id_gen,
+                    nombre_completo,
+                    tipo,
+                    json.dumps(clases_default),
+                    json.dumps(opciones),
+                    json.dumps(bonus),
+                    f"manual_drive_{next_id}",
                     asignado if asignado != "Sin asignar" else None
                 ))
                 conn.commit()
@@ -141,7 +151,30 @@ def agregar_item_manual():
             if conn: conn.close()
             return jsonify({"error": f"Error en base de datos: {str(e)}"}), 500
 
-    return jsonify({"status": "ok", "message": "Ítem agregado con éxito al inventario manual."}), 201
+    return jsonify({"status": "ok", "message": "Ítem agregado con éxito."}), 201
+
+@app.route('/api/items/eliminar', methods=['POST'])
+def eliminar_item_manual():
+    if not usuario_es_autorizado():
+        return jsonify({"error": "No autorizado. Solo operadores y administradores."}), 403
+
+    data = request.json or {}
+    item_id = data.get('id')
+    if not item_id:
+        return jsonify({"error": "ID requerido"}), 400
+
+    conn = get_db()
+    if conn:
+        try:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM public.items_mu WHERE id = %s;", (item_id,))
+                conn.commit()
+            conn.close()
+        except Exception as e:
+            if conn: conn.close()
+            return jsonify({"error": str(e)}), 500
+
+    return jsonify({"status": "ok", "message": "Ítem eliminado correctamente."}), 200
 
 # --- API DE ITEMS PAGINADA ---
 @app.route('/api/items', methods=['GET', 'PUT'])
@@ -157,14 +190,7 @@ def api_items():
         if conn:
             try:
                 with conn.cursor() as cur:
-                    cur.execute("""
-                        SELECT COUNT(*) as total 
-                        FROM public.items_mu 
-                        WHERE NOT EXISTS (
-                            SELECT 1 FROM unnest(ARRAY['sword', 'blade', 'staff', 'crossbow', 'bow', 'stick', 'book', 'claw', 'scepter', 'mace', 'morning star', 'axe', 'spear', 'dread', 'two-hand']) AS w
-                            WHERE LOWER(nombre) LIKE '%%' || w || '%%'
-                        );
-                    """)
+                    cur.execute("SELECT COUNT(*) as total FROM public.items_mu;")
                     row_c = cur.fetchone()
                     if row_c: total_items = row_c['total']
 
@@ -172,13 +198,7 @@ def api_items():
                         SELECT id, archivo_id, nombre, tipo, base_score, defense, durability,
                                clases, opciones, bonus_excelente, drive_id, asignado_a
                         FROM public.items_mu
-                        WHERE NOT EXISTS (
-                            SELECT 1 FROM unnest(ARRAY['sword', 'blade', 'staff', 'crossbow', 'bow', 'stick', 'book', 'claw', 'scepter', 'mace', 'morning star', 'axe', 'spear', 'dread', 'two-hand']) AS w
-                            WHERE LOWER(nombre) LIKE '%%' || w || '%%'
-                        )
-                        ORDER BY 
-                            NULLIF(regexp_replace(archivo_id, '\D', '', 'g'), '')::numeric ASC NULLS LAST,
-                            id ASC
+                        ORDER BY id ASC
                         LIMIT %s OFFSET %s;
                     """, (limit, offset))
                     filas = cur.fetchall()
@@ -214,7 +234,7 @@ def api_items():
         }), 200
 
     if not usuario_es_autorizado():
-        return jsonify({"error": "No autorizado"}), 403
+        return jsonify({"error": "No autorizado para modificar asignaciones."}), 403
 
     if request.method == 'PUT':
         data = request.json or {}
@@ -225,6 +245,67 @@ def api_items():
             try:
                 with conn.cursor() as cur:
                     cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE id = %s;", (asignado_a, item_id))
+                    conn.commit()
+                conn.close()
+            except Exception:
+                if conn: conn.close()
+        return jsonify({"status": "ok"}), 200
+
+# --- API DE GESTIÓN DE USUARIOS (SOLO PINION / ADMIN) ---
+@app.route('/api/usuarios', methods=['GET', 'POST', 'DELETE'])
+def api_usuarios():
+    conn = get_db()
+    if request.method == 'GET':
+        usuarios = []
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT id, username, rol FROM public.usuarios ORDER BY id ASC;")
+                    usuarios = cur.fetchall()
+                conn.close()
+            except Exception:
+                if conn: conn.close()
+        return jsonify(usuarios)
+
+    if not usuario_es_admin():
+        return jsonify({"error": "Solo el administrador Pinion puede crear o gestionar usuarios."}), 403
+
+    data = request.json or {}
+    if request.method == 'POST':
+        username = data.get('username', '').strip()
+        password = data.get('password', '').strip()
+        rol = data.get('rol', 'lector').strip()
+
+        if not username or not password:
+            if conn: conn.close()
+            return jsonify({"error": "Usuario y contraseña requeridos"}), 400
+
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        INSERT INTO public.usuarios (username, password_hash, rol)
+                        VALUES (%s, %s, %s)
+                        ON CONFLICT (username) DO UPDATE 
+                        SET password_hash = EXCLUDED.password_hash, rol = EXCLUDED.rol;
+                    """, (username, password, rol))
+                    conn.commit()
+                conn.close()
+            except Exception as e:
+                if conn: conn.close()
+                return jsonify({"error": str(e)}), 500
+        return jsonify({"status": "ok", "message": "Usuario guardado exitosamente."}), 201
+
+    if request.method == 'DELETE':
+        uid = data.get('id')
+        uname = data.get('username')
+        if uname and uname.lower() == 'pinion':
+            return jsonify({"error": "No se puede eliminar al administrador principal Pinion."}), 400
+
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("DELETE FROM public.usuarios WHERE id = %s OR username = %s;", (uid, uname))
                     conn.commit()
                 conn.close()
             except Exception:
@@ -259,7 +340,7 @@ def api_miembros():
         return jsonify(miembros_clan_db)
 
     if not usuario_es_autorizado():
-        return jsonify({"error": "No autorizado."}), 403
+        return jsonify({"error": "No autorizado para registrar miembros."}), 403
 
     if request.method == 'POST':
         data = request.json or {}
@@ -316,10 +397,11 @@ def api_session():
         return jsonify({
             "logged_in": True,
             "user": session['user'],
-            "rol": session.get('rol', 'encargado'),
-            "autorizado": usuario_es_autorizado()
+            "rol": session.get('rol', 'lector'),
+            "autorizado": usuario_es_autorizado(),
+            "es_admin": usuario_es_admin()
         })
-    return jsonify({"logged_in": False, "autorizado": False})
+    return jsonify({"logged_in": False, "autorizado": False, "es_admin": False})
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -333,17 +415,38 @@ def login():
     username = username_raw.lower()
     user_db = None
 
-    if username == 'pinion' and password == 'G1nt0n1c':
-        user_db = {'username': 'Pinion', 'rol': 'admin'}
-    elif username == 'tolkien' and password == 'tolkien123':
-        user_db = {'username': 'tolkien', 'rol': 'encargado'}
-    elif username == 'nasda' and password == 'nasda123':
-        user_db = {'username': 'nasda', 'rol': 'encargado'}
+    conn = get_db()
+    if conn:
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT username, password_hash, rol FROM public.usuarios WHERE LOWER(username) = %s;", (username,))
+                user_db = cur.fetchone()
+            conn.close()
+        except Exception:
+            if conn: conn.close()
+
+    if not user_db:
+        if username == 'pinion' and password == 'G1nt0n1c':
+            user_db = {'username': 'Pinion', 'rol': 'admin'}
+        elif username == 'tolkien' and password == 'tolkien123':
+            user_db = {'username': 'tolkien', 'rol': 'operador'}
+        elif username == 'nasda' and password == 'nasda123':
+            user_db = {'username': 'nasda', 'rol': 'operador'}
 
     if user_db:
-        session['user'] = user_db.get('username')
-        session['rol'] = user_db.get('rol')
-        return jsonify({"status": "ok", "user": session['user'], "rol": session['rol']}), 200
+        stored_pass = user_db.get("password_hash", "")
+        es_valido = (stored_pass == password or check_password_hash(stored_pass, password) if stored_pass.startswith('scrypt:') else stored_pass == password)
+
+        if es_valido:
+            session['user'] = user_db.get('username', username_raw)
+            session['rol'] = user_db.get('rol', 'lector')
+            return jsonify({
+                "status": "ok",
+                "user": session['user'],
+                "rol": session['rol'],
+                "autorizado": usuario_es_autorizado(),
+                "es_admin": usuario_es_admin()
+            }), 200
 
     return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
 
@@ -351,6 +454,14 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for('index'))
+
+@app.route('/')
+def index():
+    return render_template('index.html', link_descarga=LINK_DESCARGA_BOT)
+
+@app.route('/items')
+def vista_items():
+    return render_template('items.html')
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
