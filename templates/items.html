@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🛡️ Catálogo de Armaduras & Clan - MuDream Multiverso</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { background-color: #0a0814; color: #e6e1ff; font-family: 'Segoe UI', system-ui, sans-serif; }
+        
         .tabla-scroll-box {
             height: 520px !important;
             overflow-y: scroll !important;
@@ -18,6 +20,7 @@
         .tabla-scroll-box::-webkit-scrollbar { width: 10px; }
         .tabla-scroll-box::-webkit-scrollbar-track { background: #0d0a1a; border-left: 1px solid #2b214a; }
         .tabla-scroll-box::-webkit-scrollbar-thumb { background: #6d28d9; border-radius: 5px; }
+
         .tabla-items { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
         .tabla-items th { 
             background: #17112e; padding: 10px 12px; color: #c4b5fd; font-weight: 700; text-transform: uppercase; font-size: 11px; border-bottom: 2px solid #3b2d6b; position: sticky; top: 0; z-index: 10; 
@@ -26,6 +29,8 @@
         .tabla-items tr:hover { background: rgba(139, 92, 246, 0.1); }
         .badge-pj { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.4); color: #c4b5fd; }
         .badge-opt { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 4px; margin-bottom: 3px; background: rgba(6, 182, 212, 0.15); border: 1px solid #06b6d4; color: #67e8f9; }
+        .member-row { cursor: pointer; }
+        .member-row:hover { background: rgba(99, 102, 241, 0.15) !important; }
     </style>
 </head>
 <body class="p-4 md:p-8 flex flex-col items-center">
@@ -33,7 +38,7 @@
     <header class="w-full max-w-7xl mb-6 border-b border-purple-900/50 pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
             <h1 class="text-3xl font-extrabold text-emerald-400">🛡️ MULTIVERSO - ARMADURAS & CLAN</h1>
-            <p class="text-xs text-purple-300">Inventario y control de baúles públicos</p>
+            <p class="text-xs text-purple-300">Página pública de consulta, inventario y control de stock</p>
         </div>
         <div class="flex items-center gap-3">
             <span id="session-user-badge" class="text-xs text-purple-300 font-bold bg-[#141126] px-3 py-1.5 rounded-lg border border-purple-900">
@@ -108,14 +113,14 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">🏰 Nombre del Baúl</label>
-                    <input type="text" id="inputBaul" required placeholder="Ej. Baúl Principal" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
+                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">🏰 Nombre del Baúl (Opcional)</label>
+                    <input type="text" id="inputBaul" placeholder="Ej. Baúl Principal (opcional)" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
                 </div>
 
                 <div>
                     <label class="block text-xs uppercase text-purple-300 font-bold mb-1">👤 Asignado a (Miembro del Clan)</label>
                     <select id="inputAsignado" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
-                        <option value="">-- Sin asignar --</option>
+                        <option value="">-- Sin asignar (Libre en Baúl) --</option>
                     </select>
                 </div>
 
@@ -126,7 +131,7 @@
                         <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Aumento de SD máximo"> Aumento de SD máximo</label>
                         <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Reducción de daño (DD)"> Reducción de daño (DD)</label>
                         <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Reflejo de daño (Reflect)"> Reflejo de daño (Reflect)</label>
-                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Resistencia a daño crítico"> Resistencia a crítico</label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Resistencia a daño crítico (Rate)"> Resistencia a crítico (Rate)</label>
                         <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Tasa de drop de Zen"> Tasa de Zen</label>
                     </div>
                 </div>
@@ -139,8 +144,11 @@
             </form>
         </div>
 
-        <div class="bg-[#141126] border border-purple-900/60 p-4 rounded-xl shadow flex gap-3">
-            <input type="text" id="filtroTexto" oninput="aplicarFiltros()" placeholder="🔍 Buscar por ID, nombre, baúl o asignado..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
+        <div class="bg-[#141126] border border-purple-900/60 p-4 rounded-xl shadow flex flex-wrap gap-3 items-center justify-between">
+            <input type="text" id="filtroTexto" oninput="aplicarFiltros()" placeholder="🔍 Buscar por ID, nombre, baúl o asignado..." class="flex-1 min-w-[240px] bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
+            <button onclick="exportarExcelItems()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-4 py-2.5 rounded-lg text-xs transition shadow flex items-center gap-1.5">
+                📊 Exportar Ítems a Excel
+            </button>
         </div>
 
         <div class="tabla-scroll-box" id="scrollBox">
@@ -171,7 +179,7 @@
                     <input type="text" id="clanPjNombre" placeholder="Ej. PinionBK" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs outline-none">
                 </div>
                 <div>
-                    <label class="block text-[11px] text-gray-300 font-semibold mb-1">SCROLL DE CLASE / RAZA:</label>
+                    <label class="block text-[11px] text-gray-300 font-semibold mb-1">CLASE / RAZA:</label>
                     <select id="clanPjRaza" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs outline-none">
                         <option value="DK">DK (Dark Knight)</option>
                         <option value="SM">SM (Dark Wizard)</option>
@@ -194,13 +202,19 @@
             </div>
         </div>
 
+        <div class="flex justify-end">
+            <button onclick="exportarExcelMiembros()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-4 py-2.5 rounded-lg text-xs transition shadow flex items-center gap-1.5">
+                📊 Exportar Clan a Excel
+            </button>
+        </div>
+
         <div class="tabla-scroll-box">
             <table class="tabla-items">
                 <thead>
                     <tr>
                         <th style="width: 170px;">Nick del PJ</th>
                         <th style="width: 150px;">Clase / Raza</th>
-                        <th>Ítems Asignados</th>
+                        <th>Ítems Asignados (Clic en miembro para ver detalles)</th>
                         <th style="width: 130px; text-align: center;" id="th-miembro-acciones" class="hidden">Acción</th>
                     </tr>
                 </thead>
@@ -253,6 +267,17 @@
                     <tr><td colspan="4" class="text-center py-8 text-gray-500">Cargando usuarios...</td></tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- MODAL DETALLES DEL MIEMBRO (ITEMS QUE POSEE) -->
+    <div id="modal-miembro-detalles" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-[#141126] border border-purple-500 p-6 rounded-xl max-w-lg w-full flex flex-col shadow-2xl">
+            <h3 id="modal-miembro-titulo" class="text-lg font-bold text-emerald-400 mb-3">Inventario de PJ</h3>
+            <div id="modal-miembro-contenido" class="space-y-2 max-h-[60vh] overflow-y-auto mb-4 text-xs text-purple-200">
+                <!-- Se llena dinámicamente -->
+            </div>
+            <button onclick="cerrarModalMiembro()" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded text-xs font-bold self-end">Cerrar</button>
         </div>
     </div>
 
@@ -353,7 +378,7 @@
                     miembrosClan = await res.json();
                     const selectAsignado = document.getElementById('inputAsignado');
                     if (selectAsignado) {
-                        let opts = '<option value="">-- Sin asignar --</option>';
+                        let opts = '<option value="">-- Sin asignar (Libre en Baúl) --</option>';
                         miembrosClan.forEach(m => {
                             opts += `<option value="${m.nombre_pj}">${m.nombre_pj} (${m.raza})</option>`;
                         });
@@ -384,7 +409,7 @@
                 const opcionesLista = Array.isArray(item.opciones) ? item.opciones : [];
                 const opcionesBadges = opcionesLista.map(opt => `<span class="badge-opt">${opt}</span>`).join('');
                 
-                let asignadoHTML = `<span class="text-gray-500 text-xs">Disponible</span>`;
+                let asignadoHTML = `<span class="text-gray-500 text-xs">Disponible (En Baúl)</span>`;
                 if (item.asignado_a) {
                     asignadoHTML = `<span class="bg-indigo-950 border border-indigo-500 text-indigo-200 px-2 py-0.5 rounded text-xs font-bold">${item.asignado_a}</span>`;
                 }
@@ -434,6 +459,8 @@
                     document.getElementById('inputAsignado').value = '';
                     document.querySelectorAll('input[name="chkOpciones"]').forEach(chk => chk.checked = false);
                     cargarItems();
+                    cargarMiembrosParaSelect();
+                    cargarMiembros();
                 } else {
                     const err = await res.json();
                     alert("Error: " + (err.error || "No se pudo guardar"));
@@ -455,6 +482,8 @@
                 });
                 if (res.ok) {
                     cargarItems();
+                    cargarMiembrosParaSelect();
+                    cargarMiembros();
                 } else {
                     alert("Error al eliminar el ítem.");
                 }
@@ -465,7 +494,7 @@
             if (!sesionAutorizada) return alert("Solo los operadores o admin pueden asignar ítems.");
             const item = catalogo.find(x => x.id === id);
             if (!item) return;
-            const nuevo = prompt(`Asignar ítem #${item.id} (${item.nombre}) a qué miembro?:`, item.asignado_a || '');
+            const nuevo = prompt(`Asignar ítem #${item.id} (${item.nombre}) a qué miembro? (Dejar en blanco para devolver al baúl):`, item.asignado_a || '');
             if (nuevo === null) return;
 
             const val = nuevo.trim() || null;
@@ -478,6 +507,7 @@
                 if (res.ok) {
                     item.asignado_a = val;
                     aplicarFiltros();
+                    cargarMiembros();
                 }
             } catch(e) {}
         }
@@ -504,18 +534,50 @@
                 
                 let btnAccion = '';
                 if (sesionAutorizada) {
-                    btnAccion = `<td class="text-center"><button onclick="eliminarMiembro(${m.id}, '${m.nombre_pj}')" class="bg-red-950 text-red-300 border border-red-700 px-2 py-1 rounded text-xs">🗑️ Borrar</button></td>`;
+                    btnAccion = `<td class="text-center"><button onclick="event.stopPropagation(); eliminarMiembro(${m.id}, '${m.nombre_pj}')" class="bg-red-950 text-red-300 border border-red-700 px-2 py-1 rounded text-xs">🗑️ Borrar</button></td>`;
                 }
 
                 return `
-                    <tr>
+                    <tr class="member-row" onclick="mostrarDetallesMiembro('${m.nombre_pj}')">
                         <td class="font-bold text-white">${m.nombre_pj}</td>
                         <td><span class="badge-pj">${m.raza}</span></td>
-                        <td>${chips || '<span class="text-gray-500 text-xs">Sin ítems</span>'}</td>
+                        <td>${chips || '<span class="text-gray-500 text-xs">Sin ítems en posesión</span>'}</td>
                         ${sesionAutorizada ? btnAccion : ''}
                     </tr>
                 `;
             }).join('');
+        }
+
+        function mostrarDetallesMiembro(nombrePj) {
+            const miembro = miembrosClan.find(m => m.nombre_pj.toLowerCase() === nombrePj.toLowerCase());
+            if (!miembro) return;
+
+            document.getElementById('modal-miembro-titulo').textContent = `Inventario de: ${miembro.nombre_pj} (${miembro.raza})`;
+            const ids = Array.isArray(miembro.items_asignados) ? miembro.items_asignados : [];
+            
+            const cont = document.getElementById('modal-miembro-contenido');
+            if (!ids.length) {
+                cont.innerHTML = `<p class="text-gray-400 italic">Este personaje no tiene ningún ítem asignado actualmente.</p>`;
+            } else {
+                let html = `<ul class="space-y-2">`;
+                ids.forEach(id => {
+                    const itm = catalogo.find(x => String(x.id) === String(id));
+                    if (itm) {
+                        const opts = Array.isArray(itm.opciones) ? itm.opciones.join(', ') : '';
+                        html += `<li class="bg-[#0d0a1a] p-2.5 rounded border border-purple-900"><strong class="text-emerald-400">#${itm.id} - ${itm.nombre}</strong><div class="text-[10px] text-cyan-300 mt-1">${opts}</div></li>`;
+                    } else {
+                        html += `<li class="bg-[#0d0a1a] p-2.5 rounded border border-purple-900 text-gray-400">Ítem ID #${id}</li>`;
+                    }
+                });
+                html += `</ul>`;
+                cont.innerHTML = html;
+            }
+
+            document.getElementById('modal-miembro-detalles').classList.remove('hidden');
+        }
+
+        function cerrarModalMiembro() {
+            document.getElementById('modal-miembro-detalles').classList.add('hidden');
         }
 
         async function guardarMiembroClan() {
@@ -538,13 +600,14 @@
                     document.getElementById('clanPjItems').value = '';
                     cargarMiembros();
                     cargarMiembrosParaSelect();
+                    cargarItems();
                 }
             } catch(e) {}
         }
 
         async function eliminarMiembro(id, nombre_pj) {
             if (!sesionAutorizada) return alert("No autorizado.");
-            if (!confirm(`¿Eliminar a ${nombre_pj}?`)) return;
+            if (!confirm(`¿Eliminar a ${nombre_pj}? (Sus ítems volverán a estar disponibles en el baúl)`)) return;
             try {
                 await fetch('/api/miembros', {
                     method: 'DELETE',
@@ -553,6 +616,7 @@
                 });
                 cargarMiembros();
                 cargarMiembrosParaSelect();
+                cargarItems();
             } catch(e) {}
         }
 
@@ -604,7 +668,7 @@
         }
 
         async function eliminarUsuario(id, username) {
-            if (!esAdmin) return alert("No autorizado.");
+            if (!sesionAutorizada) return alert("No autorizado.");
             if (!confirm(`¿Eliminar al usuario ${username}?`)) return;
             try {
                 await fetch('/api/usuarios', {
@@ -614,6 +678,32 @@
                 });
                 cargarUsuarios();
             } catch(e) {}
+        }
+
+        function exportarExcelItems() {
+            const dataExport = catalogo.map(i => ({
+                "ID": i.id,
+                "Nombre": i.nombre,
+                "Tipo/Pieza": i.tipo,
+                "Opciones": Array.isArray(i.opciones) ? i.opciones.join(" | ") : "",
+                "Asignado A": i.asignado_a || "Disponible (En Baúl)"
+            }));
+            const worksheet = XLSX.utils.json_to_sheet(dataExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Armaduras y Baúles");
+            XLSX.writeFile(workbook, "Inventario_Multiverso_Armaduras.xlsx");
+        }
+
+        function exportarExcelMiembros() {
+            const dataExport = miembrosClan.map(m => ({
+                "Nick PJ": m.nombre_pj,
+                "Clase / Raza": m.raza,
+                "IDs Ítems en Posesión": Array.isArray(m.items_asignados) ? m.items_asignados.join(", ") : ""
+            }));
+            const worksheet = XLSX.utils.json_to_sheet(dataExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Miembros del Clan");
+            XLSX.writeFile(workbook, "Inventario_Miembros_Clan.xlsx");
         }
 
         document.addEventListener('DOMContentLoaded', () => {
