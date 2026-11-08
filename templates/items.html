@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🛡️ Catálogo de Armaduras & Clan - MuDream Multiverso</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { background-color: #0a0814; color: #e6e1ff; font-family: 'Segoe UI', system-ui, sans-serif; }
-        
         .tabla-scroll-box {
             height: 520px !important;
             overflow-y: scroll !important;
@@ -20,14 +18,13 @@
         .tabla-scroll-box::-webkit-scrollbar { width: 10px; }
         .tabla-scroll-box::-webkit-scrollbar-track { background: #0d0a1a; border-left: 1px solid #2b214a; }
         .tabla-scroll-box::-webkit-scrollbar-thumb { background: #6d28d9; border-radius: 5px; }
-
         .tabla-items { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
         .tabla-items th { 
             background: #17112e; padding: 10px 12px; color: #c4b5fd; font-weight: 700; text-transform: uppercase; font-size: 11px; border-bottom: 2px solid #3b2d6b; position: sticky; top: 0; z-index: 10; 
         }
         .tabla-items td { padding: 8px 12px; border-bottom: 1px solid #1f1838; vertical-align: middle; }
         .tabla-items tr:hover { background: rgba(139, 92, 246, 0.1); }
-        .badge-pj { display: inline-block; padding: 1px 5px; border-radius: 4px; font-size: 10px; font-weight: 700; background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.4); color: #c4b5fd; }
+        .badge-pj { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.4); color: #c4b5fd; }
         .badge-opt { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 4px; margin-bottom: 3px; background: rgba(6, 182, 212, 0.15); border: 1px solid #06b6d4; color: #67e8f9; }
     </style>
 </head>
@@ -36,7 +33,7 @@
     <header class="w-full max-w-7xl mb-6 border-b border-purple-900/50 pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
             <h1 class="text-3xl font-extrabold text-emerald-400">🛡️ MULTIVERSO - ARMADURAS & CLAN</h1>
-            <p class="text-xs text-purple-300">Página pública de consulta e inventario de baúles</p>
+            <p class="text-xs text-purple-300">Inventario y control de baúles públicos</p>
         </div>
         <div class="flex items-center gap-3">
             <span id="session-user-badge" class="text-xs text-purple-300 font-bold bg-[#141126] px-3 py-1.5 rounded-lg border border-purple-900">
@@ -74,13 +71,13 @@
                     <label class="block text-xs uppercase text-purple-300 font-bold mb-1">📜 Scroll 1: Set de Armadura</label>
                     <select id="inputSetBase" required class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
                         <option value="">-- Seleccionar Set --</option>
-                        <optgroup label="Dark Knight (BK / Guerrero)">
+                        <optgroup label="Dark Knight (BK)">
                             <option value="Leather">Leather</option><option value="Bronze">Bronze</option><option value="Scale">Scale</option><option value="Brass">Brass</option><option value="Plate">Plate</option><option value="Dragon">Dragon</option><option value="Phoenix">Phoenix</option><option value="Black Dragon">Black Dragon</option><option value="Brave">Brave</option>
                         </optgroup>
-                        <optgroup label="Dark Wizard (SM / Mago)">
+                        <optgroup label="Dark Wizard (SM)">
                             <option value="Pad">Pad</option><option value="Bone">Bone</option><option value="Sphinx">Sphinx</option><option value="Legendary">Legendary</option><option value="Grand Soul">Grand Soul</option><option value="Hades">Hades</option>
                         </optgroup>
-                        <optgroup label="Fairy Elf (ELF / Arquera)">
+                        <optgroup label="Fairy Elf (ELF)">
                             <option value="Vine">Vine</option><option value="Silk">Silk</option><option value="Wind">Wind</option><option value="Spirit">Spirit</option><option value="Guardian">Guardian</option><option value="Seraphim">Seraphim</option>
                         </optgroup>
                         <optgroup label="Magic Gladiator (MG)">
@@ -89,7 +86,7 @@
                         <optgroup label="Dark Lord (DL)">
                             <option value="Adamantine">Adamantine</option><option value="Glorious">Glorious</option><option value="Sovereign">Sovereign</option>
                         </optgroup>
-                        <optgroup label="Summoner (SU)">
+                        <optgroup label="Summoner (SUMM)">
                             <option value="Red Wing">Red Wing</option><option value="Demonic">Demonic</option>
                         </optgroup>
                         <optgroup label="Rage Fighter (RF)">
@@ -112,21 +109,23 @@
 
                 <div>
                     <label class="block text-xs uppercase text-purple-300 font-bold mb-1">🏰 Nombre del Baúl</label>
-                    <input type="text" id="inputBaul" required placeholder="Ej. Baúl Principal / Warehouse 1" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
+                    <input type="text" id="inputBaul" required placeholder="Ej. Baúl Principal" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
                 </div>
 
                 <div>
                     <label class="block text-xs uppercase text-purple-300 font-bold mb-1">👤 Asignado a (Miembro del Clan)</label>
-                    <input type="text" id="inputAsignado" placeholder="Ej. SirPinion" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
+                    <select id="inputAsignado" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
+                        <option value="">-- Sin asignar --</option>
+                    </select>
                 </div>
 
                 <div class="md:col-span-2">
                     <label class="block text-xs uppercase text-purple-300 font-bold mb-1">✨ Opciones Excellent</label>
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-[#0d0a1a] p-3 rounded-lg border border-purple-900 text-xs">
-                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Aumento de HP máximo (3-5%)"> Aumento de HP máximo</label>
-                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Aumento de SD máximo (3-5%)"> Aumento de SD máximo</label>
-                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Reducción de daño (Damage Decrease: 4%)"> Reducción de daño (DD)</label>
-                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Reflejo de daño (Reflect Damage: 4%)"> Reflejo de daño (Reflect)</label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Aumento de HP máximo"> Aumento de HP máximo</label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Aumento de SD máximo"> Aumento de SD máximo</label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Reducción de daño (DD)"> Reducción de daño (DD)</label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Reflejo de daño (Reflect)"> Reflejo de daño (Reflect)</label>
                         <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Resistencia a daño crítico"> Resistencia a crítico</label>
                         <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Tasa de drop de Zen"> Tasa de Zen</label>
                     </div>
@@ -152,7 +151,7 @@
                         <th>Nombre del Ítem & Baúl</th>
                         <th style="width: 140px;">Pieza</th>
                         <th>Opciones Principales</th>
-                        <th style="width: 180px; text-align: center;">Asignado a</th>
+                        <th style="width: 220px; text-align: center;">Asignado a</th>
                         <th style="width: 90px; text-align: center;" id="th-acciones-head" class="hidden">Borrar</th>
                     </tr>
                 </thead>
@@ -168,19 +167,19 @@
         <div id="panel-miembros-crud" class="bg-[#141126] border border-indigo-700/60 p-4 rounded-xl shadow-lg hidden">
             <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end w-full">
                 <div>
-                    <label class="block text-[11px] text-gray-300 font-semibold mb-1">NICK:</label>
+                    <label class="block text-[11px] text-gray-300 font-semibold mb-1">NICK DEL PJ:</label>
                     <input type="text" id="clanPjNombre" placeholder="Ej. PinionBK" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs outline-none">
                 </div>
                 <div>
-                    <label class="block text-[11px] text-gray-300 font-semibold mb-1">RAZA:</label>
+                    <label class="block text-[11px] text-gray-300 font-semibold mb-1">SCROLL DE CLASE / RAZA:</label>
                     <select id="clanPjRaza" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs outline-none">
-                        <option value="Dark Knight">Dark Knight (BK)</option>
-                        <option value="Dark Wizard">Dark Wizard (SM)</option>
-                        <option value="Elf">Fairy Elf (ME)</option>
-                        <option value="Magic Gladiator">Magic Gladiator (MG)</option>
-                        <option value="Dark Lord">Dark Lord (DL)</option>
-                        <option value="Summoner">Summoner (SUM)</option>
-                        <option value="Rage Fighter">Rage Fighter (RF)</option>
+                        <option value="DK">DK (Dark Knight)</option>
+                        <option value="SM">SM (Dark Wizard)</option>
+                        <option value="ELF">ELF (Fairy Elf)</option>
+                        <option value="MG">MG (Magic Gladiator)</option>
+                        <option value="DL">DL (Dark Lord)</option>
+                        <option value="SUMM">SUMM (Summoner)</option>
+                        <option value="RF">RF (Rage Fighter)</option>
                     </select>
                 </div>
                 <div>
@@ -200,7 +199,7 @@
                 <thead>
                     <tr>
                         <th style="width: 170px;">Nick del PJ</th>
-                        <th style="width: 150px;">Raza / Clase</th>
+                        <th style="width: 150px;">Clase / Raza</th>
                         <th>Ítems Asignados</th>
                         <th style="width: 130px; text-align: center;" id="th-miembro-acciones" class="hidden">Acción</th>
                     </tr>
@@ -219,7 +218,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
                 <div>
                     <label class="block text-xs text-gray-300 font-semibold mb-1">USUARIO:</label>
-                    <input type="text" id="nuevoUsuario" placeholder="Ej. nuevoperador" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs outline-none">
+                    <input type="text" id="nuevoUsuario" placeholder="Ej. operadornuevo" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs outline-none">
                 </div>
                 <div>
                     <label class="block text-xs text-gray-300 font-semibold mb-1">CONTRASEÑA:</label>
@@ -230,7 +229,6 @@
                     <select id="nuevoRol" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs outline-none">
                         <option value="operador">Operador (Edita/Crea ítems)</option>
                         <option value="lector">Lector (Solo vista)</option>
-                        <option value="admin">Administrador</option>
                     </select>
                 </div>
                 <div>
@@ -348,6 +346,23 @@
             } catch(e) {}
         }
 
+        async function cargarMiembrosParaSelect() {
+            try {
+                const res = await fetch('/api/miembros');
+                if (res.ok) {
+                    miembrosClan = await res.json();
+                    const selectAsignado = document.getElementById('inputAsignado');
+                    if (selectAsignado) {
+                        let opts = '<option value="">-- Sin asignar --</option>';
+                        miembrosClan.forEach(m => {
+                            opts += `<option value="${m.nombre_pj}">${m.nombre_pj} (${m.raza})</option>`;
+                        });
+                        selectAsignado.innerHTML = opts;
+                    }
+                }
+            } catch(e) {}
+        }
+
         function aplicarFiltros() {
             const busqueda = (document.getElementById('filtroTexto').value || '').toLowerCase();
             const filtrados = catalogo.filter(item => {
@@ -402,7 +417,7 @@
             const set_base = document.getElementById('inputSetBase').value;
             const tipo = document.getElementById('inputTipoPieza').value;
             const baul = document.getElementById('inputBaul').value.trim();
-            const asignado = document.getElementById('inputAsignado').value.trim();
+            const asignado = document.getElementById('inputAsignado').value;
 
             const opciones = [];
             document.querySelectorAll('input[name="chkOpciones"]:checked').forEach(chk => opciones.push(chk.value));
@@ -411,7 +426,7 @@
                 const res = await fetch('/api/items/agregar-manual', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ set_base, tipo, baul, asignado, opciones })
+                    body: JSON.stringify({ set_base, tipo, baul, asignado: asignado || 'Sin asignar', opciones })
                 });
                 if (res.ok) {
                     alert("¡Ítem guardado con éxito!");
@@ -522,6 +537,7 @@
                     document.getElementById('clanPjNombre').value = '';
                     document.getElementById('clanPjItems').value = '';
                     cargarMiembros();
+                    cargarMiembrosParaSelect();
                 }
             } catch(e) {}
         }
@@ -536,6 +552,7 @@
                     body: JSON.stringify({ id, nombre_pj })
                 });
                 cargarMiembros();
+                cargarMiembrosParaSelect();
             } catch(e) {}
         }
 
@@ -602,6 +619,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             chequearSesion();
             cargarItems();
+            cargarMiembrosParaSelect();
         });
     </script>
 </body>
