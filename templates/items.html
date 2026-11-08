@@ -668,7 +668,7 @@
         }
 
         async function eliminarUsuario(id, username) {
-            if (!sesionAutorizada) return alert("No autorizado.");
+            if (!esAdmin) return alert("No autorizado.");
             if (!confirm(`¿Eliminar al usuario ${username}?`)) return;
             try {
                 await fetch('/api/usuarios', {
