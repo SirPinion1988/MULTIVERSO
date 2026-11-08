@@ -144,17 +144,61 @@
             </form>
         </div>
 
-        <!-- BUSCADOR INTERACTIVO AVANZADO (DISPONIBLE PARA TODOS) -->
-        <div class="bg-[#141126] border border-purple-900/60 p-4 rounded-xl shadow space-y-3">
-            <div class="flex flex-wrap gap-3 items-center justify-between">
-                <input type="text" id="filtroTexto" oninput="aplicarFiltros()" placeholder="🔍 Buscar por ID, nombre (ej. Black Dragon), baúl o asignado..." class="flex-1 min-w-[240px] bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
-                <button onclick="exportarExcelItems()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-4 py-2.5 rounded-lg text-xs transition shadow flex items-center gap-1.5">
-                    📊 Exportar Ítems a Excel
-                </button>
+        <!-- BUSCADOR INTERACTIVO IDÉNTICO AL DE CARGA (DISPONIBLE PARA TODOS) -->
+        <div class="bg-[#141126] border border-purple-900/60 p-4 rounded-xl shadow space-y-4">
+            <h3 class="text-sm font-bold text-purple-300 uppercase">🔍 Buscador Interactivo de Ítems / Baúles</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-[11px] text-purple-300 font-bold mb-1">📜 Filtrar por Set (Scroll 1):</label>
+                    <select id="filtroSetBase" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
+                        <option value="">-- Todos los Sets --</option>
+                        <optgroup label="Dark Knight (BK)">
+                            <option value="Leather">Leather</option><option value="Bronze">Bronze</option><option value="Scale">Scale</option><option value="Brass">Brass</option><option value="Plate">Plate</option><option value="Dragon">Dragon</option><option value="Black Dragon">Black Dragon</option><option value="Dark Phoenix">Dark Phoenix</option><option value="Great Dragon">Great Dragon</option><option value="Dragon Knight">Dragon Knight</option><option value="Titan">Titan</option><option value="Brave">Brave</option>
+                        </optgroup>
+                        <optgroup label="Dark Wizard (SM)">
+                            <option value="Pad">Pad</option><option value="Bone">Bone</option><option value="Sphinx">Sphinx</option><option value="Legendary">Legendary</option><option value="Grand Soul">Grand Soul</option><option value="Dark Soul">Dark Soul</option><option value="Venom Mist">Venom Mist</option><option value="Hades">Hades</option>
+                        </optgroup>
+                        <optgroup label="Fairy Elf (ELF)">
+                            <option value="Vine">Vine</option><option value="Silk">Silk</option><option value="Wind">Wind</option><option value="Spirit">Spirit</option><option value="Guardian">Guardian</option><option value="Divine">Divine</option><option value="Red Spirit">Red Spirit</option><option value="Sylphid Ray">Sylphid Ray</option><option value="Seraphim">Seraphim</option>
+                        </optgroup>
+                        <optgroup label="Magic Gladiator (MG)">
+                            <option value="Storm Crow">Storm Crow</option><option value="Unicorn">Unicorn</option><option value="Thunder Hawk">Thunder Hawk</option><option value="Hurricane">Hurricane</option><option value="Volcano">Volcano</option><option value="Destroyer">Destroyer</option><option value="Phantom">Phantom</option>
+                        </optgroup>
+                        <optgroup label="Dark Lord (DL)">
+                            <option value="Light Plate">Light Plate</option><option value="Adamantine">Adamantine</option><option value="Dark Steel">Dark Steel</option><option value="Dark Master">Dark Master</option><option value="Glorious">Glorious</option><option value="Emperor">Emperor</option><option value="Royal">Royal</option>
+                        </optgroup>
+                        <optgroup label="Summoner (SUMM)">
+                            <option value="Mystery">Mystery</option><option value="Red Wing">Red Wing</option><option value="Ancient">Ancient</option><option value="Black Rose">Black Rose</option><option value="Aura">Aura</option><option value="Lilium">Lilium</option><option value="Queen">Queen</option>
+                        </optgroup>
+                        <optgroup label="Rage Fighter (RF)">
+                            <option value="Sacred">Sacred</option><option value="Piercing">Piercing</option><option value="Phoenix Soul">Phoenix Soul</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] text-purple-300 font-bold mb-1">📦 Filtrar por Tipo de Pieza (Scroll 2):</label>
+                    <select id="filtroTipoPieza" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
+                        <option value="">-- Todos los Tipos --</option>
+                        <option value="Armor">Armor (Pechera)</option>
+                        <option value="Pants">Pants (Pantalón)</option>
+                        <option value="Helm">Helm (Casco)</option>
+                        <option value="Gloves">Gloves (Guantes)</option>
+                        <option value="Boots">Boots (Botas)</option>
+                        <option value="Shield">Shield (Escudo)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] text-purple-300 font-bold mb-1">🔍 Búsqueda Libre (ID, Baúl o Miembro):</label>
+                    <input type="text" id="filtroTexto" oninput="aplicarFiltros()" placeholder="Ej. Principal, Pinion, #2..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
+                </div>
             </div>
-            <!-- Checkboxes de filtro interactivo rápido -->
+
+            <!-- Checkboxes de opciones excellent para filtrado rápido -->
             <div>
-                <label class="block text-[11px] text-purple-300 font-bold mb-1.5 uppercase">Filtrar por Opciones Excellent (tilda para filtrar):</label>
+                <label class="block text-[11px] text-purple-300 font-bold mb-1.5 uppercase">✨ Filtrar por Opciones Excellent (tilda para combinar):</label>
                 <div class="flex flex-wrap gap-3 bg-[#0d0a1a] p-2.5 rounded-lg border border-purple-900 text-xs">
                     <label class="flex items-center gap-1.5 cursor-pointer text-gray-200"><input type="checkbox" class="filtro-chk" value="Reducción de daño (DD)" onchange="aplicarFiltros()"> DD (Reducción)</label>
                     <label class="flex items-center gap-1.5 cursor-pointer text-gray-200"><input type="checkbox" class="filtro-chk" value="Reflejo de daño (Reflect)" onchange="aplicarFiltros()"> Reflect</label>
@@ -163,6 +207,13 @@
                     <label class="flex items-center gap-1.5 cursor-pointer text-gray-200"><input type="checkbox" class="filtro-chk" value="Resistencia a daño crítico (Rate)" onchange="aplicarFiltros()"> Critical (Rate)</label>
                     <label class="flex items-center gap-1.5 cursor-pointer text-gray-200"><input type="checkbox" class="filtro-chk" value="Tasa de drop de Zen" onchange="aplicarFiltros()"> Zen</label>
                 </div>
+            </div>
+
+            <div class="flex justify-between items-center pt-2 border-t border-purple-900/40">
+                <button onclick="limpiarFiltros()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded text-xs font-bold transition">🧹 Limpiar Filtros</button>
+                <button onclick="exportarExcelItems()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-4 py-2 rounded-lg text-xs transition shadow flex items-center gap-1.5">
+                    📊 Exportar Ítems a Excel
+                </button>
             </div>
         </div>
 
@@ -421,25 +472,40 @@
             } catch(e) {}
         }
 
+        function limpiarFiltros() {
+            document.getElementById('filtroSetBase').value = "";
+            document.getElementById('filtroTipoPieza').value = "";
+            document.getElementById('filtroTexto').value = "";
+            document.querySelectorAll('.filtro-chk').forEach(chk => chk.checked = false);
+            aplicarFiltros();
+        }
+
         function aplicarFiltros() {
+            const setBase = (document.getElementById('filtroSetBase').value || '').toLowerCase();
+            const tipoPieza = (document.getElementById('filtroTipoPieza').value || '').toLowerCase();
             const busqueda = (document.getElementById('filtroTexto').value || '').toLowerCase();
-            
-            // Obtener checkboxes tildados de opciones excellent
             const chkSeleccionados = Array.from(document.querySelectorAll('.filtro-chk:checked')).map(chk => chk.value.toLowerCase());
 
             const filtrados = catalogo.filter(item => {
                 const idStr = String(item.id || '').toLowerCase();
                 const nombre = String(item.nombre || '').toLowerCase();
+                const tipo = String(item.tipo || '').toLowerCase();
                 const asignado = String(item.asignado_a || '').toLowerCase();
                 const opcionesStr = Array.isArray(item.opciones) ? item.opciones.join(' ').toLowerCase() : '';
 
-                // Coincidencia con texto de búsqueda
-                const matchTexto = idStr.includes(busqueda) || nombre.includes(busqueda) || asignado.includes(busqueda);
+                // Filtro por Scroll 1 (Set Base)
+                const matchSet = !setBase || nombre.includes(setBase);
 
-                // Coincidencia con todas las opciones excellent tildadas
+                // Filtro por Scroll 2 (Tipo de Pieza)
+                const matchTipo = !tipoPieza || tipo.includes(tipoPieza);
+
+                // Filtro por texto libre
+                const matchTexto = !busqueda || idStr.includes(busqueda) || nombre.includes(busqueda) || asignado.includes(busqueda);
+
+                // Filtro por checkboxes de opciones Excellent
                 const matchOpciones = chkSeleccionados.every(opt => opcionesStr.includes(opt));
 
-                return matchTexto && matchOpciones;
+                return matchSet && matchTipo && matchTexto && matchOpciones;
             });
 
             renderizarTabla(filtrados);
@@ -592,7 +658,7 @@
                 tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-gray-500">Sin miembros registrados.</td></tr>';
                 return;
             }
-            tbody.innerHTML = miembrosClan.name || miembrosClan.map(m => {
+            tbody.innerHTML = miembrosClan.map(m => {
                 const ids = Array.isArray(m.items_asignados) ? m.items_asignados : [];
                 const chips = ids.map(id => `<span class="bg-indigo-950 border border-indigo-500 text-indigo-300 px-2 py-0.5 rounded text-xs mr-1 font-mono">#${id}</span>`).join('');
                 
@@ -617,7 +683,7 @@
             if (!miembro) return;
 
             document.getElementById('modal-miembro-titulo').textContent = `Inventario de: ${miembro.nombre_pj} (${miembro.raza})`;
-            const ids = Array.isArray(m = miembro.items_asignados) ? m : [];
+            const ids = Array.isArray(miembro.items_asignados) ? miembro.items_asignados : [];
             
             const cont = document.getElementById('modal-miembro-contenido');
             if (!ids.length) {
@@ -627,7 +693,7 @@
                 ids.forEach(id => {
                     const itm = catalogo.find(x => String(x.id) === String(id));
                     if (itm) {
-                        const opts = Array.isArray(itm.opciones) ? rit = itm.opciones.join(', ') : '';
+                        const opts = Array.isArray(itm.opciones) ? itm.opciones.join(', ') : '';
                         html += `<li class="bg-[#0d0a1a] p-2.5 rounded border border-purple-900"><strong class="text-emerald-400">#${itm.id} - ${itm.nombre}</strong><div class="text-[10px] text-cyan-300 mt-1">${opts}</div></li>`;
                     } else {
                         html += `<li class="bg-[#0d0a1a] p-2.5 rounded border border-purple-900 text-gray-400">Ítem ID #${id}</li>`;
@@ -671,16 +737,19 @@
 
         async function eliminarMiembro(id, nombre_pj) {
             if (!sesionAutorizada) return alert("No autorizado.");
-            if (!confirm(`¿Eliminar a ${nombre_pj}? (Sus ítems volverán a estar disponibles en el baúl)`)) return;
+            if (!confirm(`¿Eliminar al miembro ${nombre_pj}? Sus ítems volverán al baúl.`)) return;
+
             try {
-                await fetch('/api/miembros', {
+                const res = await fetch('/api/miembros', {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id, nombre_pj })
                 });
-                cargarMiembros();
-                cargarMiembrosParaSelect();
-                cargarItems();
+                if (res.ok) {
+                    cargarMiembros();
+                    cargarMiembrosParaSelect();
+                    cargarItems();
+                }
             } catch(e) {}
         }
 
