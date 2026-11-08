@@ -84,6 +84,7 @@ def usuario_es_admin():
     rol = session.get('rol', '').lower()
     return usr == 'pinion' or rol == 'admin'
 
+# --- ÚNICA RUTA PRINCIPAL (EVITA EL ERROR DE ENDPOINT DUPLICADO) ---
 @app.route('/')
 def index():
     return render_template('index.html', link_descarga=LINK_DESCARGA_BOT)
@@ -484,13 +485,31 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+@app.route('/api/status_timers')
+@app.route('/api/timers')
+def get_status_timers():
+    return jsonify({
+        "timers": status_timers,
+        "ocultos": list(tarjetas_ocultas_global),
+        "heartbeats": heartbeats,
+        "ultimas_pcs": ultimas_pcs,
+        "ultimos_pjs": ultimos_pjs,
+        "mapas": status_mapas
+    })
 
-@app.route('/items')
-def vista_items():
-    return render_template('items.html')
+@app.route('/api/kill', methods=['POST'])
+def registrar_kill():
+    data = request.json or {}
+    server = data.get('server')
+    boss_raw = data.get('boss', '').strip()
+    if not server or not boss_raw: return jsonify({"error": "Faltan datos"}), 400
+    boss = re.sub(r'\s+\d+$', '', boss_raw)
+    now_unix = int(time.time())
+
+    if server not in status_timers: status_timers[server] = {}
+    status_timers[server][boss] = now_unix
+    guardar_json(DATA_FILE, status_timers)
+    return jsonify({"status": "ok"}), 200
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
