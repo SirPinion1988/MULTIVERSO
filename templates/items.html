@@ -160,7 +160,7 @@
                 <div class="md:col-span-2 space-y-3">
                     <label class="block text-xs uppercase text-purple-300 font-bold">✨ Opciones Excellent</label>
                     
-                    <!-- RECUADRO 1: ARMADURAS / ESCUDOS / ACCESORIOS -->
+                    <!-- RECUADRO 1 -->
                     <div class="bg-[#0d0a1a] p-3 rounded-lg border border-purple-900/80">
                         <span class="text-[10px] uppercase font-bold text-cyan-400 block mb-2">🛡️ Opciones para Armaduras, Escudos y Accesorios:</span>
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
@@ -173,7 +173,7 @@
                         </div>
                     </div>
 
-                    <!-- RECUADRO 2: ARMAS / BASTONES / ARCOS -->
+                    <!-- RECUADRO 2 (INCLUYE Damage to Monster) -->
                     <div class="bg-[#0d0a1a] p-3 rounded-lg border border-purple-900/80">
                         <span class="text-[10px] uppercase font-bold text-amber-400 block mb-2">⚔️ Opciones para Armas y Bastones:</span>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
@@ -185,6 +185,8 @@
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Increases attack speed +"> Increases attack speed +</label>
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Obtains (Life) when monster is killed"> Obtains (Life) when monster is killed</label>
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Obtains (Mana) when monster is killed"> Obtains (Mana) when monster is killed</label>
+                            <label class="flex items-center gap-2 cursor-pointer text-red-400 font-bold"><input type="checkbox" name="chkOpciones" value="[Epic] Damage to monsters +10%"> [Epic] Damage to monsters +10%</label>
+                            <label class="flex items-center gap-2 cursor-pointer text-amber-300 font-bold"><input type="checkbox" name="chkOpciones" value="Damage to Monster"> Damage to Monster</label>
                         </div>
                     </div>
                 </div>
@@ -197,7 +199,7 @@
             </form>
         </div>
 
-        <!-- BUSCADOR INTERACTIVO CON LA MISMA DISTRIBUCIÓN QUE EL PANEL DE CARGA -->
+        <!-- BUSCADOR INTERACTIVO CON IDÉNTICA DISTRIBUCIÓN -->
         <div class="bg-[#141126] border border-purple-900/60 p-6 rounded-xl shadow-xl space-y-4">
             <h3 class="text-sm font-bold text-purple-300 uppercase">🔍 Buscador Interactivo (Misma Distribución)</h3>
             
@@ -301,6 +303,8 @@
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Increases attack speed +" onchange="aplicarFiltros()"> Increases attack speed +</label>
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Obtains (Life) when monster is killed" onchange="aplicarFiltros()"> Obtains (Life) when monster is killed</label>
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Obtains (Mana) when monster is killed" onchange="aplicarFiltros()"> Obtains (Mana) when monster is killed</label>
+                            <label class="flex items-center gap-2 cursor-pointer text-red-400 font-bold"><input type="checkbox" class="filtro-chk" value="[Epic] Damage to monsters +10%" onchange="aplicarFiltros()"> [Epic] Damage to monsters +10%</label>
+                            <label class="flex items-center gap-2 cursor-pointer text-amber-300 font-bold"><input type="checkbox" class="filtro-chk" value="Damage to Monster" onchange="aplicarFiltros()"> Damage to Monster</label>
                         </div>
                     </div>
                 </div>
