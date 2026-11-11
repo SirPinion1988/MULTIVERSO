@@ -881,4 +881,72 @@
             if (!esAdmin) return alert("Solo Pinion puede crear usuarios.");
             const username = document.getElementById('nuevoUsuario').value.trim();
             const password = document.getElementById('nuevaPassword').value.trim();
-            const rol =
+            const rol = document.getElementById('nuevoRol').value;
+
+            if (!username || !password) return alert("Completá usuario y contraseña.");
+
+            try {
+                const res = await fetch('/api/usuarios', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, rol })
+                });
+                if (res.ok) {
+                    alert("Usuario creado con éxito.");
+                    document.getElementById('nuevoUsuario').value = '';
+                    document.getElementById('nuevaPassword').value = '';
+                    cargarUsuarios();
+                } else {
+                    const err = await res.json();
+                    alert("Error: " + (err.error || "No se pudo crear"));
+                }
+            } catch(e) {}
+        }
+
+        async function eliminarUsuario(id, username) {
+            if (!esAdmin) return alert("No autorizado.");
+            if (!confirm(`¿Eliminar al usuario ${username}?`)) return;
+            try {
+                await fetch('/api/usuarios', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, username })
+                });
+                cargarUsuarios();
+            } catch(e) {}
+        }
+
+        function exportarExcelItems() {
+            const dataExport = catalogo.map(i => ({
+                "ID": i.id,
+                "Nombre": i.nombre,
+                "Tipo/Pieza": i.tipo,
+                "Opciones": Array.isArray(i.opciones) ? i.opciones.join(" | ") : "",
+                "Asignado A": i.asignado_a || "Disponible (En Baúl)"
+            }));
+            const worksheet = XLSX.utils.json_to_sheet(dataExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Armaduras y Baúles");
+            XLSX.writeFile(workbook, "Inventario_Multiverso_Armaduras.xlsx");
+        }
+
+        function exportarExcelMiembros() {
+            const dataExport = miembrosclan.map(m => ({
+                "Nick PJ": m.nombre_pj,
+                "Clase / Raza": m.raza,
+                "IDs Ítems en Posesión": Array.isArray(m.items_asignados) ? m.items_asignados.join(", ") : ""
+            }));
+            const worksheet = XLSX.utils.json_to_sheet(dataExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Miembros del Clan");
+            XLSX.writeFile(workbook, "Inventario_Miembros_Clan.xlsx");
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            chequearSesion();
+            cargarItems();
+            cargarMiembrosParaSelect();
+        });
+    </script>
+</body>
+</html>
