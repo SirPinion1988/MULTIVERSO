@@ -70,7 +70,7 @@
         
         <!-- PANEL DE CARGA MANUAL (SOLO OPERADORES Y ADMIN) -->
         <div id="panel-carga-manual" class="w-full bg-[#141126] border border-emerald-600/50 p-6 rounded-xl shadow-xl hidden mb-4">
-            <h2 class="text-lg font-bold text-emerald-400 mb-4">➕ Cargar Nuevo Ítem / Baúl (ID automático desde 2)</h2>
+            <h2 class="text-lg font-bold text-emerald-400 mb-4">➕ Cargar Nuevo Ítem / Baúl</h2>
             <form onsubmit="guardarItemManual(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs uppercase text-purple-300 font-bold mb-1">📜 Scroll 1: Seleccionar Set, Arma o Anillo</label>
@@ -156,6 +156,13 @@
                     </select>
                 </div>
 
+                <!-- CAMPO NUEVO: ID PERSONALIZADO -->
+                <div>
+                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">🆔 ID Personalizado (Opcional)</label>
+                    <input type="number" id="inputCustomId" placeholder="Automático si se deja vacío" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
+                </div>
+                <div></div>
+
                 <!-- OPCIONES EXCELLENT SEPARADAS EN DOS RECUADROS -->
                 <div class="md:col-span-2 space-y-3">
                     <label class="block text-xs uppercase text-purple-300 font-bold">✨ Opciones Excellent</label>
@@ -173,7 +180,7 @@
                         </div>
                     </div>
 
-                    <!-- RECUADRO 2 (INCLUYE Damage to Monster) -->
+                    <!-- RECUADRO 2 -->
                     <div class="bg-[#0d0a1a] p-3 rounded-lg border border-purple-900/80">
                         <span class="text-[10px] uppercase font-bold text-amber-400 block mb-2">⚔️ Opciones para Armas y Bastones:</span>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
@@ -692,6 +699,7 @@
             const tipo = document.getElementById('inputTipoPieza').value;
             const baul = document.getElementById('inputBaul').value.trim();
             const asignado = document.getElementById('inputAsignado').value;
+            const custom_id = document.getElementById('inputCustomId').value.trim();
 
             const opciones = [];
             document.querySelectorAll('input[name="chkOpciones"]:checked').forEach(chk => opciones.push(chk.value));
@@ -700,12 +708,13 @@
                 const res = await fetch('/api/items/agregar-manual', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ set_base, tipo, baul, asignado: asignado || 'Sin asignar', opciones })
+                    body: JSON.stringify({ set_base, tipo, baul, asignado: asignado || 'Sin asignar', opciones, custom_id })
                 });
                 if (res.ok) {
                     alert("¡Ítem guardado con éxito!");
                     document.getElementById('inputBaul').value = '';
                     document.getElementById('inputAsignado').value = '';
+                    document.getElementById('inputCustomId').value = '';
                     document.querySelectorAll('input[name="chkOpciones"]').forEach(chk => chk.checked = false);
                     cargarItems();
                     cargarMiembrosParaSelect();
@@ -872,72 +881,4 @@
             if (!esAdmin) return alert("Solo Pinion puede crear usuarios.");
             const username = document.getElementById('nuevoUsuario').value.trim();
             const password = document.getElementById('nuevaPassword').value.trim();
-            const rol = document.getElementById('nuevoRol').value;
-
-            if (!username || !password) return alert("Completá usuario y contraseña.");
-
-            try {
-                const res = await fetch('/api/usuarios', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password, rol })
-                });
-                if (res.ok) {
-                    alert("Usuario creado con éxito.");
-                    document.getElementById('nuevoUsuario').value = '';
-                    document.getElementById('nuevaPassword').value = '';
-                    cargarUsuarios();
-                } else {
-                    const err = await res.json();
-                    alert("Error: " + (err.error || "No se pudo crear"));
-                }
-            } catch(e) {}
-        }
-
-        async function eliminarUsuario(id, username) {
-            if (!esAdmin) return alert("No autorizado.");
-            if (!confirm(`¿Eliminar al usuario ${username}?`)) return;
-            try {
-                await fetch('/api/usuarios', {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id, username })
-                });
-                cargarUsuarios();
-            } catch(e) {}
-        }
-
-        function exportarExcelItems() {
-            const dataExport = catalogo.map(i => ({
-                "ID": i.id,
-                "Nombre": i.nombre,
-                "Tipo/Pieza": i.tipo,
-                "Opciones": Array.isArray(i.opciones) ? i.opciones.join(" | ") : "",
-                "Asignado A": i.asignado_a || "Disponible (En Baúl)"
-            }));
-            const worksheet = XLSX.utils.json_to_sheet(dataExport);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Armaduras y Baúles");
-            XLSX.writeFile(workbook, "Inventario_Multiverso_Armaduras.xlsx");
-        }
-
-        function exportarExcelMiembros() {
-            const dataExport = miembrosClan.map(m => ({
-                "Nick PJ": m.nombre_pj,
-                "Clase / Raza": m.raza,
-                "IDs Ítems en Posesión": Array.isArray(m.items_asignados) ? m.items_asignados.join(", ") : ""
-            }));
-            const worksheet = XLSX.utils.json_to_sheet(dataExport);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Miembros del Clan");
-            XLSX.writeFile(workbook, "Inventario_Miembros_Clan.xlsx");
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            chequearSesion();
-            cargarItems();
-            cargarMiembrosParaSelect();
-        });
-    </script>
-</body>
-</html>
+            const rol =
