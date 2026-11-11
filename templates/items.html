@@ -52,6 +52,8 @@
 
     <!-- SECCIÓN 1: ÍTEMS -->
     <div id="seccion-items-view" class="w-full max-w-7xl space-y-4">
+        
+        <!-- PANEL DE CARGA MANUAL -->
         <div id="panel-carga-manual" class="bg-[#141126] border border-emerald-600/50 p-6 rounded-xl shadow-xl hidden mb-4">
             <h2 class="text-lg font-bold text-emerald-400 mb-4">➕ Cargar Nuevo Ítem / Baúl</h2>
             <form onsubmit="guardarItemManual(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -507,8 +509,11 @@
             });
             document.getElementById(`seccion-${sec}-view`).classList.remove('hidden');
             document.getElementById(`btn-sec-${sec}`).className = "bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition shadow";
+            
+            if (sec === 'ITEMS') { cargarItems(); }
             if (sec === 'CLAN') { cargarMiembros(); }
             if (sec === 'DONACIONES') { cargarMiembros(); cargarDonaciones(); cargarAsistencias(); }
+            if (sec === 'USERS') { cargarUsuarios(); }
         }
 
         async function cargarItems() {
@@ -747,7 +752,7 @@
                         <td class="font-bold text-amber-400">${d.pj_name}</td>
                         <td>${d.tipo_donacion}</td>
                         <td class="text-xs text-gray-400">${d.registrado_por}</td>
-                        <td class="${esAdmin ? '' : 'hidden'}"><button onclick="eliminarDonacion(${d.id})" class="bg-red-950 text-red-300 px-2 py-0.5 rounded text-xs">🗑️</button></td>
+                        <td class="${esAdmin ? '' : 'hidden'}"><button onclick="eliminarDonacion(${d.id})" class="bg-red-950 text-red-300 px-2 py-0.5 rounded text-xs font-bold">🗑️</button></td>
                     </tr>
                 `).join('') || '<tr><td colspan="5" class="text-center py-4 text-gray-500">Sin donaciones.</td></tr>';
             }
@@ -769,7 +774,7 @@
                         <td class="font-bold text-indigo-300">${a.pj_name}</td>
                         <td>${a.evento}</td>
                         <td class="text-xs text-gray-400">${a.registrado_por}</td>
-                        <td class="${esAdmin ? '' : 'hidden'}"><button onclick="eliminarAsistencia(${a.id})" class="bg-red-950 text-red-300 px-2 py-0.5 rounded text-xs">🗑️</button></td>
+                        <td class="${esAdmin ? '' : 'hidden'}"><button onclick="eliminarAsistencia(${a.id})" class="bg-red-950 text-red-300 px-2 py-0.5 rounded text-xs font-bold">🗑️</button></td>
                     </tr>
                 `).join('') || '<tr><td colspan="5" class="text-center py-4 text-gray-500">Sin asistencias.</td></tr>';
             }
@@ -809,7 +814,7 @@
                     <tr>
                         <td class="font-bold">${u.username}</td>
                         <td><span class="badge-pj">${u.rol}</span></td>
-                        <td>${u.username.toLowerCase() !== 'pinion' ? `<button onclick="eliminarUsuario(${u.id})" class="bg-red-950 text-red-300 px-2 py-1 rounded text-xs">🗑️</button>` : ''}</td>
+                        <td>${u.username.toLowerCase() !== 'pinion' ? `<button onclick="eliminarUsuario(${u.id})" class="bg-red-950 text-red-300 px-2 py-1 rounded text-xs font-bold">🗑️</button>` : ''}</td>
                     </tr>
                 `).join('');
             }
@@ -820,10 +825,16 @@
             const password = document.getElementById('nuevaPassword').value.trim();
             const rol = document.getElementById('nuevoRol').value;
             if (!username || !password) return alert("Completá usuario y contraseña.");
-            await fetch('/api/usuarios', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password, rol }) });
-            document.getElementById('nuevoUsuario').value = '';
-            document.getElementById('nuevaPassword').value = '';
-            cargarUsuarios();
+            const res = await fetch('/api/usuarios', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password, rol }) });
+            if (res.ok) {
+                alert("Usuario creado con éxito.");
+                document.getElementById('nuevoUsuario').value = '';
+                document.getElementById('nuevaPassword').value = '';
+                cargarUsuarios();
+            } else {
+                const err = await res.json();
+                alert("Error: " + err.error);
+            }
         }
 
         async function eliminarUsuario(id) {
