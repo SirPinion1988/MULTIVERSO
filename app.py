@@ -290,7 +290,7 @@ def api_asistencias():
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
 
-# --- API DE ÍTEMS (CON SOPORTE DE ID MANUAL Y OPCIONES EXCELLENT) ---
+# --- API DE ÍTEMS (CREAR, EDITAR, ELIMINAR) ---
 @app.route('/api/items/agregar-manual', methods=['POST'])
 def agregar_item_manual():
     if not usuario_es_autorizado(): return jsonify({"error": "No autorizado."}), 403
@@ -334,6 +334,41 @@ def agregar_item_manual():
             if conn: conn.close()
             return jsonify({"error": str(e)}), 500
     return jsonify({"status": "ok"}), 201
+
+@app.route('/api/items/editar', methods=['POST'])
+def editar_item():
+    if not usuario_es_autorizado(): return jsonify({"error": "No autorizado."}), 403
+    data = request.json or {}
+    old_id = data.get('old_id')
+    new_id = data.get('new_id')
+    nombre = data.get('nombre')
+    tipo = data.get('tipo')
+    opciones = data.get('opciones', [])
+    asignado_a = data.get('asignado_a') or None
+
+    if not old_id or not nombre:
+        return jsonify({"error": "Faltan datos obligatorios."}), 400
+
+    conn = get_db()
+    if conn:
+        try:
+            with conn.cursor() as cur:
+                if str(old_id) != str(new_id):
+                    cur.execute("SELECT id FROM public.items_mu WHERE id = %s;", (new_id,))
+                    if cur.fetchone():
+                        return jsonify({"error": f"El ID #{new_id} ya está en uso."}), 400
+
+                cur.execute("""
+                    UPDATE public.items_mu 
+                    SET id = %s, nombre = %s, tipo = %s, opciones = %s, asignado_a = %s, archivo_id = %s
+                    WHERE id = %s;
+                """, (new_id, nombre, tipo, json.dumps(opciones), asignado_a, f"{new_id}.png", old_id))
+                conn.commit()
+            conn.close()
+        except Exception as e:
+            if conn: conn.close()
+            return jsonify({"error": str(e)}), 500
+    return jsonify({"status": "ok"}), 200
 
 @app.route('/api/items/eliminar', methods=['POST'])
 def eliminar_item_manual():
@@ -442,7 +477,15 @@ def api_miembros():
             try:
                 with conn.cursor() as cur:
                     cur.execute("SELECT id, nombre_pj, raza, items_asignados, notas FROM public.miembros_clan ORDER BY id ASC;")
-                    miembros = cur.fetchall()
+                    filas = cur.fetchall()
+                    for r in filas:
+                        miembros.append({
+                            "id": r['id'],
+                            "nombre_pj": r['nombre_pj'],
+                            "raza": r['raza'],
+                            "items_asignados": normalizar_campo_json(r['items_asignados'], []),
+                            "notas": r.get('notas', '')
+                        })
                 conn.close()
             except Exception: pass
         return jsonify(miembros)
@@ -451,13 +494,14 @@ def api_miembros():
     if request.method == 'POST':
         nombre_pj = data.get('nombre_pj', '').strip()
         raza = data.get('raza', 'DK').strip()
+        if not nombre_pj: return jsonify({"error": "Falta nick"}), 400
         if conn:
             try:
                 with conn.cursor() as cur:
                     cur.execute("INSERT INTO public.miembros_clan (nombre_pj, raza) VALUES (%s, %s) ON CONFLICT (nombre_pj) DO UPDATE SET raza = EXCLUDED.raza;", (nombre_pj, raza))
                     conn.commit()
                 conn.close()
-            except Exception: pass
+            except Exception as e: return jsonify({"error": str(e)}), 500
         return jsonify({"status": "ok"}), 201
     if request.method == 'DELETE':
         m_id = data.get('id')
