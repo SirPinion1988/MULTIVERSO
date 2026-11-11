@@ -2,8 +2,6 @@ import os
 import time
 import json
 import re
-import base64
-import requests
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file
 from werkzeug.security import check_password_hash
@@ -17,14 +15,7 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 LINK_DESCARGA_BOT = "https://drive.google.com/uc?export=download&id=TU_ID_DE_GOOGLE_DRIVE"
 
 DATA_FILE = "timers_data.json"
-DONACIONES_FILE = "donaciones_data.json"
 MAPAS_FILE = "mapas_data.json"
-MIEMBROS_FILE = "miembros_data.json"
-
-BOSSES_MANUALES = [
-    "Red Dragon", "Yellow Goblin", "Blue Goblin", 
-    "Red Goblin", "Santa", "White Wizard", "Skeleton King"
-]
 
 def cargar_json(filepath, default_val):
     if os.path.exists(filepath):
@@ -44,14 +35,9 @@ def guardar_json(filepath, data):
 
 status_timers = cargar_json(DATA_FILE, {"Server 1": {}, "Server 2": {}, "Server 3": {}, "Server 20": {}})
 status_mapas = cargar_json(MAPAS_FILE, {"1": {}, "2": {}, "3": {}})
-donaciones_db = cargar_json(DONACIONES_FILE, [])
-miembros_clan_db = cargar_json(MIEMBROS_FILE, [])
-
-tarjetas_ocultas_global = set()
 heartbeats = {}
 ultimas_pcs = {}
 ultimos_pjs = {}
-ultimos_kills_recientes = {}
 
 def get_db():
     if not DATABASE_URL:
@@ -91,7 +77,7 @@ def index():
 def vista_items():
     return render_template('items.html')
 
-# --- BACKUP LOCAL (EXPORTAR / IMPORTAR) ---
+# --- BACKUP LOCAL (EXPORTAR E IMPORTAR) ---
 @app.route('/api/backup/exportar', methods=['GET'])
 def exportar_backup():
     if not usuario_es_admin():
@@ -152,8 +138,10 @@ def importar_backup():
                     """, (
                         itm.get('id'), itm.get('archivo_id'), itm.get('nombre'), itm.get('tipo'),
                         itm.get('base_score', 0), itm.get('defense', 0), itm.get('durability', '-'),
-                        json.dumps(itm.get('clases', [])), json.dumps(itm.get('opciones', [])),
-                        json.dumps(itm.get('bonus_excelente', [])), itm.get('drive_id', ''), itm.get('asignado_a')
+                        json.dumps(normalizar_campo_json(itm.get('clases'), [])),
+                        json.dumps(normalizar_campo_json(itm.get('opciones'), [])),
+                        json.dumps(normalizar_campo_json(itm.get('bonus_excelente'), [])),
+                        itm.get('drive_id', ''), itm.get('asignado_a')
                     ))
 
             if 'miembros_clan' in backup_data:
@@ -162,7 +150,7 @@ def importar_backup():
                     cur.execute("""
                         INSERT INTO public.miembros_clan (id, nombre_pj, raza, items_asignados, notas)
                         VALUES (%s, %s, %s, %s, %s);
-                    """, (m.get('id'), m.get('nombre_pj'), m.get('raza'), json.dumps(m.get('items_asignados', [])), m.get('notas', '')))
+                    """, (m.get('id'), m.get('nombre_pj'), m.get('raza'), json.dumps(normalizar_campo_json(m.get('items_asignados'), [])), m.get('notas', '')))
 
             if 'donaciones' in backup_data:
                 cur.execute("DELETE FROM public.donaciones;")
@@ -188,7 +176,7 @@ def importar_backup():
 
     return jsonify({"status": "ok", "message": "Respaldo restaurado con éxito."}), 200
 
-# --- APIS DE DONACIONES Y ASISTENCIAS ---
+# --- API DE DONACIONES ---
 @app.route('/api/donaciones', methods=['GET', 'POST', 'DELETE'])
 def api_donaciones():
     conn = get_db()
@@ -233,7 +221,7 @@ def api_donaciones():
 
     if request.method == 'DELETE':
         if not usuario_es_admin():
-            return jsonify({"error": "Solo el administrador Pinion puede eliminar registros."}), 403
+            return jsonify({"error": "Solo Pinion puede eliminar registros."}), 403
         d_id = data.get('id')
         if conn:
             try:
@@ -245,6 +233,7 @@ def api_donaciones():
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
 
+# --- API DE ASISTENCIAS ---
 @app.route('/api/asistencias', methods=['GET', 'POST', 'DELETE'])
 def api_asistencias():
     conn = get_db()
@@ -301,7 +290,7 @@ def api_asistencias():
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
 
-# --- APIS DE ITEMS (CON SOPORTE DE ID MANUAL) ---
+# --- API DE ÍTEMS (CON SOPORTE DE ID MANUAL Y OPCIONES EXCELLENT) ---
 @app.route('/api/items/agregar-manual', methods=['POST'])
 def agregar_item_manual():
     if not usuario_es_autorizado(): return jsonify({"error": "No autorizado."}), 403
@@ -322,9 +311,13 @@ def agregar_item_manual():
         try:
             with conn.cursor() as cur:
                 if custom_id is not None and str(custom_id).strip() != "":
-                    target_id = int(custom_id)
+                    try:
+                        target_id = int(custom_id)
+                    except ValueError:
+                        return jsonify({"error": "El ID personalizado debe ser un número entero."}), 400
+
                     cur.execute("SELECT id FROM public.items_mu WHERE id = %s;", (target_id,))
-                    if cur.fetchone(): return jsonify({"error": f"ID #{target_id} ya existe."}), 400
+                    if cur.fetchone(): return jsonify({"error": f"El ID #{target_id} ya existe en la base de datos."}), 400
                     next_id = target_id
                 else:
                     cur.execute("SELECT COALESCE(MAX(id), 1) as max_id FROM public.items_mu;")
@@ -367,7 +360,17 @@ def api_items():
             try:
                 with conn.cursor() as cur:
                     cur.execute("SELECT id, archivo_id, nombre, tipo, clases, opciones, asignado_a FROM public.items_mu ORDER BY id ASC;")
-                    items = cur.fetchall()
+                    filas = cur.fetchall()
+                    for r in filas:
+                        items.append({
+                            "id": r['id'],
+                            "archivo_id": r.get('archivo_id') or str(r['id']),
+                            "nombre": r.get('nombre') or 'Sin Nombre',
+                            "tipo": r.get('tipo') or 'Armor',
+                            "clases": normalizar_campo_json(r.get('clases'), []),
+                            "opciones": normalizar_campo_json(r.get('opciones'), []),
+                            "asignado_a": r.get('asignado_a')
+                        })
                 conn.close()
             except Exception:
                 if conn: conn.close()
@@ -387,7 +390,7 @@ def api_items():
             if conn: conn.close()
     return jsonify({"status": "ok"}), 200
 
-# --- APIS DE USUARIOS Y MIEMBROS ---
+# --- API DE USUARIOS Y MIEMBROS ---
 @app.route('/api/usuarios', methods=['GET', 'POST', 'DELETE'])
 def api_usuarios():
     es_pinion = usuario_es_admin()
@@ -505,7 +508,7 @@ def logout():
 @app.route('/api/status_timers')
 @app.route('/api/timers')
 def get_status_timers():
-    return jsonify({"timers": status_timers, "ocultos": list(tarjetas_ocultas_global), "heartbeats": heartbeats, "ultimas_pcs": ultimas_pcs, "ultimos_pjs": ultimos_pjs, "mapas": status_mapas})
+    return jsonify({"timers": status_timers, "ocultos": list(tarjetas_ocultas_global) if 'tarjetas_ocultas_global' in globals() else [], "heartbeats": heartbeats, "ultimas_pcs": ultimas_pcs, "ultimos_pjs": ultimos_pjs, "mapas": status_mapas})
 
 @app.route('/api/kill', methods=['POST'])
 def registrar_kill():
