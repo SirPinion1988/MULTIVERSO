@@ -519,15 +519,15 @@
                 if (btn) btn.className = "bg-gray-800 text-gray-400 px-4 py-2 rounded-lg text-xs font-bold transition";
             });
             
-            const targetView = document.getElementById(`seccion-${sec}-view`);
-            const targetBtn = document.getElementById(`btn-sec-${sec}`);
+            const targetView = document.getElementById(`seccion-${sec.toLowerCase()}-view`);
+            const targetBtn = document.getElementById(`btn-sec-${sec.toLowerCase()}`);
             if (targetView) targetView.classList.remove('hidden');
             if (targetBtn) targetBtn.className = "bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition shadow";
             
-            if (sec === 'items') { cargarItems(); }
-            if (sec === 'clan') { cargarMiembros(); }
-            if (sec === 'donaciones') { cargarMiembros(); cargarDonaciones(); cargarAsistencias(); }
-            if (sec === 'users') { cargarUsuarios(); }
+            if (sec === 'ITEMS') { cargarItems(); }
+            if (sec === 'CLAN') { cargarMiembros(); }
+            if (sec === 'DONACIONES') { cargarMiembros(); cargarDonaciones(); cargarAsistencias(); }
+            if (sec === 'USERS') { cargarUsuarios(); }
         }
 
         async function cargarItems() {
