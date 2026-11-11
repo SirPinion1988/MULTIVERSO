@@ -81,8 +81,7 @@ def vista_items():
 @app.route('/api/backup/exportar', methods=['GET'])
 def exportar_backup():
     if not usuario_es_admin():
-        return jsonify({"error": "Solo el administrador Pinion puede exportar respaldos."}), 403
-
+        return jsonify({"error": "No autorizado."}), 403
     conn = get_db()
     backup_data = {}
     if conn:
@@ -106,27 +105,21 @@ def exportar_backup():
     backup_filepath = "multiverso_backup_db.json"
     with open(backup_filepath, 'w', encoding='utf-8') as f:
         json.dump(backup_data, f, indent=4, ensure_ascii=False, default=str)
-
     return send_file(backup_filepath, as_attachment=True, download_name=f"Multiverso_Backup_{datetime.now().strftime('%Y-%m-%d_%H-%M')}.json")
 
 @app.route('/api/backup/importar', methods=['POST'])
 def importar_backup():
     if not usuario_es_admin():
-        return jsonify({"error": "Solo el administrador Pinion puede restaurar respaldos."}), 403
-
+        return jsonify({"error": "No autorizado."}), 403
     if 'file' not in request.files:
-        return jsonify({"error": "No se adjuntó ningún archivo."}), 400
-
-    file = request.files['file']
+        return jsonify({"error": "No se adjuntó archivo."}), 400
     try:
-        backup_data = json.load(file)
+        backup_data = json.load(request.files['file'])
     except Exception as e:
-        return jsonify({"error": f"Archivo JSON inválido: {str(e)}"}), 400
+        return jsonify({"error": f"JSON inválido: {str(e)}"}), 400
 
     conn = get_db()
-    if not conn:
-        return jsonify({"error": "Sin conexión a la base de datos."}), 500
-
+    if not conn: return jsonify({"error": "Sin conexión a DB."}), 500
     try:
         with conn.cursor() as cur:
             if 'items_mu' in backup_data:
@@ -143,7 +136,6 @@ def importar_backup():
                         json.dumps(normalizar_campo_json(itm.get('bonus_excelente'), [])),
                         itm.get('drive_id', ''), itm.get('asignado_a')
                     ))
-
             if 'miembros_clan' in backup_data:
                 cur.execute("DELETE FROM public.miembros_clan;")
                 for m in backup_data['miembros_clan']:
@@ -151,7 +143,6 @@ def importar_backup():
                         INSERT INTO public.miembros_clan (id, nombre_pj, raza, items_asignados, notas)
                         VALUES (%s, %s, %s, %s, %s);
                     """, (m.get('id'), m.get('nombre_pj'), m.get('raza'), json.dumps(normalizar_campo_json(m.get('items_asignados'), [])), m.get('notas', '')))
-
             if 'donaciones' in backup_data:
                 cur.execute("DELETE FROM public.donaciones;")
                 for d in backup_data['donaciones']:
@@ -159,7 +150,6 @@ def importar_backup():
                         INSERT INTO public.donaciones (id, pj_name, tipo_donacion, cantidad, registrado_por, created_at)
                         VALUES (%s, %s, %s, %s, %s, %s);
                     """, (d.get('id'), d.get('pj_name'), d.get('tipo_donacion'), d.get('cantidad', 1), d.get('registrado_por', 'Sistema'), d.get('created_at')))
-
             if 'asistencias_invasiones' in backup_data:
                 cur.execute("DELETE FROM public.asistencias_invasiones;")
                 for a in backup_data['asistencias_invasiones']:
@@ -167,16 +157,14 @@ def importar_backup():
                         INSERT INTO public.asistencias_invasiones (id, pj_name, evento, fecha, registrado_por)
                         VALUES (%s, %s, %s, %s, %s);
                     """, (a.get('id'), a.get('pj_name'), a.get('evento'), a.get('fecha'), a.get('registrado_por', 'Sistema')))
-
             conn.commit()
         conn.close()
     except Exception as e:
         if conn: conn.close()
-        return jsonify({"error": f"Error: {str(e)}"}), 500
+        return jsonify({"error": str(e)}), 500
+    return jsonify({"status": "ok"}), 200
 
-    return jsonify({"status": "ok", "message": "Respaldo restaurado con éxito."}), 200
-
-# --- API DE DONACIONES ---
+# --- API DONACIONES ---
 @app.route('/api/donaciones', methods=['GET', 'POST', 'DELETE'])
 def api_donaciones():
     conn = get_db()
@@ -192,26 +180,19 @@ def api_donaciones():
                 if conn: conn.close()
         return jsonify(donaciones)
 
-    if not usuario_es_autorizado():
-        return jsonify({"error": "No autorizado."}), 403
-
+    if not usuario_es_autorizado(): return jsonify({"error": "No autorizado."}), 403
     data = request.json or {}
     if request.method == 'POST':
         pj_name = data.get('pj_name', '').strip()
         tipo_donacion = data.get('tipo_donacion', '').strip()
         cantidad = data.get('cantidad', 1)
-
         if not pj_name or not tipo_donacion:
             if conn: conn.close()
-            return jsonify({"error": "PJ y tipo de donación requeridos"}), 400
-
+            return jsonify({"error": "Faltan datos"}), 400
         if conn:
             try:
                 with conn.cursor() as cur:
-                    cur.execute("""
-                        INSERT INTO public.donaciones (pj_name, tipo_donacion, cantidad, registrado_por)
-                        VALUES (%s, %s, %s, %s);
-                    """, (pj_name, tipo_donacion, cantidad, session.get('user', 'Sistema')))
+                    cur.execute("INSERT INTO public.donaciones (pj_name, tipo_donacion, cantidad, registrado_por) VALUES (%s, %s, %s, %s);", (pj_name, tipo_donacion, cantidad, session.get('user', 'Sistema')))
                     conn.commit()
                 conn.close()
             except Exception as e:
@@ -220,8 +201,7 @@ def api_donaciones():
         return jsonify({"status": "ok"}), 201
 
     if request.method == 'DELETE':
-        if not usuario_es_admin():
-            return jsonify({"error": "Solo Pinion puede eliminar registros."}), 403
+        if not usuario_es_admin(): return jsonify({"error": "Solo Pinion."}), 403
         d_id = data.get('id')
         if conn:
             try:
@@ -229,11 +209,10 @@ def api_donaciones():
                     cur.execute("DELETE FROM public.donaciones WHERE id = %s;", (d_id,))
                     conn.commit()
                 conn.close()
-            except Exception:
-                if conn: conn.close()
+            except Exception: pass
         return jsonify({"status": "ok"}), 200
 
-# --- API DE ASISTENCIAS ---
+# --- API ASISTENCIAS ---
 @app.route('/api/asistencias', methods=['GET', 'POST', 'DELETE'])
 def api_asistencias():
     conn = get_db()
@@ -249,26 +228,19 @@ def api_asistencias():
                 if conn: conn.close()
         return jsonify(asistencias)
 
-    if not usuario_es_autorizado():
-        return jsonify({"error": "No autorizado."}), 403
-
+    if not usuario_es_autorizado(): return jsonify({"error": "No autorizado."}), 403
     data = request.json or {}
     if request.method == 'POST':
         pj_name = data.get('pj_name', '').strip()
         evento = data.get('evento', 'Invasión').strip()
         fecha = data.get('fecha') or datetime.now().strftime('%Y-%m-%d')
-
         if not pj_name:
             if conn: conn.close()
-            return jsonify({"error": "Nombre del PJ requerido"}), 400
-
+            return jsonify({"error": "Falta PJ"}), 400
         if conn:
             try:
                 with conn.cursor() as cur:
-                    cur.execute("""
-                        INSERT INTO public.asistencias_invasiones (pj_name, evento, fecha, registrado_por)
-                        VALUES (%s, %s, %s, %s);
-                    """, (pj_name, evento, fecha, session.get('user', 'Sistema')))
+                    cur.execute("INSERT INTO public.asistencias_invasiones (pj_name, evento, fecha, registrado_por) VALUES (%s, %s, %s, %s);", (pj_name, evento, fecha, session.get('user', 'Sistema')))
                     conn.commit()
                 conn.close()
             except Exception as e:
@@ -277,8 +249,7 @@ def api_asistencias():
         return jsonify({"status": "ok"}), 201
 
     if request.method == 'DELETE':
-        if not usuario_es_admin():
-            return jsonify({"error": "Solo Pinion puede eliminar registros."}), 403
+        if not usuario_es_admin(): return jsonify({"error": "Solo Pinion."}), 403
         a_id = data.get('id')
         if conn:
             try:
@@ -286,11 +257,10 @@ def api_asistencias():
                     cur.execute("DELETE FROM public.asistencias_invasiones WHERE id = %s;", (a_id,))
                     conn.commit()
                 conn.close()
-            except Exception:
-                if conn: conn.close()
+            except Exception: pass
         return jsonify({"status": "ok"}), 200
 
-# --- API DE ÍTEMS ---
+# --- API ITEMS ---
 @app.route('/api/items/agregar-manual', methods=['POST'])
 def agregar_item_manual():
     if not usuario_es_autorizado(): return jsonify({"error": "No autorizado."}), 403
@@ -312,10 +282,9 @@ def agregar_item_manual():
             with conn.cursor() as cur:
                 if custom_id is not None and str(custom_id).strip() != "":
                     try: target_id = int(custom_id)
-                    except ValueError: return jsonify({"error": "ID personalizado inválido."}), 400
-
+                    except ValueError: return jsonify({"error": "ID inválido."}), 400
                     cur.execute("SELECT id FROM public.items_mu WHERE id = %s;", (target_id,))
-                    if cur.fetchone(): return jsonify({"error": f"El ID #{target_id} ya existe."}), 400
+                    if cur.fetchone(): return jsonify({"error": f"ID #{target_id} ya existe."}), 400
                     next_id = target_id
                 else:
                     cur.execute("SELECT COALESCE(MAX(id), 1) as max_id FROM public.items_mu;")
@@ -345,15 +314,13 @@ def editar_item():
     asignado_a = data.get('asignado_a') or None
 
     if not old_id or not nombre: return jsonify({"error": "Faltan datos."}), 400
-
     conn = get_db()
     if conn:
         try:
             with conn.cursor() as cur:
                 if str(old_id) != str(new_id):
                     cur.execute("SELECT id FROM public.items_mu WHERE id = %s;", (new_id,))
-                    if cur.fetchone(): return jsonify({"error": f"El ID #{new_id} ya está en uso."}), 400
-
+                    if cur.fetchone(): return jsonify({"error": f"ID #{new_id} ya está en uso."}), 400
                 cur.execute("""
                     UPDATE public.items_mu 
                     SET id = %s, nombre = %s, tipo = %s, opciones = %s, asignado_a = %s, archivo_id = %s
@@ -421,7 +388,7 @@ def api_items():
             if conn: conn.close()
     return jsonify({"status": "ok"}), 200
 
-# --- API DE USUARIOS Y MIEMBROS ---
+# --- API USUARIOS Y MIEMBROS ---
 @app.route('/api/usuarios', methods=['GET', 'POST', 'DELETE'])
 def api_usuarios():
     es_pinion = usuario_es_admin()
