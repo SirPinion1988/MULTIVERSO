@@ -77,7 +77,7 @@ def index():
 def vista_items():
     return render_template('items.html')
 
-# --- BACKUP LOCAL (EXPORTAR E IMPORTAR) ---
+# --- BACKUP LOCAL ---
 @app.route('/api/backup/exportar', methods=['GET'])
 def exportar_backup():
     if not usuario_es_admin():
@@ -115,7 +115,7 @@ def importar_backup():
         return jsonify({"error": "Solo el administrador Pinion puede restaurar respaldos."}), 403
 
     if 'file' not in request.files:
-        return jsonify({"error": "No se adjuntó ningún archivo de respaldo."}), 400
+        return jsonify({"error": "No se adjuntó ningún archivo."}), 400
 
     file = request.files['file']
     try:
@@ -172,7 +172,7 @@ def importar_backup():
         conn.close()
     except Exception as e:
         if conn: conn.close()
-        return jsonify({"error": f"Error al restaurar base de datos: {str(e)}"}), 500
+        return jsonify({"error": f"Error: {str(e)}"}), 500
 
     return jsonify({"status": "ok", "message": "Respaldo restaurado con éxito."}), 200
 
@@ -290,7 +290,7 @@ def api_asistencias():
                 if conn: conn.close()
         return jsonify({"status": "ok"}), 200
 
-# --- API DE ÍTEMS (CREAR, EDITAR, ELIMINAR) ---
+# --- API DE ÍTEMS ---
 @app.route('/api/items/agregar-manual', methods=['POST'])
 def agregar_item_manual():
     if not usuario_es_autorizado(): return jsonify({"error": "No autorizado."}), 403
@@ -311,13 +311,11 @@ def agregar_item_manual():
         try:
             with conn.cursor() as cur:
                 if custom_id is not None and str(custom_id).strip() != "":
-                    try:
-                        target_id = int(custom_id)
-                    except ValueError:
-                        return jsonify({"error": "El ID personalizado debe ser un número entero."}), 400
+                    try: target_id = int(custom_id)
+                    except ValueError: return jsonify({"error": "ID personalizado inválido."}), 400
 
                     cur.execute("SELECT id FROM public.items_mu WHERE id = %s;", (target_id,))
-                    if cur.fetchone(): return jsonify({"error": f"El ID #{target_id} ya existe en la base de datos."}), 400
+                    if cur.fetchone(): return jsonify({"error": f"El ID #{target_id} ya existe."}), 400
                     next_id = target_id
                 else:
                     cur.execute("SELECT COALESCE(MAX(id), 1) as max_id FROM public.items_mu;")
@@ -346,8 +344,7 @@ def editar_item():
     opciones = data.get('opciones', [])
     asignado_a = data.get('asignado_a') or None
 
-    if not old_id or not nombre:
-        return jsonify({"error": "Faltan datos obligatorios."}), 400
+    if not old_id or not nombre: return jsonify({"error": "Faltan datos."}), 400
 
     conn = get_db()
     if conn:
@@ -355,8 +352,7 @@ def editar_item():
             with conn.cursor() as cur:
                 if str(old_id) != str(new_id):
                     cur.execute("SELECT id FROM public.items_mu WHERE id = %s;", (new_id,))
-                    if cur.fetchone():
-                        return jsonify({"error": f"El ID #{new_id} ya está en uso."}), 400
+                    if cur.fetchone(): return jsonify({"error": f"El ID #{new_id} ya está en uso."}), 400
 
                 cur.execute("""
                     UPDATE public.items_mu 
@@ -447,11 +443,12 @@ def api_usuarios():
         username = data.get('username', '').strip()
         password = data.get('password', '').strip()
         rol = data.get('rol', 'lector').strip()
+        if not username or not password: return jsonify({"error": "Faltan datos"}), 400
         if not es_pinion and rol != 'lector': return jsonify({"error": "Solo Pinion puede crear operadores."}), 403
         if conn:
             try:
                 with conn.cursor() as cur:
-                    cur.execute("INSERT INTO public.usuarios (username, password_hash, rol) VALUES (%s, %s, %s) ON CONFLICT (username) DO UPDATE SET rol = EXCLUDED.rol;", (username, password, rol))
+                    cur.execute("INSERT INTO public.usuarios (username, password_hash, rol) VALUES (%s, %s, %s) ON CONFLICT (username) DO UPDATE SET rol = EXCLUDED.rol, password_hash = EXCLUDED.password_hash;", (username, password, rol))
                     conn.commit()
                 conn.close()
             except Exception as e: return jsonify({"error": str(e)}), 500
