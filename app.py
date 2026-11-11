@@ -127,6 +127,7 @@ def agregar_item_manual():
     asignado = data.get('asignado', '').strip() or None
     opciones = data.get('opciones', [])
     bonus = data.get('bonus', [])
+    custom_id = data.get('custom_id')
 
     if not set_base:
         return jsonify({"error": "Falta seleccionar el set"}), 400
@@ -138,9 +139,22 @@ def agregar_item_manual():
     if conn:
         try:
             with conn.cursor() as cur:
-                cur.execute("SELECT COALESCE(MAX(id), 1) as max_id FROM public.items_mu;")
-                row = cur.fetchone()
-                next_id = 2 if row['max_id'] < 2 else row['max_id'] + 1
+                if custom_id is not None and str(custom_id).strip() != "":
+                    try:
+                        target_id = int(custom_id)
+                    except ValueError:
+                        return jsonify({"error": "El ID personalizado debe ser un número entero válido."}), 400
+                    
+                    # Verificar si ya existe ese ID
+                    cur.execute("SELECT id FROM public.items_mu WHERE id = %s;", (target_id,))
+                    if cur.fetchone():
+                        return jsonify({"error": f"El ID #{target_id} ya existe en la base de datos."}), 400
+                    next_id = target_id
+                else:
+                    cur.execute("SELECT COALESCE(MAX(id), 1) as max_id FROM public.items_mu;")
+                    row = cur.fetchone()
+                    next_id = 2 if row['max_id'] < 2 else row['max_id'] + 1
+
                 archivo_id_gen = f"{next_id}.png"
 
                 cur.execute("""
@@ -262,7 +276,6 @@ def api_items():
 
 @app.route('/api/usuarios', methods=['GET', 'POST', 'DELETE'])
 def api_usuarios():
-    # Pinion puede ver y gestionar todo; los operadores (tolkien, nasda) pueden listar y crear SOLAMENTE usuarios con rol 'lector'.
     es_pinion = usuario_es_admin()
     es_op = usuario_es_autorizado()
 
@@ -292,7 +305,6 @@ def api_usuarios():
             if conn: conn.close()
             return jsonify({"error": "Usuario y contraseña requeridos"}), 400
 
-        # Si no es Pinion, NO puede crear un usuario con rol operador o admin
         if not es_pinion and rol != 'lector':
             if conn: conn.close()
             return jsonify({"error": "Solo el administrador Pinion puede crear operadores."}), 403
@@ -314,7 +326,6 @@ def api_usuarios():
         return jsonify({"status": "ok"}), 201
 
     if request.method == 'DELETE':
-        # Solo Pinion puede eliminar usuarios
         if not es_pinion:
             if conn: conn.close()
             return jsonify({"error": "Solo el administrador Pinion puede eliminar usuarios."}), 403
