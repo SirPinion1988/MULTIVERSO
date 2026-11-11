@@ -3,580 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🛡️ Multiverso - Inventario, Asistencias & Donaciones</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <style>
-        body { background-color: #0a0814; color: #e6e1ff; font-family: 'Segoe UI', system-ui, sans-serif; }
-        .tabla-scroll-box { height: 450px !important; overflow-y: scroll !important; border: 1px solid #3b2d6b; border-radius: 8px; background: #0d0a1a; }
-        .tabla-scroll-box::-webkit-scrollbar { width: 8px; }
-        .tabla-scroll-box::-webkit-scrollbar-thumb { background: #6d28d9; border-radius: 4px; }
-        .tabla-items { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
-        .tabla-items th { background: #17112e; padding: 10px 12px; color: #c4b5fd; font-weight: 700; text-transform: uppercase; font-size: 11px; border-bottom: 2px solid #3b2d6b; position: sticky; top: 0; z-index: 10; }
-        .tabla-items td { padding: 8px 12px; border-bottom: 1px solid #1f1838; vertical-align: middle; }
-        .tabla-items tr:hover { background: rgba(139, 92, 246, 0.1); }
-        .badge-pj { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.4); color: #c4b5fd; }
-        .badge-opt { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 4px; margin-bottom: 3px; background: rgba(6, 182, 212, 0.15); border: 1px solid #06b6d4; color: #67e8f9; }
-    </style>
-</head>
-<body class="p-4 md:p-8 flex flex-col items-center">
-
-    <header class="w-full max-w-7xl mb-6 border-b border-purple-900/50 pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div>
-            <h1 class="text-3xl font-extrabold text-emerald-400">🛡️ MULTIVERSO - GESTIÓN TOTAL</h1>
-            <p class="text-xs text-purple-300">Inventario, Armas, Asistencia a Invasiones y Donaciones</p>
-        </div>
-        <div class="flex items-center gap-3">
-            <span id="session-user-badge" class="text-xs text-purple-300 font-bold bg-[#141126] px-3 py-1.5 rounded-lg border border-purple-900">
-                Invitado (Público)
-            </span>
-            <div id="admin-backup-buttons" class="hidden flex gap-2">
-                <button onclick="descargarBackup()" class="bg-blue-700 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">💾 Backup Local</button>
-                <label class="bg-amber-700 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
-                    📂 Restaurar <input type="file" id="fileBackupInput" onchange="restaurarBackup(event)" class="hidden" accept=".json">
-                </label>
-            </div>
-            <button onclick="toggleLoginModal()" id="btn-login-open" class="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">
-                🔑 Ingresar
-            </button>
-            <a href="/" class="bg-purple-900 hover:bg-purple-800 text-purple-200 px-3 py-1.5 rounded-lg text-xs font-bold">← Monitor</a>
-        </div>
-    </header>
-
-    <div class="flex flex-wrap items-center justify-center gap-3 mb-6 w-full max-w-7xl">
-        <button onclick="cambiarSeccion('ITEMS')" id="btn-sec-items" class="bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition shadow">📋 Ítems & Baúles</button>
-        <button onclick="cambiarSeccion('CLAN')" id="btn-sec-clan" class="bg-gray-800 text-gray-400 px-4 py-2 rounded-lg text-xs font-bold transition">👥 Miembros</button>
-        <button onclick="cambiarSeccion('DONACIONES')" id="btn-sec-donaciones" class="bg-gray-800 text-gray-400 px-4 py-2 rounded-lg text-xs font-bold transition">💎 Donaciones & Asistencias</button>
-        <button onclick="cambiarSeccion('USERS')" id="btn-sec-users" class="bg-gray-800 text-gray-400 px-4 py-2 rounded-lg text-xs font-bold transition hidden">⚙️ Usuarios</button>
-    </div>
-
-    <!-- SECCIÓN 1: ÍTEMS -->
-    <div id="seccion-items-view" class="w-full max-w-7xl space-y-4">
-        <!-- Panel de carga e items que ya tenías -->
-        <div id="panel-carga-manual" class="bg-[#141126] border border-emerald-600/50 p-6 rounded-xl shadow-xl hidden mb-4">
-            <h2 class="text-lg font-bold text-emerald-400 mb-4">➕ Cargar Nuevo Ítem / Baúl</h2>
-            <form onsubmit="guardarItemManual(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">📜 Elemento Base</label>
-                    <select id="inputSetBase" required class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs">
-                        <option value="">-- Seleccionar --</option>
-                        <option value="Leather">Leather</option><option value="Dragon">Dragon</option><option value="Blade">Blade</option><option value="Divine Archangel Sword">Divine Archangel Sword</option><option value="Wizard's Ring">Wizard's Ring</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">📦 Tipo</label>
-                    <select id="inputTipoPieza" required class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs">
-                        <option value="Armor">Armor</option><option value="Weapon">Weapon</option><option value="Shield">Shield</option><option value="Ring">Ring</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">🏰 Baúl</label>
-                    <input type="text" id="inputBaul" placeholder="Ej. Principal" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs">
-                </div>
-                <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">👤 Asignado</label>
-                    <select id="inputAsignado" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs">
-                        <option value="">-- En Baúl --</option>
-                    </select>
-                </div>
-                <div class="md:col-span-2 flex justify-end">
-                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2 rounded text-xs">💾 Guardar</button>
-                </div>
-            </form>
-        </div>
-        <div class="tabla-scroll-box">
-            <table class="tabla-items">
-                <thead><tr><th>ID</th><th>Nombre</th><th>Tipo</th><th>Asignado A</th><th id="th-acciones-head" class="hidden">Acción</th></tr></thead>
-                <tbody id="tabla-items-body"><tr><td colspan="6" class="text-center py-8 text-gray-500">Cargando...</td></tr></tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- SECCIÓN 2: MIEMBROS -->
-    <div id="seccion-clan-view" class="w-full max-w-7xl space-y-4 hidden">
-        <div id="panel-miembros-crud" class="bg-[#141126] border border-indigo-700/60 p-4 rounded-xl shadow-lg hidden flex gap-3">
-            <input type="text" id="clanPjNombre" placeholder="Nick PJ" class="bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs flex-1">
-            <select id="clanPjRaza" class="bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs">
-                <option value="DK">DK</option><option value="SM">SM</option><option value="ELF">ELF</option><option value="MG">MG</option><option value="DL">DL</option>
-            </select>
-            <button onclick="guardarMiembroClan()" class="bg-indigo-600 text-white px-4 py-2 rounded text-xs font-bold">➕ Agregar PJ</button>
-        </div>
-        <div class="tabla-scroll-box">
-            <table class="tabla-items">
-                <thead><tr><th>Nick del PJ</th><th>Clase</th><th>Ítems Asignados</th><th id="th-miembro-acciones" class="hidden text-center">Acción</th></tr></thead>
-                <tbody id="tabla-clan-body"><tr><td colspan="4" class="text-center py-8 text-gray-500">Sin miembros.</td></tr></tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- SECCIÓN 3: DONACIONES & ASISTENCIAS (NUEVO DISEÑO SOLICITADO) -->
-    <div id="seccion-donaciones-view" class="w-full max-w-7xl space-y-6 hidden">
-        
-        <!-- CONTROL DE ASISTENCIAS (MAYOR A MENOR + BOTONES SUMAR/RESTAR) -->
-        <div class="bg-[#141126] border border-indigo-600/50 p-5 rounded-xl shadow-lg space-y-4">
-            <h2 class="text-sm font-bold text-indigo-400 uppercase">⚔️ Asistencias a Invasiones (Ranking)</h2>
-            
-            <div id="panel-asistencia-ctrl" class="flex flex-wrap gap-3 items-center hidden bg-[#0d0a1a] p-3 rounded-lg border border-purple-900">
-                <span class="text-xs text-purple-300 font-bold">Miembro:</span>
-                <select id="asistPjSelect" class="bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs">
-                    <option value="">-- Seleccionar Miembro --</option>
-                </select>
-                <div class="flex gap-2 ml-auto">
-                    <button onclick="modificarAsistencia(1)" class="bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-1.5 rounded text-xs font-bold">➕ Sumar Asistencia</button>
-                    <button onclick="modificarAsistencia(-1)" class="bg-red-900 hover:bg-red-800 text-white px-3 py-1.5 rounded text-xs font-bold">➖ Restar Asistencia</button>
-                </div>
-            </div>
-
-            <div class="tabla-scroll-box" style="height: 220px !important;">
-                <table class="tabla-items">
-                    <thead><tr><th>Miembro (PJ)</th><th style="text-align: right; padding-right: 40px;">Asistencias Totales</th></tr></thead>
-                    <tbody id="tabla-asistencias-ranking"><tr><td colspan="2" class="text-center py-4">Cargando ranking...</td></tr></tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- BANCO GUILD (TOTALES NETOS) -->
-        <div class="bg-[#141126] border border-amber-600/50 p-5 rounded-xl shadow-lg space-y-3">
-            <div class="flex justify-between items-center">
-                <h2 class="text-sm font-bold text-amber-400 uppercase">🏛️ Banco Guild (Acumulado Neto)</h2>
-                <button onclick="abrirModalGasto()" id="btn-gasto-modal" class="hidden bg-red-700 hover:bg-red-600 text-white px-3 py-1.5 rounded text-xs font-bold">📉 Registrar Uso / Gasto</button>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="tabla-items text-center">
-                    <thead>
-                        <tr>
-                            <th>Bless</th><th>Soul</th><th>Life</th><th>Chaos</th><th>Creation</th><th>Zen</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="font-bold text-amber-300 text-sm">
-                            <td id="banco-bless">0</td>
-                            <td id="banco-soul">0</td>
-                            <td id="banco-life">0</td>
-                            <td id="banco-chaos">0</td>
-                            <td id="banco-creation">0</td>
-                            <td id="banco-zen">0</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- DONACIÓN POR MIEMBRO (REGISTRO Y LISTADO) -->
-        <div class="bg-[#141126] border border-amber-600/50 p-5 rounded-xl shadow-lg space-y-4">
-            <h2 class="text-sm font-bold text-amber-400 uppercase">💎 Donación por Miembro (Semanal / Acumulado)</h2>
-            
-            <div id="panel-donacion-crud" class="grid grid-cols-2 sm:grid-cols-7 gap-2 items-end hidden bg-[#0d0a1a] p-3 rounded-lg border border-purple-900">
-                <div class="col-span-2">
-                    <label class="block text-[10px] text-gray-300 mb-1">MIEMBRO:</label>
-                    <select id="donPj" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs">
-                        <option value="">-- Seleccionar --</option>
-                    </select>
-                </div>
-                <div><label class="block text-[10px] text-gray-300 mb-1">BLESS:</label><input type="number" id="donBless" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-gray-300 mb-1">SOUL:</label><input type="number" id="donSoul" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-gray-300 mb-1">LIFE:</label><input type="number" id="donLife" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-gray-300 mb-1">CHAOS:</label><input type="number" id="donChaos" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-gray-300 mb-1">CREATION:</label><input type="number" id="donCreation" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-                <div class="col-span-2"><label class="block text-[10px] text-gray-300 mb-1">ZEN:</label><input type="number" id="donZen" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-                <div class="col-span-5"><button onclick="guardarDonacionJoyas()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 rounded text-xs transition">💾 Registrar Donación</button></div>
-            </div>
-
-            <div class="tabla-scroll-box" style="height: 300px !important;">
-                <table class="tabla-items text-center">
-                    <thead>
-                        <tr>
-                            <th style="text-align: left;">Miembro</th>
-                            <th>Bless</th><th>Soul</th><th>Life</th><th>Chaos</th><th>Creation</th><th>Zen</th><th>Fecha</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-donaciones-body">
-                        <tr><td colspan="8" class="text-center py-6 text-gray-500">Cargando donaciones...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- HISTORIAL DE GASTOS / USOS -->
-        <div class="bg-[#141126] border border-red-900/50 p-5 rounded-xl shadow-lg space-y-3">
-            <h2 class="text-sm font-bold text-red-400 uppercase">📜 Historial de Usos del Acumulado (Gastos Guild)</h2>
-            <div class="tabla-scroll-box" style="height: 200px !important;">
-                <table class="tabla-items text-center">
-                    <thead>
-                        <tr>
-                            <th style="text-align: left;">Motivo / Uso</th>
-                            <th>Bless</th><th>Soul</th><th>Life</th><th>Chaos</th><th>Creation</th><th>Zen</th><th>Fecha</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-gastos-body">
-                        <tr><td colspan="8" class="text-center py-4 text-gray-500">Sin gastos registrados.</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL REGISTRO DE GASTO -->
-    <div id="modal-gasto" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-[#141126] border border-red-600 p-6 rounded-xl max-w-lg w-full flex flex-col shadow-2xl space-y-3">
-            <h3 class="text-lg font-bold text-red-400 mb-2">📉 Registrar Gasto / Uso de Joyas</h3>
-            <div>
-                <label class="block text-xs uppercase text-purple-300 font-bold mb-1">Motivo (Ej. Se usó para Box of Kundun):</label>
-                <input type="text" id="gastoMotivo" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2.5 rounded text-xs">
-            </div>
-            <div class="grid grid-cols-3 gap-2 text-xs">
-                <div><label class="text-[10px]">Bless:</label><input type="number" id="gastoBless" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
-                <div><label class="text-[10px]">Soul:</label><input type="number" id="gastoSoul" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
-                <div><label class="text-[10px]">Life:</label><input type="number" id="gastoLife" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
-                <div><label class="text-[10px]">Chaos:</label><input type="number" id="gastoChaos" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
-                <div><label class="text-[10px]">Creation:</label><input type="number" id="gastoCreation" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
-                <div><label class="text-[10px]">Zen:</label><input type="number" id="gastoZen" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
-            </div>
-            <div class="flex gap-2 justify-end pt-3">
-                <button onclick="guardarGastoGuild()" class="bg-red-700 hover:bg-red-600 text-white px-4 py-2 rounded text-xs font-bold">Descontar del Banco</button>
-                <button onclick="cerrarModalGasto()" class="bg-gray-800 text-white px-4 py-2 rounded text-xs font-bold">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- SECCIÓN 4: USUARIOS -->
-    <div id="seccion-users-view" class="w-full max-w-7xl space-y-4 hidden">
-        <div class="bg-[#141126] p-6 rounded-xl border border-purple-700">
-            <h2 class="text-lg font-bold text-purple-400 mb-4">👑 Gestión de Usuarios (Pinion)</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
-                <input type="text" id="nuevoUsuario" placeholder="Usuario" class="bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs">
-                <input type="password" id="nuevaPassword" placeholder="Contraseña" class="bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs">
-                <select id="nuevoRol" class="bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs">
-                    <option value="operador">Operador</option><option value="lector">Lector</option>
-                </select>
-                <button onclick="crearUsuario()" class="bg-purple-600 text-white py-2 rounded text-xs font-bold">Crear</button>
-            </div>
-        </div>
-        <div class="tabla-scroll-box">
-            <table class="tabla-items">
-                <thead><tr><th>Usuario</th><th>Rol</th><th>Acción</th></tr></thead>
-                <tbody id="tabla-usuarios-body"><tr><td colspan="3" class="text-center py-4">Cargando...</td></tr></tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- MODAL LOGIN -->
-    <div id="modal-login" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50">
-        <div class="bg-[#141126] border border-purple-600 p-6 rounded-xl w-80 text-center shadow-2xl">
-            <h3 class="text-lg font-bold text-purple-300 mb-4">🔐 Iniciar Sesión</h3>
-            <input type="text" id="loginUser" placeholder="Usuario" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm">
-            <input type="password" id="loginPass" placeholder="Contraseña" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-4 text-sm">
-            <div class="flex gap-2">
-                <button onclick="ejecutarLogin()" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 rounded text-sm">Entrar</button>
-                <button onclick="toggleLoginModal()" class="w-full bg-gray-800 text-gray-400 font-bold py-2 rounded text-sm">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let catalogo = [], miembrosClan = [], sesionAutorizada = false, esAdmin = false;
-
-        async function chequearSesion() {
-            try {
-                const res = await fetch('/api/session');
-                const data = await res.json();
-                if (data.logged_in) {
-                    sesionAutorizada = data.autorizado;
-                    esAdmin = data.es_admin;
-                    const badge = document.getElementById('session-user-badge');
-                    if (badge) badge.innerHTML = `👤 <strong>${data.user}</strong> (${data.rol})`;
-                    const loginBtn = document.getElementById('btn-login-open');
-                    if (loginBtn) loginBtn.outerHTML = `<a href="/logout" class="bg-red-700 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">Salir</a>`;
-                    
-                    if (sesionAutorizada) {
-                        ['panel-carga-manual', 'panel-miembros-crud', 'panel-asistencia-ctrl', 'panel-donacion-crud', 'btn-gasto-modal', 'th-acciones-head', 'th-miembro-acciones'].forEach(id => {
-                            const el = document.getElementById(id);
-                            if (el) el.classList.remove('hidden');
-                        });
-                    }
-                    if (esAdmin) {
-                        ['btn-sec-users', 'admin-backup-buttons'].forEach(id => {
-                            const el = document.getElementById(id);
-                            if (el) el.classList.remove('hidden');
-                        });
-                        cargarUsuarios();
-                    }
-                }
-            } catch(e) { console.error("Error sesión:", e); }
-        }
-
-        function toggleLoginModal() { document.getElementById('modal-login').classList.toggle('hidden'); }
-
-        async function ejecutarLogin() {
-            const username = document.getElementById('loginUser').value;
-            const password = document.getElementById('loginPass').value;
-            const res = await fetch('/login', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            if (res.ok) location.reload();
-            else alert("Credenciales incorrectas");
-        }
-
-        function cambiarSeccion(sec) {
-            ['items', 'clan', 'donaciones', 'users'].forEach(s => {
-                document.getElementById(`seccion-${s}-view`).classList.add('hidden');
-                document.getElementById(`btn-sec-${s}`).className = "bg-gray-800 text-gray-400 px-4 py-2 rounded-lg text-xs font-bold transition";
-            });
-            document.getElementById(`seccion-${sec.toLowerCase()}-view`).classList.remove('hidden');
-            document.getElementById(`btn-sec-${sec.toLowerCase()}`).className = "bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition shadow";
-            
-            if (sec === 'ITEMS') { cargarItems(); }
-            if (sec === 'CLAN') { cargarMiembros(); }
-            if (sec === 'DONACIONES') { cargarMiembros(); cargarAsistenciasRanking(); cargarDonacionesJoyas(); }
-            if (sec === 'USERS') { cargarUsuarios(); }
-        }
-
-        async function cargarItems() {
-            const res = await fetch('/api/items');
-            if (res.ok) {
-                const data = await res.json();
-                catalogo = data.items || [];
-                renderizarTabla(catalogo);
-            }
-        }
-
-        async function cargarMiembros() {
-            const res = await fetch('/api/miembros');
-            if (res.ok) {
-                miembrosClan = await res.json();
-                const selAsist = document.getElementById('asistPjSelect');
-                const selDon = document.getElementById('donPj');
-                const selAsignado = document.getElementById('inputAsignado');
-                let opts = '<option value="">-- Seleccionar Miembro --</option>';
-                miembrosClan.forEach(m => { opts += `<option value="${m.nombre_pj}">${m.nombre_pj} (${m.raza})</option>`; });
-                
-                if (selAsist) selAsist.innerHTML = opts;
-                if (selDon) selDon.innerHTML = opts;
-                if (selAsignado) selAsignado.innerHTML = '<option value="">-- En Baúl --</option>' + opts;
-
-                const tbody = document.getElementById('tabla-clan-body');
-                if (tbody) {
-                    tbody.innerHTML = miembrosClan.map(m => `
-                        <tr>
-                            <td class="font-bold text-white">${m.nombre_pj}</td>
-                            <td><span class="badge-pj">${m.raza}</span></td>
-                            <td>${Array.isArray(m.items_asignados) ? m.items_asignados.map(id => `#${id}`).join(', ') : 'Ninguno'}</td>
-                            <td class="${sesionAutorizada ? 'text-center' : 'hidden'}">
-                                <button onclick="eliminarMiembro(${m.id}, '${m.nombre_pj}')" class="bg-red-950 text-red-300 border border-red-700 px-2 py-1 rounded text-xs font-bold">🗑️</button>
-                            </td>
-                        </tr>
-                    `).join('') || '<tr><td colspan="4" class="text-center py-8 text-gray-500">Sin miembros.</td></tr>';
-                }
-            }
-        }
-
-        function renderizarTabla(items) {
-            const tbody = document.getElementById('tabla-items-body');
-            if (!tbody) return;
-            tbody.innerHTML = items.map(item => `
-                <tr>
-                    <td class="font-mono text-amber-400 font-extrabold text-sm">#${item.id}</td>
-                    <td class="font-bold text-emerald-400">${item.nombre}</td>
-                    <td><span class="badge-pj">${item.tipo}</span></td>
-                    <td>${Array.isArray(item.opciones) ? item.opciones.map(o => `<span class="badge-opt">${o}</span>`).join('') : '-'}</td>
-                    <td class="text-center">${item.asignado_a ? `<span class="bg-indigo-950 text-indigo-200 px-2 py-0.5 rounded text-xs font-bold">${item.asignado_a}</span>` : '<span class="text-gray-500 text-xs">En Baúl</span>'}</td>
-                    <td class="${sesionAutorizada ? 'text-center' : 'hidden'}">
-                        <button onclick="eliminarItem(${item.id})" class="bg-red-950 text-red-300 px-2 py-1 rounded text-xs">🗑️</button>
-                    </td>
-                </tr>
-            `).join('') || '<tr><td colspan="6" class="text-center py-8 text-gray-500">Sin ítems.</td></tr>';
-        }
-
-        async function guardarItemManual(e) {
-            e.preventDefault();
-            const set_base = document.getElementById('inputSetBase').value;
-            const tipo = document.getElementById('inputTipoPieza').value;
-            const baul = document.getElementById('inputBaul').value.trim();
-            const asignado = document.getElementById('inputAsignado').value;
-
-            const res = await fetch('/api/items/agregar-manual', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ set_base, tipo, baul, asignado: asignado || 'Sin asignar', opciones: [] })
-            });
-            if (res.ok) { alert("Ítem guardado."); cargarItems(); }
-        }
-
-        async function eliminarItem(id) {
-            if (!confirm(`¿Eliminar ítem #${id}?`)) return;
-            await fetch('/api/items/eliminar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            cargarItems();
-        }
-
-        async function guardarMiembroClan() {
-            const nombre_pj = document.getElementById('clanPjNombre').value.trim();
-            const raza = document.getElementById('clanPjRaza').value;
-            if (!nombre_pj) return alert("Ingresá el nick.");
-            await fetch('/api/miembros', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre_pj, raza }) });
-            document.getElementById('clanPjNombre').value = '';
-            cargarMiembros();
-        }
-
-        async function eliminarMiembro(id, nombre_pj) {
-            if (!confirm(`¿Eliminar a ${nombre_pj}?`)) return;
-            await fetch('/api/miembros', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            cargarMiembros();
-        }
-
-        // --- ASISTENCIAS RANKING ---
-        async function cargarAsistenciasRanking() {
-            const res = await fetch('/api/asistencias-ranking');
-            if (res.ok) {
-                const data = await res.json();
-                const tbody = document.getElementById('tabla-asistencias-ranking');
-                if (tbody) {
-                    tbody.innerHTML = data.map(row => `
-                        <tr>
-                            <td class="font-bold text-indigo-300">${row.pj_name}</td>
-                            <td style="text-align: right; padding-right: 40px;" class="font-extrabold text-amber-400 text-base">${row.total_asistencias}</td>
-                        </tr>
-                    `).join('') || '<tr><td colspan="2" class="text-center py-4 text-gray-500">Sin asistencias registradas.</td></tr>';
-                }
-            }
-        }
-
-        async function modificarAsistencia(delta) {
-            const pj_name = document.getElementById('asistPjSelect').value;
-            if (!pj_name) return alert("Seleccioná un miembro.");
-            await fetch('/api/asistencias-ranking', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pj_name, delta })
-            });
-            cargarAsistenciasRanking();
-        }
-
-        // --- DONACIONES JOYAS & BANCO ---
-        async function guardarDonacionJoyas() {
-            const pj_name = document.getElementById('donPj').value;
-            if (!pj_name) return alert("Seleccioná un miembro.");
-            const payload = {
-                pj_name,
-                bless: parseInt(document.getElementById('donBless').value) || 0,
-                soul: parseInt(document.getElementById('donSoul').value) || 0,
-                life: parseInt(document.getElementById('donLife').value) || 0,
-                chaos: parseInt(document.getElementById('donChaos').value) || 0,
-                creation: parseInt(document.getElementById('donCreation').value) || 0,
-                zen: parseInt(document.getElementById('donZen').value) || 0
-            };
-            const res = await fetch('/api/donaciones-joyas', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-            });
-            if (res.ok) {
-                alert("¡Donación registrada con éxito!");
-                ['donBless', 'donSoul', 'donLife', 'donChaos', 'donCreation', 'donZen'].forEach(id => document.getElementById(id).value = 0);
-                cargarDonacionesJoyas();
-            }
-        }
-
-        async function cargarDonacionesJoyas() {
-            const res = await fetch('/api/donaciones-joyas');
-            if (res.ok) {
-                const data = await res.json();
-                
-                // Actualizar Banco Guild
-                const b = data.banco_guild;
-                document.getElementById('banco-bless').textContent = b.bless;
-                document.getElementById('banco-soul').textContent = b.soul;
-                document.getElementById('banco-life').textContent = b.life;
-                document.getElementById('banco-chaos').textContent = b.chaos;
-                document.getElementById('banco-creation').textContent = b.creation;
-                document.getElementById('banco-zen').textContent = b.zen.toLocaleString();
-
-                // Tabla Donaciones por miembro
-                document.getElementById('tabla-donaciones-body').innerHTML = data.donaciones.map(d => `
-                    <tr>
-                        <td style="text-align: left;" class="font-bold text-amber-400">${d.pj_name}</td>
-                        <td>${d.bless}</td><td>${d.soul}</td><td>${d.life}</td><td>${d.chaos}</td><td>${d.creation}</td><td>${d.zen.toLocaleString()}</td>
-                        <td class="text-xs text-purple-300">${new Date(d.created_at).toLocaleDateString()}</td>
-                    </tr>
-                `).join('') || '<tr><td colspan="8" class="text-center py-4 text-gray-500">Sin donaciones de joyas.</td></tr>';
-
-                // Tabla Gastos / Usos
-                document.getElementById('tabla-gastos-body').innerHTML = data.gastos.map(g => `
-                    <tr>
-                        <td style="text-align: left;" class="font-bold text-red-400">${g.motivo}</td>
-                        <td>${g.bless}</td><td>${g.soul}</td><td>${g.life}</td><td>${g.chaos}</td><td>${g.creation}</td><td>${g.zen.toLocaleString()}</td>
-                        <td class="text-xs text-purple-300">${new Date(g.created_at).toLocaleDateString()}</td>
-                    </tr>
-                `).join('') || '<tr><td colspan="8" class="text-center py-4 text-gray-500">Sin gastos registrados.</td></tr>';
-            }
-        }
-
-        function abrirModalGasto() { document.getElementById('modal-gasto').classList.remove('hidden'); }
-        function cerrarModalGasto() { document.getElementById('modal-gasto').classList.add('hidden'); }
-
-        async function guardarGastoGuild() {
-            const motivo = document.getElementById('gastoMotivo').value.trim();
-            if (!motivo) return alert("Ingresá el motivo del gasto.");
-            const payload = {
-                motivo,
-                bless: parseInt(document.getElementById('gastoBless').value) || 0,
-                soul: parseInt(document.getElementById('gastoSoul').value) || 0,
-                life: parseInt(document.getElementById('gastoLife').value) || 0,
-                chaos: parseInt(document.getElementById('gastoChaos').value) || 0,
-                creation: parseInt(document.getElementById('gastoCreation').value) || 0,
-                zen: parseInt(document.getElementById('gastoZen').value) || 0
-            };
-            const res = await fetch('/api/guild-gastos', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-            });
-            if (res.ok) {
-                alert("Gasto registrado y descontado del banco.");
-                cerrarModalGasto();
-                cargarDonacionesJoyas();
-            }
-        }
-
-        function descargarBackup() { window.location.href = '/api/backup/exportar'; }
-        async function restaurarBackup(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            if (!confirm("⚠️ ¿Restaurar respaldo? Se sobrescribirán los datos.")) return;
-            const fd = new FormData(); fd.append('file', file);
-            const res = await fetch('/api/backup/importar', { method: 'POST', body: fd });
-            if (res.ok) { alert("¡Restaurado con éxito!"); location.reload(); }
-        }
-
-        async function cargarUsuarios() {
-            const res = await fetch('/api/usuarios');
-            if (res.ok) {
-                const users = await res.json();
-                document.getElementById('tabla-usuarios-body').innerHTML = users.map(u => `
-                    <tr><td class="font-bold">${u.username}</td><td><span class="badge-pj">${u.rol}</span></td>
-                    <td>${u.username.toLowerCase() !== 'pinion' ? `<button onclick="eliminarUsuario(${u.id})" class="bg-red-950 text-red-300 px-2 py-1 rounded text-xs font-bold">🗑️</button>` : ''}</td></tr>
-                `).join('');
-            }
-        }
-
-        async function crearUsuario() {
-            const username = document.getElementById('nuevoUsuario').value.trim();
-            const password = document.getElementById('nuevaPassword').value.trim();
-            const rol = document.getElementById('nuevoRol').value;
-            if (!username || !password) return alert("Completá usuario y contraseña.");
-            await fetch('/api/usuarios', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password, rol }) });
-            document.getElementById('nuevoUsuario').value = ''; document.getElementById('nuevaPassword').value = '';
-            cargarUsuarios();
-        }
-
-        async function eliminarUsuario(id) {
-            if (!confirm("¿Eliminar usuario?")) return;
-            await fetch('/api/usuarios', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            cargarUsuarios();
-        }
-
-        document.addEventListener('DOMContentLoaded', () => { chequearSesion(); cargarItems(); });
-    </script>
-</body>
-</html><!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🛡️ Multiverso - Inventario, Armas, Asistencias & Donaciones</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -798,7 +224,6 @@
                 <div>
                     <label class="block text-xs uppercase text-purple-300 font-bold mb-1">📦 Scroll 2: Tipo de Pieza</label>
                     <select id="filtroTipoPieza" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
-                        <option value="">-- Todos los Tipos --</option>
                         <option value="Armor">Armor (Pechera)</option>
                         <option value="Pants">Pants (Pantalón)</option>
                         <option value="Helm">Helm (Casco)</option>
@@ -916,55 +341,100 @@
 
     <!-- SECCIÓN 3: DONACIONES Y ASISTENCIAS -->
     <div id="seccion-donaciones-view" class="w-full max-w-7xl space-y-6 hidden">
-        <div id="panel-donacion-crud" class="bg-[#141126] border border-amber-600/50 p-5 rounded-xl shadow-lg hidden">
-            <h2 class="text-sm font-bold text-amber-400 mb-3">💎 Registrar Donación o Asistencia por Fecha</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 items-end">
-                <div>
-                    <label class="block text-[11px] text-gray-300 mb-1">REGISTRO:</label>
-                    <select id="regTipo" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs">
-                        <option value="donacion">💎 Donación</option>
-                        <option value="asistencia">⚔️ Asistencia a Invasión</option>
-                    </select>
+        
+        <!-- CUADRO ASISTENCIAS (MAYOR A MENOR + BOTONES) -->
+        <div class="bg-[#141126] border border-indigo-600/50 p-5 rounded-xl shadow-lg space-y-4">
+            <h2 class="text-sm font-bold text-indigo-400 uppercase">⚔️ Asistencias a Invasiones (Ranking)</h2>
+            <div id="panel-asistencia-ctrl" class="flex flex-wrap gap-3 items-center hidden bg-[#0d0a1a] p-3 rounded-lg border border-purple-900">
+                <span class="text-xs text-purple-300 font-bold">Miembro:</span>
+                <select id="asistPjSelect" class="bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs">
+                    <option value="">-- Seleccionar Miembro --</option>
+                </select>
+                <div class="flex gap-2 ml-auto">
+                    <button onclick="modificarAsistencia(1)" class="bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-1.5 rounded text-xs font-bold">➕ Sumar Asistencia</button>
+                    <button onclick="modificarAsistencia(-1)" class="bg-red-900 hover:bg-red-800 text-white px-3 py-1.5 rounded text-xs font-bold">➖ Restar Asistencia</button>
                 </div>
-                <div>
-                    <label class="block text-[11px] text-gray-300 mb-1">MIEMBRO / PJ:</label>
-                    <select id="regPj" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs">
-                        <option value="">-- Seleccionar PJ --</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[11px] text-gray-300 mb-1">DETALLE / EVENTO:</label>
-                    <input type="text" id="regDetalle" placeholder="Ej. Jewel of Bless (5)" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs">
-                </div>
-                <div>
-                    <label class="block text-[11px] text-gray-300 mb-1">FECHA:</label>
-                    <input type="date" id="regFecha" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs">
-                </div>
-                <div>
-                    <button onclick="guardarDonacionAsistencia()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 rounded text-xs transition">💾 Registrar</button>
-                </div>
+            </div>
+            <div class="tabla-scroll-box" style="height: 220px !important;">
+                <table class="tabla-items">
+                    <thead><tr><th>Miembro (PJ)</th><th style="text-align: right; padding-right: 40px;">Asistencias Totales</th></tr></thead>
+                    <tbody id="tabla-asistencias-ranking"><tr><td colspan="2" class="text-center py-4">Cargando ranking...</td></tr></tbody>
+                </table>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="space-y-2">
-                <h3 class="text-sm font-bold text-amber-400">💎 Historial de Donaciones</h3>
-                <div class="tabla-scroll-box" style="height: 350px !important;">
-                    <table class="tabla-items">
-                        <thead><tr><th>Fecha</th><th>PJ</th><th>Donación</th><th>Registrado Por</th><th id="th-donacion-del" class="hidden">Acción</th></tr></thead>
-                        <tbody id="tabla-donaciones-body"><tr><td colspan="5" class="text-center py-4 text-gray-500">Sin donaciones.</td></tr></tbody>
-                    </table>
-                </div>
+        <!-- BANCO GUILD -->
+        <div class="bg-[#141126] border border-amber-600/50 p-5 rounded-xl shadow-lg space-y-3">
+            <div class="flex justify-between items-center">
+                <h2 class="text-sm font-bold text-amber-400 uppercase">🏛️ Banco Guild (Acumulado Neto)</h2>
+                <button onclick="abrirModalGasto()" id="btn-gasto-modal" class="hidden bg-red-700 hover:bg-red-600 text-white px-3 py-1.5 rounded text-xs font-bold">📉 Registrar Uso / Gasto</button>
             </div>
+            <div class="overflow-x-auto">
+                <table class="tabla-items text-center">
+                    <thead><tr><th>Bless</th><th>Soul</th><th>Life</th><th>Chaos</th><th>Creation</th><th>Zen</th></tr></thead>
+                    <tbody>
+                        <tr class="font-bold text-amber-300 text-sm">
+                            <td id="banco-bless">0</td><td id="banco-soul">0</td><td id="banco-life">0</td><td id="banco-chaos">0</td><td id="banco-creation">0</td><td id="banco-zen">0</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-            <div class="space-y-2">
-                <h3 class="text-sm font-bold text-indigo-400">⚔️ Historial de Asistencias a Invasiones</h3>
-                <div class="tabla-scroll-box" style="height: 350px !important;">
-                    <table class="tabla-items">
-                        <thead><tr><th>Fecha</th><th>PJ</th><th>Evento</th><th>Registrado Por</th><th id="th-asistencia-del" class="hidden">Acción</th></tr></thead>
-                        <tbody id="tabla-asistencias-body"><tr><td colspan="5" class="text-center py-4 text-gray-500">Sin asistencias.</td></tr></tbody>
-                    </table>
+        <!-- DONACIÓN POR MIEMBRO -->
+        <div class="bg-[#141126] border border-amber-600/50 p-5 rounded-xl shadow-lg space-y-4">
+            <h2 class="text-sm font-bold text-amber-400 uppercase">💎 Donación por Miembro (Semanal / Acumulado)</h2>
+            <div id="panel-donacion-crud" class="grid grid-cols-2 sm:grid-cols-7 gap-2 items-end hidden bg-[#0d0a1a] p-3 rounded-lg border border-purple-900">
+                <div class="col-span-2">
+                    <label class="block text-[10px] text-gray-300 mb-1">MIEMBRO:</label>
+                    <select id="donPj" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs">
+                        <option value="">-- Seleccionar --</option>
+                    </select>
                 </div>
+                <div><label class="block text-[10px] text-gray-300 mb-1">BLESS:</label><input type="number" id="donBless" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-gray-300 mb-1">SOUL:</label><input type="number" id="donSoul" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-gray-300 mb-1">LIFE:</label><input type="number" id="donLife" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-gray-300 mb-1">CHAOS:</label><input type="number" id="donChaos" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-gray-300 mb-1">CREATION:</label><input type="number" id="donCreation" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
+                <div class="col-span-2"><label class="block text-[10px] text-gray-300 mb-1">ZEN:</label><input type="number" id="donZen" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
+                <div class="col-span-5"><button onclick="guardarDonacionJoyas()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 rounded text-xs transition">💾 Registrar Donación</button></div>
+            </div>
+            <div class="tabla-scroll-box" style="height: 300px !important;">
+                <table class="tabla-items text-center">
+                    <thead><tr><th style="text-align: left;">Miembro</th><th>Bless</th><th>Soul</th><th>Life</th><th>Chaos</th><th>Creation</th><th>Zen</th><th>Fecha</th></tr></thead>
+                    <tbody id="tabla-donaciones-body"><tr><td colspan="8" class="text-center py-6 text-gray-500">Cargando donaciones...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- HISTORIAL DE GASTOS / USOS -->
+        <div class="bg-[#141126] border border-red-900/50 p-5 rounded-xl shadow-lg space-y-3">
+            <h2 class="text-sm font-bold text-red-400 uppercase">📜 Historial de Usos del Acumulado (Gastos Guild)</h2>
+            <div class="tabla-scroll-box" style="height: 200px !important;">
+                <table class="tabla-items text-center">
+                    <thead><tr><th style="text-align: left;">Motivo / Uso</th><th>Bless</th><th>Soul</th><th>Life</th><th>Chaos</th><th>Creation</th><th>Zen</th><th>Fecha</th></tr></thead>
+                    <tbody id="tabla-gastos-body"><tr><td colspan="8" class="text-center py-4 text-gray-500">Sin gastos registrados.</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL REGISTRO DE GASTO -->
+    <div id="modal-gasto" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-[#141126] border border-red-600 p-6 rounded-xl max-w-md w-full flex flex-col shadow-2xl space-y-3">
+            <h3 class="text-lg font-bold text-red-400 mb-2">📉 Registrar Gasto / Uso de Joyas</h3>
+            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">Motivo:</label><input type="text" id="gastoMotivo" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2.5 rounded text-xs"></div>
+            <div class="grid grid-cols-3 gap-2 text-xs">
+                <div><label>Bless:</label><input type="number" id="gastoBless" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
+                <div><label>Soul:</label><input type="number" id="gastoSoul" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
+                <div><label>Life:</label><input type="number" id="gastoLife" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
+                <div><label>Chaos:</label><input type="number" id="gastoChaos" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
+                <div><label>Creation:</label><input type="number" id="gastoCreation" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
+                <div><label>Zen:</label><input type="number" id="gastoZen" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
+            </div>
+            <div class="flex gap-2 justify-end pt-3">
+                <button onclick="guardarGastoGuild()" class="bg-red-700 hover:bg-red-600 text-white px-4 py-2 rounded text-xs font-bold">Descontar</button>
+                <button onclick="cerrarModalGasto()" class="bg-gray-800 text-white px-4 py-2 rounded text-xs font-bold">Cancelar</button>
             </div>
         </div>
     </div>
@@ -995,25 +465,13 @@
         <div class="bg-[#141126] border border-purple-500 p-6 rounded-xl max-w-md w-full flex flex-col shadow-2xl space-y-3">
             <h3 class="text-lg font-bold text-amber-400 mb-2">✏️ Editar Ítem</h3>
             <input type="hidden" id="editOldId">
-            <div>
-                <label class="block text-xs uppercase text-purple-300 font-bold mb-1">ID del Ítem:</label>
-                <input type="number" id="editId" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded text-xs">
-            </div>
-            <div>
-                <label class="block text-xs uppercase text-purple-300 font-bold mb-1">Nombre Completo / Baúl:</label>
-                <input type="text" id="editNombre" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded text-xs">
-            </div>
-            <div>
-                <label class="block text-xs uppercase text-purple-300 font-bold mb-1">Tipo de Pieza:</label>
-                <input type="text" id="editTipo" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded text-xs">
-            </div>
-            <div>
-                <label class="block text-xs uppercase text-purple-300 font-bold mb-1">Asignado a PJ:</label>
-                <input type="text" id="editAsignado" placeholder="Vacío si está en baúl" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded text-xs">
-            </div>
+            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">ID:</label><input type="number" id="editId" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs"></div>
+            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">Nombre / Baúl:</label><input type="text" id="editNombre" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs"></div>
+            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">Tipo:</label><input type="text" id="editTipo" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs"></div>
+            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">Asignado a:</label><input type="text" id="editAsignado" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs"></div>
             <div class="flex gap-2 justify-end pt-2">
-                <button onclick="guardarEdicionItem()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded text-xs font-bold">Guardar Cambios</button>
-                <button onclick="cerrarModalEditar()" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded text-xs font-bold">Cancelar</button>
+                <button onclick="guardarEdicionItem()" class="bg-emerald-600 text-white px-4 py-2 rounded text-xs font-bold">Guardar</button>
+                <button onclick="cerrarModalEditar()" class="bg-gray-800 text-white px-4 py-2 rounded text-xs font-bold">Cancelar</button>
             </div>
         </div>
     </div>
@@ -1025,7 +483,7 @@
             <input type="text" id="loginUser" placeholder="Usuario" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm">
             <input type="password" id="loginPass" placeholder="Contraseña" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-4 text-sm">
             <div class="flex gap-2">
-                <button onclick="ejecutarLogin()" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 rounded text-sm">Entrar</button>
+                <button onclick="ejecutarLogin()" class="w-full bg-purple-700 text-white font-bold py-2 rounded text-sm">Entrar</button>
                 <button onclick="toggleLoginModal()" class="w-full bg-gray-800 text-gray-400 font-bold py-2 rounded text-sm">Cancelar</button>
             </div>
         </div>
@@ -1033,8 +491,6 @@
 
     <script>
         let catalogo = [], miembrosClan = [], sesionAutorizada = false, esAdmin = false;
-        const regFechaInput = document.getElementById('regFecha');
-        if (regFechaInput) regFechaInput.valueAsDate = new Date();
 
         async function chequearSesion() {
             try {
@@ -1049,35 +505,29 @@
                     if (loginBtn) loginBtn.outerHTML = `<a href="/logout" class="bg-red-700 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">Salir</a>`;
                     
                     if (sesionAutorizada) {
-                        const panels = ['panel-carga-manual', 'panel-miembros-crud', 'panel-donacion-crud', 'th-acciones-head', 'th-miembro-acciones'];
-                        panels.forEach(id => {
+                        ['panel-carga-manual', 'panel-miembros-crud', 'panel-asistencia-ctrl', 'panel-donacion-crud', 'btn-gasto-modal', 'th-acciones-head', 'th-miembro-acciones'].forEach(id => {
                             const el = document.getElementById(id);
                             if (el) el.classList.remove('hidden');
                         });
                     }
                     if (esAdmin) {
-                        const adminEls = ['btn-sec-users', 'admin-backup-buttons', 'th-donacion-del', 'th-asistencia-del'];
-                        adminEls.forEach(id => {
+                        ['btn-sec-users', 'admin-backup-buttons'].forEach(id => {
                             const el = document.getElementById(id);
                             if (el) el.classList.remove('hidden');
                         });
                         cargarUsuarios();
                     }
                 }
-            } catch(e) { console.error("Error en sesión:", e); }
+            } catch(e) { console.error("Error sesión:", e); }
         }
 
-        function toggleLoginModal() { 
-            const m = document.getElementById('modal-login');
-            if (m) m.classList.toggle('hidden'); 
-        }
+        function toggleLoginModal() { document.getElementById('modal-login').classList.toggle('hidden'); }
 
         async function ejecutarLogin() {
             const username = document.getElementById('loginUser').value;
             const password = document.getElementById('loginPass').value;
             const res = await fetch('/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
             if (res.ok) location.reload();
@@ -1085,63 +535,56 @@
         }
 
         function cambiarSeccion(sec) {
-            const vistas = ['items', 'clan', 'donaciones', 'users'];
-            vistas.forEach(s => {
-                const view = document.getElementById(`seccion-${s}-view`);
-                const btn = document.getElementById(`btn-sec-${s}`);
-                if (view) view.classList.add('hidden');
-                if (btn) btn.className = "bg-gray-800 text-gray-400 px-4 py-2 rounded-lg text-xs font-bold transition";
+            ['items', 'clan', 'donaciones', 'users'].forEach(s => {
+                document.getElementById(`seccion-${s}-view`).classList.add('hidden');
+                document.getElementById(`btn-sec-${s}`).className = "bg-gray-800 text-gray-400 px-4 py-2 rounded-lg text-xs font-bold transition";
             });
-            
-            const targetView = document.getElementById(`seccion-${sec.toLowerCase()}-view`);
-            const targetBtn = document.getElementById(`btn-sec-${sec.toLowerCase()}`);
-            if (targetView) targetView.classList.remove('hidden');
-            if (targetBtn) targetBtn.className = "bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition shadow";
+            document.getElementById(`seccion-${sec.toLowerCase()}-view`).classList.remove('hidden');
+            document.getElementById(`btn-sec-${sec.toLowerCase()}`).className = "bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition shadow";
             
             if (sec === 'ITEMS') { cargarItems(); }
             if (sec === 'CLAN') { cargarMiembros(); }
-            if (sec === 'DONACIONES') { cargarMiembros(); cargarDonaciones(); cargarAsistencias(); }
+            if (sec === 'DONACIONES') { cargarMiembros(); cargarAsistenciasRanking(); cargarDonacionesJoyas(); }
             if (sec === 'USERS') { cargarUsuarios(); }
         }
 
         async function cargarItems() {
-            try {
-                const res = await fetch('/api/items');
-                if (res.ok) {
-                    const data = await res.json();
-                    catalogo = data.items || [];
-                    aplicarFiltros();
-                }
-            } catch(e) { console.error("Error cargando ítems:", e); }
+            const res = await fetch('/api/items');
+            if (res.ok) {
+                const data = await res.json();
+                catalogo = data.items || [];
+                aplicarFiltros();
+            }
         }
 
         async function cargarMiembros() {
-            try {
-                const res = await fetch('/api/miembros');
-                if (res.ok) {
-                    miembrosClan = await res.json();
-                    const selPj = document.getElementById('regPj');
-                    const selAsignado = document.getElementById('inputAsignado');
-                    let opts = '<option value="">-- Seleccionar PJ --</option>';
-                    miembrosClan.forEach(m => { opts += `<option value="${m.nombre_pj}">${m.nombre_pj} (${m.raza})</option>`; });
-                    if (selPj) selPj.innerHTML = opts;
-                    if (selAsignado) selAsignado.innerHTML = '<option value="">-- Sin asignar (En Baúl) --</option>' + opts;
+            const res = await fetch('/api/miembros');
+            if (res.ok) {
+                miembrosClan = await res.json();
+                const selAsist = document.getElementById('asistPjSelect');
+                const selDon = document.getElementById('donPj');
+                const selAsignado = document.getElementById('inputAsignado');
+                let opts = '<option value="">-- Seleccionar Miembro --</option>';
+                miembrosClan.forEach(m => { opts += `<option value="${m.nombre_pj}">${m.nombre_pj} (${m.raza})</option>`; });
+                
+                if (selAsist) selAsist.innerHTML = opts;
+                if (selDon) selDon.innerHTML = opts;
+                if (selAsignado) selAsignado.innerHTML = '<option value="">-- En Baúl --</option>' + opts;
 
-                    const tbody = document.getElementById('tabla-clan-body');
-                    if (tbody) {
-                        tbody.innerHTML = miembrosClan.map(m => `
-                            <tr>
-                                <td class="font-bold text-white">${m.nombre_pj}</td>
-                                <td><span class="badge-pj">${m.raza}</span></td>
-                                <td>${Array.isArray(m.items_asignados) ? m.items_asignados.map(id => `#${id}`).join(', ') : 'Ninguno'}</td>
-                                <td class="${sesionAutorizada ? 'text-center' : 'hidden'}">
-                                    <button onclick="eliminarMiembro(${m.id}, '${m.nombre_pj}')" class="bg-red-950 text-red-300 border border-red-700 px-2 py-1 rounded text-xs font-bold">🗑️</button>
-                                </td>
-                            </tr>
-                        `).join('') || '<tr><td colspan="4" class="text-center py-8 text-gray-500">Sin miembros registrados.</td></tr>';
-                    }
+                const tbody = document.getElementById('tabla-clan-body');
+                if (tbody) {
+                    tbody.innerHTML = miembrosClan.map(m => `
+                        <tr>
+                            <td class="font-bold text-white">${m.nombre_pj}</td>
+                            <td><span class="badge-pj">${m.raza}</span></td>
+                            <td>${Array.isArray(m.items_asignados) ? m.items_asignados.map(id => `#${id}`).join(', ') : 'Ninguno'}</td>
+                            <td class="${sesionAutorizada ? 'text-center' : 'hidden'}">
+                                <button onclick="eliminarMiembro(${m.id}, '${m.nombre_pj}')" class="bg-red-950 text-red-300 border border-red-700 px-2 py-1 rounded text-xs font-bold">🗑️</button>
+                            </td>
+                        </tr>
+                    `).join('') || '<tr><td colspan="4" class="text-center py-8 text-gray-500">Sin miembros.</td></tr>';
                 }
-            } catch(e) { console.error("Error cargando miembros:", e); }
+            }
         }
 
         function limpiarFiltros() {
@@ -1182,36 +625,26 @@
             const tbody = document.getElementById('tabla-items-body');
             if (!tbody) return;
             if (!items.length) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500">Sin registros con estos filtros.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500">Sin registros.</td></tr>';
                 return;
             }
             tbody.innerHTML = items.map(item => {
-                const opcionesLista = Array.isArray(item.opciones) ? item.opciones : [];
-                const opcionesBadges = opcionesLista.map(opt => `<span class="badge-opt">${opt}</span>`).join('');
-                
-                let asignadoHTML = `<span class="text-gray-500 text-xs">Disponible (En Baúl)</span>`;
-                if (item.asignado_a) {
-                    asignadoHTML = `<span class="bg-indigo-950 border border-indigo-500 text-indigo-200 px-2 py-0.5 rounded text-xs font-bold">${item.asignado_a}</span>`;
-                }
-
-                let accionesHTML = '';
-                if (sesionAutorizada) {
-                    accionesHTML = `
-                        <td class="text-center space-x-1">
-                            <button onclick="abrirModalEditar(${item.id})" class="bg-blue-950 hover:bg-blue-900 text-blue-300 border border-blue-700 px-2 py-1 rounded text-xs font-bold" title="Editar">✏️</button>
-                            <button onclick="eliminarItem(${item.id})" class="bg-red-950 hover:bg-red-900 text-red-300 border border-red-700 px-2 py-1 rounded text-xs font-bold" title="Borrar">🗑️</button>
-                        </td>
-                    `;
-                }
+                const opcionesBadges = Array.isArray(item.opciones) ? item.opciones.map(opt => `<span class="badge-opt">${opt}</span>`).join('') : '-';
+                let asignadoHTML = item.asignado_a ? `<span class="bg-indigo-950 text-indigo-200 px-2 py-0.5 rounded text-xs font-bold">${item.asignado_a}</span>` : '<span class="text-gray-500 text-xs">En Baúl</span>';
+                let accionesHTML = sesionAutorizada ? `
+                    <td class="text-center space-x-1">
+                        <button onclick="abrirModalEditar(${item.id})" class="bg-blue-950 text-blue-300 border border-blue-700 px-2 py-1 rounded text-xs font-bold">✏️</button>
+                        <button onclick="eliminarItem(${item.id})" class="bg-red-950 text-red-300 border border-red-700 px-2 py-1 rounded text-xs font-bold">🗑️</button>
+                    </td>` : '';
 
                 return `
                     <tr>
                         <td class="font-mono text-amber-400 font-extrabold text-sm">#${item.id}</td>
                         <td class="font-bold text-emerald-400">${item.nombre}</td>
                         <td><span class="badge-pj">${item.tipo}</span></td>
-                        <td>${opcionesBadges || '-'}</td>
+                        <td>${opcionesBadges}</td>
                         <td class="text-center">${asignadoHTML}</td>
-                        ${sesionAutorizada ? accionesHTML : ''}
+                        ${accionesHTML}
                     </tr>
                 `;
             }).join('');
@@ -1228,9 +661,7 @@
             document.getElementById('modal-editar-item').classList.remove('hidden');
         }
 
-        function cerrarModalEditar() {
-            document.getElementById('modal-editar-item').classList.add('hidden');
-        }
+        function cerrarModalEditar() { document.getElementById('modal-editar-item').classList.add('hidden'); }
 
         async function guardarEdicionItem() {
             const old_id = document.getElementById('editOldId').value;
@@ -1238,23 +669,15 @@
             const nombre = document.getElementById('editNombre').value.trim();
             const tipo = document.getElementById('editTipo').value.trim();
             const asignado_a = document.getElementById('editAsignado').value.trim();
-
             const itemOriginal = catalogo.find(x => x.id == old_id);
             const opciones = itemOriginal ? itemOriginal.opciones : [];
 
             const res = await fetch('/api/items/editar', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ old_id, new_id, nombre, tipo, opciones, asignado_a })
             });
-            if (res.ok) {
-                alert("¡Ítem actualizado con éxito!");
-                cerrarModalEditar();
-                cargarItems();
-            } else {
-                const err = await res.json();
-                alert("Error: " + err.error);
-            }
+            if (res.ok) { alert("¡Ítem actualizado!"); cerrarModalEditar(); cargarItems(); }
+            else { const err = await res.json(); alert("Error: " + err.error); }
         }
 
         async function guardarItemManual(e) {
@@ -1264,25 +687,19 @@
             const baul = document.getElementById('inputBaul').value.trim();
             const asignado = document.getElementById('inputAsignado').value;
             const custom_id = document.getElementById('inputCustomId').value.trim();
-
             const opciones = [];
             document.querySelectorAll('input[name="chkOpciones"]:checked').forEach(chk => opciones.push(chk.value));
 
             const res = await fetch('/api/items/agregar-manual', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ set_base, tipo, baul, asignado: asignado || 'Sin asignar', custom_id, opciones })
             });
             if (res.ok) {
-                alert("¡Ítem guardado con éxito!");
-                document.getElementById('inputBaul').value = '';
-                document.getElementById('inputCustomId').value = '';
+                alert("¡Ítem guardado!");
+                document.getElementById('inputBaul').value = ''; document.getElementById('inputCustomId').value = '';
                 document.querySelectorAll('input[name="chkOpciones"]').forEach(chk => chk.checked = false);
                 cargarItems();
-            } else {
-                const err = await res.json();
-                alert("Error: " + err.error);
-            }
+            } else { const err = await res.json(); alert("Error: " + err.error); }
         }
 
         async function eliminarItem(id) {
@@ -1295,139 +712,134 @@
             const nombre_pj = document.getElementById('clanPjNombre').value.trim();
             const raza = document.getElementById('clanPjRaza').value;
             if (!nombre_pj) return alert("Ingresá el nick.");
-            const res = await fetch('/api/miembros', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre_pj, raza }) });
-            if (res.ok) {
-                document.getElementById('clanPjNombre').value = '';
-                cargarMiembros();
-            } else {
-                const err = await res.json();
-                alert("Error: " + err.error);
-            }
+            await fetch('/api/miembros', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre_pj, raza }) });
+            document.getElementById('clanPjNombre').value = '';
+            cargarMiembros();
         }
 
         async function eliminarMiembro(id, nombre_pj) {
-            if (!confirm(`¿Eliminar al miembro ${nombre_pj}?`)) return;
+            if (!confirm(`¿Eliminar a ${nombre_pj}?`)) return;
             await fetch('/api/miembros', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
             cargarMiembros();
         }
 
-        async function guardarDonacionAsistencia() {
-            const tipo = document.getElementById('regTipo').value;
-            const pj_name = document.getElementById('regPj').value;
-            const detalle = document.getElementById('regDetalle').value.trim();
-            const fecha = document.getElementById('regFecha').value;
-
-            if (!pj_name) return alert("Seleccioná un PJ.");
-
-            if (tipo === 'donacion') {
-                if (!detalle) return alert("Ingresá el detalle de la donación.");
-                await fetch('/api/donaciones', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pj_name, tipo_donacion: detalle, cantidad: 1 })
-                });
-                cargarDonaciones();
-            } else {
-                await fetch('/api/asistencias', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pj_name, evento: detalle || 'Invasión', fecha })
-                });
-                cargarAsistencias();
+        // ASISTENCIAS RANKING
+        async function cargarAsistenciasRanking() {
+            const res = await fetch('/api/asistencias-ranking');
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('tabla-asistencias-ranking').innerHTML = data.map(row => `
+                    <tr>
+                        <td class="font-bold text-indigo-300">${row.pj_name}</td>
+                        <td style="text-align: right; padding-right: 40px;" class="font-extrabold text-amber-400 text-base">${row.total_asistencias}</td>
+                    </tr>
+                `).join('') || '<tr><td colspan="2" class="text-center py-4 text-gray-500">Sin asistencias.</td></tr>';
             }
-            document.getElementById('regDetalle').value = '';
-            alert("¡Registrado con éxito!");
         }
 
-        async function cargarDonaciones() {
-            try {
-                const res = await fetch('/api/donaciones');
-                if (res.ok) {
-                    donacionesList = await res.json();
-                    const tbody = document.getElementById('tabla-donaciones-body');
-                    if (tbody) {
-                        tbody.innerHTML = donacionesList.map(d => `
-                            <tr>
-                                <td class="text-xs text-purple-300">${new Date(d.created_at).toLocaleDateString()}</td>
-                                <td class="font-bold text-amber-400">${d.pj_name}</td>
-                                <td>${d.tipo_donacion}</td>
-                                <td class="text-xs text-gray-400">${d.registrado_por}</td>
-                                <td class="${esAdmin ? '' : 'hidden'}"><button onclick="eliminarDonacion(${d.id})" class="bg-red-950 text-red-300 px-2 py-0.5 rounded text-xs font-bold">🗑️</button></td>
-                            </tr>
-                        `).join('') || '<tr><td colspan="5" class="text-center py-4 text-gray-500">Sin donaciones.</td></tr>';
-                    }
-                }
-            } catch(e) { console.error("Error cargando donaciones:", e); }
+        async function modificarAsistencia(delta) {
+            const pj_name = document.getElementById('asistPjSelect').value;
+            if (!pj_name) return alert("Seleccioná un miembro.");
+            await fetch('/api/asistencias-ranking', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pj_name, delta })
+            });
+            cargarAsistenciasRanking();
         }
 
-        async function eliminarDonacion(id) {
-            if (!confirm("¿Eliminar registro de donación?")) return;
-            await fetch('/api/donaciones', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            cargarDonaciones();
+        // DONACIONES JOYAS & BANCO
+        async function guardarDonacionJoyas() {
+            const pj_name = document.getElementById('donPj').value;
+            if (!pj_name) return alert("Seleccioná un miembro.");
+            const payload = {
+                pj_name,
+                bless: parseInt(document.getElementById('donBless').value) || 0,
+                soul: parseInt(document.getElementById('donSoul').value) || 0,
+                life: parseInt(document.getElementById('donLife').value) || 0,
+                chaos: parseInt(document.getElementById('donChaos').value) || 0,
+                creation: parseInt(document.getElementById('donCreation').value) || 0,
+                zen: parseInt(document.getElementById('donZen').value) || 0
+            };
+            const res = await fetch('/api/donaciones-joyas', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                alert("¡Donación registrada!");
+                ['donBless', 'donSoul', 'donLife', 'donChaos', 'donCreation', 'donZen'].forEach(id => document.getElementById(id).value = 0);
+                cargarDonacionesJoyas();
+            }
         }
 
-        async function cargarAsistencias() {
-            try {
-                const res = await fetch('/api/asistencias');
-                if (res.ok) {
-                    asistenciasList = await res.json();
-                    const tbody = document.getElementById('tabla-asistencias-body');
-                    if (tbody) {
-                        tbody.innerHTML = asistenciasList.map(a => `
-                            <tr>
-                                <td class="text-xs text-purple-300">${a.fecha}</td>
-                                <td class="font-bold text-indigo-300">${a.pj_name}</td>
-                                <td>${a.evento}</td>
-                                <td class="text-xs text-gray-400">${a.registrado_por}</td>
-                                <td class="${esAdmin ? '' : 'hidden'}"><button onclick="eliminarAsistencia(${a.id})" class="bg-red-950 text-red-300 px-2 py-0.5 rounded text-xs font-bold">🗑️</button></td>
-                            </tr>
-                        `).join('') || '<tr><td colspan="5" class="text-center py-4 text-gray-500">Sin asistencias.</td></tr>';
-                    }
-                }
-            } catch(e) { console.error("Error cargando asistencias:", e); }
+        async function cargarDonacionesJoyas() {
+            const res = await fetch('/api/donaciones-joyas');
+            if (res.ok) {
+                const data = await res.json();
+                const b = data.banco_guild;
+                document.getElementById('banco-bless').textContent = b.bless;
+                document.getElementById('banco-soul').textContent = b.soul;
+                document.getElementById('banco-life').textContent = b.life;
+                document.getElementById('banco-chaos').textContent = b.chaos;
+                document.getElementById('banco-creation').textContent = b.creation;
+                document.getElementById('banco-zen').textContent = b.zen.toLocaleString();
+
+                document.getElementById('tabla-donaciones-body').innerHTML = data.donaciones.map(d => `
+                    <tr>
+                        <td style="text-align: left;" class="font-bold text-amber-400">${d.pj_name}</td>
+                        <td>${d.bless}</td><td>${d.soul}</td><td>${d.life}</td><td>${d.chaos}</td><td>${d.creation}</td><td>${d.zen.toLocaleString()}</td>
+                        <td class="text-xs text-purple-300">${new Date(d.created_at).toLocaleDateString()}</td>
+                    </tr>
+                `).join('') || '<tr><td colspan="8" class="text-center py-4 text-gray-500">Sin donaciones.</td></tr>';
+
+                document.getElementById('tabla-gastos-body').innerHTML = data.gastos.map(g => `
+                    <tr>
+                        <td style="text-align: left;" class="font-bold text-red-400">${g.motivo}</td>
+                        <td>${g.bless}</td><td>${g.soul}</td><td>${g.life}</td><td>${g.chaos}</td><td>${g.creation}</td><td>${g.zen.toLocaleString()}</td>
+                        <td class="text-xs text-purple-300">${new Date(g.created_at).toLocaleDateString()}</td>
+                    </tr>
+                `).join('') || '<tr><td colspan="8" class="text-center py-4 text-gray-500">Sin gastos.</td></tr>';
+            }
         }
 
-        async function eliminarAsistencia(id) {
-            if (!confirm("¿Eliminar registro de asistencia?")) return;
-            await fetch('/api/asistencias', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            cargarAsistencias();
+        function abrirModalGasto() { document.getElementById('modal-gasto').classList.remove('hidden'); }
+        function cerrarModalGasto() { document.getElementById('modal-gasto').classList.add('hidden'); }
+
+        async function guardarGastoGuild() {
+            const motivo = document.getElementById('gastoMotivo').value.trim();
+            if (!motivo) return alert("Ingresá el motivo.");
+            const payload = {
+                motivo,
+                bless: parseInt(document.getElementById('gastoBless').value) || 0,
+                soul: parseInt(document.getElementById('gastoSoul').value) || 0,
+                life: parseInt(document.getElementById('gastoLife').value) || 0,
+                chaos: parseInt(document.getElementById('gastoChaos').value) || 0,
+                creation: parseInt(document.getElementById('gastoCreation').value) || 0,
+                zen: parseInt(document.getElementById('gastoZen').value) || 0
+            };
+            const res = await fetch('/api/guild-gastos', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+            });
+            if (res.ok) { alert("Gasto registrado."); cerrarModalGasto(); cargarDonacionesJoyas(); }
         }
 
         function descargarBackup() { window.location.href = '/api/backup/exportar'; }
-
         async function restaurarBackup(event) {
             const file = event.target.files[0];
             if (!file) return;
-            if (!confirm("⚠️ ATENCIÓN: Restaurar un respaldo sobrescribirá los datos actuales. ¿Continuar?")) return;
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            const res = await fetch('/api/backup/importar', { method: 'POST', body: formData });
-            if (res.ok) {
-                alert("¡Base de datos restaurada con éxito!");
-                location.reload();
-            } else {
-                const err = await res.json();
-                alert("Error al restaurar: " + err.error);
-            }
+            if (!confirm("⚠️ ¿Restaurar respaldo? Se sobrescribirán los datos.")) return;
+            const fd = new FormData(); fd.append('file', file);
+            const res = await fetch('/api/backup/importar', { method: 'POST', body: fd });
+            if (res.ok) { alert("¡Restaurado con éxito!"); location.reload(); }
         }
 
         async function cargarUsuarios() {
-            try {
-                const res = await fetch('/api/usuarios');
-                if (res.ok) {
-                    const users = await res.json();
-                    const tbody = document.getElementById('tabla-usuarios-body');
-                    if (tbody) {
-                        tbody.innerHTML = users.map(u => `
-                            <tr>
-                                <td class="font-bold">${u.username}</td>
-                                <td><span class="badge-pj">${u.rol}</span></td>
-                                <td>${u.username.toLowerCase() !== 'pinion' ? `<button onclick="eliminarUsuario(${u.id})" class="bg-red-950 text-red-300 px-2 py-1 rounded text-xs font-bold">🗑️</button>` : ''}</td>
-                            </tr>
-                        `).join('');
-                    }
-                }
-            } catch(e) { console.error("Error cargando usuarios:", e); }
+            const res = await fetch('/api/usuarios');
+            if (res.ok) {
+                const users = await res.json();
+                document.getElementById('tabla-usuarios-body').innerHTML = users.map(u => `
+                    <tr><td class="font-bold">${u.username}</td><td><span class="badge-pj">${u.rol}</span></td>
+                    <td>${u.username.toLowerCase() !== 'pinion' ? `<button onclick="eliminarUsuario(${u.id})" class="bg-red-950 text-red-300 px-2 py-1 rounded text-xs font-bold">🗑️</button>` : ''}</td></tr>
+                `).join('');
+            }
         }
 
         async function crearUsuario() {
@@ -1435,16 +847,9 @@
             const password = document.getElementById('nuevaPassword').value.trim();
             const rol = document.getElementById('nuevoRol').value;
             if (!username || !password) return alert("Completá usuario y contraseña.");
-            const res = await fetch('/api/usuarios', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password, rol }) });
-            if (res.ok) {
-                alert("Usuario creado con éxito.");
-                document.getElementById('nuevoUsuario').value = '';
-                document.getElementById('nuevaPassword').value = '';
-                cargarUsuarios();
-            } else {
-                const err = await res.json();
-                alert("Error: " + err.error);
-            }
+            await fetch('/api/usuarios', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password, rol }) });
+            document.getElementById('nuevoUsuario').value = ''; document.getElementById('nuevaPassword').value = '';
+            cargarUsuarios();
         }
 
         async function eliminarUsuario(id) {
@@ -1453,10 +858,7 @@
             cargarUsuarios();
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            chequearSesion();
-            cargarItems();
-        });
+        document.addEventListener('DOMContentLoaded', () => { chequearSesion(); cargarItems(); });
     </script>
 </body>
 </html>
