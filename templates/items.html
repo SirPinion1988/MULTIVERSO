@@ -294,7 +294,7 @@
                         <th style="width: 140px;">Pieza</th>
                         <th>Opciones Principales</th>
                         <th style="width: 220px; text-align: center;">Asignado a</th>
-                        <th style="width: 90px; text-align: center;" id="th-acciones-head" class="hidden">Borrar</th>
+                        <th style="width: 90px; text-align: center;" id="th-acciones-head" class="hidden">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-items-body">
@@ -334,8 +334,8 @@
 
         <div class="tabla-scroll-box">
             <table class="tabla-items">
-                <thead><tr><th>Nick del PJ</th><th>Clase / Raza</th><th>Ítems Asignados</th></tr></thead>
-                <tbody id="tabla-clan-body"><tr><td colspan="3" class="text-center py-8 text-gray-500">Sin miembros.</td></tr></tbody>
+                <thead><tr><th>Nick del PJ</th><th>Clase / Raza</th><th>Ítems Asignados</th><th id="th-miembro-acciones" class="hidden text-center">Acción</th></tr></thead>
+                <tbody id="tabla-clan-body"><tr><td colspan="4" class="text-center py-8 text-gray-500">Sin miembros.</td></tr></tbody>
             </table>
         </div>
     </div>
@@ -377,8 +377,8 @@
                 <h3 class="text-sm font-bold text-amber-400">💎 Historial de Donaciones</h3>
                 <div class="tabla-scroll-box" style="height: 350px !important;">
                     <table class="tabla-items">
-                        <thead><tr><th>Fecha</th><th>PJ</th><th>Donación</th><th>Registrado Por</th></tr></thead>
-                        <tbody id="tabla-donaciones-body"><tr><td colspan="4" class="text-center py-4 text-gray-500">Sin donaciones.</td></tr></tbody>
+                        <thead><tr><th>Fecha</th><th>PJ</th><th>Donación</th><th>Registrado Por</th><th id="th-donacion-del" class="hidden">Acción</th></tr></thead>
+                        <tbody id="tabla-donaciones-body"><tr><td colspan="5" class="text-center py-4 text-gray-500">Sin donaciones.</td></tr></tbody>
                     </table>
                 </div>
             </div>
@@ -387,8 +387,8 @@
                 <h3 class="text-sm font-bold text-indigo-400">⚔️ Historial de Asistencias a Invasiones</h3>
                 <div class="tabla-scroll-box" style="height: 350px !important;">
                     <table class="tabla-items">
-                        <thead><tr><th>Fecha</th><th>PJ</th><th>Evento</th><th>Registrado Por</th></tr></thead>
-                        <tbody id="tabla-asistencias-body"><tr><td colspan="4" class="text-center py-4 text-gray-500">Sin asistencias.</td></tr></tbody>
+                        <thead><tr><th>Fecha</th><th>PJ</th><th>Evento</th><th>Registrado Por</th><th id="th-asistencia-del" class="hidden">Acción</th></tr></thead>
+                        <tbody id="tabla-asistencias-body"><tr><td colspan="5" class="text-center py-4 text-gray-500">Sin asistencias.</td></tr></tbody>
                     </table>
                 </div>
             </div>
@@ -413,6 +413,34 @@
                 <thead><tr><th>Usuario</th><th>Rol</th><th>Acción</th></tr></thead>
                 <tbody id="tabla-usuarios-body"><tr><td colspan="3" class="text-center py-4">Cargando...</td></tr></tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- MODAL EDITAR ÍTEM -->
+    <div id="modal-editar-item" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-[#141126] border border-purple-500 p-6 rounded-xl max-w-md w-full flex flex-col shadow-2xl space-y-3">
+            <h3 class="text-lg font-bold text-amber-400 mb-2">✏️ Editar Ítem</h3>
+            <input type="hidden" id="editOldId">
+            <div>
+                <label class="block text-xs uppercase text-purple-300 font-bold mb-1">ID del Ítem:</label>
+                <input type="number" id="editId" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded text-xs">
+            </div>
+            <div>
+                <label class="block text-xs uppercase text-purple-300 font-bold mb-1">Nombre Completo / Baúl:</label>
+                <input type="text" id="editNombre" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded text-xs">
+            </div>
+            <div>
+                <label class="block text-xs uppercase text-purple-300 font-bold mb-1">Tipo de Pieza:</label>
+                <input type="text" id="editTipo" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded text-xs">
+            </div>
+            <div>
+                <label class="block text-xs uppercase text-purple-300 font-bold mb-1">Asignado a PJ:</label>
+                <input type="text" id="editAsignado" placeholder="Vacío si está en baúl" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded text-xs">
+            </div>
+            <div class="flex gap-2 justify-end pt-2">
+                <button onclick="guardarEdicionItem()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded text-xs font-bold">Guardar Cambios</button>
+                <button onclick="cerrarModalEditar()" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded text-xs font-bold">Cancelar</button>
+            </div>
         </div>
     </div>
 
@@ -447,10 +475,13 @@
                         document.getElementById('panel-miembros-crud').classList.remove('hidden');
                         document.getElementById('panel-donacion-crud').classList.remove('hidden');
                         document.getElementById('th-acciones-head').classList.remove('hidden');
+                        document.getElementById('th-miembro-acciones').classList.remove('hidden');
                     }
                     if (esAdmin) {
                         document.getElementById('btn-sec-users').classList.remove('hidden');
                         document.getElementById('admin-backup-buttons').classList.remove('hidden');
+                        document.getElementById('th-donacion-del').classList.remove('hidden');
+                        document.getElementById('th-asistencia-del').classList.remove('hidden');
                         cargarUsuarios();
                     }
                 }
@@ -506,8 +537,11 @@
                         <td class="font-bold text-white">${m.nombre_pj}</td>
                         <td><span class="badge-pj">${m.raza}</span></td>
                         <td>${Array.isArray(m.items_asignados) ? m.items_asignados.map(id => `#${id}`).join(', ') : 'Ninguno'}</td>
+                        <td class="${sesionAutorizada ? 'text-center' : 'hidden'}">
+                            <button onclick="eliminarMiembro(${m.id}, '${m.nombre_pj}')" class="bg-red-950 text-red-300 border border-red-700 px-2 py-1 rounded text-xs">🗑️</button>
+                        </td>
                     </tr>
-                `).join('') || '<tr><td colspan="3" class="text-center py-8 text-gray-500">Sin miembros.</td></tr>';
+                `).join('') || '<tr><td colspan="4" class="text-center py-8 text-gray-500">Sin miembros.</td></tr>';
             }
         }
 
@@ -560,9 +594,14 @@
                     asignadoHTML = `<span class="bg-indigo-950 border border-indigo-500 text-indigo-200 px-2 py-0.5 rounded text-xs font-bold">${item.asignado_a}</span>`;
                 }
 
-                let borrarHTML = '';
+                let accionesHTML = '';
                 if (sesionAutorizada) {
-                    borrarHTML = `<td class="text-center"><button onclick="eliminarItem(${item.id})" class="bg-red-950 hover:bg-red-900 text-red-300 border border-red-700 px-2 py-1 rounded text-xs font-bold">🗑️</button></td>`;
+                    accionesHTML = `
+                        <td class="text-center space-x-1">
+                            <button onclick="abrirModalEditar(${item.id})" class="bg-blue-950 hover:bg-blue-900 text-blue-300 border border-blue-700 px-2 py-1 rounded text-xs font-bold" title="Editar">✏️</button>
+                            <button onclick="eliminarItem(${item.id})" class="bg-red-950 hover:bg-red-900 text-red-300 border border-red-700 px-2 py-1 rounded text-xs font-bold" title="Borrar">🗑️</button>
+                        </td>
+                    `;
                 }
 
                 return `
@@ -572,10 +611,50 @@
                         <td><span class="badge-pj">${item.tipo}</span></td>
                         <td>${opcionesBadges || '-'}</td>
                         <td class="text-center">${asignadoHTML}</td>
-                        ${sesionAutorizada ? borrarHTML : ''}
+                        ${sesionAutorizada ? accionesHTML : ''}
                     </tr>
                 `;
             }).join('');
+        }
+
+        function abrirModalEditar(id) {
+            const item = catalogo.find(x => x.id === id);
+            if (!item) return;
+            document.getElementById('editOldId').value = item.id;
+            document.getElementById('editId').value = item.id;
+            document.getElementById('editNombre').value = item.nombre;
+            document.getElementById('editTipo').value = item.tipo;
+            document.getElementById('editAsignado').value = item.asignado_a || '';
+            document.getElementById('modal-editar-item').classList.remove('hidden');
+        }
+
+        function cerrarModalEditar() {
+            document.getElementById('modal-editar-item').classList.add('hidden');
+        }
+
+        async function guardarEdicionItem() {
+            const old_id = document.getElementById('editOldId').value;
+            const new_id = document.getElementById('editId').value;
+            const nombre = document.getElementById('editNombre').value.trim();
+            const tipo = document.getElementById('editTipo').value.trim();
+            const asignado_a = document.getElementById('editAsignado').value.trim();
+
+            const itemOriginal = catalogo.find(x => x.id == old_id);
+            const opciones = itemOriginal ? itemOriginal.opciones : [];
+
+            const res = await fetch('/api/items/editar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ old_id, new_id, nombre, tipo, opciones, asignado_a })
+            });
+            if (res.ok) {
+                alert("¡Ítem actualizado con éxito!");
+                cerrarModalEditar();
+                cargarItems();
+            } else {
+                const err = await res.json();
+                alert("Error: " + err.error);
+            }
         }
 
         async function guardarItemManual(e) {
@@ -617,8 +696,19 @@
             const nombre_pj = document.getElementById('clanPjNombre').value.trim();
             const raza = document.getElementById('clanPjRaza').value;
             if (!nombre_pj) return alert("Ingresá el nick.");
-            await fetch('/api/miembros', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre_pj, raza }) });
-            document.getElementById('clanPjNombre').value = '';
+            const res = await fetch('/api/miembros', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre_pj, raza }) });
+            if (res.ok) {
+                document.getElementById('clanPjNombre').value = '';
+                cargarMiembros();
+            } else {
+                const err = await res.json();
+                alert("Error: " + err.error);
+            }
+        }
+
+        async function eliminarMiembro(id, nombre_pj) {
+            if (!confirm(`¿Eliminar al miembro ${nombre_pj}?`)) return;
+            await fetch('/api/miembros', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
             cargarMiembros();
         }
 
@@ -658,9 +748,16 @@
                         <td class="font-bold text-amber-400">${d.pj_name}</td>
                         <td>${d.tipo_donacion}</td>
                         <td class="text-xs text-gray-400">${d.registrado_por}</td>
+                        <td class="${esAdmin ? '' : 'hidden'}"><button onclick="eliminarDonacion(${d.id})" class="bg-red-950 text-red-300 px-2 py-0.5 rounded text-xs">🗑️</button></td>
                     </tr>
-                `).join('') || '<tr><td colspan="4" class="text-center py-4 text-gray-500">Sin donaciones.</td></tr>';
+                `).join('') || '<tr><td colspan="5" class="text-center py-4 text-gray-500">Sin donaciones.</td></tr>';
             }
+        }
+
+        async function eliminarDonacion(id) {
+            if (!confirm("¿Eliminar registro de donación?")) return;
+            await fetch('/api/donaciones', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+            cargarDonaciones();
         }
 
         async function cargarAsistencias() {
@@ -673,9 +770,16 @@
                         <td class="font-bold text-indigo-300">${a.pj_name}</td>
                         <td>${a.evento}</td>
                         <td class="text-xs text-gray-400">${a.registrado_por}</td>
+                        <td class="${esAdmin ? '' : 'hidden'}"><button onclick="eliminarAsistencia(${a.id})" class="bg-red-950 text-red-300 px-2 py-0.5 rounded text-xs">🗑️</button></td>
                     </tr>
-                `).join('') || '<tr><td colspan="4" class="text-center py-4 text-gray-500">Sin asistencias.</td></tr>';
+                `).join('') || '<tr><td colspan="5" class="text-center py-4 text-gray-500">Sin asistencias.</td></tr>';
             }
+        }
+
+        async function eliminarAsistencia(id) {
+            if (!confirm("¿Eliminar registro de asistencia?")) return;
+            await fetch('/api/asistencias', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+            cargarAsistencias();
         }
 
         function descargarBackup() { window.location.href = '/api/backup/exportar'; }
