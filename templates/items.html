@@ -179,20 +179,9 @@
                             <option value="Small Shield">Small Shield</option><option value="Buckler Shield">Buckler Shield</option><option value="Horn Shield">Horn Shield</option><option value="Kite Shield">Kite Shield</option><option value="Large Round Shield">Large Round Shield</option><option value="Skull Shield">Skull Shield</option><option value="Scale Shield">Scale Shield</option><option value="Plate Shield">Plate Shield</option><option value="Big Shield">Big Shield</option><option value="Spiked Shield">Spiked Shield</option><option value="Dragon Slayer Shield">Dragon Slayer Shield</option><option value="Tower Shield">Tower Shield</option><option value="Serpent Shield">Serpent Shield</option><option value="Bronze Shield">Bronze Shield</option><option value="Death Shield">Death Shield</option><option value="Dragon Shield">Dragon Shield</option><option value="Luminary Shield">Luminary Shield</option><option value="Elite Dragon Shield">Elite Dragon Shield</option><option value="Nightfall Shield">Nightfall Shield</option><option value="Phoenix Shield">Phoenix Shield</option><option value="Darkreaver Shield">Darkreaver Shield</option><option value="Flare Guard Shield">Flare Guard Shield</option><option value="Pyroguard Shield">Pyroguard Shield</option><option value="Spectral Shield">Spectral Shield</option><option value="Wraithguard Shield">Wraithguard Shield</option><option value="Arcane Shield">Arcane Shield</option><option value="Doomforged Shield">Doomforged Shield</option><option value="Quantum Shield">Quantum Shield</option><option value="Crimson Glory">Crimson Glory</option><option value="Platinum Shield">Platinum Shield</option><option value="Judge's Angel Shield">Judge's Angel Shield</option><option value="Manticore Shield">Manticore Shield</option>
                         </optgroup>
 
-                        <!-- ANILLOS Y PENDIENTES (RINGS & PENDANTS) -->
+                        <!-- ANILLOS Y PENDIENTES -->
                         <optgroup label="=== ANILLOS Y PENDIENTES ===">
-                            <option value="Wizard's Ring">Wizard's Ring</option>
-                            <option value="Moonstone Pendant">Moonstone Pendant</option>
-                            <option value="Jack O'lantern Ring">Jack O'lantern Ring</option>
-                            <option value="Panda Ring">Panda Ring</option>
-                            <option value="Robot Knight Ring">Robot Knight Ring</option>
-                            <option value="Mini Robot Ring">Mini Robot Ring</option>
-                            <option value="Ring of Ice">Ring of Ice</option>
-                            <option value="Ring of Poison">Ring of Poison</option>
-                            <option value="Ring of Fire">Ring of Fire</option>
-                            <option value="Ring of Earth">Ring of Earth</option>
-                            <option value="Ring of Wind">Ring of Wind</option>
-                            <option value="Ring of Magic">Ring of Magic</option>
+                            <option value="Wizard's Ring">Wizard's Ring</option><option value="Moonstone Pendant">Moonstone Pendant</option><option value="Jack O'lantern Ring">Jack O'lantern Ring</option><option value="Panda Ring">Panda Ring</option><option value="Robot Knight Ring">Robot Knight Ring</option><option value="Mini Robot Ring">Mini Robot Ring</option><option value="Ring of Ice">Ring of Ice</option><option value="Ring of Poison">Ring of Poison</option><option value="Ring of Fire">Ring of Fire</option><option value="Ring of Earth">Ring of Earth</option><option value="Ring of Wind">Ring of Wind</option><option value="Ring of Magic">Ring of Magic</option>
                         </optgroup>
                     </select>
                 </div>
@@ -206,7 +195,7 @@
                         <option value="Gloves">Gloves (Guantes)</option>
                         <option value="Boots">Boots (Botas)</option>
                         <option value="Shield">Shield (Escudo)</option>
-                        <option value="Weapon">Weapon / Sword / Staff / Bow (Arma)</option>
+                        <option value="Weapon">Weapon / Arma</option>
                         <option value="Ring">Ring (Anillo)</option>
                         <option value="Pendant">Pendant (Amuleto)</option>
                     </select>
@@ -225,7 +214,7 @@
                 </div>
 
                 <div class="md:col-span-2">
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">✨ Opciones Excellent (y de Armas/Anillos)</label>
+                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">✨ Opciones Excellent</label>
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-[#0d0a1a] p-3 rounded-lg border border-purple-900 text-xs">
                         <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Aumento de HP máximo"> Aumento de HP máximo</label>
                         <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Aumento de SD máximo"> Aumento de SD máximo</label>
@@ -252,13 +241,13 @@
             </form>
         </div>
 
-        <!-- BUSCADOR INTERACTIVO IDÉNTICO AL FORMULARIO DE CARGA -->
+        <!-- BUSCADOR INTERACTIVO IDÉNTICO AL FORMULARIO DE CARGA (AHORA CON TODOS LOS ÍTEMS) -->
         <div class="bg-[#141126] border border-purple-900/60 p-4 rounded-xl shadow space-y-4">
             <h3 class="text-sm font-bold text-purple-300 uppercase">🔍 Buscador Interactivo Independiente</h3>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
-                    <label class="block text-[11px] text-purple-300 font-bold mb-1">📜 Filtrar por Set / Arma (Scroll 1):</label>
+                    <label class="block text-[11px] text-purple-300 font-bold mb-1">📜 Filtrar por Set / Arma / Anillo (Scroll 1):</label>
                     <select id="filtroSetBase" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
                         <option value="">-- Todos los Ítems y Sets --</option>
                         <optgroup label="=== ARMADURAS & SETS ===">
@@ -624,9 +613,9 @@
                 const asignado = String(item.asignado_a || '').toLowerCase();
                 const opcionesStr = Array.isArray(item.opciones) ? item.opciones.join(' ').toLowerCase() : '';
 
-                const matchSet = !setBase || nombre.includes(setBase);
-                const matchTipo = !tipoPieza || tipo.includes(tipoPieza);
-                const matchTexto = !busqueda || idStr.includes(busqueda) || nombre.includes(busqueda) || asignado.includes(busqueda);
+                const matchSet = !setBase || nombre.toLowerCase().includes(setBase);
+                const matchTipo = !tipoPieza || tipo.toLowerCase().includes(tipoPieza);
+                const matchTexto = !busqueda || idStr.includes(busqueda) || nombre.toLowerCase().includes(busqueda) || asignado.toLowerCase().includes(busqueda);
                 const matchOpciones = chkSeleccionados.every(opt => opcionesStr.includes(opt));
 
                 return matchSet && matchTipo && matchTexto && matchOpciones;
