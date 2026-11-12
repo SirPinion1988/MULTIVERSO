@@ -711,4 +711,26 @@
         }
 
         async function crearUsuario() {
-            const username = document.getElementById('nuevoUsuario').
+            const username = document.getElementById('nuevoUsuario').value.trim();
+            const password = document.getElementById('nuevaPassword').value.trim();
+            const rol = document.getElementById('nuevoRol').value;
+            if (!username || !password) return alert("Completá usuario y contraseña.");
+            await fetch('/api/usuarios', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password, rol }) });
+            document.getElementById('nuevoUsuario').value = ''; document.getElementById('nuevaPassword').value = '';
+            cargarUsuarios();
+        }
+
+        async function eliminarUsuario(id) {
+            if (!confirm("¿Eliminar usuario?")) return;
+            await fetch('/api/usuarios', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+            cargarUsuarios();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => { 
+            chequearSesion(); 
+            cargarItems(); 
+            cargarMiembros(); 
+        });
+    </script>
+</body>
+</html>
