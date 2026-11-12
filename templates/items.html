@@ -64,7 +64,7 @@
                         <option value="">-- Todos los Ítems / Seleccionar Elemento --</option>
                         <optgroup label="=== ARMADURAS & SETS ===">
                             <option value="Leather">Leather</option><option value="Bronze">Bronze</option><option value="Scale">Scale</option><option value="Brass">Brass</option><option value="Plate">Plate</option><option value="Dragon">Dragon</option><option value="Black Dragon">Black Dragon</option><option value="Dark Phoenix">Dark Phoenix</option><option value="Great Dragon">Great Dragon</option><option value="Dragon Knight">Dragon Knight</option><option value="Titan">Titan</option><option value="Brave">Brave</option>
-                            <option value="Pad">Pad</option><option value="Bone">Bone</option><option value="Sphinx">Sphinx</option><option value="Legendary">Legendary</option><option value="Grand Soul">Grand Soul</option><option value="Dark Soul">Dark Soul</option><option value="Venom Mist">Venom Mist</option><option value="Hades">Hades</option>
+                            <option value="Pad">Pad</option><option value="Bone">Bone</option><option value="Sphinx">Sphinx</option><option value="Legendary">Legendary</option><option value="Grand Soul">Grand Soul</option><option value="Dark Soul">Dark Soul</option><option value="Venom Mist">Venom Mist</option><option value="Hades">Set Hades (SM)</option>
                             <option value="Vine">Vine</option><option value="Silk">Silk</option><option value="Wind">Wind</option><option value="Spirit">Spirit</option><option value="Guardian">Guardian</option><option value="Divine">Divine</option><option value="Red Spirit">Red Spirit</option><option value="Sylphid Ray">Sylphid Ray</option><option value="Seraphim">Seraphim</option>
                             <option value="Storm Crow">Storm Crow</option><option value="Unicorn">Unicorn</option><option value="Thunder Hawk">Thunder Hawk</option><option value="Hurricane">Hurricane</option><option value="Volcano">Volcano</option><option value="Destroyer">Destroyer</option><option value="Phantom">Phantom</option>
                             <option value="Light Plate">Light Plate</option><option value="Adamantine">Adamantine</option><option value="Dark Steel">Dark Steel</option><option value="Dark Master">Dark Master</option><option value="Glorious">Glorious</option><option value="Emperor">Emperor</option><option value="Royal">Royal</option>
@@ -128,7 +128,6 @@
                         <option value="">-- Todos (Libres o Asignados) --</option>
                     </select>
                 </div>
-                <!-- ID PERSONALIZADO (SOLO ADMIN Y OPERADORES) -->
                 <div id="panel-custom-id" class="hidden">
                     <label class="block text-xs uppercase text-purple-300 font-bold mb-1">🆔 ID Personalizado (Opcional al Cargar)</label>
                     <input type="number" id="inputCustomId" placeholder="Automático si se deja vacío" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
@@ -162,8 +161,8 @@
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Increases attack speed +" onchange="aplicarFiltros()"> Increases attack speed +</label>
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Obtains (Life) when monster is killed" onchange="aplicarFiltros()"> Obtains (Life) when monster is killed</label>
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Obtains (Mana) when monster is killed" onchange="aplicarFiltros()"> Obtains (Mana) when monster is killed</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Critical damage rate %" onchange="aplicarFiltros()"> Critical damage rate %</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Damage to Monster" onchange="aplicarFiltros()"> Damage to Monster</label>
+                            <label class="flex items-center gap-2 cursor-pointer text-red-400 font-bold"><input type="checkbox" class="filtro-chk" value="[Epic] Damage to monsters +10%" onchange="aplicarFiltros()"> [Epic] Damage to monsters +10%</label>
+                            <label class="flex items-center gap-2 cursor-pointer text-amber-300 font-bold"><input type="checkbox" class="filtro-chk" value="Damage to Monster" onchange="aplicarFiltros()"> Damage to Monster</label>
                         </div>
                     </div>
                 </div>
@@ -172,7 +171,6 @@
                     <button onclick="limpiarFiltros()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg text-xs font-bold transition">🧹 Limpiar Filtros</button>
                     <div class="flex gap-2">
                         <button onclick="exportarExcelItems()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-4 py-2 rounded-lg text-xs transition shadow flex items-center gap-1.5">📊 Exportar a Excel</button>
-                        <!-- BOTÓN DE GUARDAR: SOLO VISIBLE PARA ADMIN Y OPERADORES -->
                         <button onclick="guardarItemDesdeFiltro()" id="btn-guardar-item" class="hidden bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2 rounded-lg text-xs transition shadow">💾 Guardar Nuevo Ítem</button>
                     </div>
                 </div>
@@ -311,6 +309,62 @@
         </div>
     </div>
 
+    <!-- MODAL EDITAR ÍTEM (INTELIGENTE: MUESTRA OPCIONES SEGÚN EL TIPO DE PIEZA) -->
+    <div id="modal-editar-item" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-[#141126] border border-purple-500 p-6 rounded-xl max-w-lg w-full flex flex-col shadow-2xl space-y-3 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-lg font-bold text-amber-400 mb-2">✏️ Editar Ítem</h3>
+            <input type="hidden" id="editOldId">
+            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">ID:</label><input type="number" id="editId" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
+            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">Nombre / Baúl:</label><input type="text" id="editNombre" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
+            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">Tipo de Pieza:</label>
+                <select id="editTipo" onchange="actualizarOpcionesEdicion()" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs">
+                    <option value="Armor">Armor</option>
+                    <option value="Pants">Pants</option>
+                    <option value="Helm">Helm</option>
+                    <option value="Gloves">Gloves</option>
+                    <option value="Boots">Boots</option>
+                    <option value="Shield">Shield</option>
+                    <option value="Weapon">Weapon</option>
+                    <option value="Ring">Ring</option>
+                    <option value="Pendant">Pendant</option>
+                </select>
+            </div>
+            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">Asignado a:</label><input type="text" id="editAsignado" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
+
+            <!-- BLOQUE DINÁMICO DE OPCIONES EN EDICIÓN -->
+            <div id="edit-opciones-defensivas" class="space-y-1">
+                <span class="text-[10px] uppercase font-bold text-cyan-400 block">🛡️ Opciones de Armadura / Escudo / Anillo:</span>
+                <div class="grid grid-cols-2 gap-1 text-xs">
+                    <label><input type="checkbox" name="editChkOpt" value="Aumento de HP máximo"> HP Máximo</label>
+                    <label><input type="checkbox" name="editChkOpt" value="Aumento de SD máximo"> SD Máximo</label>
+                    <label><input type="checkbox" name="editChkOpt" value="Reducción de daño (DD)"> Reducción de daño (DD)</label>
+                    <label><input type="checkbox" name="editChkOpt" value="Reflejo de daño (Reflect)"> Reflect</label>
+                    <label><input type="checkbox" name="editChkOpt" value="Resistencia a daño crítico (Rate)"> Resistencia Crítico</label>
+                    <label><input type="checkbox" name="editChkOpt" value="Tasa de drop de Zen"> Drop Zen</label>
+                </div>
+            </div>
+
+            <div id="edit-opciones-ofensivas" class="space-y-1 hidden">
+                <span class="text-[10px] uppercase font-bold text-amber-400 block">⚔️ Opciones de Arma / Colgante:</span>
+                <div class="grid grid-cols-1 gap-1 text-xs">
+                    <label><input type="checkbox" name="editChkOpt" value="Excellent damage rate %"> Excellent damage rate %</label>
+                    <label><input type="checkbox" name="editChkOpt" value="Wizardry Damage increases +level/"> Wizardry Damage +level/</label>
+                    <label><input type="checkbox" name="editChkOpt" value="Physical Damage increases +level/"> Physical Damage +level/</label>
+                    <label><input type="checkbox" name="editChkOpt" value="Increases attack speed +"> Increases attack speed +</label>
+                    <label><input type="checkbox" name="editChkOpt" value="Obtains (Life) when monster is killed"> Life per kill</label>
+                    <label><input type="checkbox" name="editChkOpt" value="Obtains (Mana) when monster is killed"> Mana per kill</label>
+                    <label class="text-red-400 font-bold"><input type="checkbox" name="editChkOpt" value="[Epic] Damage to monsters +10%"> [Epic] Damage to monsters +10%</label>
+                    <label class="text-amber-300 font-bold"><input type="checkbox" name="editChkOpt" value="Damage to Monster"> Damage to Monster</label>
+                </div>
+            </div>
+
+            <div class="flex gap-2 justify-end pt-2">
+                <button onclick="guardarEdicionItem()" class="bg-emerald-600 text-white px-4 py-2 rounded text-xs font-bold">Guardar</button>
+                <button onclick="cerrarModalEditar()" class="bg-gray-800 text-white px-4 py-2 rounded text-xs font-bold">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- SECCIÓN 4: USUARIOS -->
     <div id="seccion-users-view" class="w-full max-w-7xl space-y-4 hidden">
         <div class="bg-[#141126] p-6 rounded-xl border border-purple-700">
@@ -329,22 +383,6 @@
                 <thead><tr><th>Usuario</th><th>Rol</th><th>Acción</th></tr></thead>
                 <tbody id="tabla-usuarios-body"><tr><td colspan="3" class="text-center py-4">Cargando...</td></tr></tbody>
             </table>
-        </div>
-    </div>
-
-    <!-- MODAL EDITAR -->
-    <div id="modal-editar-item" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-[#141126] border border-purple-500 p-6 rounded-xl max-w-md w-full flex flex-col shadow-2xl space-y-3">
-            <h3 class="text-lg font-bold text-amber-400 mb-2">✏️ Editar Ítem</h3>
-            <input type="hidden" id="editOldId">
-            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">ID:</label><input type="number" id="editId" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs"></div>
-            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">Nombre / Baúl:</label><input type="text" id="editNombre" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs"></div>
-            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">Tipo:</label><input type="text" id="editTipo" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs"></div>
-            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">Asignado a:</label><input type="text" id="editAsignado" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs"></div>
-            <div class="flex gap-2 justify-end pt-2">
-                <button onclick="guardarEdicionItem()" class="bg-emerald-600 text-white px-4 py-2 rounded text-xs font-bold">Guardar</button>
-                <button onclick="cerrarModalEditar()" class="bg-gray-800 text-white px-4 py-2 rounded text-xs font-bold">Cancelar</button>
-            </div>
         </div>
     </div>
 
@@ -377,7 +415,6 @@
                     if (loginBtn) loginBtn.outerHTML = `<a href="/logout" class="bg-red-700 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">Salir</a>`;
                     
                     if (sesionAutorizada) {
-                        // CONTROLES TOTALES PARA ADMIN Y OPERADORES
                         ['btn-guardar-item', 'panel-custom-id', 'dummy-div', 'panel-miembros-crud', 'panel-asistencia-ctrl', 'panel-donacion-crud', 'btn-gasto-modal', 'th-acciones-head', 'th-miembro-acciones'].forEach(id => {
                             const el = document.getElementById(id);
                             if (el) el.classList.remove('hidden');
@@ -530,14 +567,36 @@
             }).join('');
         }
 
+        function actualizarOpcionesEdicion() {
+            const tipo = document.getElementById('editTipo').value;
+            const defBox = document.getElementById('edit-opciones-defensivas');
+            const offBox = document.getElementById('edit-opciones-ofensivas');
+            
+            if (tipo === 'Weapon' || tipo === 'Pendant') {
+                defBox.classList.add('hidden');
+                offBox.classList.remove('hidden');
+            } else {
+                offBox.classList.add('hidden');
+                defBox.classList.remove('hidden');
+            }
+        }
+
         function abrirModalEditar(id) {
             const item = catalogo.find(x => x.id === id);
             if (!item) return;
             document.getElementById('editOldId').value = item.id;
             document.getElementById('editId').value = item.id;
             document.getElementById('editNombre').value = item.nombre;
-            document.getElementById('editTipo').value = item.tipo;
+            document.getElementById('editTipo').value = item.tipo || 'Armor';
             document.getElementById('editAsignado').value = item.asignado_a || '';
+            
+            actualizarOpcionesEdicion();
+
+            const ops = item.opciones || [];
+            document.querySelectorAll('input[name="editChkOpt"]').forEach(chk => {
+                chk.checked = ops.includes(chk.value);
+            });
+
             document.getElementById('modal-editar-item').classList.remove('hidden');
         }
 
@@ -549,8 +608,11 @@
             const nombre = document.getElementById('editNombre').value.trim();
             const tipo = document.getElementById('editTipo').value.trim();
             const asignado_a = document.getElementById('editAsignado').value.trim();
-            const itemOriginal = catalogo.find(x => x.id == old_id);
-            const opciones = itemOriginal ? itemOriginal.opciones : [];
+            
+            const opciones = [];
+            document.querySelectorAll('input[name="editChkOpt"]:checked').forEach(chk => {
+                opciones.push(chk.value);
+            });
 
             const res = await fetch('/api/items/editar', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
