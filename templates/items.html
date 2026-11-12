@@ -51,7 +51,7 @@
         <button onclick="cambiarSeccion('USERS')" id="btn-sec-users" class="bg-gray-800 text-gray-400 px-4 py-2 rounded-lg text-xs font-bold transition hidden">⚙️ Usuarios</button>
     </div>
 
-    <!-- SECCIÓN 1: ÍTEMS (PANEL UNIFICADO BÚSQUEDA + CARGA) -->
+    <!-- SECCIÓN 1: ÚNICO PANEL UNIFICADO (BUSCADOR + CARGADOR) -->
     <div id="seccion-items-view" class="w-full max-w-7xl space-y-4">
         
         <div class="bg-[#141126] border border-purple-900/60 p-6 rounded-xl shadow-xl space-y-4">
@@ -107,7 +107,7 @@
                         <option value="">-- Todos (Libres o Asignados) --</option>
                     </select>
                 </div>
-                <!-- ID PERSONALIZADO (SOLO PARA ADMIN Y OPERADORES AL CARGAR) -->
+                <!-- ID PERSONALIZADO (SOLO ADMIN Y OPERADORES) -->
                 <div id="panel-custom-id" class="hidden">
                     <label class="block text-xs uppercase text-purple-300 font-bold mb-1">🆔 ID Personalizado (Opcional al Cargar)</label>
                     <input type="number" id="inputCustomId" placeholder="Automático si se deja vacío" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
@@ -165,7 +165,7 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 2: MIEMBROS (SOLO ADMIN Y OPERADORES) -->
+    <!-- SECCIÓN 2: MIEMBROS -->
     <div id="seccion-clan-view" class="w-full max-w-7xl space-y-4 hidden">
         <div id="panel-miembros-crud" class="bg-[#141126] border border-indigo-700/60 p-4 rounded-xl shadow-lg hidden">
             <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end w-full">
@@ -187,13 +187,11 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 3: DONACIONES Y ASISTENCIAS (VISTA LECTURA PARA LECTORES / CONTROL TOTAL ADMIN Y OPERADORES) -->
+    <!-- SECCIÓN 3: DONACIONES Y ASISTENCIAS -->
     <div id="seccion-donaciones-view" class="w-full max-w-7xl space-y-6 hidden">
         
-        <!-- RANKING ASISTENCIAS -->
         <div class="bg-[#141126] border border-indigo-600/50 p-5 rounded-xl shadow-lg space-y-4">
             <h2 class="text-sm font-bold text-indigo-400 uppercase">⚔️ Asistencias a Invasiones (Ranking)</h2>
-            <!-- CONTROLES SOLO PARA ADMIN Y OPERADORES -->
             <div id="panel-asistencia-ctrl" class="flex flex-wrap gap-3 items-center hidden bg-[#0d0a1a] p-3 rounded-lg border border-purple-900">
                 <span class="text-xs text-purple-300 font-bold">Miembro:</span>
                 <select id="asistPjSelect" class="bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"><option value="">-- Seleccionar --</option></select>
@@ -210,11 +208,9 @@
             </div>
         </div>
 
-        <!-- BANCO GUILD (VISIBLE PARA LECTORES Y ADMINS) -->
         <div class="bg-[#141126] border border-amber-600/50 p-5 rounded-xl shadow-lg space-y-3">
             <div class="flex justify-between items-center">
                 <h2 class="text-sm font-bold text-amber-400 uppercase">🏛️ Banco Guild (Acumulado Neto)</h2>
-                <!-- BOTÓN GASTO SOLO ADMIN Y OPERADORES -->
                 <button onclick="abrirModalGasto()" id="btn-gasto-modal" class="hidden bg-red-700 hover:bg-red-600 text-white px-3 py-1.5 rounded text-xs font-bold">📉 Registrar Uso / Gasto</button>
             </div>
             <div class="overflow-x-auto">
@@ -229,10 +225,8 @@
             </div>
         </div>
 
-        <!-- DONACIÓN POR MIEMBRO -->
         <div class="bg-[#141126] border border-amber-600/50 p-5 rounded-xl shadow-lg space-y-4">
             <h2 class="text-sm font-bold text-amber-400 uppercase">💎 Donación por Miembro</h2>
-            <!-- CRUD DONACIÓN SOLO ADMIN Y OPERADORES -->
             <div id="panel-donacion-crud" class="grid grid-cols-2 sm:grid-cols-7 gap-2 items-end hidden bg-[#0d0a1a] p-3 rounded-lg border border-purple-900">
                 <div class="col-span-2">
                     <label class="block text-[10px] text-gray-300 mb-1">MIEMBRO:</label>
