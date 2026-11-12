@@ -8,7 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { background-color: #0a0814; color: #e6e1ff; font-family: 'Segoe UI', system-ui, sans-serif; }
-        .tabla-scroll-box { height: 500px !important; overflow-y: scroll !important; border: 1px solid #3b2d6b; border-radius: 8px; background: #0d0a1a; }
+        .tabla-scroll-box { height: 450px !important; overflow-y: scroll !important; border: 1px solid #3b2d6b; border-radius: 8px; background: #0d0a1a; }
         .tabla-scroll-box::-webkit-scrollbar { width: 8px; }
         .tabla-scroll-box::-webkit-scrollbar-thumb { background: #6d28d9; border-radius: 4px; }
         .tabla-items { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
@@ -30,6 +30,7 @@
             <span id="session-user-badge" class="text-xs text-purple-300 font-bold bg-[#141126] px-3 py-1.5 rounded-lg border border-purple-900">
                 Invitado (Público)
             </span>
+            <!-- BACKUP Y RESTAURAR SOLO PARA ADMIN (PINION) -->
             <div id="admin-backup-buttons" class="hidden flex gap-2">
                 <button onclick="descargarBackup()" class="bg-blue-700 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">💾 Backup Local</button>
                 <label class="bg-amber-700 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
@@ -50,123 +51,17 @@
         <button onclick="cambiarSeccion('USERS')" id="btn-sec-users" class="bg-gray-800 text-gray-400 px-4 py-2 rounded-lg text-xs font-bold transition hidden">⚙️ Usuarios</button>
     </div>
 
-    <!-- SECCIÓN 1: ÍTEMS -->
+    <!-- SECCIÓN 1: ÍTEMS (PANEL UNIFICADO BUSCADOR + CARGADOR) -->
     <div id="seccion-items-view" class="w-full max-w-7xl space-y-4">
         
-        <!-- PANEL DE CARGA MANUAL (SOLO ADMIN / OPERADOR) -->
-        <div id="panel-carga-manual" class="bg-[#141126] border border-emerald-600/50 p-6 rounded-xl shadow-xl hidden mb-4">
-            <h2 class="text-lg font-bold text-emerald-400 mb-4">➕ Cargar Nuevo Ítem / Baúl / Arma</h2>
-            <form onsubmit="guardarItemManual(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">📜 Scroll 1: Seleccionar Set, Arma, Escudo o Anillo</label>
-                    <select id="inputSetBase" required class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
-                        <option value="">-- Seleccionar Elemento --</option>
-                        <optgroup label="=== ARMADURAS & SETS ===">
-                            <option value="Leather">Set Leather (BK)</option><option value="Bronze">Set Bronze (BK)</option><option value="Scale">Set Scale (BK/MG)</option><option value="Brass">Set Brass (BK)</option><option value="Plate">Set Plate (BK)</option><option value="Dragon">Set Dragon (BK/MG)</option><option value="Black Dragon">Set Black Dragon (BK)</option><option value="Dark Phoenix">Set Dark Phoenix (BK)</option><option value="Great Dragon">Set Great Dragon (BK)</option><option value="Dragon Knight">Set Dragon Knight (BK)</option><option value="Titan">Set Titan (BK)</option><option value="Brave">Set Brave (BK)</option>
-                            <option value="Pad">Set Pad (SM/MG)</option><option value="Bone">Set Bone (SM)</option><option value="Sphinx">Set Sphinx (SM)</option><option value="Legendary">Set Legendary (SM/MG)</option><option value="Grand Soul">Set Grand Soul (SM)</option><option value="Dark Soul">Set Dark Soul (SM)</option><option value="Venom Mist">Set Venom Mist (SM)</option><option value="Hades">Set Hades (SM)</option>
-                            <option value="Vine">Set Vine (ELF)</option><option value="Silk">Set Silk (ELF)</option><option value="Wind">Set Wind (ELF)</option><option value="Spirit">Set Spirit (ELF)</option><option value="Guardian">Set Guardian (ELF)</option><option value="Divine">Set Divine (ELF)</option><option value="Red Spirit">Set Red Spirit (ELF)</option><option value="Sylphid Ray">Set Sylphid Ray (ELF)</option><option value="Seraphim">Set Seraphim (ELF)</option>
-                            <option value="Storm Crow">Set Storm Crow (MG)</option><option value="Unicorn">Set Unicorn (MG)</option><option value="Thunder Hawk">Set Thunder Hawk (MG)</option><option value="Hurricane">Set Hurricane (MG)</option><option value="Volcano">Set Volcano (MG)</option><option value="Destroyer">Set Destroyer (MG)</option><option value="Phantom">Set Phantom (MG)</option>
-                            <option value="Light Plate">Set Light Plate (DL)</option><option value="Adamantine">Set Adamantine (DL)</option><option value="Dark Steel">Set Dark Steel (DL)</option><option value="Dark Master">Set Dark Master (DL)</option><option value="Glorious">Set Glorious (DL)</option><option value="Emperor">Set Emperor (DL)</option><option value="Royal">Set Royal (DL)</option>
-                            <option value="Mystery">Set Mystery (SUMM)</option><option value="Red Wing">Set Red Wing (SUMM)</option><option value="Ancient">Set Ancient (SUMM)</option><option value="Black Rose">Set Black Rose (SUMM)</option><option value="Aura">Set Aura (SUMM)</option><option value="Lilium">Set Lilium (SUMM)</option><option value="Queen">Set Queen (SUMM)</option>
-                            <option value="Sacred">Set Sacred (RF)</option><option value="Piercing">Set Piercing (RF)</option><option value="Phoenix Soul">Set Phoenix Soul (RF)</option>
-                        </optgroup>
-                        <optgroup label="=== ESPADAS Y DAGAS ===">
-                            <option value="Short Sword">Short Sword</option><option value="Kris">Kris</option><option value="Rapier">Rapier</option><option value="Assassin Sword">Assassin Sword</option><option value="Katana">Katana</option><option value="Gladius">Gladius</option><option value="Falchion">Falchion</option><option value="Serpent Sword">Serpent Sword</option><option value="Salamander Two-Hand Blade">Salamander Two-Hand Blade</option><option value="Blade">Blade</option><option value="Light Saber Two-Hand">Light Saber Two-Hand</option><option value="Legendary Two-Hand Blade">Legendary Two-Hand Blade</option><option value="Giant Two-Hand Blade">Giant Two-Hand Blade</option><option value="Heliacal Two-Hand Blade">Heliacal Two-Hand Blade</option><option value="Moonlit Dagger">Moonlit Dagger</option><option value="Starfire Katana">Starfire Katana</option><option value="Abyssal Sword">Abyssal Sword</option><option value="Double Sword">Double Sword</option><option value="Epic Kriss">Epic Kriss</option><option value="Lighting Sword">Lighting Sword</option><option value="Dark Breaker Two-Hand">Dark Breaker Two-Hand</option><option value="Thunder Two-Hand Blade">Thunder Two-Hand Blade</option><option value="Viperstrike Dagger">Viperstrike Dagger</option><option value="Destruction Sword">Destruction Sword</option><option value="Emerald Sword">Emerald Sword</option><option value="Twilight Dagger">Twilight Dagger</option><option value="Knight Sword">Knight Sword</option><option value="Daybreak Two-Hand Blade">Daybreak Two-Hand Blade</option><option value="Firedrake Sword">Firedrake Sword</option><option value="Fire Doom Dagger">Fire Doom Dagger</option><option value="Bone Sword">Bone Sword</option><option value="Divine Archangel Sword">Divine Archangel Sword</option><option value="Blessed Archangel Sword">Blessed Archangel Sword</option><option value="Soulrender Two-Hand Blade">Soulrender Two-Hand Blade</option><option value="Manticore Knight Sword">Manticore Knight Sword</option><option value="Rune Two-Hand Blade">Rune Two-Hand Blade</option><option value="Dark Reign Two-Hand Blade">Dark Reign Two-Hand Blade</option><option value="Dancer Two-Hand Blade">Dancer Two-Hand Blade</option><option value="Frostshard Two-Hand Blade">Frostshard Two-Hand Blade</option><option value="Majestic Sword">Majestic Sword</option><option value="Dragon Dancer Sword">Dragon Dancer Sword</option><option value="Explosion Two-Hand Blade">Explosion Two-Hand Blade</option><option value="Manticore Magic Sword">Manticore Magic Sword</option><option value="Manticore Two-Hand Blade">Manticore Two-Hand Blade</option>
-                        </optgroup>
-                        <optgroup label="=== LANZAS ===">
-                            <option value="Double Poleaxe">Double Poleaxe</option><option value="Dragon Lance">Dragon Lance</option><option value="Halberd">Halberd</option><option value="Spear">Spear</option><option value="Giant Trident">Giant Trident</option><option value="Berdysh">Berdysh</option><option value="Light Spear">Light Spear</option><option value="Serpent Spear">Serpent Spear</option><option value="Great Scythe">Great Scythe</option><option value="Bill of Balrog">Bill of Balrog</option><option value="Dragon Spear">Dragon Spear</option><option value="Brova">Brova</option>
-                        </optgroup>
-                        <optgroup label="=== HACHAS Y MARTILLOS ===">
-                            <option value="Small Axe">Small Axe</option><option value="Hand Axe">Hand Axe</option><option value="Double Axe">Double Axe</option><option value="Tomahawk">Tomahawk</option><option value="Battle Two-Hand Axe">Battle Two-Hand Axe</option><option value="Nikea Two-Hand Axe">Nikea Two-Hand Axe</option><option value="Larkan Two-Hand Axe">Larkan Two-Hand Axe</option><option value="Crescent Two-Hand Axe">Crescent Two-Hand Axe</option><option value="Great Dragon Two-Hand Axe">Great Dragon Two-Hand Axe</option><option value="Mace">Mace</option><option value="Morning Star">Morning Star</option><option value="Flail">Flail</option><option value="Great Two-Hand Hammer">Great Two-Hand Hammer</option><option value="Chaos Dragon Two-Hand Axe">Chaos Dragon Two-Hand Axe</option><option value="Crystal Morning Two-Hand Star">Crystal Morning Two-Hand Star</option><option value="Crystal Two-Hand Blade">Crystal Two-Hand Blade</option>
-                        </optgroup>
-                        <optgroup label="=== BASTONES (STAFFS) ===">
-                            <option value="Skull Staff">Skull Staff</option><option value="Angelic Two-Hand Staff">Angelic Two-Hand Staff</option><option value="Serpent Two-Hand Staff">Serpent Two-Hand Staff</option><option value="Thunder Two-Hand Staff">Thunder Two-Hand Staff</option><option value="Gorgon Two-Hand Staff">Gorgon Two-Hand Staff</option><option value="Legendary Staff">Legendary Staff</option><option value="Skeleton Two-Hand Staff">Skeleton Two-Hand Staff</option><option value="Resurrection Staff">Resurrection Staff</option><option value="Chaos Lighting Two-Hand Staff">Chaos Lighting Two-Hand Staff</option><option value="Destruction Two-Hand Staff">Destruction Two-Hand Staff</option><option value="Dragon Soul Staff">Dragon Soul Staff</option><option value="Platina Staff">Platina Staff</option><option value="Chromatic Staff">Chromatic Staff</option><option value="Kundun Staff">Kundun Staff</option><option value="Crystal Two-Hand Staff">Crystal Two-Hand Staff</option><option value="Grand Viper Staff">Grand Viper Staff</option><option value="Divine Archangel Staff">Divine Archangel Staff</option><option value="Eternal Two-Hand Staff">Eternal Two-Hand Staff</option><option value="Blessed Archangel Staff">Blessed Archangel Staff</option><option value="Manticore Staff">Manticore Staff</option>
-                        </optgroup>
-                        <optgroup label="=== ARCOS Y BALLESTAS ===">
-                            <option value="Short Bow">Short Bow</option><option value="Crossbow">Crossbow</option><option value="Bow">Bow</option><option value="Golden Crossbow">Golden Crossbow</option><option value="Elven Bow">Elven Bow</option><option value="Arquebus">Arquebus</option><option value="Battle Bow">Battle Bow</option><option value="Light Crossbow">Light Crossbow</option><option value="Tiger Bow">Tiger Bow</option><option value="Serpent Crossbow">Serpent Crossbow</option><option value="Silver Bow">Silver Bow</option><option value="Bluewing Crossbow">Bluewing Crossbow</option><option value="Aquagold Crossbow">Aquagold Crossbow</option><option value="Epic Silver Bow">Epic Silver Bow</option><option value="Chaos Nature Bow">Chaos Nature Bow</option><option value="Saint Crossbow">Saint Crossbow</option><option value="Celestial Bow">Celestial Bow</option><option value="Starlight Bow">Starlight Bow</option><option value="Great Reign Crossbow">Great Reign Crossbow</option><option value="Albatross Bow">Albatross Bow</option><option value="Aileen Bow">Aileen Bow</option><option value="Arrow Viper Bow">Arrow Viper Bow</option><option value="Spectral Crossbow">Spectral Crossbow</option><option value="Sylph Wind Bow">Sylph Wind Bow</option><option value="Devil Crossbow">Devil Crossbow</option><option value="Divine Archangel Crossbow">Divine Archangel Crossbow</option><option value="Blessed Archangel Crossbow">Blessed Archangel Crossbow</option><option value="Manticore Bow">Manticore Bow</option><option value="Manticore Quiver">Manticore Quiver</option>
-                        </optgroup>
-                        <optgroup label="=== CETROS (DL) ===">
-                            <option value="Battle Scepter">Battle Scepter</option><option value="Master Scepter">Master Scepter</option><option value="Great Scepter">Great Scepter</option><option value="Lord Scepter">Lord Scepter</option><option value="Great Lord Scepter">Great Lord Scepter</option><option value="Shining Scepter">Shining Scepter</option><option value="Striker Scepter">Striker Scepter</option><option value="Imperial Scepter">Imperial Scepter</option><option value="Soleil Scepter">Soleil Scepter</option><option value="Divine Archangel Scepter">Divine Archangel Scepter</option><option value="Blessed Archangel Scepter">Blessed Archangel Scepter</option><option value="Manticore Scepter">Manticore Scepter</option>
-                        </optgroup>
-                        <optgroup label="=== LIBROS Y STICKS (SUMM) ===">
-                            <option value="Book of Samut">Book of Samut</option><option value="Red Winged Stick">Red Winged Stick</option><option value="Book of Neil">Book of Neil</option><option value="Ancient Stick">Ancient Stick</option><option value="Demonic Stick">Demonic Stick</option><option value="Book of Lagle">Book of Lagle</option><option value="Raven Stick">Raven Stick</option><option value="Storm Blitz Stick">Storm Blitz Stick</option><option value="Summon Spirit Stick">Summon Spirit Stick</option><option value="Divine Archangel Stick">Divine Archangel Stick</option><option value="Blessed Archangel Stick">Blessed Archangel Stick</option><option value="Manticore Book">Manticore Book</option><option value="Manticore Stick">Manticore Stick</option><option value="Mystery Stick">Mystery Stick</option><option value="Violent Wind Stick">Violent Wind Stick</option>
-                        </optgroup>
-                        <optgroup label="=== GARRAS (RF) ===">
-                            <option value="Sacred Claw">Sacred Claw</option><option value="Holy Storm Claw">Holy Storm Claw</option><option value="Drakzar Claw">Drakzar Claw</option><option value="Piercing Claw">Piercing Claw</option><option value="Bloodgrin Claw">Bloodgrin Claw</option><option value="Phoenix Soul Star Claw">Phoenix Soul Star Claw</option><option value="Carnavor Claw">Carnavor Claw</option><option value="Divine Archangel Claw">Divine Archangel Claw</option><option value="Blessed Archangel Claw">Blessed Archangel Claw</option><option value="Manticore Claw">Manticore Claw</option>
-                        </optgroup>
-                        <optgroup label="=== ESCUDOS (SHIELDS) ===">
-                            <option value="Small Shield">Small Shield</option><option value="Buckler Shield">Buckler Shield</option><option value="Horn Shield">Horn Shield</option><option value="Kite Shield">Kite Shield</option><option value="Large Round Shield">Large Round Shield</option><option value="Skull Shield">Skull Shield</option><option value="Scale Shield">Scale Shield</option><option value="Plate Shield">Plate Shield</option><option value="Big Shield">Big Shield</option><option value="Spiked Shield">Spiked Shield</option><option value="Dragon Slayer Shield">Dragon Slayer Shield</option><option value="Tower Shield">Tower Shield</option><option value="Serpent Shield">Serpent Shield</option><option value="Bronze Shield">Bronze Shield</option><option value="Death Shield">Death Shield</option><option value="Dragon Shield">Dragon Shield</option><option value="Luminary Shield">Luminary Shield</option><option value="Elite Dragon Shield">Elite Dragon Shield</option><option value="Nightfall Shield">Nightfall Shield</option><option value="Phoenix Shield">Phoenix Shield</option><option value="Darkreaver Shield">Darkreaver Shield</option><option value="Flare Guard Shield">Flare Guard Shield</option><option value="Pyroguard Shield">Pyroguard Shield</option><option value="Spectral Shield">Spectral Shield</option><option value="Wraithguard Shield">Wraithguard Shield</option><option value="Arcane Shield">Arcane Shield</option><option value="Doomforged Shield">Doomforged Shield</option><option value="Quantum Shield">Quantum Shield</option><option value="Crimson Glory">Crimson Glory</option><option value="Platinum Shield">Platinum Shield</option><option value="Judge's Angel Shield">Judge's Angel Shield</option><option value="Manticore Shield">Manticore Shield</option>
-                        </optgroup>
-                        <optgroup label="=== ANILLOS Y PENDIENTES ===">
-                            <option value="Wizard's Ring">Wizard's Ring</option><option value="Moonstone Pendant">Moonstone Pendant</option><option value="Jack O'lantern Ring">Jack O'lantern Ring</option><option value="Panda Ring">Panda Ring</option><option value="Robot Knight Ring">Robot Knight Ring</option><option value="Mini Robot Ring">Mini Robot Ring</option><option value="Ring of Ice">Ring of Ice</option><option value="Ring of Poison">Ring of Poison</option><option value="Ring of Fire">Ring of Fire</option><option value="Ring of Earth">Ring of Earth</option><option value="Ring of Wind">Ring of Wind</option><option value="Ring of Magic">Ring of Magic</option>
-                        </optgroup>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">📦 Tipo de Pieza</label>
-                    <select id="inputTipoPieza" required class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
-                        <option value="Armor">Armor (Pechera)</option>
-                        <option value="Pants">Pants (Pantalón)</option>
-                        <option value="Helm">Helm (Casco)</option>
-                        <option value="Gloves">Gloves (Guantes)</option>
-                        <option value="Boots">Boots (Botas)</option>
-                        <option value="Shield">Shield (Escudo)</option>
-                        <option value="Weapon">Weapon / Arma</option>
-                        <option value="Ring">Ring (Anillo)</option>
-                        <option value="Pendant">Pendant (Amuleto)</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">🏰 Nombre del Baúl (Opcional)</label>
-                    <input type="text" id="inputBaul" placeholder="Ej. Baúl Principal" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">👤 Asignado a (Miembro del Clan)</label>
-                    <select id="inputAsignado" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
-                        <option value="">-- Sin asignar (Libre en Baúl) --</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">🆔 ID Personalizado (Opcional)</label>
-                    <input type="number" id="inputCustomId" placeholder="Automático si se deja vacío" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
-                </div>
-                <div></div>
-
-                <!-- OPCIONES EXCELLENT -->
-                <div class="md:col-span-2 space-y-3">
-                    <label class="block text-xs uppercase text-purple-300 font-bold">✨ Opciones Excellent</label>
-                    <div class="bg-[#0d0a1a] p-3 rounded-lg border border-purple-900/80">
-                        <span class="text-[10px] uppercase font-bold text-cyan-400 block mb-2">🛡️ Opciones para Armaduras y Escudos:</span>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Aumento de HP máximo"> Aumento de HP máximo</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Reducción de daño (DD)"> Reducción de daño (DD)</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Reflejo de daño (Reflect)"> Reflejo de daño (Reflect)</label>
-                        </div>
-                    </div>
-                    <div class="bg-[#0d0a1a] p-3 rounded-lg border border-purple-900/80">
-                        <span class="text-[10px] uppercase font-bold text-amber-400 block mb-2">⚔️ Opciones para Armas:</span>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Excellent damage rate %"> Excellent damage rate %</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="chkOpciones" value="Increases attack speed +"> Increases attack speed +</label>
-                            <label class="flex items-center gap-2 cursor-pointer text-red-400 font-bold"><input type="checkbox" name="chkOpciones" value="[Epic] Damage to monsters +10%"> [Epic] Damage to monsters +10%</label>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="md:col-span-2 flex justify-end">
-                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-xl text-xs transition shadow">💾 Guardar Ítem</button>
-                </div>
-            </form>
-        </div>
-
-        <!-- BUSCADOR INTERACTIVO CON TODO EL CATÁLOGO MASIVO -->
         <div class="bg-[#141126] border border-purple-900/60 p-6 rounded-xl shadow-xl space-y-4">
-            <h3 class="text-sm font-bold text-purple-300 uppercase">🔍 Buscador Interactivo de Ítems</h3>
+            <h3 class="text-sm font-bold text-purple-300 uppercase">🔍 Buscador / ➕ Cargador Interactivo de Ítems</h3>
+            
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs uppercase text-purple-300 font-bold mb-1">📜 Scroll 1: Seleccionar Set, Arma o Anillo</label>
-                    <select id="filtroSetBase" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
-                        <option value="">-- Todos los Ítems / Sets / Anillos --</option>
+                    <select id="inputFiltroSetBase" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
+                        <option value="">-- Todos los Ítems / Seleccionar Elemento --</option>
                         <optgroup label="=== ARMADURAS & SETS ===">
                             <option value="Leather">Leather</option><option value="Bronze">Bronze</option><option value="Scale">Scale</option><option value="Brass">Brass</option><option value="Plate">Plate</option><option value="Dragon">Dragon</option><option value="Black Dragon">Black Dragon</option><option value="Dark Phoenix">Dark Phoenix</option><option value="Great Dragon">Great Dragon</option><option value="Dragon Knight">Dragon Knight</option><option value="Titan">Titan</option><option value="Brave">Brave</option>
                             <option value="Pad">Pad</option><option value="Bone">Bone</option><option value="Sphinx">Sphinx</option><option value="Legendary">Legendary</option><option value="Grand Soul">Grand Soul</option><option value="Dark Soul">Dark Soul</option><option value="Venom Mist">Venom Mist</option><option value="Hades">Hades</option>
@@ -189,7 +84,7 @@
                 </div>
                 <div>
                     <label class="block text-xs uppercase text-purple-300 font-bold mb-1">📦 Scroll 2: Tipo de Pieza</label>
-                    <select id="filtroTipoPieza" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
+                    <select id="inputFiltroTipoPieza" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
                         <option value="">-- Todos los Tipos --</option>
                         <option value="Armor">Armor (Pechera)</option>
                         <option value="Pants">Pants (Pantalón)</option>
@@ -204,16 +99,23 @@
                 </div>
                 <div>
                     <label class="block text-xs uppercase text-purple-300 font-bold mb-1">🏰 Nombre del Baúl (Opcional)</label>
-                    <input type="text" id="filtroBaul" oninput="aplicarFiltros()" placeholder="Ej. Baúl Principal..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
+                    <input type="text" id="inputFiltroBaul" oninput="aplicarFiltros()" placeholder="Ej. Baúl Principal..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
                 </div>
                 <div>
                     <label class="block text-xs uppercase text-purple-300 font-bold mb-1">👤 Asignado a (Miembro del Clan)</label>
-                    <input type="text" id="filtroAsignado" oninput="aplicarFiltros()" placeholder="Ej. Pinion..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
+                    <select id="inputFiltroAsignado" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
+                        <option value="">-- Todos (Libres o Asignados) --</option>
+                    </select>
                 </div>
+                <div>
+                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">🆔 ID Personalizado (Solo Carga)</label>
+                    <input type="number" id="inputCustomId" placeholder="Automático si se deja vacío" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
+                </div>
+                <div></div>
 
-                <!-- OPCIONES EXCELLENT PARA FILTRAR -->
+                <!-- OPCIONES EXCELLENT -->
                 <div class="md:col-span-2 space-y-3">
-                    <label class="block text-xs uppercase text-purple-300 font-bold">✨ Filtrar por Opciones Excellent</label>
+                    <label class="block text-xs uppercase text-purple-300 font-bold">✨ Opciones Excellent (Filtro / Carga)</label>
                     <div class="bg-[#0d0a1a] p-3 rounded-lg border border-purple-900/80">
                         <span class="text-[10px] uppercase font-bold text-cyan-400 block mb-2">🛡️ Opciones para Armaduras y Escudos:</span>
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
@@ -222,11 +124,23 @@
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Reflejo de daño (Reflect)" onchange="aplicarFiltros()"> Reflejo de daño (Reflect)</label>
                         </div>
                     </div>
+                    <div class="bg-[#0d0a1a] p-3 rounded-lg border border-purple-900/80">
+                        <span class="text-[10px] uppercase font-bold text-amber-400 block mb-2">⚔️ Opciones para Armas:</span>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Excellent damage rate %" onchange="aplicarFiltros()"> Excellent damage rate %</label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Increases attack speed +" onchange="aplicarFiltros()"> Increases attack speed +</label>
+                            <label class="flex items-center gap-2 cursor-pointer text-red-400 font-bold"><input type="checkbox" class="filtro-chk" value="[Epic] Damage to monsters +10%" onchange="aplicarFiltros()"> [Epic] Damage to monsters +10%</label>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="md:col-span-2 flex justify-between items-center pt-2 border-t border-purple-900/40">
                     <button onclick="limpiarFiltros()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg text-xs font-bold transition">🧹 Limpiar Filtros</button>
-                    <button onclick="exportarExcelItems()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-4 py-2 rounded-lg text-xs transition shadow flex items-center gap-1.5">📊 Exportar a Excel</button>
+                    <div class="flex gap-2">
+                        <button onclick="exportarExcelItems()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-4 py-2 rounded-lg text-xs transition shadow flex items-center gap-1.5">📊 Exportar a Excel</button>
+                        <!-- BOTÓN DE GUARDAR SOLO VISIBLE PARA ADMIN Y OPERADORES -->
+                        <button onclick="guardarItemManual(event)" id="btn-guardar-item" class="hidden bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2 rounded-lg text-xs transition shadow">💾 Guardar Nuevo Ítem</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -250,7 +164,7 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 2: MIEMBROS -->
+    <!-- SECCIÓN 2: MIEMBROS (SOLO ADMIN Y OPERADORES) -->
     <div id="seccion-clan-view" class="w-full max-w-7xl space-y-4 hidden">
         <div id="panel-miembros-crud" class="bg-[#141126] border border-indigo-700/60 p-4 rounded-xl shadow-lg hidden">
             <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end w-full">
@@ -274,8 +188,11 @@
 
     <!-- SECCIÓN 3: DONACIONES Y ASISTENCIAS -->
     <div id="seccion-donaciones-view" class="w-full max-w-7xl space-y-6 hidden">
+        
+        <!-- RANKING ASISTENCIAS -->
         <div class="bg-[#141126] border border-indigo-600/50 p-5 rounded-xl shadow-lg space-y-4">
             <h2 class="text-sm font-bold text-indigo-400 uppercase">⚔️ Asistencias a Invasiones (Ranking)</h2>
+            <!-- CONTROLES DE ASISTENCIA SOLO ADMIN Y OPERADORES -->
             <div id="panel-asistencia-ctrl" class="flex flex-wrap gap-3 items-center hidden bg-[#0d0a1a] p-3 rounded-lg border border-purple-900">
                 <span class="text-xs text-purple-300 font-bold">Miembro:</span>
                 <select id="asistPjSelect" class="bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"><option value="">-- Seleccionar --</option></select>
@@ -292,6 +209,7 @@
             </div>
         </div>
 
+        <!-- BANCO GUILD -->
         <div class="bg-[#141126] border border-amber-600/50 p-5 rounded-xl shadow-lg space-y-3">
             <div class="flex justify-between items-center">
                 <h2 class="text-sm font-bold text-amber-400 uppercase">🏛️ Banco Guild (Acumulado Neto)</h2>
@@ -309,8 +227,10 @@
             </div>
         </div>
 
+        <!-- DONACIÓN POR MIEMBRO -->
         <div class="bg-[#141126] border border-amber-600/50 p-5 rounded-xl shadow-lg space-y-4">
             <h2 class="text-sm font-bold text-amber-400 uppercase">💎 Donación por Miembro</h2>
+            <!-- CRUD DONACIÓN SOLO ADMIN Y OPERADORES -->
             <div id="panel-donacion-crud" class="grid grid-cols-2 sm:grid-cols-7 gap-2 items-end hidden bg-[#0d0a1a] p-3 rounded-lg border border-purple-900">
                 <div class="col-span-2">
                     <label class="block text-[10px] text-gray-300 mb-1">MIEMBRO:</label>
@@ -429,7 +349,8 @@
                     if (loginBtn) loginBtn.outerHTML = `<a href="/logout" class="bg-red-700 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">Salir</a>`;
                     
                     if (sesionAutorizada) {
-                        ['panel-carga-manual', 'panel-miembros-crud', 'panel-asistencia-ctrl', 'panel-donacion-crud', 'btn-gasto-modal', 'th-acciones-head', 'th-miembro-acciones'].forEach(id => {
+                        // CONTROLES VISIBLES PARA ADMIN Y OPERADORES
+                        ['btn-guardar-item', 'panel-miembros-crud', 'panel-asistencia-ctrl', 'panel-donacion-crud', 'btn-gasto-modal', 'th-acciones-head', 'th-miembro-acciones'].forEach(id => {
                             const el = document.getElementById(id);
                             if (el) el.classList.remove('hidden');
                         });
@@ -487,13 +408,18 @@
                 miembrosClan = await res.json();
                 const selAsist = document.getElementById('asistPjSelect');
                 const selDon = document.getElementById('donPj');
-                const selAsignado = document.getElementById('inputAsignado');
-                let opts = '<option value="">-- Seleccionar Miembro --</option>';
-                miembrosClan.forEach(m => { opts += `<option value="${m.nombre_pj}">${m.nombre_pj} (${m.raza})</option>`; });
+                const selAsignado = document.getElementById('inputFiltroAsignado');
+                let opts = '<option value="">-- Todos (Libres o Asignados) --</option>';
+                let optsCtrl = '<option value="">-- Seleccionar Miembro --</option>';
                 
-                if (selAsist) selAsist.innerHTML = opts;
-                if (selDon) selDon.innerHTML = opts;
-                if (selAsignado) selAsignado.innerHTML = '<option value="">-- En Baúl --</option>' + opts;
+                miembrosClan.forEach(m => { 
+                    opts += `<option value="${m.nombre_pj}">${m.nombre_pj}</option>`;
+                    optsCtrl += `<option value="${m.nombre_pj}">${m.nombre_pj} (${m.raza})</option>`;
+                });
+                
+                if (selAsist) selAsist.innerHTML = optsCtrl;
+                if (selDon) selDon.innerHTML = optsCtrl;
+                if (selAsignado) selAsignado.innerHTML = opts;
 
                 const tbody = document.getElementById('tabla-clan-body');
                 if (tbody) {
@@ -512,19 +438,20 @@
         }
 
         function limpiarFiltros() {
-            document.getElementById('filtroSetBase').value = "";
-            document.getElementById('filtroTipoPieza').value = "";
-            document.getElementById('filtroBaul').value = "";
-            document.getElementById('filtroAsignado').value = "";
+            document.getElementById('inputFiltroSetBase').value = "";
+            document.getElementById('inputFiltroTipoPieza').value = "";
+            document.getElementById('inputFiltroBaul').value = "";
+            document.getElementById('inputFiltroAsignado').value = "";
+            document.getElementById('inputCustomId').value = "";
             document.querySelectorAll('.filtro-chk').forEach(chk => chk.checked = false);
             aplicarFiltros();
         }
 
         function aplicarFiltros() {
-            const setBase = (document.getElementById('filtroSetBase').value || '').toLowerCase();
-            const tipoPieza = (document.getElementById('filtroTipoPieza').value || '').toLowerCase();
-            const filtroBaul = (document.getElementById('filtroBaul').value || '').toLowerCase();
-            const filtroAsignado = (document.getElementById('filtroAsignado').value || '').toLowerCase();
+            const setBase = (document.getElementById('inputFiltroSetBase').value || '').toLowerCase();
+            const tipoPieza = (document.getElementById('inputFiltroTipoPieza').value || '').toLowerCase();
+            const filtroBaul = (document.getElementById('inputFiltroBaul').value || '').toLowerCase();
+            const filtroAsignado = (document.getElementById('inputFiltroAsignado').value || '').toLowerCase();
             const chkSeleccionados = Array.from(document.querySelectorAll('.filtro-chk:checked')).map(chk => chk.value.toLowerCase());
 
             const filtrados = catalogo.filter(item => {
@@ -536,7 +463,7 @@
                 const matchSet = !setBase || nombre.includes(setBase);
                 const matchTipo = !tipoPieza || tipo.includes(tipoPieza);
                 const matchBaul = !filtroBaul || nombre.includes(filtroBaul);
-                const matchAsignado = !filtroAsignado || asignado.includes(filtroAsignado);
+                const matchAsignado = !filtroAsignado || asignado === filtroAsignado;
                 const matchOpciones = chkSeleccionados.every(opt => opcionesStr.includes(opt));
 
                 return matchSet && matchTipo && matchBaul && matchAsignado && matchOpciones;
@@ -606,22 +533,26 @@
 
         async function guardarItemManual(e) {
             e.preventDefault();
-            const set_base = document.getElementById('inputSetBase').value;
-            const tipo = document.getElementById('inputTipoPieza').value;
-            const baul = document.getElementById('inputBaul').value.trim();
-            const asignado = document.getElementById('inputAsignado').value;
+            const set_base = document.getElementById('inputFiltroSetBase').value;
+            const tipo = document.getElementById('inputFiltroTipoPieza').value;
+            const baul = document.getElementById('inputFiltroBaul').value.trim();
+            const asignado = document.getElementById('inputFiltroAsignado').value;
             const custom_id = document.getElementById('inputCustomId').value.trim();
+            
+            if (!set_base) return alert("Seleccioná un ítem del Scroll 1 para cargar.");
+
             const opciones = [];
-            document.querySelectorAll('input[name="chkOpciones"]:checked').forEach(chk => opciones.push(chk.value));
+            document.querySelectorAll('input[name="chkOpciones"]:checked, .filtro-chk:checked').forEach(chk => {
+                if (!opciones.includes(chk.value)) opciones.push(chk.value);
+            });
 
             const res = await fetch('/api/items/agregar-manual', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ set_base, tipo, baul, asignado: asignado || 'Sin asignar', custom_id, opciones })
+                body: JSON.stringify({ set_base, tipo, baul: baul || 'Baúl General', asignado: asignado || 'Sin asignar', custom_id, opciones })
             });
             if (res.ok) {
-                alert("¡Ítem guardado!");
-                document.getElementById('inputBaul').value = ''; document.getElementById('inputCustomId').value = '';
-                document.querySelectorAll('input[name="chkOpciones"]').forEach(chk => chk.checked = false);
+                alert("¡Ítem guardado con éxito!");
+                limpiarFiltros();
                 cargarItems();
             } else { const err = await res.json(); alert("Error: " + err.error); }
         }
