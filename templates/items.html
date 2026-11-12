@@ -8,7 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { background-color: #0a0814; color: #e6e1ff; font-family: 'Segoe UI', system-ui, sans-serif; }
-        .tabla-scroll-box { height: 450px !important; overflow-y: scroll !important; border: 1px solid #3b2d6b; border-radius: 8px; background: #0d0a1a; }
+        .tabla-scroll-box { height: 500px !important; overflow-y: scroll !important; border: 1px solid #3b2d6b; border-radius: 8px; background: #0d0a1a; }
         .tabla-scroll-box::-webkit-scrollbar { width: 8px; }
         .tabla-scroll-box::-webkit-scrollbar-thumb { background: #6d28d9; border-radius: 4px; }
         .tabla-items { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
@@ -30,7 +30,7 @@
             <span id="session-user-badge" class="text-xs text-purple-300 font-bold bg-[#141126] px-3 py-1.5 rounded-lg border border-purple-900">
                 Invitado (Público)
             </span>
-            <!-- BACKUP Y RESTAURAR SOLO PARA ADMIN (PINION) -->
+            <!-- BACKUP SOLO ADMIN (PINION) -->
             <div id="admin-backup-buttons" class="hidden flex gap-2">
                 <button onclick="descargarBackup()" class="bg-blue-700 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">💾 Backup Local</button>
                 <label class="bg-amber-700 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
@@ -51,7 +51,7 @@
         <button onclick="cambiarSeccion('USERS')" id="btn-sec-users" class="bg-gray-800 text-gray-400 px-4 py-2 rounded-lg text-xs font-bold transition hidden">⚙️ Usuarios</button>
     </div>
 
-    <!-- SECCIÓN 1: ÍTEMS (PANEL UNIFICADO BUSCADOR + CARGADOR) -->
+    <!-- SECCIÓN 1: ÍTEMS (PANEL UNIFICADO BÚSQUEDA + CARGA) -->
     <div id="seccion-items-view" class="w-full max-w-7xl space-y-4">
         
         <div class="bg-[#141126] border border-purple-900/60 p-6 rounded-xl shadow-xl space-y-4">
@@ -63,13 +63,13 @@
                     <select id="inputFiltroSetBase" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
                         <option value="">-- Todos los Ítems / Seleccionar Elemento --</option>
                         <optgroup label="=== ARMADURAS & SETS ===">
-                            <option value="Leather">Leather</option><option value="Bronze">Bronze</option><option value="Scale">Scale</option><option value="Brass">Brass</option><option value="Plate">Plate</option><option value="Dragon">Dragon</option><option value="Black Dragon">Black Dragon</option><option value="Dark Phoenix">Dark Phoenix</option><option value="Great Dragon">Great Dragon</option><option value="Dragon Knight">Dragon Knight</option><option value="Titan">Titan</option><option value="Brave">Brave</option>
-                            <option value="Pad">Pad</option><option value="Bone">Bone</option><option value="Sphinx">Sphinx</option><option value="Legendary">Legendary</option><option value="Grand Soul">Grand Soul</option><option value="Dark Soul">Dark Soul</option><option value="Venom Mist">Venom Mist</option><option value="Hades">Hades</option>
-                            <option value="Vine">Vine</option><option value="Silk">Silk</option><option value="Wind">Wind</option><option value="Spirit">Spirit</option><option value="Guardian">Guardian</option><option value="Divine">Divine</option><option value="Red Spirit">Red Spirit</option><option value="Sylphid Ray">Sylphid Ray</option><option value="Seraphim">Seraphim</option>
-                            <option value="Storm Crow">Storm Crow</option><option value="Unicorn">Unicorn</option><option value="Thunder Hawk">Thunder Hawk</option><option value="Hurricane">Hurricane</option><option value="Volcano">Volcano</option><option value="Destroyer">Destroyer</option><option value="Phantom">Phantom</option>
-                            <option value="Light Plate">Light Plate</option><option value="Adamantine">Adamantine</option><option value="Dark Steel">Dark Steel</option><option value="Dark Master">Dark Master</option><option value="Glorious">Glorious</option><option value="Emperor">Emperor</option><option value="Royal">Royal</option>
-                            <option value="Mystery">Mystery</option><option value="Red Wing">Red Wing</option><option value="Ancient">Ancient</option><option value="Black Rose">Black Rose</option><option value="Aura">Aura</option><option value="Lilium">Lilium</option><option value="Queen">Queen</option>
-                            <option value="Sacred">Sacred</option><option value="Piercing">Piercing</option><option value="Phoenix Soul">Phoenix Soul</option>
+                            <option value="Leather">Set Leather (BK)</option><option value="Bronze">Set Bronze (BK)</option><option value="Scale">Set Scale (BK/MG)</option><option value="Brass">Set Brass (BK)</option><option value="Plate">Set Plate (BK)</option><option value="Dragon">Set Dragon (BK/MG)</option><option value="Black Dragon">Set Black Dragon (BK)</option><option value="Dark Phoenix">Set Dark Phoenix (BK)</option><option value="Great Dragon">Set Great Dragon (BK)</option><option value="Dragon Knight">Set Dragon Knight (BK)</option><option value="Titan">Set Titan (BK)</option><option value="Brave">Set Brave (BK)</option>
+                            <option value="Pad">Set Pad (SM/MG)</option><option value="Bone">Set Bone (SM)</option><option value="Sphinx">Set Sphinx (SM)</option><option value="Legendary">Set Legendary (SM/MG)</option><option value="Grand Soul">Set Grand Soul (SM)</option><option value="Dark Soul">Set Dark Soul (SM)</option><option value="Venom Mist">Set Venom Mist (SM)</option><option value="Hades">Set Hades (SM)</option>
+                            <option value="Vine">Set Vine (ELF)</option><option value="Silk">Set Silk (ELF)</option><option value="Wind">Set Wind (ELF)</option><option value="Spirit">Set Spirit (ELF)</option><option value="Guardian">Set Guardian (ELF)</option><option value="Divine">Set Divine (ELF)</option><option value="Red Spirit">Set Red Spirit (ELF)</option><option value="Sylphid Ray">Set Sylphid Ray (ELF)</option><option value="Seraphim">Set Seraphim (ELF)</option>
+                            <option value="Storm Crow">Set Storm Crow (MG)</option><option value="Unicorn">Set Unicorn (MG)</option><option value="Thunder Hawk">Set Thunder Hawk (MG)</option><option value="Hurricane">Set Hurricane (MG)</option><option value="Volcano">Set Volcano (MG)</option><option value="Destroyer">Set Destroyer (MG)</option><option value="Phantom">Set Phantom (MG)</option>
+                            <option value="Light Plate">Set Light Plate (DL)</option><option value="Adamantine">Set Adamantine (DL)</option><option value="Dark Steel">Set Dark Steel (DL)</option><option value="Dark Master">Set Dark Master (DL)</option><option value="Glorious">Set Glorious (DL)</option><option value="Emperor">Set Emperor (DL)</option><option value="Royal">Set Royal (DL)</option>
+                            <option value="Mystery">Set Mystery (SUMM)</option><option value="Red Wing">Set Red Wing (SUMM)</option><option value="Ancient">Set Ancient (SUMM)</option><option value="Black Rose">Set Black Rose (SUMM)</option><option value="Aura">Set Aura (SUMM)</option><option value="Lilium">Set Lilium (SUMM)</option><option value="Queen">Set Queen (SUMM)</option>
+                            <option value="Sacred">Set Sacred (RF)</option><option value="Piercing">Set Piercing (RF)</option><option value="Phoenix Soul">Set Phoenix Soul (RF)</option>
                         </optgroup>
                         <optgroup label="=== ESPADAS Y DAGAS ===">
                             <option value="Short Sword">Short Sword</option><option value="Kris">Kris</option><option value="Rapier">Rapier</option><option value="Assassin Sword">Assassin Sword</option><option value="Katana">Katana</option><option value="Gladius">Gladius</option><option value="Falchion">Falchion</option><option value="Serpent Sword">Serpent Sword</option><option value="Blade">Blade</option><option value="Divine Archangel Sword">Divine Archangel Sword</option><option value="Blessed Archangel Sword">Blessed Archangel Sword</option><option value="Manticore Knight Sword">Manticore Knight Sword</option><option value="Dark Reign Two-Hand Blade">Dark Reign Two-Hand Blade</option>
@@ -98,7 +98,7 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">🏰 Nombre del Baúl (Opcional)</label>
+                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">🏰 Nombre del Baúl</label>
                     <input type="text" id="inputFiltroBaul" oninput="aplicarFiltros()" placeholder="Ej. Baúl Principal..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
                 </div>
                 <div>
@@ -107,15 +107,16 @@
                         <option value="">-- Todos (Libres o Asignados) --</option>
                     </select>
                 </div>
-                <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">🆔 ID Personalizado (Solo Carga)</label>
+                <!-- ID PERSONALIZADO (SOLO PARA ADMIN Y OPERADORES AL CARGAR) -->
+                <div id="panel-custom-id" class="hidden">
+                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">🆔 ID Personalizado (Opcional al Cargar)</label>
                     <input type="number" id="inputCustomId" placeholder="Automático si se deja vacío" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
                 </div>
-                <div></div>
+                <div class="hidden" id="dummy-div"></div>
 
                 <!-- OPCIONES EXCELLENT -->
                 <div class="md:col-span-2 space-y-3">
-                    <label class="block text-xs uppercase text-purple-300 font-bold">✨ Opciones Excellent (Filtro / Carga)</label>
+                    <label class="block text-xs uppercase text-purple-300 font-bold">✨ Opciones Excellent</label>
                     <div class="bg-[#0d0a1a] p-3 rounded-lg border border-purple-900/80">
                         <span class="text-[10px] uppercase font-bold text-cyan-400 block mb-2">🛡️ Opciones para Armaduras y Escudos:</span>
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
@@ -138,8 +139,8 @@
                     <button onclick="limpiarFiltros()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg text-xs font-bold transition">🧹 Limpiar Filtros</button>
                     <div class="flex gap-2">
                         <button onclick="exportarExcelItems()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-4 py-2 rounded-lg text-xs transition shadow flex items-center gap-1.5">📊 Exportar a Excel</button>
-                        <!-- BOTÓN DE GUARDAR SOLO VISIBLE PARA ADMIN Y OPERADORES -->
-                        <button onclick="guardarItemManual(event)" id="btn-guardar-item" class="hidden bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2 rounded-lg text-xs transition shadow">💾 Guardar Nuevo Ítem</button>
+                        <!-- BOTÓN DE GUARDAR: SOLO VISIBLE PARA ADMIN Y OPERADORES -->
+                        <button onclick="guardarItemDesdeFiltro()" id="btn-guardar-item" class="hidden bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2 rounded-lg text-xs transition shadow">💾 Guardar Nuevo Ítem</button>
                     </div>
                 </div>
             </div>
@@ -186,13 +187,13 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 3: DONACIONES Y ASISTENCIAS -->
+    <!-- SECCIÓN 3: DONACIONES Y ASISTENCIAS (VISTA LECTURA PARA LECTORES / CONTROL TOTAL ADMIN Y OPERADORES) -->
     <div id="seccion-donaciones-view" class="w-full max-w-7xl space-y-6 hidden">
         
         <!-- RANKING ASISTENCIAS -->
         <div class="bg-[#141126] border border-indigo-600/50 p-5 rounded-xl shadow-lg space-y-4">
             <h2 class="text-sm font-bold text-indigo-400 uppercase">⚔️ Asistencias a Invasiones (Ranking)</h2>
-            <!-- CONTROLES DE ASISTENCIA SOLO ADMIN Y OPERADORES -->
+            <!-- CONTROLES SOLO PARA ADMIN Y OPERADORES -->
             <div id="panel-asistencia-ctrl" class="flex flex-wrap gap-3 items-center hidden bg-[#0d0a1a] p-3 rounded-lg border border-purple-900">
                 <span class="text-xs text-purple-300 font-bold">Miembro:</span>
                 <select id="asistPjSelect" class="bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"><option value="">-- Seleccionar --</option></select>
@@ -209,10 +210,11 @@
             </div>
         </div>
 
-        <!-- BANCO GUILD -->
+        <!-- BANCO GUILD (VISIBLE PARA LECTORES Y ADMINS) -->
         <div class="bg-[#141126] border border-amber-600/50 p-5 rounded-xl shadow-lg space-y-3">
             <div class="flex justify-between items-center">
                 <h2 class="text-sm font-bold text-amber-400 uppercase">🏛️ Banco Guild (Acumulado Neto)</h2>
+                <!-- BOTÓN GASTO SOLO ADMIN Y OPERADORES -->
                 <button onclick="abrirModalGasto()" id="btn-gasto-modal" class="hidden bg-red-700 hover:bg-red-600 text-white px-3 py-1.5 rounded text-xs font-bold">📉 Registrar Uso / Gasto</button>
             </div>
             <div class="overflow-x-auto">
@@ -349,8 +351,8 @@
                     if (loginBtn) loginBtn.outerHTML = `<a href="/logout" class="bg-red-700 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">Salir</a>`;
                     
                     if (sesionAutorizada) {
-                        // CONTROLES VISIBLES PARA ADMIN Y OPERADORES
-                        ['btn-guardar-item', 'panel-miembros-crud', 'panel-asistencia-ctrl', 'panel-donacion-crud', 'btn-gasto-modal', 'th-acciones-head', 'th-miembro-acciones'].forEach(id => {
+                        // CONTROLES TOTALES PARA ADMIN Y OPERADORES
+                        ['btn-guardar-item', 'panel-custom-id', 'dummy-div', 'panel-miembros-crud', 'panel-asistencia-ctrl', 'panel-donacion-crud', 'btn-gasto-modal', 'th-acciones-head', 'th-miembro-acciones'].forEach(id => {
                             const el = document.getElementById(id);
                             if (el) el.classList.remove('hidden');
                         });
@@ -442,7 +444,8 @@
             document.getElementById('inputFiltroTipoPieza').value = "";
             document.getElementById('inputFiltroBaul').value = "";
             document.getElementById('inputFiltroAsignado').value = "";
-            document.getElementById('inputCustomId').value = "";
+            const customIdEl = document.getElementById('inputCustomId');
+            if (customIdEl) customIdEl.value = "";
             document.querySelectorAll('.filtro-chk').forEach(chk => chk.checked = false);
             aplicarFiltros();
         }
@@ -531,18 +534,18 @@
             else { const err = await res.json(); alert("Error: " + err.error); }
         }
 
-        async function guardarItemManual(e) {
-            e.preventDefault();
+        async function guardarItemDesdeFiltro() {
             const set_base = document.getElementById('inputFiltroSetBase').value;
             const tipo = document.getElementById('inputFiltroTipoPieza').value;
             const baul = document.getElementById('inputFiltroBaul').value.trim();
             const asignado = document.getElementById('inputFiltroAsignado').value;
-            const custom_id = document.getElementById('inputCustomId').value.trim();
-            
-            if (!set_base) return alert("Seleccioná un ítem del Scroll 1 para cargar.");
+            const customIdEl = document.getElementById('inputCustomId');
+            const custom_id = customIdEl ? customIdEl.value.trim() : '';
+
+            if (!set_base) return alert("Seleccioná un elemento del Scroll 1 para poder guardarlo.");
 
             const opciones = [];
-            document.querySelectorAll('input[name="chkOpciones"]:checked, .filtro-chk:checked').forEach(chk => {
+            document.querySelectorAll('.filtro-chk:checked').forEach(chk => {
                 if (!opciones.includes(chk.value)) opciones.push(chk.value);
             });
 
