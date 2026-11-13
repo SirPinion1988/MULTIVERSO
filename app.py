@@ -4,7 +4,6 @@ import json
 import re
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file
-from werkzeug.security import check_password_hash
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
@@ -67,7 +66,8 @@ def usuario_es_autorizado():
 def usuario_es_admin():
     if 'user' not in session: return False
     usr = session['user'].lower()
-    return usr == 'pinion'
+    rol = session.get('rol', '').lower()
+    return usr == 'pinion' or rol == 'admin'
 
 @app.route('/')
 def index():
@@ -97,7 +97,7 @@ def exportar_backup():
                 backup_data['asistencias_invasiones'] = cur.fetchall()
                 cur.execute("SELECT * FROM public.guild_gastos;")
                 backup_data['guild_gastos'] = cur.fetchall()
-                cur.execute("SELECT id, username, rol FROM public.usuarios;")
+                cur.execute("SELECT id, username, rol, activo FROM public.usuarios;")
                 backup_data['usuarios'] = cur.fetchall()
             conn.close()
         except Exception as e:
@@ -441,38 +441,72 @@ def api_items():
             if conn: conn.close()
     return jsonify({"status": "ok"}), 200
 
-# --- API USUARIOS Y MIEMBROS ---
-@app.route('/api/usuarios', methods=['GET', 'POST', 'DELETE'])
+# --- API USUARIOS ---
+@app.route('/api/usuarios', methods=['GET', 'POST', 'PUT', 'DELETE'])
 def api_usuarios():
     es_pinion = usuario_es_admin()
     es_op = usuario_es_autorizado()
     if not es_pinion and not es_op: return jsonify({"error": "No autorizado."}), 403
     conn = get_db()
+    
     if request.method == 'GET':
         usrs = []
         if conn:
             try:
                 with conn.cursor() as cur:
-                    cur.execute("SELECT id, username, rol FROM public.usuarios ORDER BY id ASC;")
+                    cur.execute("SELECT id, username, rol, activo FROM public.usuarios ORDER BY id ASC;")
                     usrs = cur.fetchall()
                 conn.close()
             except Exception: pass
         return jsonify(usrs)
+        
     data = request.json or {}
     if request.method == 'POST':
         username = data.get('username', '').strip()
         password = data.get('password', '').strip()
         rol = data.get('rol', 'lector').strip()
-        if not username or not password: return jsonify({"error": "Faltan datos"}), 400
-        if not es_pinion and rol != 'lector': return jsonify({"error": "Solo Pinion puede crear operadores."}), 403
+        activo = data.get('activo', True)
+        
+        if not username: return jsonify({"error": "Falta usuario"}), 400
+        if not es_pinion and rol != 'lector': return jsonify({"error": "Solo Pinion puede asignar roles elevados."}), 403
+        
         if conn:
             try:
                 with conn.cursor() as cur:
-                    cur.execute("INSERT INTO public.usuarios (username, password_hash, rol) VALUES (%s, %s, %s) ON CONFLICT (username) DO UPDATE SET rol = EXCLUDED.rol, password_hash = EXCLUDED.password_hash;", (username, password, rol))
+                    if password:
+                        cur.execute("""
+                            INSERT INTO public.usuarios (username, password_hash, rol, activo) 
+                            VALUES (%s, %s, %s, %s) 
+                            ON CONFLICT (username) DO UPDATE 
+                            SET rol = EXCLUDED.rol, password_hash = EXCLUDED.password_hash, activo = EXCLUDED.activo;
+                        """, (username, password, rol, activo))
+                    else:
+                        cur.execute("""
+                            UPDATE public.usuarios SET rol = %s, activo = %s WHERE username = %s;
+                        """, (rol, activo, username))
                     conn.commit()
                 conn.close()
             except Exception as e: return jsonify({"error": str(e)}), 500
         return jsonify({"status": "ok"}), 201
+
+    if request.method == 'PUT':
+        if not es_pinion: return jsonify({"error": "Solo Pinion."}), 403
+        uid = data.get('id')
+        activo = data.get('activo')
+        rol = data.get('rol')
+        
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    if activo is not None:
+                        cur.execute("UPDATE public.usuarios SET activo = %s WHERE id = %s;", (activo, uid))
+                    if rol is not None:
+                        cur.execute("UPDATE public.usuarios SET rol = %s WHERE id = %s;", (rol, uid))
+                    conn.commit()
+                conn.close()
+            except Exception as e: return jsonify({"error": str(e)}), 500
+        return jsonify({"status": "ok"}), 200
+
     if request.method == 'DELETE':
         if not es_pinion: return jsonify({"error": "Solo Pinion."}), 403
         uid = data.get('id')
@@ -485,7 +519,8 @@ def api_usuarios():
             except Exception: pass
         return jsonify({"status": "ok"}), 200
 
-@app.route('/api/miembros', methods=['GET', 'POST', 'DELETE'])
+# --- API MIEMBROS ---
+@app.route('/api/miembros', methods=['GET', 'POST', 'PUT', 'DELETE'])
 def api_miembros():
     conn = get_db()
     if request.method == 'GET':
@@ -506,20 +541,53 @@ def api_miembros():
                 conn.close()
             except Exception: pass
         return jsonify(miembros)
+        
     if not usuario_es_autorizado(): return jsonify({"error": "No autorizado."}), 403
     data = request.json or {}
-    if request.method == 'POST':
+    
+    if request.method == 'POST': # Crear miembro y usuario automático (nick+123)
         nombre_pj = data.get('nombre_pj', '').strip()
         raza = data.get('raza', 'DK').strip()
         if not nombre_pj: return jsonify({"error": "Falta nick"}), 400
+        
         if conn:
             try:
                 with conn.cursor() as cur:
                     cur.execute("INSERT INTO public.miembros_clan (nombre_pj, raza) VALUES (%s, %s) ON CONFLICT (nombre_pj) DO UPDATE SET raza = EXCLUDED.raza;", (nombre_pj, raza))
+                    
+                    pass_inicial = nombre_pj + "123"
+                    cur.execute("""
+                        INSERT INTO public.usuarios (username, password_hash, rol, activo)
+                        VALUES (%s, %s, 'lector', TRUE)
+                        ON CONFLICT (username) DO NOTHING;
+                    """, (nombre_pj, pass_inicial))
+                    
                     conn.commit()
                 conn.close()
             except Exception as e: return jsonify({"error": str(e)}), 500
         return jsonify({"status": "ok"}), 201
+
+    if request.method == 'PUT': # Editar Nick o Raza del miembro
+        m_id = data.get('id')
+        nuevo_nombre = data.get('nombre_pj', '').strip()
+        nueva_raza = data.get('raza', '').strip()
+        
+        if not m_id or not nuevo_nombre: return jsonify({"error": "Faltan datos"}), 400
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT nombre_pj FROM public.miembros_clan WHERE id = %s;", (m_id,))
+                    row_old = cur.fetchone()
+                    if row_old:
+                        viejo_nombre = row_old['nombre_pj']
+                        cur.execute("UPDATE public.miembros_clan SET nombre_pj = %s, raza = %s WHERE id = %s;", (nuevo_nombre, nueva_raza, m_id))
+                        if viejo_nombre != nuevo_nombre:
+                            cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE asignado_a = %s;", (nuevo_nombre, viejo_nombre))
+                    conn.commit()
+                conn.close()
+            except Exception as e: return jsonify({"error": str(e)}), 500
+        return jsonify({"status": "ok"}), 200
+
     if request.method == 'DELETE':
         m_id = data.get('id')
         if conn:
@@ -547,18 +615,25 @@ def login():
     if conn:
         try:
             with conn.cursor() as cur:
-                cur.execute("SELECT username, password_hash, rol FROM public.usuarios WHERE LOWER(username) = %s;", (username,))
+                cur.execute("SELECT username, password_hash, rol, activo FROM public.usuarios WHERE LOWER(username) = %s;", (username,))
                 user_db = cur.fetchone()
             conn.close()
         except Exception: pass
+        
     if not user_db:
-        if username == 'pinion' and password == 'G1nt0n1c': user_db = {'username': 'Pinion', 'rol': 'admin'}
-        elif username == 'tolkien' and password == 'tolkien123': user_db = {'username': 'tolkien', 'rol': 'operador'}
-        elif username == 'nasda' and password == 'nasda123': user_db = {'username': 'nasda', 'rol': 'operador'}
-    if user_db and (user_db.get('password_hash') == password):
-        session['user'] = user_db.get('username')
-        session['rol'] = user_db.get('rol', 'lector')
-        return jsonify({"status": "ok", "user": session['user'], "rol": session['rol'], "autorizado": usuario_es_autorizado(), "es_admin": usuario_es_admin()}), 200
+        if username == 'pinion' and password == 'G1nt0n1c': user_db = {'username': 'Pinion', 'rol': 'admin', 'activo': True}
+        elif username == 'tolkien' and password == 'tolkien123': user_db = {'username': 'tolkien', 'rol': 'operador', 'activo': True}
+        elif username == 'nasda' and password == 'nasda123': user_db = {'username': 'nasda', 'rol': 'operador', 'activo': True}
+        
+    if user_db:
+        if user_db.get('activo') is False:
+            return jsonify({"error": "Tu cuenta se encuentra suspendida."}), 403
+            
+        if user_db.get('password_hash') == password:
+            session['user'] = user_db.get('username')
+            session['rol'] = user_db.get('rol', 'lector')
+            return jsonify({"status": "ok", "user": session['user'], "rol": session['rol'], "autorizado": usuario_es_autorizado(), "es_admin": usuario_es_admin()}), 200
+            
     return jsonify({"error": "Credenciales incorrectas"}), 401
 
 @app.route('/logout')
