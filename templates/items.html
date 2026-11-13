@@ -30,7 +30,6 @@
             <span id="session-user-badge" class="text-xs text-purple-300 font-bold bg-[#141126] px-3 py-1.5 rounded-lg border border-purple-900">
                 Invitado (Público)
             </span>
-            <!-- BACKUP SOLO ADMIN (PINION) -->
             <div id="admin-backup-buttons" class="hidden flex gap-2">
                 <button onclick="descargarBackup()" class="bg-blue-700 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">💾 Backup Local</button>
                 <label class="bg-amber-700 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
@@ -51,71 +50,31 @@
         <button onclick="cambiarSeccion('USERS')" id="btn-sec-users" class="bg-gray-800 text-gray-400 px-4 py-2 rounded-lg text-xs font-bold transition hidden">⚙️ Usuarios</button>
     </div>
 
-    <!-- SECCIÓN 1: ÍTEMS (PANEL UNIFICADO BUSCADOR + CARGA CON CATÁLOGO MASIVO) -->
+    <!-- SECCIÓN 1: ÍTEMS -->
     <div id="seccion-items-view" class="w-full max-w-7xl space-y-4">
-        
         <div class="bg-[#141126] border border-purple-900/60 p-6 rounded-xl shadow-xl space-y-4">
             <h3 class="text-sm font-bold text-purple-300 uppercase">🔍 Buscador / ➕ Cargador Interactivo de Ítems</h3>
-            
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">📜 Scroll 1: Seleccionar Set, Arma o Anillo</label>
+                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">📜 Set, Arma o Anillo</label>
                     <select id="inputFiltroSetBase" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
-                        <option value="">-- Todos los Ítems / Seleccionar Elemento --</option>
+                        <option value="">-- Todos los Ítems --</option>
                         <optgroup label="=== ARMADURAS & SETS ===">
-                            <option value="Leather">Leather</option><option value="Bronze">Bronze</option><option value="Scale">Scale</option><option value="Brass">Brass</option><option value="Plate">Plate</option><option value="Dragon">Dragon</option><option value="Black Dragon">Black Dragon</option><option value="Dark Phoenix">Dark Phoenix</option><option value="Great Dragon">Great Dragon</option><option value="Dragon Knight">Dragon Knight</option><option value="Titan">Titan</option><option value="Brave">Brave</option>
-                            <option value="Pad">Pad</option><option value="Bone">Bone</option><option value="Sphinx">Sphinx</option><option value="Legendary">Legendary</option><option value="Grand Soul">Grand Soul</option><option value="Dark Soul">Dark Soul</option><option value="Venom Mist">Venom Mist</option><option value="Hades">Set Hades (SM)</option>
-                            <option value="Vine">Vine</option><option value="Silk">Silk</option><option value="Wind">Wind</option><option value="Spirit">Spirit</option><option value="Guardian">Guardian</option><option value="Divine">Divine</option><option value="Red Spirit">Red Spirit</option><option value="Sylphid Ray">Sylphid Ray</option><option value="Seraphim">Seraphim</option>
-                            <option value="Storm Crow">Storm Crow</option><option value="Unicorn">Unicorn</option><option value="Thunder Hawk">Thunder Hawk</option><option value="Hurricane">Hurricane</option><option value="Volcano">Volcano</option><option value="Destroyer">Destroyer</option><option value="Phantom">Phantom</option>
-                            <option value="Light Plate">Light Plate</option><option value="Adamantine">Adamantine</option><option value="Dark Steel">Dark Steel</option><option value="Dark Master">Dark Master</option><option value="Glorious">Glorious</option><option value="Emperor">Emperor</option><option value="Royal">Royal</option>
-                            <option value="Violent Wind">Violent Wind</option><option value="Red Wing">Red Wing</option><option value="Ancient">Ancient</option><option value="Black Rose">Black Rose</option><option value="Aura">Aura</option><option value="Lilium">Lilium</option><option value="Queen">Queen</option>
-                            <option value="Sacred">Sacred</option><option value="Piercing">Piercing</option><option value="Phoenix Soul">Phoenix Soul</option>
+                            <option value="Leather">Leather</option><option value="Bronze">Bronze</option><option value="Scale">Scale</option><option value="Brass">Brass</option><option value="Plate">Plate</option><option value="Dragon">Dragon</option><option value="Black Dragon">Black Dragon</option><option value="Dark Phoenix">Dark Phoenix</option><option value="Pad">Pad</option><option value="Bone">Bone</option><option value="Sphinx">Sphinx</option><option value="Legendary">Legendary</option><option value="Vine">Vine</option><option value="Silk">Silk</option><option value="Wind">Wind</option><option value="Spirit">Spirit</option><option value="Guardian">Guardian</option><option value="Storm Crow">Storm Crow</option><option value="Thunder Hawk">Thunder Hawk</option><option value="Light Plate">Light Plate</option><option value="Adamantine">Adamantine</option><option value="Dark Steel">Dark Steel</option><option value="Violent Wind">Violent Wind</option><option value="Red Wing">Red Wing</option><option value="Sacred">Sacred</option>
                         </optgroup>
-                        <optgroup label="=== ESPADAS Y DAGAS ===">
-                            <option value="Short Sword">Short Sword</option><option value="Kris">Kris</option><option value="Rapier">Rapier</option><option value="Assassin Sword">Assassin Sword</option><option value="Katana">Katana</option><option value="Gladius">Gladius</option><option value="Falchion">Falchion</option><option value="Serpent Sword">Serpent Sword</option><option value="Salamander Two-Hand Blade">Salamander Two-Hand Blade</option><option value="Blade">Blade</option><option value="Light Saber Two-Hand">Light Saber Two-Hand</option><option value="Legendary Two-Hand Blade">Legendary Two-Hand Blade</option><option value="Giant Two-Hand Blade">Giant Two-Hand Blade</option><option value="Heliacal Two-Hand Blade">Heliacal Two-Hand Blade</option><option value="Moonlit Dagger">Moonlit Dagger</option><option value="Starfire Katana">Starfire Katana</option><option value="Abyssal Sword">Abyssal Sword</option><option value="Double Sword">Double Sword</option><option value="Epic Kriss">Epic Kriss</option><option value="Lighting Sword">Lighting Sword</option><option value="Dark Breaker Two-Hand">Dark Breaker Two-Hand</option><option value="Thunder Two-Hand Blade">Thunder Two-Hand Blade</option><option value="Viperstrike Dagger">Viperstrike Dagger</option><option value="Destruction Sword">Destruction Sword</option><option value="Emerald Sword">Emerald Sword</option><option value="Twilight Dagger">Twilight Dagger</option><option value="Knight Sword">Knight Sword</option><option value="Daybreak Two-Hand Blade">Daybreak Two-Hand Blade</option><option value="Firedrake Sword">Firedrake Sword</option><option value="Fire Doom Dagger">Fire Doom Dagger</option><option value="Bone Sword">Bone Sword</option><option value="Divine Archangel Sword">Divine Archangel Sword</option><option value="Blessed Archangel Sword">Blessed Archangel Sword</option><option value="Soulrender Two-Hand Blade">Soulrender Two-Hand Blade</option><option value="Manticore Knight Sword">Manticore Knight Sword</option><option value="Rune Two-Hand Blade">Rune Two-Hand Blade</option><option value="Dark Reign Two-Hand Blade">Dark Reign Two-Hand Blade</option><option value="Dancer Two-Hand Blade">Dancer Two-Hand Blade</option><option value="Frostshard Two-Hand Blade">Frostshard Two-Hand Blade</option><option value="Majestic Sword">Majestic Sword</option><option value="Dragon Dancer Sword">Dragon Dancer Sword</option><option value="Explosion Two-Hand Blade">Explosion Two-Hand Blade</option><option value="Manticore Magic Sword">Manticore Magic Sword</option><option value="Manticore Two-Hand Blade">Manticore Two-Hand Blade</option>
+                        <optgroup label="=== ESPADAS Y ARMAS ===">
+                            <option value="Kris">Kris</option><option value="Rapier">Rapier</option><option value="Assassin Sword">Assassin Sword</option><option value="Katana">Katana</option><option value="Gladius">Gladius</option><option value="Falchion">Falchion</option><option value="Serpent Sword">Serpent Sword</option><option value="Double Sword">Double Sword</option><option value="Lighting Sword">Lighting Sword</option><option value="Destruction Sword">Destruction Sword</option><option value="Morning Star">Morning Star</option><option value="Elven Bow">Elven Bow</option><option value="Silver Bow">Silver Bow</option><option value="Bluewing Crossbow">Bluewing Crossbow</option><option value="Aquagold Crossbow">Aquagold Crossbow</option><option value="Serpent Two-Hand Staff">Serpent Two-Hand Staff</option><option value="Resurrection Staff">Resurrection Staff</option><option value="Master Scepter">Master Scepter</option><option value="Battle Scepter">Battle Scepter</option><option value="Shining Scepter">Shining Scepter</option><option value="Book of Samut">Book of Samut</option><option value="Red Winged Stick">Red Winged Stick</option><option value="Book of Neil">Book of Neil</option><option value="Ancient Stick">Ancient Stick</option><option value="Mystery Stick">Mystery Stick</option><option value="Violent Wind Stick">Violent Wind Stick</option><option value="Sacred Claw">Sacred Claw</option>
                         </optgroup>
-                        <optgroup label="=== LANZAS ===">
-                            <option value="Double Poleaxe">Double Poleaxe</option><option value="Dragon Lance">Dragon Lance</option><option value="Halberd">Halberd</option><option value="Spear">Spear</option><option value="Giant Trident">Giant Trident</option><option value="Berdysh">Berdysh</option><option value="Light Spear">Light Spear</option><option value="Serpent Spear">Serpent Spear</option><option value="Great Scythe">Great Scythe</option><option value="Bill of Balrog">Bill of Balrog</option><option value="Dragon Spear">Dragon Spear</option><option value="Brova">Brova</option>
-                        </optgroup>
-                        <optgroup label="=== HACHAS Y MARTILLOS ===">
-                            <option value="Small Axe">Small Axe</option><option value="Hand Axe">Hand Axe</option><option value="Double Axe">Double Axe</option><option value="Tomahawk">Tomahawk</option><option value="Battle Two-Hand Axe">Battle Two-Hand Axe</option><option value="Nikea Two-Hand Axe">Nikea Two-Hand Axe</option><option value="Larkan Two-Hand Axe">Larkan Two-Hand Axe</option><option value="Crescent Two-Hand Axe">Crescent Two-Hand Axe</option><option value="Great Dragon Two-Hand Axe">Great Dragon Two-Hand Axe</option><option value="Mace">Mace</option><option value="Morning Star">Morning Star</option><option value="Flail">Flail</option><option value="Great Two-Hand Hammer">Great Two-Hand Hammer</option><option value="Chaos Dragon Two-Hand Axe">Chaos Dragon Two-Hand Axe</option><option value="Crystal Morning Two-Hand Star">Crystal Morning Two-Hand Star</option><option value="Crystal Two-Hand Blade">Crystal Two-Hand Blade</option>
-                        </optgroup>
-                        <optgroup label="===  STAFFS ===">
-                            <option value="Skull Staff">Skull Staff</option><option value="Angelic Two-Hand Staff">Angelic Two-Hand Staff</option><option value="Serpent Two-Hand Staff">Serpent Two-Hand Staff</option><option value="Serpent Two-Hand Staff">Serpent Two-Hand Staff</option><option value="Thunder Two-Hand Staff">Thunder Two-Hand Staff</option><option value="Gorgon Two-Hand Staff">Gorgon Two-Hand Staff</option><option value="Legendary Staff">Legendary Staff</option><option value="Skeleton Two-Hand Staff">Skeleton Two-Hand Staff</option><option value="Resurrection Staff">Resurrection Staff</option><option value="Chaos Lighting Two-Hand Staff">Chaos Lighting Two-Hand Staff</option><option value="Destruction Two-Hand Staff">Destruction Two-Hand Staff</option><option value="Dragon Soul Staff">Dragon Soul Staff</option><option value="Platina Staff">Platina Staff</option><option value="Chromatic Staff">Chromatic Staff</option><option value="Kundun Staff">Kundun Staff</option><option value="Crystal Two-Hand Staff">Crystal Two-Hand Staff</option><option value="Grand Viper Staff">Grand Viper Staff</option><option value="Divine Archangel Staff">Divine Archangel Staff</option><option value="Eternal Two-Hand Staff">Eternal Two-Hand Staff</option><option value="Blessed Archangel Staff">Blessed Archangel Staff</option><option value="Manticore Staff">Manticore Staff</option>
-                        </optgroup>
-                        <optgroup label="=== ARCOS Y BALLESTAS ===">
-                            <option value="Short Bow">Short Bow</option><option value="Crossbow">Crossbow</option><option value="Bow">Bow</option><option value="Golden Crossbow">Golden Crossbow</option><option value="Elven Bow">Elven Bow</option><option value="Arquebus">Arquebus</option><option value="Battle Bow">Battle Bow</option><option value="Light Crossbow">Light Crossbow</option><option value="Tiger Bow">Tiger Bow</option><option value="Serpent Crossbow">Serpent Crossbow</option><option value="Silver Bow">Silver Bow</option><option value="Bluewing Crossbow">Bluewing Crossbow</option><option value="Aquagold Crossbow">Aquagold Crossbow</option><option value="Epic Silver Bow">Epic Silver Bow</option><option value="Chaos Nature Bow">Chaos Nature Bow</option><option value="Saint Crossbow">Saint Crossbow</option><option value="Celestial Bow">Celestial Bow</option><option value="Starlight Bow">Starlight Bow</option><option value="Great Reign Crossbow">Great Reign Crossbow</option><option value="Albatross Bow">Albatross Bow</option><option value="Aileen Bow">Aileen Bow</option><option value="Arrow Viper Bow">Arrow Viper Bow</option><option value="Spectral Crossbow">Spectral Crossbow</option><option value="Sylph Wind Bow">Sylph Wind Bow</option><option value="Devil Crossbow">Devil Crossbow</option><option value="Divine Archangel Crossbow">Divine Archangel Crossbow</option><option value="Blessed Archangel Crossbow">Blessed Archangel Crossbow</option><option value="Manticore Bow">Manticore Bow</option><option value="Manticore Quiver">Manticore Quiver</option>
-                        </optgroup>
-                        <optgroup label="=== CETROS (DL) ===">
-                            <option value="Battle Scepter">Battle Scepter</option><option value="Master Scepter">Master Scepter</option><option value="Great Scepter">Great Scepter</option><option value="Lord Scepter">Lord Scepter</option><option value="Great Lord Scepter">Great Lord Scepter</option><option value="Shining Scepter">Shining Scepter</option><option value="Striker Scepter">Striker Scepter</option><option value="Imperial Scepter">Imperial Scepter</option><option value="Soleil Scepter">Soleil Scepter</option><option value="Divine Archangel Scepter">Divine Archangel Scepter</option><option value="Blessed Archangel Scepter">Blessed Archangel Scepter</option><option value="Manticore Scepter">Manticore Scepter</option>
-                        </optgroup>
-                        <optgroup label="=== LIBROS Y STICKS (SUMM) ===">
-                            <option value="Book of Samut">Book of Samut</option><option value="Red Winged Stick">Red Winged Stick</option><option value="Book of Neil">Book of Neil</option><option value="Ancient Stick">Ancient Stick</option><option value="Demonic Stick">Demonic Stick</option><option value="Book of Lagle">Book of Lagle</option><option value="Raven Stick">Raven Stick</option><option value="Storm Blitz Stick">Storm Blitz Stick</option><option value="Summon Spirit Stick">Summon Spirit Stick</option><option value="Divine Archangel Stick">Divine Archangel Stick</option><option value="Blessed Archangel Stick">Blessed Archangel Stick</option><option value="Manticore Book">Manticore Book</option><option value="Manticore Stick">Manticore Stick</option><option value="Mystery Stick">Mystery Stick</option><option value="Violent Wind Stick">Violent Wind Stick</option>
-                        </optgroup>
-                        <optgroup label="=== GARRAS (RF) ===">
-                            <option value="Sacred Claw">Sacred Claw</option><option value="Holy Storm Claw">Holy Storm Claw</option><option value="Drakzar Claw">Drakzar Claw</option><option value="Piercing Claw">Piercing Claw</option><option value="Bloodgrin Claw">Bloodgrin Claw</option><option value="Phoenix Soul Star Claw">Phoenix Soul Star Claw</option><option value="Carnavor Claw">Carnavor Claw</option><option value="Divine Archangel Claw">Divine Archangel Claw</option><option value="Blessed Archangel Claw">Blessed Archangel Claw</option><option value="Manticore Claw">Manticore Claw</option>
-                        </optgroup>
-                        <optgroup label="=== SHIELDS ===">
-                            <option value="Small Shield">Small Shield</option><option value="Buckler Shield">Buckler Shield</option><option value="Horn Shield">Horn Shield</option><option value="Round Shield">Round Shield</option><option value="Kite Shield">Kite Shield</option><option value="Large Round Shield">Large Round Shield</option><option value="Skull Shield">Skull Shield</option><option value="Scale Shield">Scale Shield</option><option value="Plate Shield">Plate Shield</option><option value="Big Shield">Big Shield</option><option value="Spiked Shield">Spiked Shield</option><option value="Dragon Slayer Shield">Dragon Slayer Shield</option><option value="Tower Shield">Tower Shield</option><option value="Serpent Shield">Serpent Shield</option><option value="Bronze Shield">Bronze Shield</option><option value="Death Shield">Death Shield</option><option value="Dragon Shield">Dragon Shield</option><option value="Luminary Shield">Luminary Shield</option><option value="Elite Dragon Shield">Elite Dragon Shield</option><option value="Nightfall Shield">Nightfall Shield</option><option value="Phoenix Shield">Phoenix Shield</option><option value="Darkreaver Shield">Darkreaver Shield</option><option value="Flare Guard Shield">Flare Guard Shield</option><option value="Pyroguard Shield">Pyroguard Shield</option><option value="Spectral Shield">Spectral Shield</option><option value="Wraithguard Shield">Wraithguard Shield</option><option value="Arcane Shield">Arcane Shield</option><option value="Doomforged Shield">Doomforged Shield</option><option value="Quantum Shield">Quantum Shield</option><option value="Crimson Glory">Crimson Glory</option><option value="Platinum Shield">Platinum Shield</option><option value="Judge's Angel Shield">Judge's Angel Shield</option><option value="Manticore Shield">Manticore Shield</option>
-                        </optgroup>
-                        <optgroup label="=== ANILLOS Y PENDIENTES ===">
-                            <option value="Wizard's Ring">Wizard's Ring</option><option value="Moonstone Pendant">Moonstone Pendant</option><option value="Jack O'lantern Ring">Jack O'lantern Ring</option><option value="Panda Ring">Panda Ring</option><option value="Robot Knight Ring">Robot Knight Ring</option><option value="Mini Robot Ring">Mini Robot Ring</option><option value="Ring of Ice">Ring of Ice</option><option value="Ring of Poison">Ring of Poison</option><option value="Ring of Fire">Ring of Fire</option><option value="Ring of Earth">Ring of Earth</option><option value="Ring of Wind">Ring of Wind</option><option value="Ring of Magic">Ring of Magic</option>
+                        <optgroup label="=== ESCUDOS Y ACCESORIOS ===">
+                            <option value="Small Shield">Small Shield</option><option value="Buckler Shield">Buckler Shield</option><option value="Horn Shield">Horn Shield</option><option value="Round Shield">Round Shield</option><option value="Skull Shield">Skull Shield</option><option value="Dragon Shield">Dragon Shield</option><option value="Ring of Wind">Ring of Wind</option><option value="Ring of Ice">Ring of Ice</option><option value="Pendant of Fire">Pendant of Fire</option>
                         </optgroup>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">📦 Scroll 2: Tipo de Pieza</label>
+                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">📦 Tipo de Pieza</label>
                     <select id="inputFiltroTipoPieza" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
                         <option value="">-- Todos los Tipos --</option>
-                        <option value="Armor">Armor (Pechera)</option>
-                        <option value="Pants">Pants (Pantalón)</option>
-                        <option value="Helm">Helm (Casco)</option>
-                        <option value="Gloves">Gloves (Guantes)</option>
-                        <option value="Boots">Boots (Botas)</option>
-                        <option value="Shield">Shield (Escudo)</option>
-                        <option value="Weapon">Weapon / Arma</option>
-                        <option value="Ring">Ring (Anillo)</option>
-                        <option value="Pendant">Pendant (Amuleto)</option>
+                        <option value="Armor">Armor (Pechera)</option><option value="Pants">Pants (Pantalón)</option><option value="Helm">Helm (Casco)</option><option value="Gloves">Gloves (Guantes)</option><option value="Boots">Boots (Botas)</option><option value="Shield">Shield (Escudo)</option><option value="Weapon">Weapon / Arma</option><option value="Ring">Ring (Anillo)</option><option value="Pendant">Pendant (Amuleto)</option>
                     </select>
                 </div>
                 <div>
@@ -123,23 +82,21 @@
                     <input type="text" id="inputFiltroBaul" oninput="aplicarFiltros()" placeholder="Ej. Baúl Principal..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">👤 Asignado a (Miembro del Clan)</label>
+                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">👤 Asignado a</label>
                     <select id="inputFiltroAsignado" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
-                        <option value="">-- Todos (Libres o Asignados) --</option>
+                        <option value="">-- Todos --</option>
                     </select>
                 </div>
                 <div id="panel-custom-id" class="hidden">
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">🆔 ID Personalizado (Opcional al Cargar)</label>
-                    <input type="number" id="inputCustomId" placeholder="Automático si se deja vacío" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
+                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">🆔 ID Personalizado (Opcional)</label>
+                    <input type="number" id="inputCustomId" placeholder="Automático" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
                 </div>
                 <div class="hidden" id="dummy-div"></div>
 
-                <!-- OPCIONES EXCELLENT EN DOS RECUADROS COMPLETOS -->
                 <div class="md:col-span-2 space-y-3">
                     <label class="block text-xs uppercase text-purple-300 font-bold">✨ Opciones Excellent</label>
-                    
                     <div class="bg-[#0d0a1a] p-3 rounded-lg border border-purple-900/80">
-                        <span class="text-[10px] uppercase font-bold text-cyan-400 block mb-2">🛡️ Opciones para Armaduras, Escudos y Accesorios:</span>
+                        <span class="text-[10px] uppercase font-bold text-cyan-400 block mb-2">🛡️ Defensivas:</span>
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Aumento de HP máximo" onchange="aplicarFiltros()"> Aumento de HP máximo</label>
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Aumento de SD máximo" onchange="aplicarFiltros()"> Aumento de SD máximo</label>
@@ -149,18 +106,12 @@
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Tasa de drop de Zen" onchange="aplicarFiltros()"> Tasa de drop de Zen</label>
                         </div>
                     </div>
-
                     <div class="bg-[#0d0a1a] p-3 rounded-lg border border-purple-900/80">
-                        <span class="text-[10px] uppercase font-bold text-amber-400 block mb-2">⚔️ Opciones para Armas y Bastones:</span>
+                        <span class="text-[10px] uppercase font-bold text-amber-400 block mb-2">⚔️ Ofensivas:</span>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Excellent damage rate %" onchange="aplicarFiltros()"> Excellent damage rate %</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Wizardry Damage increases +level/" onchange="aplicarFiltros()"> Wizardry Damage increases +level/</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Wizardry Damage increase %" onchange="aplicarFiltros()"> Wizardry Damage increase %</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Physical Damage increases +level/" onchange="aplicarFiltros()"> Physical Damage increases +level/</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Physical Damage increase %" onchange="aplicarFiltros()"> Physical Damage increase %</label>
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Increases attack speed +" onchange="aplicarFiltros()"> Increases attack speed +</label>
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Obtains (Life) when monster is killed" onchange="aplicarFiltros()"> Obtains (Life) when monster is killed</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Obtains (Mana) when monster is killed" onchange="aplicarFiltros()"> Obtains (Mana) when monster is killed</label>
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Critical Damage rate %" onchange="aplicarFiltros()"> Critical Damage rate %</label>
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Damage to Monster" onchange="aplicarFiltros()"> Damage to Monster</label>
                         </div>
@@ -168,10 +119,10 @@
                 </div>
 
                 <div class="md:col-span-2 flex justify-between items-center pt-2 border-t border-purple-900/40">
-                    <button onclick="limpiarFiltros()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg text-xs font-bold transition">🧹 Limpiar Filtros</button>
+                    <button onclick="limpiarFiltros()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg text-xs font-bold transition">🧹 Limpiar</button>
                     <div class="flex gap-2">
-                        <button onclick="exportarExcelItems()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-4 py-2 rounded-lg text-xs transition shadow flex items-center gap-1.5">📊 Exportar a Excel</button>
-                        <button onclick="guardarItemDesdeFiltro()" id="btn-guardar-item" class="hidden bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2 rounded-lg text-xs transition shadow">💾 Guardar Nuevo Ítem</button>
+                        <button onclick="exportarExcelItems()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-4 py-2 rounded-lg text-xs transition shadow">📊 Exportar Excel</button>
+                        <button onclick="guardarItemDesdeFiltro()" id="btn-guardar-item" class="hidden bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2 rounded-lg text-xs transition shadow">💾 Guardar Ítem</button>
                     </div>
                 </div>
             </div>
@@ -184,19 +135,19 @@
                         <th style="width: 80px;">ID #</th>
                         <th>Nombre del Ítem & Baúl</th>
                         <th style="width: 140px;">Pieza</th>
-                        <th>Opciones Principales</th>
+                        <th>Opciones</th>
                         <th style="width: 220px; text-align: center;">Asignado a</th>
                         <th style="width: 90px; text-align: center;" id="th-acciones-head" class="hidden">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-items-body">
-                    <tr><td colspan="6" class="text-center py-8 text-gray-500">Cargando ítems...</td></tr>
+                    <tr><td colspan="6" class="text-center py-8 text-gray-500">Cargando...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- SECCIÓN 2: MIEMBROS -->
+    <!-- SECCIÓN 2: MIEMBROS (CON EDICIÓN DE RAZA Y NICK) -->
     <div id="seccion-clan-view" class="w-full max-w-7xl space-y-4 hidden">
         <div id="panel-miembros-crud" class="bg-[#141126] border border-indigo-700/60 p-4 rounded-xl shadow-lg hidden">
             <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end w-full">
@@ -206,13 +157,13 @@
                         <option value="DK">DK</option><option value="RF">RF</option><option value="SM">SM</option><option value="ELF">ELF</option><option value="MG">MG</option><option value="DL">DL</option>
                     </select>
                 </div>
-                <div><label class="block text-[11px] text-gray-300 mb-1">IDS ITEMS:</label><input type="text" id="clanPjItems" placeholder="IDs" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs"></div>
-                <div><button onclick="guardarMiembroClan()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded text-xs">➕ Agregar</button></div>
+                <div><span class="text-[10px] text-purple-400 block">ℹ️ Clave autom.: <b>nick+123</b></span></div>
+                <div><button onclick="guardarMiembroClan()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded text-xs">➕ Agregar Miembro</button></div>
             </div>
         </div>
         <div class="tabla-scroll-box">
             <table class="tabla-items">
-                <thead><tr><th>Nick del PJ</th><th>Clase</th><th>Ítems Asignados</th><th id="th-miembro-acciones" class="hidden text-center">Acción</th></tr></thead>
+                <thead><tr><th>Nick del PJ</th><th>Clase (Raza)</th><th>Ítems Asignados</th><th id="th-miembro-acciones" class="hidden text-center">Acciones</th></tr></thead>
                 <tbody id="tabla-clan-body"><tr><td colspan="4" class="text-center py-8 text-gray-500">Sin miembros.</td></tr></tbody>
             </table>
         </div>
@@ -221,7 +172,7 @@
     <!-- SECCIÓN 3: DONACIONES Y ASISTENCIAS -->
     <div id="seccion-donaciones-view" class="w-full max-w-7xl space-y-6 hidden">
         <div class="bg-[#141126] border border-indigo-600/50 p-5 rounded-xl shadow-lg space-y-4">
-            <h2 class="text-sm font-bold text-indigo-400 uppercase">⚔️ Asistencias a Invasiones (Ranking)</h2>
+            <h2 class="text-sm font-bold text-indigo-400 uppercase">⚔️ Asistencias a Invasiones</h2>
             <div id="panel-asistencia-ctrl" class="flex flex-wrap gap-3 items-center hidden bg-[#0d0a1a] p-3 rounded-lg border border-purple-900">
                 <span class="text-xs text-purple-300 font-bold">Miembro:</span>
                 <select id="asistPjSelect" class="bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"><option value="">-- Seleccionar --</option></select>
@@ -232,156 +183,30 @@
             </div>
             <div class="tabla-scroll-box" style="height: 220px !important;">
                 <table class="tabla-items">
-                    <thead><tr><th>Miembro (PJ)</th><th style="text-align: right; padding-right: 40px;">Asistencias Totales</th></tr></thead>
+                    <thead><tr><th>Miembro (PJ)</th><th style="text-align: right; padding-right: 40px;">Asistencias</th></tr></thead>
                     <tbody id="tabla-asistencias-ranking"><tr><td colspan="2" class="text-center py-4">Cargando...</td></tr></tbody>
                 </table>
             </div>
         </div>
-
-        <div class="bg-[#141126] border border-amber-600/50 p-5 rounded-xl shadow-lg space-y-3">
-            <div class="flex justify-between items-center">
-                <h2 class="text-sm font-bold text-amber-400 uppercase">🏛️ Banco Guild (Acumulado Neto)</h2>
-                <button onclick="abrirModalGasto()" id="btn-gasto-modal" class="hidden bg-red-700 hover:bg-red-600 text-white px-3 py-1.5 rounded text-xs font-bold">📉 Registrar Uso / Gasto</button>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="tabla-items text-center">
-                    <thead><tr><th>Bless</th><th>Soul</th><th>Life</th><th>Chaos</th><th>Creation</th><th>Zen</th></tr></thead>
-                    <tbody>
-                        <tr class="font-bold text-amber-300 text-sm">
-                            <td id="banco-bless">0</td><td id="banco-soul">0</td><td id="banco-life">0</td><td id="banco-chaos">0</td><td id="banco-creation">0</td><td id="banco-zen">0</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="bg-[#141126] border border-amber-600/50 p-5 rounded-xl shadow-lg space-y-4">
-            <h2 class="text-sm font-bold text-amber-400 uppercase">💎 Donación por Miembro</h2>
-            <div id="panel-donacion-crud" class="grid grid-cols-2 sm:grid-cols-7 gap-2 items-end hidden bg-[#0d0a1a] p-3 rounded-lg border border-purple-900">
-                <div class="col-span-2">
-                    <label class="block text-[10px] text-gray-300 mb-1">MIEMBRO:</label>
-                    <select id="donPj" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"><option value="">-- Seleccionar --</option></select>
-                </div>
-                <div><label class="block text-[10px]">BLESS:</label><input type="number" id="donBless" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px]">SOUL:</label><input type="number" id="donSoul" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px]">LIFE:</label><input type="number" id="donLife" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px]">CHAOS:</label><input type="number" id="donChaos" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px]">CREATION:</label><input type="number" id="donCreation" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-                <div class="col-span-2"><label class="block text-[10px]">ZEN:</label><input type="number" id="donZen" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-                <div class="col-span-5"><button onclick="guardarDonacionJoyas()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 rounded text-xs">💾 Registrar</button></div>
-            </div>
-            <div class="tabla-scroll-box" style="height: 300px !important;">
-                <table class="tabla-items text-center">
-                    <thead><tr><th style="text-align: left;">Miembro</th><th>Bless</th><th>Soul</th><th>Life</th><th>Chaos</th><th>Creation</th><th>Zen</th><th>Fecha</th></tr></thead>
-                    <tbody id="tabla-donaciones-body"><tr><td colspan="8" class="text-center py-4 text-gray-500">Sin donaciones.</td></tr></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="bg-[#141126] border border-red-900/50 p-5 rounded-xl shadow-lg space-y-3">
-            <h2 class="text-sm font-bold text-red-400 uppercase">📜 Historial de Usos del Acumulado</h2>
-            <div class="tabla-scroll-box" style="height: 200px !important;">
-                <table class="tabla-items text-center">
-                    <thead><tr><th style="text-align: left;">Motivo</th><th>Bless</th><th>Soul</th><th>Life</th><th>Chaos</th><th>Creation</th><th>Zen</th><th>Fecha</th></tr></thead>
-                    <tbody id="tabla-gastos-body"><tr><td colspan="8" class="text-center py-4 text-gray-500">Sin gastos.</td></tr></tbody>
-                </table>
-            </div>
-        </div>
     </div>
 
-    <!-- MODAL GASTO -->
-    <div id="modal-gasto" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-[#141126] border border-red-600 p-6 rounded-xl max-w-md w-full flex flex-col shadow-2xl space-y-3">
-            <h3 class="text-lg font-bold text-red-400 mb-2">📉 Registrar Gasto / Uso</h3>
-            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">Motivo:</label><input type="text" id="gastoMotivo" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2.5 rounded text-xs"></div>
-            <div class="grid grid-cols-3 gap-2 text-xs">
-                <div><label>Bless:</label><input type="number" id="gastoBless" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
-                <div><label>Soul:</label><input type="number" id="gastoSoul" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
-                <div><label>Life:</label><input type="number" id="gastoLife" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
-                <div><label>Chaos:</label><input type="number" id="gastoChaos" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
-                <div><label>Creation:</label><input type="number" id="gastoCreation" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
-                <div><label>Zen:</label><input type="number" id="gastoZen" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
-            </div>
-            <div class="flex gap-2 justify-end pt-3">
-                <button onclick="guardarGastoGuild()" class="bg-red-700 text-white px-4 py-2 rounded text-xs font-bold">Descontar</button>
-                <button onclick="cerrarModalGasto()" class="bg-gray-800 text-white px-4 py-2 rounded text-xs font-bold">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL EDITAR ÍTEM (INTELIGENTE: MUESTRA OPCIONES SEGÚN EL TIPO DE PIEZA) -->
-    <div id="modal-editar-item" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-[#141126] border border-purple-500 p-6 rounded-xl max-w-lg w-full flex flex-col shadow-2xl space-y-3 max-h-[90vh] overflow-y-auto">
-            <h3 class="text-lg font-bold text-amber-400 mb-2">✏️ Editar Ítem</h3>
-            <input type="hidden" id="editOldId">
-            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">ID:</label><input type="number" id="editId" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">Nombre / Baúl:</label><input type="text" id="editNombre" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">Tipo de Pieza:</label>
-                <select id="editTipo" onchange="actualizarOpcionesEdicion()" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs">
-                    <option value="Armor">Armor</option>
-                    <option value="Pants">Pants</option>
-                    <option value="Helm">Helm</option>
-                    <option value="Gloves">Gloves</option>
-                    <option value="Boots">Boots</option>
-                    <option value="Shield">Shield</option>
-                    <option value="Weapon">Weapon</option>
-                    <option value="Ring">Ring</option>
-                    <option value="Pendant">Pendant</option>
-                </select>
-            </div>
-            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">Asignado a:</label><input type="text" id="editAsignado" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-
-            <!-- BLOQUE DINÁMICO DE OPCIONES EN EDICIÓN -->
-            <div id="edit-opciones-defensivas" class="space-y-1">
-                <span class="text-[10px] uppercase font-bold text-cyan-400 block">🛡️ Opciones de Armadura / Escudo / Anillo:</span>
-                <div class="grid grid-cols-2 gap-1 text-xs">
-                    <label><input type="checkbox" name="editChkOpt" value="Aumento de HP máximo"> HP Máximo</label>
-                    <label><input type="checkbox" name="editChkOpt" value="Aumento de SD máximo"> SD Máximo</label>
-                    <label><input type="checkbox" name="editChkOpt" value="Reducción de daño (DD)"> Reducción de daño (DD)</label>
-                    <label><input type="checkbox" name="editChkOpt" value="Reflejo de daño (Reflect)"> Reflect</label>
-                    <label><input type="checkbox" name="editChkOpt" value="Resistencia a daño crítico (Rate)"> Resistencia Crítico</label>
-                    <label><input type="checkbox" name="editChkOpt" value="Tasa de drop de Zen"> Drop Zen</label>
-                </div>
-            </div>
-
-            <div id="edit-opciones-ofensivas" class="space-y-1 hidden">
-                <span class="text-[10px] uppercase font-bold text-amber-400 block">⚔️ Opciones de Arma / Colgante:</span>
-                <div class="grid grid-cols-1 gap-1 text-xs">
-                    <label><input type="checkbox" name="editChkOpt" value="Excellent damage rate %"> Excellent damage rate %</label>
-                    <label><input type="checkbox" name="editChkOpt" value="Wizardry Damage increases +level/"> Wizardry Damage +level/</label>
-                    <label><input type="checkbox" name="editChkOpt" value="Physical Damage increases +level/"> Physical Damage +level/</label>
-                    <label><input type="checkbox" name="editChkOpt" value="Increases attack speed +"> Increases attack speed +</label>
-                    <label><input type="checkbox" name="editChkOpt" value="Obtains (Life) when monster is killed"> Life per kill</label>
-                    <label><input type="checkbox" name="editChkOpt" value="Obtains (Mana) when monster is killed"> Mana per kill</label>
-                    <label class="text-red-400 font-bold"><input type="checkbox" name="editChkOpt" value="[Epic] Damage to monsters +10%"> [Epic] Damage to monsters +10%</label>
-                    <label class="text-amber-300 font-bold"><input type="checkbox" name="editChkOpt" value="Damage to Monster"> Damage to Monster</label>
-                </div>
-            </div>
-
-            <div class="flex gap-2 justify-end pt-2">
-                <button onclick="guardarEdicionItem()" class="bg-emerald-600 text-white px-4 py-2 rounded text-xs font-bold">Guardar</button>
-                <button onclick="cerrarModalEditar()" class="bg-gray-800 text-white px-4 py-2 rounded text-xs font-bold">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- SECCIÓN 4: USUARIOS -->
+    <!-- SECCIÓN 4: USUARIOS (CON PERFIL OPERADOR/LECTOR Y SUSPENSIÓN) -->
     <div id="seccion-users-view" class="w-full max-w-7xl space-y-4 hidden">
-        <div class="bg-[#141126] p-6 rounded-xl border border-purple-700">
-            <h2 class="text-lg font-bold text-purple-400 mb-4">👑 Gestión de Usuarios (Pinion)</h2>
+        <div class="bg-[#141126] p-6 rounded-xl border border-purple-700 space-y-4">
+            <h2 class="text-lg font-bold text-purple-400">👑 Gestión de Usuarios & Accesos</h2>
             <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
                 <input type="text" id="nuevoUsuario" placeholder="Usuario" class="bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs">
-                <input type="password" id="nuevaPassword" placeholder="Contraseña" class="bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs">
+                <input type="password" id="nuevaPassword" placeholder="Contraseña temporal" class="bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs">
                 <select id="nuevoRol" class="bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs">
                     <option value="operador">Operador</option><option value="lector">Lector</option>
                 </select>
-                <button onclick="crearUsuario()" class="bg-purple-600 text-white py-2 rounded text-xs font-bold">Crear</button>
+                <button onclick="crearUsuario()" class="bg-purple-600 text-white py-2 rounded text-xs font-bold">Crear / Actualizar</button>
             </div>
         </div>
         <div class="tabla-scroll-box">
             <table class="tabla-items">
-                <thead><tr><th>Usuario</th><th>Rol</th><th>Acción</th></tr></thead>
-                <tbody id="tabla-usuarios-body"><tr><td colspan="3" class="text-center py-4">Cargando...</td></tr></tbody>
+                <thead><tr><th>Usuario</th><th>Rol Actual</th><th>Estado</th><th class="text-center">Control de Acceso</th></tr></thead>
+                <tbody id="tabla-usuarios-body"><tr><td colspan="4" class="text-center py-4">Cargando...</td></tr></tbody>
             </table>
         </div>
     </div>
@@ -395,6 +220,26 @@
             <div class="flex gap-2">
                 <button onclick="ejecutarLogin()" class="w-full bg-purple-700 text-white font-bold py-2 rounded text-sm">Entrar</button>
                 <button onclick="toggleLoginModal()" class="w-full bg-gray-800 text-gray-400 font-bold py-2 rounded text-sm">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EDITAR ÍTEM -->
+    <div id="modal-editar-item" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-[#141126] border border-purple-500 p-6 rounded-xl max-w-lg w-full flex flex-col shadow-2xl space-y-3 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-lg font-bold text-amber-400 mb-2">✏️ Editar Ítem</h3>
+            <input type="hidden" id="editOldId">
+            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">ID:</label><input type="number" id="editId" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
+            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">Nombre / Baúl:</label><input type="text" id="editNombre" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
+            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">Tipo:</label>
+                <select id="editTipo" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs">
+                    <option value="Armor">Armor</option><option value="Pants">Pants</option><option value="Helm">Helm</option><option value="Gloves">Gloves</option><option value="Boots">Boots</option><option value="Shield">Shield</option><option value="Weapon">Weapon</option><option value="Ring">Ring</option><option value="Pendant">Pendant</option>
+                </select>
+            </div>
+            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">Asignado a:</label><input type="text" id="editAsignado" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
+            <div class="flex gap-2 justify-end pt-2">
+                <button onclick="guardarEdicionItem()" class="bg-emerald-600 text-white px-4 py-2 rounded text-xs font-bold">Guardar</button>
+                <button onclick="cerrarModalEditar()" class="bg-gray-800 text-white px-4 py-2 rounded text-xs font-bold">Cancelar</button>
             </div>
         </div>
     </div>
@@ -415,7 +260,7 @@
                     if (loginBtn) loginBtn.outerHTML = `<a href="/logout" class="bg-red-700 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">Salir</a>`;
                     
                     if (sesionAutorizada) {
-                        ['btn-guardar-item', 'panel-custom-id', 'dummy-div', 'panel-miembros-crud', 'panel-asistencia-ctrl', 'panel-donacion-crud', 'btn-gasto-modal', 'th-acciones-head', 'th-miembro-acciones'].forEach(id => {
+                        ['btn-guardar-item', 'panel-custom-id', 'dummy-div', 'panel-miembros-crud', 'panel-asistencia-ctrl', 'th-acciones-head', 'th-miembro-acciones'].forEach(id => {
                             const el = document.getElementById(id);
                             if (el) el.classList.remove('hidden');
                         });
@@ -440,8 +285,12 @@
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
-            if (res.ok) location.reload();
-            else alert("Credenciales incorrectas");
+            if (res.ok) {
+                location.reload();
+            } else {
+                const err = await res.json();
+                alert(err.error || "Credenciales incorrectas");
+            }
         }
 
         function cambiarSeccion(sec) {
@@ -454,7 +303,7 @@
             
             if (sec === 'ITEMS') { cargarItems(); }
             if (sec === 'CLAN') { cargarMiembros(); }
-            if (sec === 'DONACIONES') { cargarMiembros(); cargarAsistenciasRanking(); cargarDonacionesJoyas(); }
+            if (sec === 'DONACIONES') { cargarMiembros(); cargarAsistenciasRanking(); }
             if (sec === 'USERS') { cargarUsuarios(); }
         }
 
@@ -472,10 +321,9 @@
             if (res.ok) {
                 miembrosClan = await res.json();
                 const selAsist = document.getElementById('asistPjSelect');
-                const selDon = document.getElementById('donPj');
                 const selAsignado = document.getElementById('inputFiltroAsignado');
-                let opts = '<option value="">-- Todos (Libres o Asignados) --</option>';
-                let optsCtrl = '<option value="">-- Seleccionar Miembro --</option>';
+                let opts = '<option value="">-- Todos --</option>';
+                let optsCtrl = '<option value="">-- Seleccionar --</option>';
                 
                 miembrosClan.forEach(m => { 
                     opts += `<option value="${m.nombre_pj}">${m.nombre_pj}</option>`;
@@ -483,23 +331,72 @@
                 });
                 
                 if (selAsist) selAsist.innerHTML = optsCtrl;
-                if (selDon) selDon.innerHTML = optsCtrl;
                 if (selAsignado) selAsignado.innerHTML = opts;
 
                 const tbody = document.getElementById('tabla-clan-body');
                 if (tbody) {
                     tbody.innerHTML = miembrosClan.map(m => `
                         <tr>
-                            <td class="font-bold text-white">${m.nombre_pj}</td>
-                            <td><span class="badge-pj">${m.raza}</span></td>
+                            <td class="font-bold text-white">
+                                <input type="text" id="edit-pj-${m.id}" value="${m.nombre_pj}" class="bg-[#0d0a1a] border border-purple-900 text-white px-2 py-1 rounded text-xs ${!sesionAutorizada ? 'pointer-events-none border-none' : ''}">
+                            </td>
+                            <td>
+                                <select id="edit-raza-${m.id}" class="bg-[#0d0a1a] border border-purple-900 text-white px-2 py-1 rounded text-xs ${!sesionAutorizada ? 'pointer-events-none border-none' : ''}">
+                                    <option value="DK" ${m.raza === 'DK' ? 'selected' : ''}>DK</option>
+                                    <option value="RF" ${m.raza === 'RF' ? 'selected' : ''}>RF</option>
+                                    <option value="SM" ${m.raza === 'SM' ? 'selected' : ''}>SM</option>
+                                    <option value="ELF" ${m.raza === 'ELF' ? 'selected' : ''}>ELF</option>
+                                    <option value="MG" ${m.raza === 'MG' ? 'selected' : ''}>MG</option>
+                                    <option value="DL" ${m.raza === 'DL' ? 'selected' : ''}>DL</option>
+                                </select>
+                            </td>
                             <td>${Array.isArray(m.items_asignados) ? m.items_asignados.map(id => `#${id}`).join(', ') : 'Ninguno'}</td>
-                            <td class="${sesionAutorizada ? 'text-center' : 'hidden'}">
-                                <button onclick="eliminarMiembro(${m.id}, '${m.nombre_pj}')" class="bg-red-950 text-red-300 border border-red-700 px-2 py-1 rounded text-xs font-bold">🗑️</button>
+                            <td class="${sesionAutorizada ? 'text-center space-x-1' : 'hidden'}">
+                                <button onclick="actualizarMiembro(${m.id})" class="bg-blue-950 text-blue-300 border border-blue-700 px-2 py-1 rounded text-xs font-bold" title="Guardar Cambios">💾</button>
+                                <button onclick="eliminarMiembro(${m.id}, '${m.nombre_pj}')" class="bg-red-950 text-red-300 border border-red-700 px-2 py-1 rounded text-xs font-bold" title="Eliminar">🗑️</button>
                             </td>
                         </tr>
                     `).join('') || '<tr><td colspan="4" class="text-center py-8 text-gray-500">Sin miembros.</td></tr>';
                 }
             }
+        }
+
+        async function guardarMiembroClan() {
+            const nombre_pj = document.getElementById('clanPjNombre').value.trim();
+            const raza = document.getElementById('clanPjRaza').value;
+            if (!nombre_pj) return alert("Ingresá el nick.");
+            
+            const res = await fetch('/api/miembros', { 
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ nombre_pj, raza }) 
+            });
+            if (res.ok) {
+                alert(`¡Miembro agregado! Usuario de acceso creado con clave temporal: ${nombre_pj}123`);
+                document.getElementById('clanPjNombre').value = '';
+                cargarMiembros();
+            } else {
+                const err = await res.json();
+                alert("Error: " + err.error);
+            }
+        }
+
+        async function actualizarMiembro(id) {
+            const nombre_pj = document.getElementById(`edit-pj-${id}`).value.trim();
+            const raza = document.getElementById(`edit-raza-${id}`).value;
+            if (!nombre_pj) return alert("El nick no puede estar vacío.");
+            
+            const res = await fetch('/api/miembros', {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, nombre_pj, raza })
+            });
+            if (res.ok) { alert("¡Miembro actualizado!"); cargarMiembros(); }
+            else { const err = await res.json(); alert("Error: " + err.error); }
+        }
+
+        async function eliminarMiembro(id, nombre_pj) {
+            if (!confirm(`¿Eliminar a ${nombre_pj}?`)) return;
+            await fetch('/api/miembros', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+            cargarMiembros();
         }
 
         function limpiarFiltros() {
@@ -567,20 +464,6 @@
             }).join('');
         }
 
-        function actualizarOpcionesEdicion() {
-            const tipo = document.getElementById('editTipo').value;
-            const defBox = document.getElementById('edit-opciones-defensivas');
-            const offBox = document.getElementById('edit-opciones-ofensivas');
-            
-            if (tipo === 'Weapon' || tipo === 'Pendant') {
-                defBox.classList.add('hidden');
-                offBox.classList.remove('hidden');
-            } else {
-                offBox.classList.add('hidden');
-                defBox.classList.remove('hidden');
-            }
-        }
-
         function abrirModalEditar(id) {
             const item = catalogo.find(x => x.id === id);
             if (!item) return;
@@ -589,14 +472,6 @@
             document.getElementById('editNombre').value = item.nombre;
             document.getElementById('editTipo').value = item.tipo || 'Armor';
             document.getElementById('editAsignado').value = item.asignado_a || '';
-            
-            actualizarOpcionesEdicion();
-
-            const ops = item.opciones || [];
-            document.querySelectorAll('input[name="editChkOpt"]').forEach(chk => {
-                chk.checked = ops.includes(chk.value);
-            });
-
             document.getElementById('modal-editar-item').classList.remove('hidden');
         }
 
@@ -609,14 +484,9 @@
             const tipo = document.getElementById('editTipo').value.trim();
             const asignado_a = document.getElementById('editAsignado').value.trim();
             
-            const opciones = [];
-            document.querySelectorAll('input[name="editChkOpt"]:checked').forEach(chk => {
-                opciones.push(chk.value);
-            });
-
             const res = await fetch('/api/items/editar', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ old_id, new_id, nombre, tipo, opciones, asignado_a })
+                body: JSON.stringify({ old_id, new_id, nombre, tipo, opciones: [], asignado_a })
             });
             if (res.ok) { alert("¡Ítem actualizado!"); cerrarModalEditar(); cargarItems(); }
             else { const err = await res.json(); alert("Error: " + err.error); }
@@ -630,7 +500,7 @@
             const customIdEl = document.getElementById('inputCustomId');
             const custom_id = customIdEl ? customIdEl.value.trim() : '';
 
-            if (!set_base) return alert("Seleccioná un elemento del Scroll 1 para poder guardarlo.");
+            if (!set_base) return alert("Seleccioná un elemento.");
 
             const opciones = [];
             document.querySelectorAll('.filtro-chk:checked').forEach(chk => {
@@ -641,32 +511,14 @@
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ set_base, tipo, baul: baul || 'Baúl General', asignado: asignado || 'Sin asignar', custom_id, opciones })
             });
-            if (res.ok) {
-                alert("¡Ítem guardado con éxito!");
-                limpiarFiltros();
-                cargarItems();
-            } else { const err = await res.json(); alert("Error: " + err.error); }
+            if (res.ok) { alert("¡Ítem guardado!"); limpiarFiltros(); cargarItems(); }
+            else { const err = await res.json(); alert("Error: " + err.error); }
         }
 
         async function eliminarItem(id) {
             if (!confirm(`¿Eliminar ítem #${id}?`)) return;
             await fetch('/api/items/eliminar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
             cargarItems();
-        }
-
-        async function guardarMiembroClan() {
-            const nombre_pj = document.getElementById('clanPjNombre').value.trim();
-            const raza = document.getElementById('clanPjRaza').value;
-            if (!nombre_pj) return alert("Ingresá el nick.");
-            await fetch('/api/miembros', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre_pj, raza }) });
-            document.getElementById('clanPjNombre').value = '';
-            cargarMiembros();
-        }
-
-        async function eliminarMiembro(id, nombre_pj) {
-            if (!confirm(`¿Eliminar a ${nombre_pj}?`)) return;
-            await fetch('/api/miembros', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            cargarMiembros();
         }
 
         async function cargarAsistenciasRanking() {
@@ -692,98 +544,46 @@
             cargarAsistenciasRanking();
         }
 
-        async function guardarDonacionJoyas() {
-            const pj_name = document.getElementById('donPj').value;
-            if (!pj_name) return alert("Seleccioná un miembro.");
-            const payload = {
-                pj_name,
-                bless: parseInt(document.getElementById('donBless').value) || 0,
-                soul: parseInt(document.getElementById('donSoul').value) || 0,
-                life: parseInt(document.getElementById('donLife').value) || 0,
-                chaos: parseInt(document.getElementById('donChaos').value) || 0,
-                creation: parseInt(document.getElementById('donCreation').value) || 0,
-                zen: parseInt(document.getElementById('donZen').value) || 0
-            };
-            const res = await fetch('/api/donaciones-joyas', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-            });
-            if (res.ok) {
-                alert("¡Donación registrada!");
-                ['donBless', 'donSoul', 'donLife', 'donChaos', 'donCreation', 'donZen'].forEach(id => document.getElementById(id).value = 0);
-                cargarDonacionesJoyas();
-            }
-        }
-
-        async function cargarDonacionesJoyas() {
-            const res = await fetch('/api/donaciones-joyas');
-            if (res.ok) {
-                const data = await res.json();
-                const b = data.banco_guild;
-                document.getElementById('banco-bless').textContent = b.bless;
-                document.getElementById('banco-soul').textContent = b.soul;
-                document.getElementById('banco-life').textContent = b.life;
-                document.getElementById('banco-chaos').textContent = b.chaos;
-                document.getElementById('banco-creation').textContent = b.creation;
-                document.getElementById('banco-zen').textContent = b.zen.toLocaleString();
-
-                document.getElementById('tabla-donaciones-body').innerHTML = data.donaciones.map(d => `
-                    <tr>
-                        <td style="text-align: left;" class="font-bold text-amber-400">${d.pj_name}</td>
-                        <td>${d.bless}</td><td>${d.soul}</td><td>${d.life}</td><td>${d.chaos}</td><td>${d.creation}</td><td>${d.zen.toLocaleString()}</td>
-                        <td class="text-xs text-purple-300">${new Date(d.created_at).toLocaleDateString()}</td>
-                    </tr>
-                `).join('') || '<tr><td colspan="8" class="text-center py-4 text-gray-500">Sin donaciones.</td></tr>';
-
-                document.getElementById('tabla-gastos-body').innerHTML = data.gastos.map(g => `
-                    <tr>
-                        <td style="text-align: left;" class="font-bold text-red-400">${g.motivo}</td>
-                        <td>${g.bless}</td><td>${g.soul}</td><td>${g.life}</td><td>${g.chaos}</td><td>${g.creation}</td><td>${g.zen.toLocaleString()}</td>
-                        <td class="text-xs text-purple-300">${new Date(g.created_at).toLocaleDateString()}</td>
-                    </tr>
-                `).join('') || '<tr><td colspan="8" class="text-center py-4 text-gray-500">Sin gastos.</td></tr>';
-            }
-        }
-
-        function abrirModalGasto() { document.getElementById('modal-gasto').classList.remove('hidden'); }
-        function cerrarModalGasto() { document.getElementById('modal-gasto').classList.add('hidden'); }
-
-        async function guardarGastoGuild() {
-            const motivo = document.getElementById('gastoMotivo').value.trim();
-            if (!motivo) return alert("Ingresá el motivo.");
-            const payload = {
-                motivo,
-                bless: parseInt(document.getElementById('gastoBless').value) || 0,
-                soul: parseInt(document.getElementById('gastoSoul').value) || 0,
-                life: parseInt(document.getElementById('gastoLife').value) || 0,
-                chaos: parseInt(document.getElementById('gastoChaos').value) || 0,
-                creation: parseInt(document.getElementById('gastoCreation').value) || 0,
-                zen: parseInt(document.getElementById('gastoZen').value) || 0
-            };
-            const res = await fetch('/api/guild-gastos', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-            });
-            if (res.ok) { alert("Gasto registrado."); cerrarModalGasto(); cargarDonacionesJoyas(); }
-        }
-
-        function descargarBackup() { window.location.href = '/api/backup/exportar'; }
-        async function restaurarBackup(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            if (!confirm("⚠️ ¿Restaurar respaldo? Se sobrescribirán los datos.")) return;
-            const fd = new FormData(); fd.append('file', file);
-            const res = await fetch('/api/backup/importar', { method: 'POST', body: fd });
-            if (res.ok) { alert("¡Restaurado con éxito!"); location.reload(); }
-        }
-
         async function cargarUsuarios() {
             const res = await fetch('/api/usuarios');
             if (res.ok) {
                 const users = await res.json();
                 document.getElementById('tabla-usuarios-body').innerHTML = users.map(u => `
-                    <tr><td class="font-bold">${u.username}</td><td><span class="badge-pj">${u.rol}</span></td>
-                    <td>${u.username.toLowerCase() !== 'pinion' ? `<button onclick="eliminarUsuario(${u.id})" class="bg-red-950 text-red-300 px-2 py-1 rounded text-xs font-bold">🗑️</button>` : ''}</td></tr>
+                    <tr>
+                        <td class="font-bold text-white">${u.username}</td>
+                        <td>
+                            <select onchange="cambiarRolUsuario(${u.id}, this.value)" class="bg-[#0d0a1a] border border-purple-900 text-white px-2 py-1 rounded text-xs" ${u.username.toLowerCase() === 'pinion' ? 'disabled' : ''}>
+                                <option value="admin" ${u.rol === 'admin' ? 'selected' : ''}>Admin</option>
+                                <option value="operador" ${u.rol === 'operador' ? 'selected' : ''}>Operador</option>
+                                <option value="lector" ${u.rol === 'lector' ? 'selected' : ''}>Lector</option>
+                            </select>
+                        </td>
+                        <td>
+                            <span class="px-2 py-0.5 rounded text-xs font-bold ${u.activo !== false ? 'bg-emerald-950 text-emerald-300 border border-emerald-700' : 'bg-red-950 text-red-300 border border-red-700'}">
+                                ${u.activo !== false ? 'Activo' : 'Suspendido'}
+                            </span>
+                        </td>
+                        <td class="text-center space-x-1">
+                            ${u.username.toLowerCase() !== 'pinion' ? `
+                                <button onclick="toggleSuspenderUsuario(${u.id}, ${u.activo !== false ? false : true})" class="${u.activo !== false ? 'bg-amber-950 text-amber-300 border border-amber-700' : 'bg-emerald-950 text-emerald-300 border border-emerald-700'} px-2 py-1 rounded text-xs font-bold">
+                                    ${u.activo !== false ? '🚫 Suspender' : '✅ Activar'}
+                                </button>
+                                <button onclick="eliminarUsuario(${u.id})" class="bg-red-950 text-red-300 border border-red-700 px-2 py-1 rounded text-xs font-bold">🗑️ Eliminar</button>
+                            ` : '<span class="text-xs text-gray-500">Principal</span>'}
+                        </td>
+                    </tr>
                 `).join('');
             }
+        }
+
+        async function cambiarRolUsuario(id, rol) {
+            await fetch('/api/usuarios', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, rol }) });
+            cargarUsuarios();
+        }
+
+        async function toggleSuspenderUsuario(id, nuevoEstado) {
+            await fetch('/api/usuarios', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, activo: nuevoEstado }) });
+            cargarUsuarios();
         }
 
         async function crearUsuario() {
@@ -800,6 +600,16 @@
             if (!confirm("¿Eliminar usuario?")) return;
             await fetch('/api/usuarios', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
             cargarUsuarios();
+        }
+
+        function descargarBackup() { window.location.href = '/api/backup/exportar'; }
+        async function restaurarBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (!confirm("⚠️ ¿Restaurar respaldo? Se sobrescribirán los datos.")) return;
+            const fd = new FormData(); fd.append('file', file);
+            const res = await fetch('/api/backup/importar', { method: 'POST', body: fd });
+            if (res.ok) { alert("¡Restaurado con éxito!"); location.reload(); }
         }
 
         document.addEventListener('DOMContentLoaded', () => { 
