@@ -62,9 +62,9 @@
                 <div>
                     <label class="block text-xs uppercase text-purple-300 font-bold mb-1">📜 Set, Arma o Anillo</label>
                     <select id="inputFiltroSetBase" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
-                        <option value="">-- Todos los Ítems --</option>
+                        <option value="">-- Todos los Ítems / Seleccionar --</option>
                         <optgroup label="=== ARMADURAS & SETS ===">
-                            <option value="Leather">Leather</option><option value="Bronze">Bronze</option><option value="Scale">Scale</option><option value="Brass">Brass</option><option value="Plate">Plate</option><option value="Dragon">Dragon</option><option value="Black Dragon">Black Dragon</option><option value="Dark Phoenix">Dark Phoenix</option><option value="Pad">Pad</option><option value="Bone">Bone</option><option value="Sphinx">Sphinx</option><option value="Legendary">Legendary</option><option value="Vine">Vine</option><option value="Silk">Silk</option><option value="Wind">Wind</option><option value="Spirit">Spirit</option><option value="Guardian">Guardian</option><option value="Storm Crow">Storm Crow</option><option value="Thunder Hawk">Thunder Hawk</option><option value="Light Plate">Light Plate</option><option value="Adamantine">Adamantine</option><option value="Dark Steel">Dark Steel</option><option value="Violent Wind">Violent Wind</option><option value="Red Wing">Red Wing</option><option value="Sacred">Sacred</option>
+                            <option value="Leather">Leather</option><option value="Bronze">Bronze</option><option value="Scale">Scale</option><option value="Brass">Brass</option><option value="Plate">Plate</option><option value="Dragon">Dragon</option><option value="Black Dragon">Black Dragon</option><option value="Dark Phoenix">Dark Phoenix</option><option value="Great Dragon">Great Dragon</option><option value="Pad">Pad</option><option value="Bone">Bone</option><option value="Sphinx">Sphinx</option><option value="Legendary">Legendary</option><option value="Grand Soul">Grand Soul</option><option value="Vine">Vine</option><option value="Silk">Silk</option><option value="Wind">Wind</option><option value="Spirit">Spirit</option><option value="Guardian">Guardian</option><option value="Storm Crow">Storm Crow</option><option value="Thunder Hawk">Thunder Hawk</option><option value="Light Plate">Light Plate</option><option value="Adamantine">Adamantine</option><option value="Dark Steel">Dark Steel</option><option value="Violent Wind">Violent Wind</option><option value="Red Wing">Red Wing</option><option value="Sacred">Sacred</option>
                         </optgroup>
                         <optgroup label="=== ESPADAS Y ARMAS ===">
                             <option value="Kris">Kris</option><option value="Rapier">Rapier</option><option value="Assassin Sword">Assassin Sword</option><option value="Katana">Katana</option><option value="Gladius">Gladius</option><option value="Falchion">Falchion</option><option value="Serpent Sword">Serpent Sword</option><option value="Double Sword">Double Sword</option><option value="Lighting Sword">Lighting Sword</option><option value="Destruction Sword">Destruction Sword</option><option value="Morning Star">Morning Star</option><option value="Elven Bow">Elven Bow</option><option value="Silver Bow">Silver Bow</option><option value="Bluewing Crossbow">Bluewing Crossbow</option><option value="Aquagold Crossbow">Aquagold Crossbow</option><option value="Serpent Two-Hand Staff">Serpent Two-Hand Staff</option><option value="Resurrection Staff">Resurrection Staff</option><option value="Master Scepter">Master Scepter</option><option value="Battle Scepter">Battle Scepter</option><option value="Shining Scepter">Shining Scepter</option><option value="Book of Samut">Book of Samut</option><option value="Red Winged Stick">Red Winged Stick</option><option value="Book of Neil">Book of Neil</option><option value="Ancient Stick">Ancient Stick</option><option value="Mystery Stick">Mystery Stick</option><option value="Violent Wind Stick">Violent Wind Stick</option><option value="Sacred Claw">Sacred Claw</option>
@@ -96,10 +96,11 @@
                     <input type="number" id="inputCustomId" placeholder="Automático" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
                 </div>
 
+                <!-- OPCIONES EXCELLENT EN DOS RECUADROS COMPLETOS RESTAURADOS -->
                 <div class="md:col-span-3 space-y-3">
                     <label class="block text-xs uppercase text-purple-300 font-bold">✨ Opciones Excellent</label>
                     <div class="bg-[#0d0a1a] p-3 rounded-lg border border-purple-900/80">
-                        <span class="text-[10px] uppercase font-bold text-cyan-400 block mb-2">🛡️ Defensivas:</span>
+                        <span class="text-[10px] uppercase font-bold text-cyan-400 block mb-2">🛡️ Opciones para Armaduras, Escudos y Accesorios:</span>
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Aumento de HP máximo" onchange="aplicarFiltros()"> Aumento de HP máximo</label>
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Aumento de SD máximo" onchange="aplicarFiltros()"> Aumento de SD máximo</label>
@@ -110,11 +111,16 @@
                         </div>
                     </div>
                     <div class="bg-[#0d0a1a] p-3 rounded-lg border border-purple-900/80">
-                        <span class="text-[10px] uppercase font-bold text-amber-400 block mb-2">⚔️ Ofensivas:</span>
+                        <span class="text-[10px] uppercase font-bold text-amber-400 block mb-2">⚔️ Opciones para Armas y Bastones:</span>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Excellent damage rate %" onchange="aplicarFiltros()"> Excellent damage rate %</label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Wizardry Damage increases +level/" onchange="aplicarFiltros()"> Wizardry Damage +level/</label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Wizardry Damage increase %" onchange="aplicarFiltros()"> Wizardry Damage increase %</label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Physical Damage increases +level/" onchange="aplicarFiltros()"> Physical Damage +level/</label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Physical Damage increase %" onchange="aplicarFiltros()"> Physical Damage increase %</label>
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Increases attack speed +" onchange="aplicarFiltros()"> Increases attack speed +</label>
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Obtains (Life) when monster is killed" onchange="aplicarFiltros()"> Obtains (Life) when monster is killed</label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Obtains (Mana) when monster is killed" onchange="aplicarFiltros()"> Obtains (Mana) when monster is killed</label>
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Critical Damage rate %" onchange="aplicarFiltros()"> Critical Damage rate %</label>
                             <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Damage to Monster" onchange="aplicarFiltros()"> Damage to Monster</label>
                         </div>
@@ -172,9 +178,8 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 3: DONACIONES, ASISTENCIAS Y TALISMANES (VISIBLE PARA TODOS - LECTURA GENERAL) -->
+    <!-- SECCIÓN 3: DONACIONES, ASISTENCIAS Y TALISMANES (LECTURA PÚBLICA PARA TODOS) -->
     <div id="seccion-donaciones-view" class="w-full max-w-7xl space-y-6 hidden">
-        <!-- Asistencias -->
         <div class="bg-[#141126] border border-indigo-600/50 p-5 rounded-xl shadow-lg space-y-4">
             <h2 class="text-sm font-bold text-indigo-400 uppercase">⚔️ Asistencias a Invasiones (Ranking)</h2>
             <div id="panel-asistencia-ctrl" class="flex flex-wrap gap-3 items-center hidden bg-[#0d0a1a] p-3 rounded-lg border border-purple-900">
@@ -193,7 +198,6 @@
             </div>
         </div>
 
-        <!-- Banco Guild con Talismanes -->
         <div class="bg-[#141126] border border-amber-600/50 p-5 rounded-xl shadow-lg space-y-3">
             <div class="flex justify-between items-center">
                 <h2 class="text-sm font-bold text-amber-400 uppercase">🏛️ Banco Guild (Acumulado Neto & Talismanes)</h2>
@@ -201,7 +205,7 @@
             </div>
             <div class="overflow-x-auto">
                 <table class="tabla-items text-center">
-                    <thead><tr><th>Bless</th><th>Soul</th><th>Life</th><th>Chaos</th><th>Creation</th><th>Talisman Assembly</th><th>Talisman Luck</th><th>Zen</th></tr></thead>
+                    <thead><tr><th>Bless</th><th>Soul</th><th>Life</th><th>Chaos</th><th>Creation</th><th>Assembly</th><th>Luck</th><th>Zen</th></tr></thead>
                     <tbody>
                         <tr class="font-bold text-amber-300 text-sm">
                             <td id="banco-bless">0</td><td id="banco-soul">0</td><td id="banco-life">0</td><td id="banco-chaos">0</td><td id="banco-creation">0</td><td id="banco-assembly">0</td><td id="banco-luck">0</td><td id="banco-zen">0</td>
@@ -211,7 +215,6 @@
             </div>
         </div>
 
-        <!-- Panel de Ingreso de Donaciones (Solo operador/admin) -->
         <div id="panel-donacion-crud" class="bg-[#141126] border border-amber-600/50 p-5 rounded-xl shadow-lg space-y-4 hidden">
             <h2 class="text-sm font-bold text-amber-400 uppercase">💎 Registrar Donación de Joyas / Talismanes</h2>
             <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 items-end bg-[#0d0a1a] p-3 rounded-lg border border-purple-900">
@@ -224,16 +227,15 @@
                 <div><label class="block text-[10px]">LIFE:</label><input type="number" id="donLife" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
                 <div><label class="block text-[10px]">CHAOS:</label><input type="number" id="donChaos" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
                 <div><label class="block text-[10px]">CREATION:</label><input type="number" id="donCreation" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px]">TALISMAN ASSEMBLY:</label><input type="number" id="donAssembly" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px]">TALISMAN LUCK:</label><input type="number" id="donLuck" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px]">ASSEMBLY:</label><input type="number" id="donAssembly" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px]">LUCK:</label><input type="number" id="donLuck" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
                 <div class="col-span-2"><label class="block text-[10px]">ZEN:</label><input type="number" id="donZen" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
                 <div class="col-span-5"><button onclick="guardarDonacionJoyas()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 rounded text-xs">💾 Registrar Donación</button></div>
             </div>
         </div>
 
-        <!-- Historial de Donaciones -->
         <div class="bg-[#141126] border border-amber-600/50 p-5 rounded-xl shadow-lg space-y-4">
-            <h2 class="text-sm font-bold text-amber-400 uppercase">📜 Historial de Donaciones (Visible para Todos)</h2>
+            <h2 class="text-sm font-bold text-amber-400 uppercase">📜 Historial de Donaciones</h2>
             <div class="tabla-scroll-box" style="height: 300px !important;">
                 <table class="tabla-items text-center">
                     <thead><tr><th style="text-align: left;">Miembro</th><th>Bless</th><th>Soul</th><th>Life</th><th>Chaos</th><th>Creation</th><th>Assembly</th><th>Luck</th><th>Zen</th><th>Fecha</th></tr></thead>
