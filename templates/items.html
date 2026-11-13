@@ -96,7 +96,7 @@
                     <input type="number" id="inputCustomId" placeholder="Automático" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
                 </div>
 
-                <!-- OPCIONES EXCELLENT EN DOS RECUADROS COMPLETOS RESTAURADOS -->
+                <!-- OPCIONES EXCELLENT COMPLETAS RESTAURADAS -->
                 <div class="md:col-span-3 space-y-3">
                     <label class="block text-xs uppercase text-purple-300 font-bold">✨ Opciones Excellent</label>
                     <div class="bg-[#0d0a1a] p-3 rounded-lg border border-purple-900/80">
@@ -178,7 +178,7 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 3: DONACIONES, ASISTENCIAS Y TALISMANES (LECTURA PÚBLICA PARA TODOS) -->
+    <!-- SECCIÓN 3: DONACIONES, ASISTENCIAS Y TALISMANES (LECTURA GENERAL) -->
     <div id="seccion-donaciones-view" class="w-full max-w-7xl space-y-6 hidden">
         <div class="bg-[#141126] border border-indigo-600/50 p-5 rounded-xl shadow-lg space-y-4">
             <h2 class="text-sm font-bold text-indigo-400 uppercase">⚔️ Asistencias a Invasiones (Ranking)</h2>
@@ -446,7 +446,7 @@
                 body: JSON.stringify({ nombre_pj, raza }) 
             });
             if (res.ok) {
-                alert(`¡Miembro agregado! Usuario creado con clave temporal: ${nombre_pj}123`);
+                alert(`¡Miembro agregado! Usuario creado automáticamente con clave: ${nombre_pj}123`);
                 document.getElementById('clanPjNombre').value = '';
                 cargarMiembros();
             } else {
@@ -605,7 +605,7 @@
             const res = await fetch('/api/asistencias-ranking');
             if (res.ok) {
                 const data = await res.json();
-                document.getElementById('tabla-asistencias-ranking').innerHTML = data.map(row => `
+                document.getElementById('tabla-asistencias-ranking').innerHTML = data.opciones || data.map(row => `
                     <tr>
                         <td class="font-bold text-indigo-300">${row.pj_name}</td>
                         <td style="text-align: right; padding-right: 40px;" class="font-extrabold text-amber-400 text-base">${row.total_asistencias}</td>
