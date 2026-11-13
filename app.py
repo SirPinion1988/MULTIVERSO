@@ -523,7 +523,7 @@ def api_usuarios():
             except Exception: pass
         return jsonify({"status": "ok"}), 200
 
-# --- API MIEMBROS ---
+# --- API MIEMBROS (CREA USUARIO AUTOMÁTICO nick+123) ---
 @app.route('/api/miembros', methods=['GET', 'POST', 'PUT', 'DELETE'])
 def api_miembros():
     conn = get_db()
@@ -549,7 +549,7 @@ def api_miembros():
     if not usuario_es_autorizado(): return jsonify({"error": "No autorizado."}), 403
     data = request.json or {}
     
-    if request.method == 'POST': # Crear miembro y usuario automático (nick+123)
+    if request.method == 'POST':
         nombre_pj = data.get('nombre_pj', '').strip()
         raza = data.get('raza', 'DK').strip()
         if not nombre_pj: return jsonify({"error": "Falta nick"}), 400
@@ -571,7 +571,7 @@ def api_miembros():
             except Exception as e: return jsonify({"error": str(e)}), 500
         return jsonify({"status": "ok"}), 201
 
-    if request.method == 'PUT': # Editar Nick o Raza del miembro
+    if request.method == 'PUT':
         m_id = data.get('id')
         nuevo_nombre = data.get('nombre_pj', '').strip()
         nueva_raza = data.get('raza', '').strip()
