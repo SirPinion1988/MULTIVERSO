@@ -173,7 +173,7 @@ def importar_backup():
         return jsonify({"error": str(e)}), 500
     return jsonify({"status": "ok"}), 200
 
-# --- API ASISTENCIAS RANKING (Lectura pública para miembros) ---
+# --- API ASISTENCIAS RANKING ---
 @app.route('/api/asistencias-ranking', methods=['GET', 'POST'])
 def api_asistencias_ranking():
     conn = get_db()
@@ -216,7 +216,7 @@ def api_asistencias_ranking():
             return jsonify({"error": str(e)}), 500
     return jsonify({"status": "ok"}), 201
 
-# --- API DONACIONES JOYAS, TALISMANES Y BANCO GUILD (Lectura pública para miembros) ---
+# --- API DONACIONES JOYAS Y BANCO GUILD ---
 @app.route('/api/donaciones-joyas', methods=['GET', 'POST'])
 def api_donaciones_joyas():
     conn = get_db()
