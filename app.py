@@ -149,9 +149,9 @@ def importar_backup():
                 cur.execute("DELETE FROM public.donaciones_joyas;")
                 for d in backup_data['donaciones_joyas']:
                     cur.execute("""
-                        INSERT INTO public.donaciones_joyas (id, pj_name, bless, soul, life, chaos, creation, zen, registrado_por, created_at)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
-                    """, (d.get('id'), d.get('pj_name'), d.get('bless', 0), d.get('soul', 0), d.get('life', 0), d.get('chaos', 0), d.get('creation', 0), d.get('zen', 0), d.get('registrado_por', 'Sistema'), d.get('created_at')))
+                        INSERT INTO public.donaciones_joyas (id, pj_name, bless, soul, life, chaos, creation, zen, talisman_assembly, talisman_luck, registrado_por, created_at)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                    """, (d.get('id'), d.get('pj_name'), d.get('bless', 0), d.get('soul', 0), d.get('life', 0), d.get('chaos', 0), d.get('creation', 0), d.get('zen', 0), d.get('talisman_assembly', 0), d.get('talisman_luck', 0), d.get('registrado_por', 'Sistema'), d.get('created_at')))
             if 'asistencias_invasiones' in backup_data:
                 cur.execute("DELETE FROM public.asistencias_invasiones;")
                 for a in backup_data['asistencias_invasiones']:
@@ -163,9 +163,9 @@ def importar_backup():
                 cur.execute("DELETE FROM public.guild_gastos;")
                 for g in backup_data['guild_gastos']:
                     cur.execute("""
-                        INSERT INTO public.guild_gastos (id, motivo, bless, soul, life, chaos, creation, zen, registrado_por, created_at)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
-                    """, (g.get('id'), g.get('motivo'), g.get('bless', 0), g.get('soul', 0), g.get('life', 0), g.get('chaos', 0), g.get('creation', 0), g.get('zen', 0), g.get('registrado_por', 'Sistema'), g.get('created_at')))
+                        INSERT INTO public.guild_gastos (id, motivo, bless, soul, life, chaos, creation, zen, talisman_assembly, talisman_luck, registrado_por, created_at)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                    """, (g.get('id'), g.get('motivo'), g.get('bless', 0), g.get('soul', 0), g.get('life', 0), g.get('chaos', 0), g.get('creation', 0), g.get('zen', 0), g.get('talisman_assembly', 0), g.get('talisman_luck', 0), g.get('registrado_por', 'Sistema'), g.get('created_at')))
             conn.commit()
         conn.close()
     except Exception as e:
@@ -173,7 +173,7 @@ def importar_backup():
         return jsonify({"error": str(e)}), 500
     return jsonify({"status": "ok"}), 200
 
-# --- API ASISTENCIAS RANKING ---
+# --- API ASISTENCIAS RANKING (Lectura pública para miembros) ---
 @app.route('/api/asistencias-ranking', methods=['GET', 'POST'])
 def api_asistencias_ranking():
     conn = get_db()
@@ -216,31 +216,31 @@ def api_asistencias_ranking():
             return jsonify({"error": str(e)}), 500
     return jsonify({"status": "ok"}), 201
 
-# --- API DONACIONES JOYAS Y BANCO GUILD ---
+# --- API DONACIONES JOYAS, TALISMANES Y BANCO GUILD (Lectura pública para miembros) ---
 @app.route('/api/donaciones-joyas', methods=['GET', 'POST'])
 def api_donaciones_joyas():
     conn = get_db()
     if request.method == 'GET':
         registros = []
-        banco_total = {"bless": 0, "soul": 0, "life": 0, "chaos": 0, "creation": 0, "zen": 0}
-        gastos_total = {"bless": 0, "soul": 0, "life": 0, "chaos": 0, "creation": 0, "zen": 0}
+        banco_total = {"bless": 0, "soul": 0, "life": 0, "chaos": 0, "creation": 0, "zen": 0, "talisman_assembly": 0, "talisman_luck": 0}
+        gastos_total = {"bless": 0, "soul": 0, "life": 0, "chaos": 0, "creation": 0, "zen": 0, "talisman_assembly": 0, "talisman_luck": 0}
         gastos_lista = []
         
         if conn:
             try:
                 with conn.cursor() as cur:
-                    cur.execute("SELECT id, pj_name, bless, soul, life, chaos, creation, zen, registrado_por, created_at FROM public.donaciones_joyas ORDER BY created_at DESC;")
+                    cur.execute("SELECT id, pj_name, bless, soul, life, chaos, creation, zen, COALESCE(talisman_assembly, 0) as talisman_assembly, COALESCE(talisman_luck, 0) as talisman_luck, registrado_por, created_at FROM public.donaciones_joyas ORDER BY created_at DESC;")
                     registros = cur.fetchall()
 
-                    cur.execute("SELECT SUM(bless) as bless, SUM(soul) as soul, SUM(life) as life, SUM(chaos) as chaos, SUM(creation) as creation, SUM(zen) as zen FROM public.donaciones_joyas;")
+                    cur.execute("SELECT SUM(bless) as bless, SUM(soul) as soul, SUM(life) as life, SUM(chaos) as chaos, SUM(creation) as creation, SUM(zen) as zen, SUM(COALESCE(talisman_assembly, 0)) as talisman_assembly, SUM(COALESCE(talisman_luck, 0)) as talisman_luck FROM public.donaciones_joyas;")
                     t = cur.fetchone()
                     if t:
                         banco_total = {k: (t[k] or 0) for k in banco_total}
 
-                    cur.execute("SELECT id, motivo, bless, soul, life, chaos, creation, zen, registrado_por, created_at FROM public.guild_gastos ORDER BY created_at DESC;")
+                    cur.execute("SELECT id, motivo, bless, soul, life, chaos, creation, zen, COALESCE(talisman_assembly, 0) as talisman_assembly, COALESCE(talisman_luck, 0) as talisman_luck, registrado_por, created_at FROM public.guild_gastos ORDER BY created_at DESC;")
                     gastos_lista = cur.fetchall()
 
-                    cur.execute("SELECT SUM(bless) as bless, SUM(soul) as soul, SUM(life) as life, SUM(chaos) as chaos, SUM(creation) as creation, SUM(zen) as zen FROM public.guild_gastos;")
+                    cur.execute("SELECT SUM(bless) as bless, SUM(soul) as soul, SUM(life) as life, SUM(chaos) as chaos, SUM(creation) as creation, SUM(zen) as zen, SUM(COALESCE(talisman_assembly, 0)) as talisman_assembly, SUM(COALESCE(talisman_luck, 0)) as talisman_luck FROM public.guild_gastos;")
                     g = cur.fetchone()
                     if g:
                         gastos_total = {k: (g[k] or 0) for k in gastos_total}
@@ -262,8 +262,8 @@ def api_donaciones_joyas():
         try:
             with conn.cursor() as cur:
                 cur.execute("""
-                    INSERT INTO public.donaciones_joyas (pj_name, bless, soul, life, chaos, creation, zen, registrado_por)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
+                    INSERT INTO public.donaciones_joyas (pj_name, bless, soul, life, chaos, creation, zen, talisman_assembly, talisman_luck, registrado_por)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
                 """, (
                     pj_name,
                     int(data.get('bless', 0)),
@@ -272,6 +272,8 @@ def api_donaciones_joyas():
                     int(data.get('chaos', 0)),
                     int(data.get('creation', 0)),
                     int(data.get('zen', 0)),
+                    int(data.get('talisman_assembly', 0)),
+                    int(data.get('talisman_luck', 0)),
                     session.get('user', 'Sistema')
                 ))
                 conn.commit()
@@ -294,8 +296,8 @@ def api_guild_gastos():
         try:
             with conn.cursor() as cur:
                 cur.execute("""
-                    INSERT INTO public.guild_gastos (motivo, bless, soul, life, chaos, creation, zen, registrado_por)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
+                    INSERT INTO public.guild_gastos (motivo, bless, soul, life, chaos, creation, zen, talisman_assembly, talisman_luck, registrado_por)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
                 """, (
                     motivo,
                     int(data.get('bless', 0)),
@@ -304,6 +306,8 @@ def api_guild_gastos():
                     int(data.get('chaos', 0)),
                     int(data.get('creation', 0)),
                     int(data.get('zen', 0)),
+                    int(data.get('talisman_assembly', 0)),
+                    int(data.get('talisman_luck', 0)),
                     session.get('user', 'Sistema')
                 ))
                 conn.commit()
