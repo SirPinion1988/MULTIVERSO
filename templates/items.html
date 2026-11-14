@@ -96,7 +96,7 @@
                     <input type="number" id="inputCustomId" placeholder="Automático" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
                 </div>
 
-                <!-- OPCIONES EXCELLENT COMPLETAS RESTAURADAS -->
+                <!-- OPCIONES EXCELLENT EN DOS RECUADROS -->
                 <div class="md:col-span-3 space-y-3">
                     <label class="block text-xs uppercase text-purple-300 font-bold">✨ Opciones Excellent</label>
                     <div class="bg-[#0d0a1a] p-3 rounded-lg border border-purple-900/80">
@@ -178,7 +178,7 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 3: DONACIONES, ASISTENCIAS Y TALISMANES (LECTURA GENERAL) -->
+    <!-- SECCIÓN 3: DONACIONES Y ASISTENCIAS -->
     <div id="seccion-donaciones-view" class="w-full max-w-7xl space-y-6 hidden">
         <div class="bg-[#141126] border border-indigo-600/50 p-5 rounded-xl shadow-lg space-y-4">
             <h2 class="text-sm font-bold text-indigo-400 uppercase">⚔️ Asistencias a Invasiones (Ranking)</h2>
@@ -301,19 +301,62 @@
         </div>
     </div>
 
-    <!-- MODAL EDITAR ÍTEM -->
+    <!-- MODAL EDITAR ÍTEM (INTELIGENTE: MUESTRA OPCIONES DEFENSIVAS U OFENSIVAS Y SELECTOR DE ASIGNACIÓN/BAÚL) -->
     <div id="modal-editar-item" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4">
         <div class="bg-[#141126] border border-purple-500 p-6 rounded-xl max-w-lg w-full flex flex-col shadow-2xl space-y-3 max-h-[90vh] overflow-y-auto">
             <h3 class="text-lg font-bold text-amber-400 mb-2">✏️ Editar Ítem</h3>
             <input type="hidden" id="editOldId">
             <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">ID:</label><input type="number" id="editId" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
             <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">Nombre / Baúl:</label><input type="text" id="editNombre" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">Tipo:</label>
-                <select id="editTipo" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs">
-                    <option value="Armor">Armor</option><option value="Pants">Pants</option><option value="Helm">Helm</option><option value="Gloves">Gloves</option><option value="Boots">Boots</option><option value="Shield">Shield</option><option value="Weapon">Weapon</option><option value="Ring">Ring</option><option value="Pendant">Pendant</option>
+            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">Tipo de Pieza:</label>
+                <select id="editTipo" onchange="actualizarOpcionesEdicion()" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs">
+                    <option value="Armor">Armor</option>
+                    <option value="Pants">Pants</option>
+                    <option value="Helm">Helm</option>
+                    <option value="Gloves">Gloves</option>
+                    <option value="Boots">Boots</option>
+                    <option value="Shield">Shield</option>
+                    <option value="Weapon">Weapon</option>
+                    <option value="Ring">Ring</option>
+                    <option value="Pendant">Pendant</option>
                 </select>
             </div>
-            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">Asignado a:</label><input type="text" id="editAsignado" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
+            <div>
+                <label class="block text-xs uppercase text-purple-300 font-bold mb-1">👤 Asignado a (Baúl o Miembro):</label>
+                <select id="editAsignado" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs">
+                    <option value="">En Baúl (Sin asignar)</option>
+                </select>
+            </div>
+
+            <!-- BLOQUE DINÁMICO DE OPCIONES EN EDICIÓN -->
+            <div id="edit-opciones-defensivas" class="space-y-1">
+                <span class="text-[10px] uppercase font-bold text-cyan-400 block">🛡️ Opciones de Armadura / Escudo / Anillo:</span>
+                <div class="grid grid-cols-2 gap-1 text-xs">
+                    <label><input type="checkbox" name="editChkOpt" value="Aumento de HP máximo"> HP Máximo</label>
+                    <label><input type="checkbox" name="editChkOpt" value="Aumento de SD máximo"> SD Máximo</label>
+                    <label><input type="checkbox" name="editChkOpt" value="Reducción de daño (DD)"> Reducción de daño (DD)</label>
+                    <label><input type="checkbox" name="editChkOpt" value="Reflejo de daño (Reflect)"> Reflect</label>
+                    <label><input type="checkbox" name="editChkOpt" value="Resistencia a daño crítico (Rate)"> Resistencia Crítico</label>
+                    <label><input type="checkbox" name="editChkOpt" value="Tasa de drop de Zen"> Drop Zen</label>
+                </div>
+            </div>
+
+            <div id="edit-opciones-ofensivas" class="space-y-1 hidden">
+                <span class="text-[10px] uppercase font-bold text-amber-400 block">⚔️ Opciones de Arma / Colgante:</span>
+                <div class="grid grid-cols-1 gap-1 text-xs">
+                    <label><input type="checkbox" name="editChkOpt" value="Excellent damage rate %"> Excellent damage rate %</label>
+                    <label><input type="checkbox" name="editChkOpt" value="Wizardry Damage increases +level/"> Wizardry Damage +level/</label>
+                    <label><input type="checkbox" name="editChkOpt" value="Wizardry Damage increase %"> Wizardry Damage increase %</label>
+                    <label><input type="checkbox" name="editChkOpt" value="Physical Damage increases +level/"> Physical Damage +level/</label>
+                    <label><input type="checkbox" name="editChkOpt" value="Physical Damage increase %"> Physical Damage increase %</label>
+                    <label><input type="checkbox" name="editChkOpt" value="Increases attack speed +"> Increases attack speed +</label>
+                    <label><input type="checkbox" name="editChkOpt" value="Obtains (Life) when monster is killed"> Life per kill</label>
+                    <label><input type="checkbox" name="editChkOpt" value="Obtains (Mana) when monster is killed"> Mana per kill</label>
+                    <label><input type="checkbox" name="editChkOpt" value="Critical Damage rate %"> Critical Damage rate %</label>
+                    <label><input type="checkbox" name="editChkOpt" value="Damage to Monster"> Damage to Monster</label>
+                </div>
+            </div>
+
             <div class="flex gap-2 justify-end pt-2">
                 <button onclick="guardarEdicionItem()" class="bg-emerald-600 text-white px-4 py-2 rounded text-xs font-bold">Guardar</button>
                 <button onclick="cerrarModalEditar()" class="bg-gray-800 text-white px-4 py-2 rounded text-xs font-bold">Cancelar</button>
@@ -544,6 +587,20 @@
             }).join('');
         }
 
+        function actualizarOpcionesEdicion() {
+            const tipo = document.getElementById('editTipo').value;
+            const defBox = document.getElementById('edit-opciones-defensivas');
+            const offBox = document.getElementById('edit-opciones-ofensivas');
+            
+            if (tipo === 'Weapon' || tipo === 'Pendant') {
+                defBox.classList.add('hidden');
+                offBox.classList.remove('hidden');
+            } else {
+                offBox.classList.add('hidden');
+                defBox.classList.remove('hidden');
+            }
+        }
+
         function abrirModalEditar(id) {
             const item = catalogo.find(x => x.id === id);
             if (!item) return;
@@ -551,7 +608,26 @@
             document.getElementById('editId').value = item.id;
             document.getElementById('editNombre').value = item.nombre;
             document.getElementById('editTipo').value = item.tipo || 'Armor';
-            document.getElementById('editAsignado').value = item.asignado_a || '';
+            
+            // Poblar el selector de asignación con la opción de baúl y los miembros del clan
+            const selectAsignado = document.getElementById('editAsignado');
+            let opts = '<option value="">En Baúl (Sin asignar)</option>';
+            miembrosClan.forEach(m => {
+                const selected = item.asignado_a === m.nombre_pj ? 'selected' : '';
+                opts += `<option value="${m.nombre_pj}" ${selected}>${m.nombre_pj} (${m.raza})</option>`;
+            });
+            selectAsignado.innerHTML = opts;
+            if (item.asignado_a) {
+                selectAsignado.value = item.asignado_a;
+            }
+
+            actualizarOpcionesEdicion();
+
+            const ops = item.opciones || [];
+            document.querySelectorAll('input[name="editChkOpt"]').forEach(chk => {
+                chk.checked = ops.includes(chk.value);
+            });
+
             document.getElementById('modal-editar-item').classList.remove('hidden');
         }
 
@@ -562,11 +638,16 @@
             const new_id = document.getElementById('editId').value;
             const nombre = document.getElementById('editNombre').value.trim();
             const tipo = document.getElementById('editTipo').value.trim();
-            const asignado_a = document.getElementById('editAsignado').value.trim();
+            const asignado_a = document.getElementById('editAsignado').value || null;
             
+            const opciones = [];
+            document.querySelectorAll('input[name="editChkOpt"]:checked').forEach(chk => {
+                opciones.push(chk.value);
+            });
+
             const res = await fetch('/api/items/editar', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ old_id, new_id, nombre, tipo, opciones: [], asignado_a })
+                body: JSON.stringify({ old_id, new_id, nombre, tipo, opciones, asignado_a })
             });
             if (res.ok) { alert("¡Ítem actualizado!"); cerrarModalEditar(); cargarItems(); }
             else { const err = await res.json(); alert("Error: " + err.error); }
@@ -605,7 +686,7 @@
             const res = await fetch('/api/asistencias-ranking');
             if (res.ok) {
                 const data = await res.json();
-                document.getElementById('tabla-asistencias-ranking').innerHTML = data.opciones || data.map(row => `
+                document.getElementById('tabla-asistencias-ranking').innerHTML = data.map(row => `
                     <tr>
                         <td class="font-bold text-indigo-300">${row.pj_name}</td>
                         <td style="text-align: right; padding-right: 40px;" class="font-extrabold text-amber-400 text-base">${row.total_asistencias}</td>
