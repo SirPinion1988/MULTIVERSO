@@ -30,10 +30,12 @@
             <span id="session-user-badge" class="text-xs text-purple-300 font-bold bg-[#141126] px-3 py-1.5 rounded-lg border border-purple-900">
                 Invitado (Público)
             </span>
-            <div id="admin-backup-buttons" class="hidden flex gap-2">
-                <button onclick="descargarBackup()" class="bg-blue-700 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">💾 Backup Local</button>
+            <div id="admin-backup-buttons" class="hidden flex flex-wrap gap-2 items-center">
+                <button onclick="descargarBackup()" class="bg-blue-700 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">💾 Backup DB</button>
+                <button onclick="exportarExcelAsignados()" class="bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">📊 Excel Asignados</button>
+                <button onclick="exportarExcelAsistencias()" class="bg-indigo-700 hover:bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">📊 Excel Asistencias</button>
                 <label class="bg-amber-700 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
-                    📂 Restaurar <input type="file" id="fileBackupInput" onchange="restaurarBackup(event)" class="hidden" accept=".json">
+                    📂 Subir Excel <input type="file" id="fileExcelInput" onchange="subirExcelBackup(event)" class="hidden" accept=".xlsx, .xls">
                 </label>
             </div>
             <button onclick="toggleLoginModal()" id="btn-login-open" class="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">
@@ -63,14 +65,20 @@
                     <label class="block text-xs uppercase text-purple-300 font-bold mb-1">📜 Set, Arma o Anillo</label>
                     <select id="inputFiltroSetBase" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
                         <option value="">-- Todos los Ítems / Seleccionar --</option>
-                        <optgroup label="=== ARMADURAS & SETS ===">
-                            <option value="Leather">Leather</option><option value="Bronze">Bronze</option><option value="Scale">Scale</option><option value="Brass">Brass</option><option value="Plate">Plate</option><option value="Dragon">Dragon</option><option value="Black Dragon">Black Dragon</option><option value="Dark Phoenix">Dark Phoenix</option><option value="Great Dragon">Great Dragon</option><option value="Pad">Pad</option><option value="Bone">Bone</option><option value="Sphinx">Sphinx</option><option value="Legendary">Legendary</option><option value="Grand Soul">Grand Soul</option><option value="Vine">Vine</option><option value="Silk">Silk</option><option value="Wind">Wind</option><option value="Spirit">Spirit</option><option value="Holy Spirit">Holy Spirit</option><option value="Guardian">Guardian</option><option value="Storm Crow">Storm Crow</option><option value="Thunder Hawk">Thunder Hawk</option><option value="Light Plate">Light Plate</option><option value="Adamantine">Adamantine</option><option value="Dark Steel">Dark Steel</option><option value="Violent Wind">Violent Wind</option><option value="Red Wing">Red Wing</option><option value="Sacred">Sacred</option>
+                        <optgroup label="=== ARMADURAS & SETS COMPLETOS ===">
+                            <option value="Leather">Leather</option><option value="Bronze">Bronze</option><option value="Scale">Scale</option><option value="Brass">Brass</option><option value="Plate">Plate</option><option value="Dragon">Dragon</option><option value="Black Dragon">Black Dragon</option><option value="Dark Phoenix">Dark Phoenix</option><option value="Great Dragon">Great Dragon</option><option value="Dragon Knight">Dragon Knight</option><option value="Titan">Titan</option><option value="Brave">Brave</option>
+                            <option value="Pad">Pad</option><option value="Bone">Bone</option><option value="Sphinx">Sphinx</option><option value="Legendary">Legendary</option><option value="Grand Soul">Grand Soul</option><option value="Dark Soul">Dark Soul</option><option value="Venom Mist">Venom Mist</option><option value="Hades">Set Hades (SM)</option>
+                            <option value="Vine">Vine</option><option value="Silk">Silk</option><option value="Wind">Wind</option><option value="Spirit">Spirit</option><option value="Guardian">Guardian</option><option value="Divine">Divine</option><option value="Red Spirit">Red Spirit</option><option value="Sylphid Ray">Sylphid Ray</option><option value="Seraphim">Seraphim</option>
+                            <option value="Storm Crow">Storm Crow</option><option value="Unicorn">Unicorn</option><option value="Thunder Hawk">Thunder Hawk</option><option value="Hurricane">Hurricane</option><option value="Volcano">Volcano</option><option value="Destroyer">Destroyer</option><option value="Phantom">Phantom</option>
+                            <option value="Light Plate">Light Plate</option><option value="Adamantine">Adamantine</option><option value="Dark Steel">Dark Steel</option><option value="Dark Master">Dark Master</option><option value="Glorious">Glorious</option><option value="Emperor">Emperor</option><option value="Royal">Royal</option>
+                            <option value="Violent Wind">Violent Wind</option><option value="Red Wing">Red Wing</option><option value="Ancient">Ancient</option><option value="Black Rose">Black Rose</option><option value="Aura">Aura</option><option value="Lilium">Lilium</option><option value="Queen">Queen</option>
+                            <option value="Sacred">Sacred</option><option value="Piercing">Piercing</option><option value="Phoenix Soul">Phoenix Soul</option>
                         </optgroup>
                         <optgroup label="=== ESPADAS Y ARMAS ===">
-                            <option value="Kris">Kris</option><option value="Rapier">Rapier</option><option value="Assassin Sword">Assassin Sword</option><option value="Katana">Katana</option><option value="Gladius">Gladius</option><option value="Falchion">Falchion</option><option value="Serpent Sword">Serpent Sword</option><option value="Double Sword">Double Sword</option><option value="Lighting Sword">Lighting Sword</option><option value="Destruction Sword">Destruction Sword</option><option value="Morning Star">Morning Star</option><option value="Elven Bow">Elven Bow</option><option value="Silver Bow">Silver Bow</option><option value="Bluewing Crossbow">Bluewing Crossbow</option><option value="Aquagold Crossbow">Aquagold Crossbow</option><option value="Serpent Two-Hand Staff">Serpent Two-Hand Staff</option><option value="Resurrection Staff">Resurrection Staff</option><option value="Master Scepter">Master Scepter</option><option value="Battle Scepter">Battle Scepter</option><option value="Shining Scepter">Shining Scepter</option><option value="Book of Samut">Book of Samut</option><option value="Red Winged Stick">Red Winged Stick</option><option value="Book of Neil">Book of Neil</option><option value="Ancient Stick">Ancient Stick</option><option value="Mystery Stick">Mystery Stick</option><option value="Violent Wind Stick">Violent Wind Stick</option><option value="Sacred Claw">Sacred Claw</option>
+                            <option value="Short Sword">Short Sword</option><option value="Kris">Kris</option><option value="Rapier">Rapier</option><option value="Assassin Sword">Assassin Sword</option><option value="Katana">Katana</option><option value="Gladius">Gladius</option><option value="Falchion">Falchion</option><option value="Serpent Sword">Serpent Sword</option><option value="Blade">Blade</option><option value="Lighting Sword">Lighting Sword</option><option value="Destruction Sword">Destruction Sword</option><option value="Emerald Sword">Emerald Sword</option><option value="Bone Sword">Bone Sword</option><option value="Dark Reign Two-Hand Blade">Dark Reign Two-Hand Blade</option>
                         </optgroup>
                         <optgroup label="=== ESCUDOS Y ACCESORIOS ===">
-                            <option value="Small Shield">Small Shield</option><option value="Buckler Shield">Buckler Shield</option><option value="Horn Shield">Horn Shield</option><option value="Round Shield">Round Shield</option><option value="Skull Shield">Skull Shield</option><option value="Dragon Shield">Dragon Shield</option><option value="Ring of Wind">Ring of Wind</option><option value="Ring of Ice">Ring of Ice</option><option value="Pendant of Fire">Pendant of Fire</option>
+                            <option value="Small Shield">Small Shield</option><option value="Buckler Shield">Buckler Shield</option><option value="Horn Shield">Horn Shield</option><option value="Round Shield">Round Shield</option><option value="Skull Shield">Skull Shield</option><option value="Dragon Shield">Dragon Shield</option><option value="Crimson Glory">Crimson Glory</option><option value="Ring of Wind">Ring of Wind</option><option value="Ring of Ice">Ring of Ice</option><option value="Pendant of Fire">Pendant of Fire</option>
                         </optgroup>
                     </select>
                 </div>
@@ -96,7 +104,7 @@
                     <input type="number" id="inputCustomId" placeholder="Automático" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
                 </div>
 
-                <!-- OPCIONES EXCELLENT EN DOS RECUADROS -->
+                <!-- OPCIONES EXCELLENT COMPLETAS -->
                 <div class="md:col-span-3 space-y-3">
                     <label class="block text-xs uppercase text-purple-300 font-bold">✨ Opciones Excellent</label>
                     <div class="bg-[#0d0a1a] p-3 rounded-lg border border-purple-900/80">
@@ -172,7 +180,7 @@
         </div>
         <div class="tabla-scroll-box">
             <table class="tabla-items">
-                <thead><tr><th>Nick del PJ</th><th>Clase (Raza)</th><th>Ítems Asignados</th><th id="th-miembro-acciones" class="hidden text-center">Acciones</th></tr></thead>
+                <thead><tr><th>Nick del PJ</th><th>Clase (Raza)</th><th>Ítems Asignados</th><th id="th-miembro-acciones" class="hidden text-center">Acción</th></tr></thead>
                 <tbody id="tabla-clan-body"><tr><td colspan="4" class="text-center py-8 text-gray-500">Sin miembros.</td></tr></tbody>
             </table>
         </div>
@@ -301,7 +309,7 @@
         </div>
     </div>
 
-    <!-- MODAL EDITAR ÍTEM (INTELIGENTE: MUESTRA OPCIONES DEFENSIVAS U OFENSIVAS Y SELECTOR DE ASIGNACIÓN/BAÚL) -->
+    <!-- MODAL EDITAR ÍTEM (INTELIGENTE CON OPCIONES Y SELECTOR DE MIEMBRO/BAÚL) -->
     <div id="modal-editar-item" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4">
         <div class="bg-[#141126] border border-purple-500 p-6 rounded-xl max-w-lg w-full flex flex-col shadow-2xl space-y-3 max-h-[90vh] overflow-y-auto">
             <h3 class="text-lg font-bold text-amber-400 mb-2">✏️ Editar Ítem</h3>
@@ -609,7 +617,7 @@
             document.getElementById('editNombre').value = item.nombre;
             document.getElementById('editTipo').value = item.tipo || 'Armor';
             
-            // Poblar el selector de asignación con la opción de baúl y los miembros del clan
+            // Poblar selector de asignación con Baúl y miembros
             const selectAsignado = document.getElementById('editAsignado');
             let opts = '<option value="">En Baúl (Sin asignar)</option>';
             miembrosClan.forEach(m => {
@@ -835,13 +843,18 @@
         }
 
         function descargarBackup() { window.location.href = '/api/backup/exportar'; }
-        async function restaurarBackup(event) {
+        
+        function exportarExcelAsignados() { window.location.href = '/api/backup/exportar-items-asignados'; }
+        function exportarExcelAsistencias() { window.location.href = '/api/backup/exportar-asistencias'; }
+
+        async function subirExcelBackup(event) {
             const file = event.target.files[0];
             if (!file) return;
-            if (!confirm("⚠️ ¿Restaurar respaldo? Se sobrescribirán los datos.")) return;
+            if (!confirm("⚠️ ¿Deseas actualizar los datos con este archivo Excel?")) return;
             const fd = new FormData(); fd.append('file', file);
-            const res = await fetch('/api/backup/importar', { method: 'POST', body: fd });
-            if (res.ok) { alert("¡Restaurado con éxito!"); location.reload(); }
+            const res = await fetch('/api/backup/importar-excel', { method: 'POST', body: fd });
+            if (res.ok) { alert("¡Excel importado con éxito!"); location.reload(); }
+            else { const err = await res.json(); alert("Error: " + (err.error || "Formato inválido")); }
         }
 
         document.addEventListener('DOMContentLoaded', () => { 
