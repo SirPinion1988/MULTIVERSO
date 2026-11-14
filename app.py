@@ -6,6 +6,8 @@ from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file
 import psycopg2
 from psycopg2.extras import RealDictCursor
+import io
+import pandas as pd
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "multiverso_secret_key_2026")
@@ -604,9 +606,6 @@ def api_miembros():
         return jsonify({"status": "ok"}), 200
 
 # --- EXCEL EXPORT & IMPORT ---
-import io
-import pandas as pd
-
 @app.route('/api/backup/exportar-items-asignados', methods=['GET'])
 def exportar_items_asignados():
     if not usuario_es_autorizado():
