@@ -218,6 +218,50 @@ def api_asistencias_ranking():
             return jsonify({"error": str(e)}), 500
     return jsonify({"status": "ok"}), 201
 
+# --- API RESET SEMANAL DE ASISTENCIAS (20% REDONDEO ABAJO) ---
+@app.route('/api/asistencias/reset-semanal', methods=['POST'])
+def reset_semanal_asistencias():
+    if not usuario_es_autorizado(): 
+        return jsonify({"error": "No autorizado."}), 403
+    
+    conn = get_db()
+    if not conn: 
+        return jsonify({"error": "Sin conexión a DB."}), 500
+    
+    try:
+        with conn.cursor() as cur:
+            # 1. Obtener totales actuales por miembro
+            cur.execute("""
+                SELECT pj_name, SUM(cantidad) as total
+                FROM public.asistencias_invasiones
+                GROUP BY pj_name;
+            """)
+            resultados = cur.fetchall()
+            
+            # 2. Borrar tabla actual de asistencias
+            cur.execute("DELETE FROM public.asistencias_invasiones;")
+            
+            # 3. Recalcular el 20% redondeado hacia abajo (floor) y reinsertar
+            import math
+            for row in resultados:
+                pj = row['pj_name']
+                total_actual = row['total'] or 0
+                nuevo_valor = math.floor(total_actual * 0.20)
+                
+                if nuevo_valor > 0:
+                    cur.execute("""
+                        INSERT INTO public.asistencias_invasiones (pj_name, cantidad, registrado_por)
+                        VALUES (%s, %s, %s);
+                    """, (pj, nuevo_valor, f"Reset Semanal ({session.get('user', 'Admin')})"))
+            
+            conn.commit()
+        conn.close()
+    except Exception as e:
+        if conn: conn.close()
+        return jsonify({"error": str(e)}), 500
+        
+    return jsonify({"status": "ok"}), 200
+
 # --- API DONACIONES JOYAS Y BANCO GUILD ---
 @app.route('/api/donaciones-joyas', methods=['GET', 'POST'])
 def api_donaciones_joyas():
