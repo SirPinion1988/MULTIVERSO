@@ -62,38 +62,30 @@
                     <input type="number" id="inputFiltroId" oninput="aplicarFiltros()" placeholder="Ej. 105..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">📜 Set, Arma o Anillo</label>
-                    <select id="inputFiltroSetBase" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
-                        <option value="">-- Todos los Ítems / Seleccionar --</option>
-                        <optgroup label="=== ARMADURAS & SETS COMPLETOS ===">
-                            <!-- Dark Knight -->
-                            <option value="Leather">Leather</option><option value="Bronze">Bronze</option><option value="Scale">Scale</option><option value="Brass">Brass</option><option value="Plate">Plate</option><option value="Dragon">Dragon</option><option value="Black Dragon">Black Dragon</option><option value="Dark Phoenix">Dark Phoenix</option><option value="Great Dragon">Great Dragon</option><option value="Dragon Knight">Dragon Knight</option><option value="Ashcrow">Ashcrow</option><option value="Titan">Titan</option><option value="Brave">Brave</option>
-                            <!-- Dark Wizard -->
-                            <option value="Pad">Pad</option><option value="Bone">Bone</option><option value="Sphinx">Sphinx</option><option value="Legendary">Legendary</option><option value="Grand Soul">Grand Soul</option><option value="Dark Soul">Dark Soul</option><option value="Venom Mist">Venom Mist</option><option value="Eclipse">Eclipse</option><option value="Hades">Hades</option>
-                            <!-- Fairy Elf -->
-                            <option value="Vine">Vine</option><option value="Silk">Silk</option><option value="Wind">Wind</option><option value="Spirit">Spirit</option><option value="Guardian">Guardian</option><option value="Divine">Divine</option><option value="Holy Spirit">Holy Spirit</option><option value="Red Spirit">Red Spirit</option><option value="Sylphid Ray">Sylphid Ray</option><option value="Iris">Iris</option><option value="Seraphim">Seraphim</option>
-                            <!-- Magic Gladiator -->
-                            <option value="Storm Crow">Storm Crow</option><option value="Unicorn">Unicorn</option><option value="Thunder Hawk">Thunder Hawk</option><option value="Hurricane">Hurricane</option><option value="Volcano">Volcano</option><option value="Valiant">Valiant</option><option value="Destroyer">Destroyer</option><option value="Phantom">Phantom</option>
-                            <!-- Dark Lord -->
-                            <option value="Light Plate">Light Plate</option><option value="Adamantine">Adamantine</option><option value="Dark Steel">Dark Steel</option><option value="Dark Master">Dark Master</option><option value="Sunlight">Sunlight</option><option value="Glorious">Glorious</option><option value="Emperor">Emperor</option><option value="Royal">Royal</option>
-                            <!-- Summoner -->
-                            <option value="Violent Wind">Violent Wind</option><option value="Red Wing">Red Wing</option><option value="Ancient">Ancient</option><option value="Black Rose">Black Rose</option><option value="Aura">Aura</option><option value="Lilium">Lilium</option><option value="Queen">Queen</option><option value="Demonic">Demonic</option><option value="Storm Blitz">Storm Blitz</option><option value="Eternal Wing">Eternal Wing</option>
-                            <!-- Rage Fighter -->
-                            <option value="Sacred">Sacred</option><option value="Storm Hard">Storm Hard</option><option value="Piercing">Piercing</option><option value="Phoenix Soul">Phoenix Soul</option><option value="Vega">Vega</option><option value="Chamer">Chamer</option>
-                        </optgroup>
-
-                        <optgroup label="=== STAFF & STICKS ===">
-                            <option value="Skull Staff">Skull Staff</option><option value="Angelic Staff">Angelic Staff</option><option value="Serpent Staff">Serpent Staff</option><option value="Thunder Staff">Thunder Staff</option><option value="Thunder Two-Hand Staff">Thunder Two-Hand Staff</option><option value="Gorgon Staff">Gorgon Staff</option><option value="Gorgon Two-Hand Staff">Gorgon Two-Hand Staff</option><option value="Legendary Staff">Legendary Staff</option><option value="Staff of Resurrection">Staff of Resurrection</option><option value="Resurrection Staff">Resurrection Staff</option><option value="Chaos Lightning Staff">Chaos Lightning Staff</option><option value="Staff of Destruction">Staff of Destruction</option><option value="Destruction Two-Hand Staff">Destruction Two-Hand Staff</option><option value="Dragon Soul Staff">Dragon Soul Staff</option><option value="Divine Staff of Archangel">Divine Staff of Archangel</option><option value="Staff of Kundun">Staff of Kundun</option><option value="Kundun Staff">Kundun Staff</option><option value="Grand Viper Staff">Grand Viper Staff</option><option value="Platina Staff">Platina Staff</option><option value="Crystal Two-Hand Staff">Crystal Two-Hand Staff</option><option value="Chromatic Staff">Chromatic Staff</option><option value="Imperial Staff">Imperial Staff</option><option value="Deadly Staff">Deadly Staff</option><option value="Mystery Stick">Mystery Stick</option><option value="Violent Wind Stick">Violent Wind Stick</option><option value="Red Wing Stick">Red Wing Stick</option><option value="Ancient Stick">Ancient Stick</option><option value="Demonic Stick">Demonic Stick</option><option value="Storm Blitz Stick">Storm Blitz Stick</option><option value="Eternal Wing Stick">Eternal Wing Stick</option>
-                        </optgroup>
-
-                        <optgroup label="=== ESPADAS, ARCOS Y ARMAS ===">
-                            <option value="Kris">Kris</option><option value="Short Sword">Short Sword</option><option value="Rapier">Rapier</option><option value="Katana">Katana</option><option value="Sword of Assassin">Sword of Assassin</option><option value="Assassin Sword">Assassin Sword</option><option value="Blade">Blade</option><option value="Gladius">Gladius</option><option value="Falchion">Falchion</option><option value="Serpent Sword">Serpent Sword</option><option value="Sword of Salamander">Sword of Salamander</option><option value="Light Saber">Light Saber</option><option value="Legendary Sword">Legendary Sword</option><option value="Heliacal Sword">Heliacal Sword</option><option value="Double Blade">Double Blade</option><option value="Lighting Sword">Lighting Sword</option><option value="Giant Sword">Giant Sword</option><option value="Sword of Destruction">Sword of Destruction</option><option value="Destruction Sword">Destruction Sword</option><option value="Dark Breaker">Dark Breaker</option><option <option value="Sacred Glove">Sacred Glove</option><option value="Holly Storm Claw">Holly Storm Claw</option><option value="Piercing Blade Glove">Piercing Blade Glove</option><option value="Phoenix Soul Star">Phoenix Soul Star</option><option value="Vega's Claw">Vega's Claw</option><option value="Chamer's Claw">Chamer's Claw</option><option value="Cyclone Claw">Cyclone Claw</option><option value="Blast Break">Blast Break</option> value="Thunder Blade">Thunder Blade</option><option value="Divine Sword of Archangel">Divine Sword of Archangel</option><option value="Knight Blade">Knight Blade</option><option value="Dark Reign Blade">Dark Reign Blade</option><option value="Dark Reign Two-Hand Blade">Dark Reign Two-Hand Blade</option><option value="Rune Blade">Rune Blade</option><option value="Explosion Blade">Explosion Blade</option><option value="Daybreak">Daybreak</option><option value="Sword Dancer">Sword Dancer</option><option value="Emerald Sword">Emerald Sword</option><option value="Bone Blade">Bone Blade</option><option value="Bone Sword">Bone Sword</option><option value="Flameberge">Flameberge</option><option value="Sword Breaker">Sword Breaker</option><option value="Imperial Sword">Imperial Sword</option><option value="Great Lord Scepter">Great Lord Scepter</option><option value="Solay Scepter">Solay Scepter</option><option value="Shining Scepter">Shining Scepter</option><option value="Frost Mace">Frost Mace</option><option value="Absolute Scepter">Absolute Scepter</option><option value="Celestial Bow">Celestial Bow</option><option value="Divine Crossbow of Archangel">Divine Crossbow of Archangel</option><option value="Great Reign Crossbow">Great Reign Crossbow</option><option value="Arrow Viper Bow">Arrow Viper Bow</option><option value="Sylph Wind Bow">Sylph Wind Bow</option><option value="Albatross Bow">Albatross Bow</option><option value="Stinger Bow">Stinger Bow</option><option value="Air Lyn Bow">Air Lyn Bow</option>
-                        </optgroup>
-
-                        <optgroup label="=== ESCUDOS Y ACCESORIOS ===">
-                            <option value="Small Shield">Small Shield</option><option value="Horn Shield">Horn Shield</option><option value="Kite Shield">Kite Shield</option><option value="Elven Shield">Elven Shield</option><option value="Buckler">Buckler</option><option value="Buckler Shield">Buckler Shield</option><option value="Dragon Slayer Shield">Dragon Slayer Shield</option><option value="Skull Shield">Skull Shield</option><option value="Spiked Shield">Spiked Shield</option><option value="Tower Shield">Tower Shield</option><option value="Plate Shield">Plate Shield</option><option value="Big Round Shield">Big Round Shield</option><option value="Round Shield">Round Shield</option><option value="Serpent Shield">Serpent Shield</option><option value="Bronze Shield">Bronze Shield</option><option value="Dragon Shield">Dragon Shield</option><option value="Legendary Shield">Legendary Shield</option><option value="Grand Soul Shield">Grand Soul Shield</option><option value="Elemental Shield">Elemental Shield</option><option value="Chaos Dragon Shield">Chaos Dragon Shield</option><option value="Cross Shield">Cross Shield</option><option value="Crimson Glory">Crimson Glory</option><option value="Salamander Shield">Salamander Shield</option><option value="Frost Barrier">Frost Barrier</option><option value="Guardian Shield">Guardian Shield</option><option value="Ring of Wind">Ring of Wind</option><option value="Ring of Ice">Ring of Ice</option><option value="Ring of Poison">Ring of Poison</option><option value="Ring of Fire">Ring of Fire</option><option value="Pendant of Fire">Pendant of Fire</option><option value="Pendant of Lighting">Pendant of Lighting</option><option value="Pendant of Ice">Pendant of Ice</option><option value="Wings">Wings</option><option value="Cape">Cape</option>
-                        </optgroup>
-                    </select>
+                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">📜 Set, Arma o Anillo (Escribí iniciales)</label>
+                    <input type="text" id="inputFiltroSetBase" list="listaItemsBase" oninput="aplicarFiltros()" placeholder="Escribí iniciales (Ej. Red, Chr, Sac...)" autocomplete="off" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
+                    <datalist id="listaItemsBase">
+                        <!-- Dark Knight -->
+                        <option value="Leather"></option><option value="Bronze"></option><option value="Scale"></option><option value="Brass"></option><option value="Plate"></option><option value="Dragon"></option><option value="Black Dragon"></option><option value="Dark Phoenix"></option><option value="Great Dragon"></option><option value="Dragon Knight"></option><option value="Ashcrow"></option><option value="Titan"></option><option value="Brave"></option>
+                        <!-- Dark Wizard -->
+                        <option value="Pad"></option><option value="Bone"></option><option value="Sphinx"></option><option value="Legendary"></option><option value="Grand Soul"></option><option value="Dark Soul"></option><option value="Venom Mist"></option><option value="Eclipse"></option><option value="Hades"></option>
+                        <!-- Fairy Elf -->
+                        <option value="Vine"></option><option value="Silk"></option><option value="Wind"></option><option value="Spirit"></option><option value="Guardian"></option><option value="Divine"></option><option value="Holy Spirit"></option><option value="Red Spirit"></option><option value="Sylphid Ray"></option><option value="Iris"></option><option value="Seraphim"></option>
+                        <!-- Magic Gladiator -->
+                        <option value="Storm Crow"></option><option value="Unicorn"></option><option value="Thunder Hawk"></option><option value="Hurricane"></option><option value="Volcano"></option><option value="Valiant"></option><option value="Destroyer"></option><option value="Phantom"></option>
+                        <!-- Dark Lord -->
+                        <option value="Light Plate"></option><option value="Adamantine"></option><option value="Dark Steel"></option><option value="Dark Master"></option><option value="Sunlight"></option><option value="Glorious"></option><option value="Emperor"></option><option value="Royal"></option>
+                        <!-- Summoner -->
+                        <option value="Violent Wind"></option><option value="Red Wing"></option><option value="Ancient"></option><option value="Black Rose"></option><option value="Aura"></option><option value="Lilium"></option><option value="Queen"></option><option value="Demonic"></option><option value="Storm Blitz"></option><option value="Eternal Wing"></option>
+                        <!-- Rage Fighter -->
+                        <option value="Sacred"></option><option value="Storm Hard"></option><option value="Piercing"></option><option value="Phoenix Soul"></option><option value="Vega"></option><option value="Chamer"></option>
+                        <!-- Staff & Sticks -->
+                        <option value="Skull Staff"></option><option value="Angelic Staff"></option><option value="Serpent Staff"></option><option value="Thunder Staff"></option><option value="Thunder Two-Hand Staff"></option><option value="Gorgon Staff"></option><option value="Gorgon Two-Hand Staff"></option><option value="Legendary Staff"></option><option value="Staff of Resurrection"></option><option value="Resurrection Staff"></option><option value="Chaos Lightning Staff"></option><option value="Staff of Destruction"></option><option value="Destruction Two-Hand Staff"></option><option value="Dragon Soul Staff"></option><option value="Divine Staff of Archangel"></option><option value="Staff of Kundun"></option><option value="Kundun Staff"></option><option value="Grand Viper Staff"></option><option value="Platina Staff"></option><option value="Crystal Two-Hand Staff"></option><option value="Chromatic Staff"></option><option value="Imperial Staff"></option><option value="Deadly Staff"></option><option value="Mystery Stick"></option><option value="Violent Wind Stick"></option><option value="Red Wing Stick"></option><option value="Ancient Stick"></option><option value="Demonic Stick"></option><option value="Storm Blitz Stick"></option><option value="Eternal Wing Stick"></option>
+                        <!-- Espadas, Puños, Arcos y Armas -->
+                        <option value="Kris"></option><option value="Short Sword"></option><option value="Rapier"></option><option value="Katana"></option><option value="Sword of Assassin"></option><option value="Assassin Sword"></option><option value="Blade"></option><option value="Gladius"></option><option value="Falchion"></option><option value="Serpent Sword"></option><option value="Sword of Salamander"></option><option value="Light Saber"></option><option value="Legendary Sword"></option><option value="Heliacal Sword"></option><option value="Double Blade"></option><option value="Lighting Sword"></option><option value="Giant Sword"></option><option value="Sword of Destruction"></option><option value="Destruction Sword"></option><option value="Dark Breaker"></option><option value="Sacred Glove"></option><option value="Holly Storm Claw"></option><option value="Piercing Blade Glove"></option><option value="Phoenix Soul Star"></option><option value="Vega's Claw"></option><option value="Chamer's Claw"></option><option value="Cyclone Claw"></option><option value="Blast Break"></option><option value="Thunder Blade"></option><option value="Divine Sword of Archangel"></option><option value="Knight Blade"></option><option value="Dark Reign Blade"></option><option value="Dark Reign Two-Hand Blade"></option><option value="Rune Blade"></option><option value="Explosion Blade"></option><option value="Daybreak"></option><option value="Sword Dancer"></option><option value="Emerald Sword"></option><option value="Bone Blade"></option><option value="Bone Sword"></option><option value="Flameberge"></option><option value="Sword Breaker"></option><option value="Imperial Sword"></option><option value="Great Lord Scepter"></option><option value="Solay Scepter"></option><option value="Shining Scepter"></option><option value="Frost Mace"></option><option value="Absolute Scepter"></option><option value="Celestial Bow"></option><option value="Divine Crossbow of Archangel"></option><option value="Great Reign Crossbow"></option><option value="Arrow Viper Bow"></option><option value="Sylph Wind Bow"></option><option value="Albatross Bow"></option><option value="Stinger Bow"></option><option value="Air Lyn Bow"></option>
+                        <!-- Escudos y Accesorios -->
+                        <option value="Small Shield"></option><option value="Horn Shield"></option><option value="Kite Shield"></option><option value="Elven Shield"></option><option value="Buckler"></option><option value="Buckler Shield"></option><option value="Dragon Slayer Shield"></option><option value="Skull Shield"></option><option value="Spiked Shield"></option><option value="Tower Shield"></option><option value="Plate Shield"></option><option value="Big Round Shield"></option><option value="Round Shield"></option><option value="Serpent Shield"></option><option value="Bronze Shield"></option><option value="Dragon Shield"></option><option value="Legendary Shield"></option><option value="Grand Soul Shield"></option><option value="Elemental Shield"></option><option value="Chaos Dragon Shield"></option><option value="Cross Shield"></option><option value="Crimson Glory"></option><option value="Salamander Shield"></option><option value="Frost Barrier"></option><option value="Guardian Shield"></option><option value="Ring of Wind"></option><option value="Ring of Ice"></option><option value="Ring of Poison"></option><option value="Ring of Fire"></option><option value="Pendant of Fire"></option><option value="Pendant of Lighting"></option><option value="Pendant of Ice"></option><option value="Wings"></option><option value="Cape"></option>
+                    </datalist>
                 </div>
                 <div>
                     <label class="block text-xs uppercase text-purple-300 font-bold mb-1">📦 Tipo de Pieza</label>
@@ -199,12 +191,12 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 3: DONACIONES Y ASISTENCIAS CON BOTÓN RESET SEMANAL -->
+    <!-- SECCIÓN 3: DONACIONES Y ASISTENCIAS CON BOTÓN RESET -->
     <div id="seccion-donaciones-view" class="w-full max-w-7xl space-y-6 hidden">
         <div class="bg-[#141126] border border-indigo-600/50 p-5 rounded-xl shadow-lg space-y-4">
             <div class="flex justify-between items-center">
                 <h2 class="text-sm font-bold text-indigo-400 uppercase">⚔️ Asistencias a Invasiones (Ranking)</h2>
-                <button onclick="resetSemanalAsistencias()" id="btn-reset-semanal" class="hidden bg-purple-700 hover:bg-purple-600 text-white px-3 py-1.5 rounded text-xs font-bold transition">🔄 Reset Semanal (20%)</button>
+                <button onclick="resetSemanalAsistencias()" id="btn-reset-semanal" class="hidden bg-purple-700 hover:bg-purple-600 text-white px-3 py-1.5 rounded text-xs font-bold transition">🔄 Reset Mensual (20%)</button>
             </div>
             <div id="panel-asistencia-ctrl" class="flex flex-wrap gap-3 items-center hidden bg-[#0d0a1a] p-3 rounded-lg border border-purple-900">
                 <span class="text-xs text-purple-300 font-bold">Miembro:</span>
@@ -216,8 +208,14 @@
             </div>
             <div class="tabla-scroll-box" style="height: 220px !important;">
                 <table class="tabla-items">
-                    <thead><tr><th>Miembro (PJ)</th><th style="text-align: right; padding-right: 40px;">Asistencias Totales</th></tr></thead>
-                    <tbody id="tabla-asistencias-ranking"><tr><td colspan="2" class="text-center py-4">Cargando...</td></tr></tbody>
+                    <thead>
+                        <tr>
+                            <th>Miembro (PJ)</th>
+                            <th style="text-align: center;">Resets</th>
+                            <th style="text-align: right; padding-right: 40px;">Asistencias Totales</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-asistencias-ranking"><tr><td colspan="3" class="text-center py-4">Cargando...</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -404,16 +402,14 @@
                     if (loginBtn) loginBtn.outerHTML = `<a href="/logout" class="bg-red-700 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">Salir</a>`;
                     
                     if (sesionAutorizada) {
-                        ['btn-guardar-item', 'panel-custom-id', 'dummy-div', 'panel-miembros-crud', 'panel-asistencia-ctrl', 'panel-donacion-crud', 'btn-gasto-modal', 'btn-reset-semanal', 'th-acciones-head', 'th-miembro-acciones'].forEach(id => {
+                        ['btn-guardar-item', 'panel-custom-id', 'dummy-div', 'panel-miembros-crud', 'panel-asistencia-ctrl', 'panel-donacion-crud', 'btn-gasto-modal', 'btn-reset-semanal', 'th-acciones-head', 'th-miembro-acciones', 'admin-backup-buttons'].forEach(id => {
                             const el = document.getElementById(id);
                             if (el) el.classList.remove('hidden');
                         });
                     }
                     if (esAdmin) {
-                        ['btn-sec-users', 'admin-backup-buttons'].forEach(id => {
-                            const el = document.getElementById(id);
-                            if (el) el.classList.remove('hidden');
-                        });
+                        const btnUsers = document.getElementById('btn-sec-users');
+                        if (btnUsers) btnUsers.classList.remove('hidden');
                         cargarUsuarios();
                     }
                 }
@@ -556,7 +552,7 @@
 
         function aplicarFiltros() {
             const filtroId = document.getElementById('inputFiltroId') ? document.getElementById('inputFiltroId').value.trim() : '';
-            const setBase = (document.getElementById('inputFiltroSetBase').value || '').toLowerCase();
+            const setBase = (document.getElementById('inputFiltroSetBase').value || '').trim().toLowerCase();
             const tipoPieza = (document.getElementById('inputFiltroTipoPieza').value || '').toLowerCase();
             const filtroBaul = (document.getElementById('inputFiltroBaul').value || '').toLowerCase();
             const filtroAsignado = (document.getElementById('inputFiltroAsignado').value || '').toLowerCase();
@@ -612,10 +608,10 @@
         }
 
         async function resetSemanalAsistencias() {
-            if (!confirm("⚠️ ¿Estás seguro de realizar el Reset Semanal? Se dejará solo el 20% (redondeado hacia abajo) del puntaje actual de cada miembro.")) return;
+            if (!confirm("⚠️ ¿Estás seguro de realizar el Reset? Se dejará solo el 20% (redondeado hacia abajo) del puntaje actual y se sumará +1 Reset a cada miembro.")) return;
             const res = await fetch('/api/asistencias/reset-semanal', { method: 'POST' });
             if (res.ok) {
-                alert("¡Reset semanal aplicado con éxito!");
+                alert("¡Reset aplicado con éxito!");
                 cargarAsistenciasRanking();
             } else {
                 const err = await res.json();
@@ -689,14 +685,14 @@
         }
 
         async function guardarItemDesdeFiltro() {
-            const set_base = document.getElementById('inputFiltroSetBase').value;
+            const set_base = document.getElementById('inputFiltroSetBase').value.trim();
             const tipo = document.getElementById('inputFiltroTipoPieza').value;
             const baul = document.getElementById('inputFiltroBaul').value.trim();
             const asignado = document.getElementById('inputFiltroAsignado').value;
             const customIdEl = document.getElementById('inputCustomId');
             const custom_id = customIdEl ? customIdEl.value.trim() : '';
 
-            if (!set_base) return alert("Seleccioná un elemento.");
+            if (!set_base) return alert("Escribí o seleccioná un elemento.");
 
             const opciones = [];
             document.querySelectorAll('.filtro-chk:checked').forEach(chk => {
@@ -721,12 +717,19 @@
             const res = await fetch('/api/asistencias-ranking');
             if (res.ok) {
                 const data = await res.json();
-                document.getElementById('tabla-asistencias-ranking').innerHTML = data.map(row => `
-                    <tr>
-                        <td class="font-bold text-indigo-300">${row.pj_name}</td>
-                        <td style="text-align: right; padding-right: 40px;" class="font-extrabold text-amber-400 text-base">${row.total_asistencias}</td>
-                    </tr>
-                `).join('') || '<tr><td colspan="2" class="text-center py-4 text-gray-500">Sin asistencias.</td></tr>';
+                document.getElementById('tabla-asistencias-ranking').innerHTML = data.map(row => {
+                    const resetsCount = row.total_resets || 0;
+                    const badgeReset = resetsCount > 0 
+                        ? `<span class="bg-purple-950 text-purple-200 border border-purple-600 px-2.5 py-0.5 rounded-full text-xs font-bold">🔄 ${resetsCount} ${resetsCount === 1 ? 'Reset' : 'Resets'}</span>` 
+                        : `<span class="text-gray-600 text-xs">Sin resets</span>`;
+                    return `
+                        <tr>
+                            <td class="font-bold text-indigo-300">${row.pj_name}</td>
+                            <td style="text-align: center;">${badgeReset}</td>
+                            <td style="text-align: right; padding-right: 40px;" class="font-extrabold text-amber-400 text-base">${row.total_asistencias}</td>
+                        </tr>
+                    `;
+                }).join('') || '<tr><td colspan="3" class="text-center py-4 text-gray-500">Sin asistencias.</td></tr>';
             }
         }
 
@@ -870,7 +873,6 @@
         }
 
         function descargarBackup() { window.location.href = '/api/backup/exportar'; }
-        
         function exportarExcelAsignados() { window.location.href = '/api/backup/exportar-items-asignados'; }
         function exportarExcelAsistencias() { window.location.href = '/api/backup/exportar-asistencias'; }
 
