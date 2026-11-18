@@ -2,6 +2,7 @@ import os
 import time
 import json
 import re
+import math
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file
 import psycopg2
@@ -79,10 +80,10 @@ def index():
 def vista_items():
     return render_template('items.html')
 
-# --- BACKUP LOCAL ---
+# --- BACKUP LOCAL (HABILITADO PARA ADMIN Y OPERADORES) ---
 @app.route('/api/backup/exportar', methods=['GET'])
 def exportar_backup():
-    if not usuario_es_admin():
+    if not usuario_es_autorizado():
         return jsonify({"error": "No autorizado."}), 403
     conn = get_db()
     backup_data = {}
@@ -113,7 +114,7 @@ def exportar_backup():
 
 @app.route('/api/backup/importar', methods=['POST'])
 def importar_backup():
-    if not usuario_es_admin():
+    if not usuario_es_autorizado():
         return jsonify({"error": "No autorizado."}), 403
     if 'file' not in request.files:
         return jsonify({"error": "No se adjuntó archivo."}), 400
@@ -158,9 +159,9 @@ def importar_backup():
                 cur.execute("DELETE FROM public.asistencias_invasiones;")
                 for a in backup_data['asistencias_invasiones']:
                     cur.execute("""
-                        INSERT INTO public.asistencias_invasiones (id, pj_name, cantidad, registrado_por)
-                        VALUES (%s, %s, %s, %s);
-                    """, (a.get('id'), a.get('pj_name'), a.get('cantidad', 1), a.get('registrado_por', 'Sistema')))
+                        INSERT INTO public.asistencias_invasiones (id, pj_name, cantidad, resets, registrado_por)
+                        VALUES (%s, %s, %s, %s, %s);
+                    """, (a.get('id'), a.get('pj_name'), a.get('cantidad', 1), a.get('resets', 0), a.get('registrado_por', 'Sistema')))
             if 'guild_gastos' in backup_data:
                 cur.execute("DELETE FROM public.guild_gastos;")
                 for g in backup_data['guild_gastos']:
@@ -185,7 +186,9 @@ def api_asistencias_ranking():
             try:
                 with conn.cursor() as cur:
                     cur.execute("""
-                        SELECT pj_name, SUM(cantidad) as total_asistencias
+                        SELECT pj_name, 
+                               SUM(cantidad) as total_asistencias,
+                               COALESCE(MAX(resets), 0) as total_resets
                         FROM public.asistencias_invasiones
                         GROUP BY pj_name
                         ORDER BY total_asistencias DESC;
@@ -208,9 +211,17 @@ def api_asistencias_ranking():
         try:
             with conn.cursor() as cur:
                 cur.execute("""
-                    INSERT INTO public.asistencias_invasiones (pj_name, cantidad, registrado_por)
-                    VALUES (%s, %s, %s);
-                """, (pj_name, delta, session.get('user', 'Sistema')))
+                    SELECT COALESCE(MAX(resets), 0) as max_resets 
+                    FROM public.asistencias_invasiones 
+                    WHERE pj_name = %s;
+                """, (pj_name,))
+                row_r = cur.fetchone()
+                resets_actuales = row_r['max_resets'] if row_r else 0
+
+                cur.execute("""
+                    INSERT INTO public.asistencias_invasiones (pj_name, cantidad, resets, registrado_por)
+                    VALUES (%s, %s, %s, %s);
+                """, (pj_name, delta, resets_actuales, session.get('user', 'Sistema')))
                 conn.commit()
             conn.close()
         except Exception as e:
@@ -218,7 +229,7 @@ def api_asistencias_ranking():
             return jsonify({"error": str(e)}), 500
     return jsonify({"status": "ok"}), 201
 
-# --- API RESET SEMANAL DE ASISTENCIAS (20% REDONDEO ABAJO) ---
+# --- API RESET MENSUAL / SEMANAL DE ASISTENCIAS (20% + CONTADOR DE RESETS) ---
 @app.route('/api/asistencias/reset-semanal', methods=['POST'])
 def reset_semanal_asistencias():
     if not usuario_es_autorizado(): 
@@ -230,29 +241,30 @@ def reset_semanal_asistencias():
     
     try:
         with conn.cursor() as cur:
-            # 1. Obtener totales actuales por miembro
             cur.execute("""
-                SELECT pj_name, SUM(cantidad) as total
+                SELECT pj_name, 
+                       SUM(cantidad) as total,
+                       COALESCE(MAX(resets), 0) as resets_actuales
                 FROM public.asistencias_invasiones
                 GROUP BY pj_name;
             """)
             resultados = cur.fetchall()
             
-            # 2. Borrar tabla actual de asistencias
             cur.execute("DELETE FROM public.asistencias_invasiones;")
             
-            # 3. Recalcular el 20% redondeado hacia abajo (floor) y reinsertar
-            import math
             for row in resultados:
                 pj = row['pj_name']
                 total_actual = row['total'] or 0
-                nuevo_valor = math.floor(total_actual * 0.20)
+                resets_previos = row['resets_actuales'] or 0
                 
-                if nuevo_valor > 0:
+                nuevo_valor = math.floor(total_actual * 0.20)
+                nuevos_resets = resets_previos + 1 if total_actual > 0 else resets_previos
+                
+                if nuevo_valor > 0 or nuevos_resets > 0:
                     cur.execute("""
-                        INSERT INTO public.asistencias_invasiones (pj_name, cantidad, registrado_por)
-                        VALUES (%s, %s, %s);
-                    """, (pj, nuevo_valor, f"Reset Semanal ({session.get('user', 'Admin')})"))
+                        INSERT INTO public.asistencias_invasiones (pj_name, cantidad, resets, registrado_por)
+                        VALUES (%s, %s, %s, %s);
+                    """, (pj, nuevo_valor, nuevos_resets, f"Reset ({session.get('user', 'Admin')})"))
             
             conn.commit()
         conn.close()
@@ -649,7 +661,7 @@ def api_miembros():
             except Exception: pass
         return jsonify({"status": "ok"}), 200
 
-# --- EXCEL EXPORT & IMPORT ---
+# --- EXCEL EXPORT & IMPORT (HABILITADO PARA ADMIN Y OPERADORES) ---
 @app.route('/api/backup/exportar-items-asignados', methods=['GET'])
 def exportar_items_asignados():
     if not usuario_es_autorizado():
@@ -698,7 +710,7 @@ def exportar_asistencias():
     if conn:
         try:
             with conn.cursor() as cur:
-                cur.execute('SELECT pj_name as "Miembro (PJ)", SUM(cantidad) as "Asistencias Totales" FROM public.asistencias_invasiones GROUP BY pj_name ORDER BY "Asistencias Totales" DESC;')
+                cur.execute('SELECT pj_name as "Miembro (PJ)", COALESCE(MAX(resets), 0) as "Resets", SUM(cantidad) as "Asistencias Totales" FROM public.asistencias_invasiones GROUP BY pj_name ORDER BY "Asistencias Totales" DESC;')
                 ranking = cur.fetchall()
             conn.close()
         except Exception:
@@ -719,8 +731,8 @@ def exportar_asistencias():
 
 @app.route('/api/backup/importar-excel', methods=['POST'])
 def importar_excel_web():
-    if not usuario_es_admin():
-        return jsonify({"error": "Solo el administrador puede importar respaldos."}), 403
+    if not usuario_es_autorizado():
+        return jsonify({"error": "No autorizado para importar respaldos."}), 403
     if 'file' not in request.files:
         return jsonify({"error": "No se adjuntó archivo."}), 400
     
@@ -744,9 +756,10 @@ def importar_excel_web():
                 for _, row in df_asist.iterrows():
                     pj = row.get('Miembro (PJ)')
                     cant = row.get('Asistencias Totales')
+                    resets_val = int(row.get('Resets')) if pd.notna(row.get('Resets')) else 0
                     if pd.notna(pj) and pd.notna(cant):
                         cur.execute("DELETE FROM public.asistencias_invasiones WHERE pj_name = %s;", (str(pj),))
-                        cur.execute("INSERT INTO public.asistencias_invasiones (pj_name, cantidad, registrado_por) VALUES (%s, %s, 'Importación Web');", (str(pj), int(cant)))
+                        cur.execute("INSERT INTO public.asistencias_invasiones (pj_name, cantidad, resets, registrado_por) VALUES (%s, %s, %s, 'Importación Web');", (str(pj), int(cant), resets_val))
             
             conn.commit()
         conn.close()
