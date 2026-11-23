@@ -191,30 +191,42 @@
                     <input type="number" id="inputCustomId" placeholder="Automático" class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
                 </div>
 
-                <!-- OPCIONES EXCELLENT COMPLETAS -->
-                <div class="md:col-span-3 space-y-3">
+                <!-- OPCIONES EXCELLENT COMPLETAS (2 COLUMNAS: SET A LA IZQUIERDA / ARMA A LA DERECHA) -->
+                <div class="md:col-span-3 space-y-2">
                     <label class="block text-xs uppercase text-[#f5b942] font-bold">✨ Opciones Excellent</label>
-                    <div class="bg-[#0b0a08] p-3.5 rounded-lg border border-[#29221a]">
-                        <span class="text-[10px] uppercase font-bold text-emerald-400 block mb-2">🛡️ Opciones para Armaduras, Escudos y Accesorios:</span>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-[#e5dec9]">
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Aumento de HP máximo" onchange="aplicarFiltros()"> Aumento de HP máximo</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Aumento de SD máximo" onchange="aplicarFiltros()"> Aumento de SD máximo</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Reducción de daño (DD)" onchange="aplicarFiltros()"> Reducción de daño (DD)</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Reflejo de daño (Reflect)" onchange="aplicarFiltros()"> Reflejo de daño (Reflect)</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Resistencia a daño crítico (Rate)" onchange="aplicarFiltros()"> Resistencia a crítico (Rate)</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Tasa de drop de Zen" onchange="aplicarFiltros()"> Tasa de drop de Zen</label>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
+                        <!-- CUADRADO IZQUIERDO: SET / ARMADURAS -->
+                        <div class="bg-[#0b0a08] p-3.5 rounded-lg border border-[#29221a] flex flex-col justify-between">
+                            <div>
+                                <span class="text-[10px] uppercase font-bold text-emerald-400 block mb-2.5">🛡️ Opciones para Armaduras, Escudos y Accesorios:</span>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#e5dec9]">
+                                    <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Aumento de HP máximo" onchange="aplicarFiltros()"> Aumento de HP máximo</label>
+                                    <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Aumento de SD máximo" onchange="aplicarFiltros()"> Aumento de SD máximo</label>
+                                    <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Reducción de daño (DD)" onchange="aplicarFiltros()"> Reducción de daño (DD)</label>
+                                    <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Reflejo de daño (Reflect)" onchange="aplicarFiltros()"> Reflejo de daño (Reflect)</label>
+                                    <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Resistencia a daño crítico (Rate)" onchange="aplicarFiltros()"> Resistencia a crítico (Rate)</label>
+                                    <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Tasa de drop de Zen" onchange="aplicarFiltros()"> Tasa de drop de Zen</label>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="bg-[#0b0a08] p-3.5 rounded-lg border border-[#29221a]">
-                        <span class="text-[10px] uppercase font-bold text-[#fbd379] block mb-2">⚔️ Opciones para Armas y Bastones:</span>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#e5dec9]">
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Excellent damage rate %" onchange="aplicarFiltros()"> Excellent damage rate %</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Wizardry Damage increase %" onchange="aplicarFiltros()"> Wizardry Damage increase %</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Physical Damage increase %" onchange="aplicarFiltros()"> Physical Damage increase %</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Increases attack speed +" onchange="aplicarFiltros()"> Increases attack speed +</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Obtains (Life) when monster is killed" onchange="aplicarFiltros()"> Obtains (Life) when monster is killed</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Critical Damage rate %" onchange="aplicarFiltros()"> Critical Damage rate %</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Damage to Monster" onchange="aplicarFiltros()"> Damage to Monster</label>
+
+                        <!-- CUADRADO DERECHO: ARMAS Y BASTONES -->
+                        <div class="bg-[#0b0a08] p-3.5 rounded-lg border border-[#29221a] flex flex-col justify-between">
+                            <div>
+                                <span class="text-[10px] uppercase font-bold text-[#fbd379] block mb-2.5">⚔️ Opciones para Armas y Bastones:</span>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#e5dec9]">
+                                    <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Excellent damage rate %" onchange="aplicarFiltros()"> Excellent damage rate %</label>
+                                    <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Wizardry Damage increases +level/" onchange="aplicarFiltros()"> Wizardry Damage +level/</label>
+                                    <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Wizardry Damage increase %" onchange="aplicarFiltros()"> Wizardry Damage increase %</label>
+                                    <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Physical Damage increases +level/" onchange="aplicarFiltros()"> Physical Damage +level/</label>
+                                    <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Physical Damage increase %" onchange="aplicarFiltros()"> Physical Damage increase %</label>
+                                    <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Increases attack speed +" onchange="aplicarFiltros()"> Increases attack speed +</label>
+                                    <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Obtains (Life) when monster is killed" onchange="aplicarFiltros()"> Obtains (Life) when monster is killed</label>
+                                    <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Obtains (Mana) when monster is killed" onchange="aplicarFiltros()"> Obtains (Mana) when monster is killed</label>
+                                    <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Critical Damage rate %" onchange="aplicarFiltros()"> Critical Damage rate %</label>
+                                    <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Damage to Monster" onchange="aplicarFiltros()"> Damage to Monster</label>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
