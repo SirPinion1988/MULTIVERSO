@@ -103,7 +103,7 @@
             <h1 class="text-3xl font-black tracking-wide text-[#f8f5ee]">
                 MULTIVERSO - <span class="text-[#f5b942]">GESTIÓN TOTAL</span>
             </h1>
-            <p class="text-xs text-[#a89f91] mt-0.5">Inventario, Armas, Asistencia a Invasiones y Donaciones</p>
+            <p class="text-xs text-[#a89f91] mt-0.5">Inventario, Armas, Distribución, Asistencia a Invasiones y Donaciones</p>
         </div>
         <div class="flex flex-wrap items-center gap-2.5">
             <span id="session-user-badge" class="text-xs text-[#e5dec9] font-bold bg-[#16120e] px-3 py-1.5 rounded-lg border border-[#332a1f]">
@@ -124,10 +124,11 @@
         </div>
     </header>
 
-    <!-- NAVEGACIÓN POR PESTAÑAS SEPARADAS -->
+    <!-- NAVEGACIÓN POR PESTAÑAS -->
     <div class="flex flex-wrap items-center justify-center gap-2.5 mb-6 w-full max-w-7xl">
         <button onclick="cambiarSeccion('ITEMS')" id="btn-sec-items" class="btn-gold-mudream px-4 py-2 rounded-lg text-xs transition">📋 Ítems & Baúles</button>
         <button onclick="cambiarSeccion('CLAN')" id="btn-sec-clan" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition">👥 Miembros</button>
+        <button onclick="cambiarSeccion('DISTRIBUCION')" id="btn-sec-distribucion" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition">🎁 Distribución</button>
         <button onclick="cambiarSeccion('ASISTENCIAS')" id="btn-sec-asistencias" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition">⚔️ Asistencias</button>
         <button onclick="cambiarSeccion('DONACIONES')" id="btn-sec-donaciones" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition">💎 Donaciones</button>
         <button onclick="cambiarSeccion('USERS')" id="btn-sec-users" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition hidden">⚙️ Usuarios</button>
@@ -250,15 +251,8 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 2: MIEMBROS + RULETA DE SORTEO -->
+    <!-- SECCIÓN 2: MIEMBROS -->
     <div id="seccion-clan-view" class="w-full max-w-7xl space-y-4 hidden">
-        <div class="flex flex-wrap justify-between items-center gap-3">
-            <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">👥 Roster de Miembros del Clan</h2>
-            <button onclick="abrirModalRuleta()" id="btn-abrir-ruleta" class="hidden btn-gold-mudream px-4 py-2 rounded-lg text-xs flex items-center gap-2 transition">
-                🎡 Ruleta de Sorteo (5 Miembros)
-            </button>
-        </div>
-
         <div id="panel-miembros-crud" class="card-mudream p-4 rounded-xl hidden">
             <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end w-full">
                 <div><label class="block text-[11px] text-[#a89f91] font-bold mb-1">NICK DEL PJ:</label><input type="text" id="clanPjNombre" placeholder="Nick" class="w-full input-mudream p-2 rounded text-xs"></div>
@@ -279,12 +273,93 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 3: ASISTENCIAS (INDEPENDIENTE) -->
+    <!-- SECCIÓN 3: DISTRIBUCIÓN & SORTEO RULETA -->
+    <div id="seccion-distribucion-view" class="w-full max-w-7xl space-y-6 hidden">
+        <!-- CUADRO DE SORTEO TIPO RULETA -->
+        <div id="panel-sorteo-ruleta" class="card-mudream p-6 rounded-xl space-y-5">
+            <div class="flex flex-wrap justify-between items-center border-b border-[#2e261c] pb-3 gap-2">
+                <h2 class="text-sm font-black text-[#f5b942] uppercase tracking-wider">🎡 Sorteo de Ítems por Ruleta</h2>
+                <span class="text-[11px] text-[#a89f91]">Ingresá el ID del ítem, elegí los participantes y girá la ruleta para asignarlo</span>
+            </div>
+
+            <!-- 1. BUSCAR ÍTEM POR NÚMERO DE ID -->
+            <div class="bg-[#0b0a08] border border-[#2e261c] p-4 rounded-xl space-y-2">
+                <label class="block text-xs uppercase text-[#f5b942] font-bold">1️⃣ Número de ID del Ítem a Sortear:</label>
+                <div class="flex flex-col sm:flex-row gap-3 items-center">
+                    <input type="number" id="ruletaItemId" oninput="buscarItemRuleta()" placeholder="Ej. 105" class="w-full sm:w-40 input-mudream p-2.5 rounded-lg text-sm font-mono font-bold text-[#f5b942] outline-none">
+                    <div id="ruleta-item-preview" class="flex-1 w-full bg-[#16120e] border border-[#29221a] px-3.5 py-2.5 rounded-lg text-xs text-[#8a8073]">
+                        Escribí el número de ID para ver el ítem...
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. ABAJO: SELECCIÓN DE MIEMBROS PARTICIPANTES + RULETA -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+                <div class="bg-[#0b0a08] border border-[#2e261c] p-4 rounded-xl space-y-2.5">
+                    <label class="block text-xs uppercase text-[#f5b942] font-bold mb-1">2️⃣ Seleccioná los Miembros que Participan (hasta 5):</label>
+                    <select id="ruleta-pj-1" onchange="actualizarRuletaCanvas()" class="w-full input-mudream p-2 rounded-lg text-xs"></select>
+                    <select id="ruleta-pj-2" onchange="actualizarRuletaCanvas()" class="w-full input-mudream p-2 rounded-lg text-xs"></select>
+                    <select id="ruleta-pj-3" onchange="actualizarRuletaCanvas()" class="w-full input-mudream p-2 rounded-lg text-xs"></select>
+                    <select id="ruleta-pj-4" onchange="actualizarRuletaCanvas()" class="w-full input-mudream p-2 rounded-lg text-xs"></select>
+                    <select id="ruleta-pj-5" onchange="actualizarRuletaCanvas()" class="w-full input-mudream p-2 rounded-lg text-xs"></select>
+
+                    <button onclick="girarRuleta()" id="btn-girar-ruleta" class="hidden w-full btn-gold-mudream py-3 rounded-xl text-sm uppercase tracking-wider mt-3 transition">
+                        🎲 Girar Ruleta y Asignar Ítem
+                    </button>
+                    <p id="aviso-ruleta-invitado" class="text-[11px] text-center text-[#8a8073] pt-1">
+                        🔒 Iniciá sesión como Admin u Operador para ejecutar el sorteo y asignar el ítem.
+                    </p>
+                </div>
+
+                <!-- RULETA GIRATORIA -->
+                <div class="flex flex-col items-center justify-center relative py-2">
+                    <div class="w-0 h-0 border-l-[13px] border-l-transparent border-r-[13px] border-r-transparent border-t-[24px] border-t-[#f5b942] drop-shadow z-10 -mb-2"></div>
+                    <canvas id="canvasRuleta" width="300" height="300" class="rounded-full border-4 border-[#3d3122] shadow-2xl bg-[#0b0a08]"></canvas>
+                </div>
+            </div>
+
+            <!-- CARTEL DE GANADOR -->
+            <div id="ruleta-cartel-ganador" class="hidden anim-ganador bg-gradient-to-r from-[#292015] via-[#382b1c] to-[#292015] border-2 border-[#f5b942] p-4 rounded-xl text-center shadow-2xl space-y-1">
+                <div class="text-xs uppercase font-bold text-emerald-400 tracking-widest">🎉 ¡SORTEO FINALIZADO E ÍTEM ASIGNADO! 🎉</div>
+                <div class="text-2xl font-black text-[#f8f5ee]">🏆 GANÓ: <span id="ruleta-nombre-ganador" class="text-[#f5b942]">---</span></div>
+                <div id="ruleta-detalle-asignacion" class="text-xs text-[#e5dec9]"></div>
+            </div>
+        </div>
+
+        <!-- TABLA DE MIEMBROS CON LOS ÍTEMS CARGADOS -->
+        <div class="card-mudream p-5 rounded-xl space-y-4">
+            <div class="flex flex-wrap justify-between items-center gap-2">
+                <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">📦 Distribución Actual: Miembros con Ítems Cargados</h2>
+                <span id="contador-items-distribuidos" class="text-xs text-[#fbd379] bg-[#0b0a08] border border-[#2e261c] px-3 py-1 rounded-lg font-bold">0 ítems asignados</span>
+            </div>
+            <div class="tabla-scroll-box" style="height: 420px !important;">
+                <table class="tabla-items">
+                    <thead>
+                        <tr>
+                            <th style="width: 180px;">Miembro (PJ)</th>
+                            <th style="width: 90px;">Raza</th>
+                            <th>Ítems Asignados (ID # y Opciones)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-distribucion-body">
+                        <tr><td colspan="3" class="text-center py-8 text-[#8a8073]">Cargando distribución...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN 4: ASISTENCIAS (INDEPENDIENTE) -->
     <div id="seccion-asistencias-view" class="w-full max-w-7xl space-y-6 hidden">
         <div class="card-mudream p-5 rounded-xl space-y-4">
-            <div class="flex justify-between items-center">
+            <div class="flex flex-wrap justify-between items-center gap-3">
                 <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">⚔️ Asistencias a Invasiones (Ranking)</h2>
-                <button onclick="resetSemanalAsistencias()" id="btn-reset-semanal" class="hidden bg-red-950/80 hover:bg-red-900 border border-red-600/50 text-red-200 px-3 py-1.5 rounded text-xs font-bold transition">🔄 Reset Mensual (20%)</button>
+                <div class="flex flex-wrap items-center gap-3">
+                    <span id="texto-ultimo-reset" class="text-xs text-[#a89f91] bg-[#0b0a08] border border-[#2e261c] px-3 py-1.5 rounded-lg">
+                        🕒 Último reset: <strong class="text-[#fbd379]">Sin registros</strong>
+                    </span>
+                    <button onclick="resetSemanalAsistencias()" id="btn-reset-semanal" class="hidden bg-red-950/80 hover:bg-red-900 border border-red-600/50 text-red-200 px-3 py-1.5 rounded text-xs font-bold transition">🔄 Reset Mensual (20%)</button>
+                </div>
             </div>
             <div id="panel-asistencia-ctrl" class="flex flex-wrap gap-3 items-center hidden bg-[#0b0a08] p-3 rounded-lg border border-[#29221a]">
                 <span class="text-xs text-[#e5dec9] font-bold">Miembro:</span>
@@ -309,7 +384,7 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 4: DONACIONES & BANCO GUILD (INDEPENDIENTE) -->
+    <!-- SECCIÓN 5: DONACIONES & BANCO GUILD (INDEPENDIENTE) -->
     <div id="seccion-donaciones-view" class="w-full max-w-7xl space-y-6 hidden">
         <div class="card-mudream p-5 rounded-xl space-y-3">
             <div class="flex justify-between items-center">
@@ -358,7 +433,7 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 5: USUARIOS -->
+    <!-- SECCIÓN 6: USUARIOS -->
     <div id="seccion-users-view" class="w-full max-w-7xl space-y-4 hidden">
         <div class="card-mudream p-6 rounded-xl space-y-4">
             <h2 class="text-lg font-bold text-[#f5b942]">👑 Gestión de Usuarios & Accesos</h2>
@@ -376,56 +451,6 @@
                 <thead><tr><th>Usuario</th><th>Rol Actual</th><th>Estado</th><th class="text-center">Control de Acceso</th></tr></thead>
                 <tbody id="tabla-usuarios-body"><tr><td colspan="4" class="text-center py-4">Cargando...</td></tr></tbody>
             </table>
-        </div>
-    </div>
-
-    <!-- MODAL RULETA DE SORTEO DE ÍTEM (5 MIEMBROS) -->
-    <div id="modal-ruleta" class="fixed inset-0 bg-black/85 flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-[#16120e] border border-[#f5b942]/60 p-6 rounded-2xl max-w-3xl w-full shadow-2xl space-y-5 max-h-[95vh] overflow-y-auto">
-            <div class="flex justify-between items-center border-b border-[#2e261c] pb-3">
-                <h3 class="text-lg font-black text-[#f5b942] uppercase tracking-wide">🎡 Ruleta de Sorteo de Ítem</h3>
-                <button onclick="cerrarModalRuleta()" class="text-[#a89f91] hover:text-white text-sm font-bold px-2 py-1">✖</button>
-            </div>
-
-            <!-- 1. BUSCAR ÍTEM POR ID ARRIBA -->
-            <div class="bg-[#0b0a08] border border-[#2e261c] p-4 rounded-xl space-y-2">
-                <label class="block text-xs uppercase text-[#f5b942] font-bold">1️⃣ Ingresá el ID del Ítem a Sortear:</label>
-                <div class="flex flex-col sm:flex-row gap-3 items-center">
-                    <input type="number" id="ruletaItemId" oninput="buscarItemRuleta()" placeholder="Ej. 105" class="w-full sm:w-36 input-mudream p-2.5 rounded-lg text-sm font-mono font-bold text-[#f5b942] outline-none">
-                    <div id="ruleta-item-preview" class="flex-1 w-full bg-[#16120e] border border-[#29221a] px-3.5 py-2 rounded-lg text-xs text-[#8a8073]">
-                        Escribí un ID para ver el ítem...
-                    </div>
-                </div>
-            </div>
-
-            <!-- 2. SELECCIÓN DE 5 MIEMBROS + RULETA -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                <div class="space-y-2.5">
-                    <label class="block text-xs uppercase text-[#f5b942] font-bold">2️⃣ Seleccioná los 5 Miembros Participantes:</label>
-                    <select id="ruleta-pj-1" onchange="actualizarRuletaCanvas()" class="w-full input-mudream p-2 rounded-lg text-xs"></select>
-                    <select id="ruleta-pj-2" onchange="actualizarRuletaCanvas()" class="w-full input-mudream p-2 rounded-lg text-xs"></select>
-                    <select id="ruleta-pj-3" onchange="actualizarRuletaCanvas()" class="w-full input-mudream p-2 rounded-lg text-xs"></select>
-                    <select id="ruleta-pj-4" onchange="actualizarRuletaCanvas()" class="w-full input-mudream p-2 rounded-lg text-xs"></select>
-                    <select id="ruleta-pj-5" onchange="actualizarRuletaCanvas()" class="w-full input-mudream p-2 rounded-lg text-xs"></select>
-
-                    <button onclick="girarRuleta()" id="btn-girar-ruleta" class="w-full btn-gold-mudream py-3 rounded-xl text-sm uppercase tracking-wider mt-3 transition">
-                        🎲 ¡Girar Ruleta y Sortear!
-                    </button>
-                </div>
-
-                <!-- CANVAS DE LA RULETA -->
-                <div class="flex flex-col items-center justify-center relative">
-                    <div class="w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[22px] border-t-[#f5b942] drop-shadow z-10 -mb-2"></div>
-                    <canvas id="canvasRuleta" width="290" height="290" class="rounded-full border-4 border-[#3d3122] shadow-2xl bg-[#0b0a08]"></canvas>
-                </div>
-            </div>
-
-            <!-- 3. CARTEL DE GANADOR -->
-            <div id="ruleta-cartel-ganador" class="hidden anim-ganador bg-gradient-to-r from-[#292015] via-[#382b1c] to-[#292015] border-2 border-[#f5b942] p-4 rounded-xl text-center shadow-2xl space-y-1">
-                <div class="text-xs uppercase font-bold text-emerald-400 tracking-widest">🎉 ¡SORTEO FINALIZADO E ÍTEM ASIGNADO! 🎉</div>
-                <div class="text-2xl font-black text-[#f8f5ee]">🏆 GANÓ: <span id="ruleta-nombre-ganador" class="text-[#f5b942]">---</span></div>
-                <div id="ruleta-detalle-asignacion" class="text-xs text-[#e5dec9]"></div>
-            </div>
         </div>
     </div>
 
@@ -544,10 +569,12 @@
                     if (loginBtn) loginBtn.outerHTML = `<a href="/logout" class="bg-red-950/80 hover:bg-red-900 border border-red-600/40 text-red-200 px-3 py-1.5 rounded-lg text-xs font-bold transition">Salir</a>`;
                     
                     if (sesionAutorizada) {
-                        ['btn-guardar-item', 'panel-custom-id', 'dummy-div', 'panel-miembros-crud', 'btn-abrir-ruleta', 'panel-asistencia-ctrl', 'panel-donacion-crud', 'btn-gasto-modal', 'btn-reset-semanal', 'th-acciones-head', 'th-miembro-acciones', 'admin-backup-buttons'].forEach(id => {
+                        ['btn-guardar-item', 'panel-custom-id', 'dummy-div', 'panel-miembros-crud', 'btn-girar-ruleta', 'panel-asistencia-ctrl', 'panel-donacion-crud', 'btn-gasto-modal', 'btn-reset-semanal', 'th-acciones-head', 'th-miembro-acciones', 'admin-backup-buttons'].forEach(id => {
                             const el = document.getElementById(id);
                             if (el) el.classList.remove('hidden');
                         });
+                        const avisoInv = document.getElementById('aviso-ruleta-invitado');
+                        if (avisoInv) avisoInv.classList.add('hidden');
                     }
                     if (esAdmin) {
                         const btnUsers = document.getElementById('btn-sec-users');
@@ -572,7 +599,7 @@
         }
 
         function cambiarSeccion(sec) {
-            ['items', 'clan', 'asistencias', 'donaciones', 'users'].forEach(s => {
+            ['items', 'clan', 'distribucion', 'asistencias', 'donaciones', 'users'].forEach(s => {
                 document.getElementById(`seccion-${s}-view`).classList.add('hidden');
                 document.getElementById(`btn-sec-${s}`).className = "bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition";
             });
@@ -581,6 +608,7 @@
             
             if (sec === 'ITEMS') { cargarItems(); }
             if (sec === 'CLAN') { cargarMiembros(); }
+            if (sec === 'DISTRIBUCION') { prepararVistaDistribucion(); }
             if (sec === 'ASISTENCIAS') { cargarMiembros(); cargarAsistenciasRanking(); }
             if (sec === 'DONACIONES') { cargarMiembros(); cargarDonacionesJoyas(); }
             if (sec === 'USERS') { cargarUsuarios(); }
@@ -592,6 +620,7 @@
                 const data = await res.json();
                 catalogo = data.items || [];
                 aplicarFiltros();
+                renderizarTablaDistribucion();
             }
         }
 
@@ -639,41 +668,86 @@
                         </tr>
                     `).join('') || '<tr><td colspan="4" class="text-center py-8 text-[#8a8073]">Sin miembros.</td></tr>';
                 }
+                renderizarTablaDistribucion();
             }
         }
 
-        // --- LÓGICA DE RULETA DE SORTEO ---
-        function abrirModalRuleta() {
-            if (!catalogo.length) cargarItems();
-            document.getElementById('ruletaItemId').value = '';
-            document.getElementById('ruleta-item-preview').innerHTML = 'Escribí un ID para ver el ítem...';
-            document.getElementById('ruleta-cartel-ganador').classList.add('hidden');
-            itemSeleccionadoRuleta = null;
-
+        // --- SECCIÓN DISTRIBUCIÓN & RULETA ---
+        async function prepararVistaDistribucion() {
+            await Promise.all([cargarItems(), cargarMiembros()]);
             for (let i = 1; i <= 5; i++) {
                 const sel = document.getElementById(`ruleta-pj-${i}`);
-                let opts = `<option value="">-- Participante #${i} --</option>`;
-                miembrosClan.forEach((m, idx) => {
-                    const selected = (idx === i - 1) ? 'selected' : '';
-                    opts += `<option value="${m.nombre_pj}" ${selected}>${m.nombre_pj} (${m.raza})</option>`;
+                if (!sel) continue;
+                const valorPrevio = sel.value;
+                let opts = `<option value="">-- Participante #${i} (Vacío) --</option>`;
+                miembrosClan.forEach(m => {
+                    opts += `<option value="${m.nombre_pj}">${m.nombre_pj} (${m.raza})</option>`;
                 });
                 sel.innerHTML = opts;
+                if (valorPrevio) sel.value = valorPrevio;
             }
-            document.getElementById('modal-ruleta').classList.remove('hidden');
             actualizarRuletaCanvas();
+            renderizarTablaDistribucion();
         }
 
-        function cerrarModalRuleta() {
-            if (ruletaGirando) return;
-            document.getElementById('modal-ruleta').classList.add('hidden');
+        function renderizarTablaDistribucion() {
+            const tbody = document.getElementById('tabla-distribucion-body');
+            if (!tbody) return;
+            const totalAsignados = catalogo.filter(it => it.asignado_a && it.asignado_a.trim() !== '').length;
+            const contadorEl = document.getElementById('contador-items-distribuidos');
+            if (contadorEl) contadorEl.textContent = `${totalAsignados} ítems asignados`;
+
+            if (!miembrosClan.length) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-[#8a8073]">Sin miembros cargados.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = miembrosClan.map(m => {
+                const itemsDelPj = catalogo.filter(it => it.asignado_a && it.asignado_a.toLowerCase() === m.nombre_pj.toLowerCase());
+                const itemsHTML = itemsDelPj.length
+                    ? itemsDelPj.map(it => {
+                        const opts = Array.isArray(it.opciones) && it.opciones.length ? ` <span class="text-emerald-300 text-[10px]">(${it.opciones.join(', ')})</span>` : '';
+                        const btnQuitar = sesionAutorizada
+                            ? `<button onclick="quitarItemDeMiembro(${it.id})" class="ml-1.5 text-red-400 hover:text-red-300 font-bold" title="Devolver al Baúl">✖</button>`
+                            : '';
+                        return `<div class="inline-flex items-center bg-[#191510] border border-[#f5b942]/40 px-2.5 py-1 rounded-lg mr-1.5 mb-1 text-xs">
+                                    <span class="font-mono font-extrabold text-[#f5b942] mr-1.5">#${it.id}</span>
+                                    <span class="font-bold text-[#f8f5ee]">${it.nombre}</span>${opts}${btnQuitar}
+                                </div>`;
+                    }).join('')
+                    : '<span class="text-xs text-[#8a8073] italic">Sin ítems asignados</span>';
+
+                return `
+                    <tr>
+                        <td class="font-bold text-[#f8f5ee]">${m.nombre_pj}</td>
+                        <td><span class="badge-pj">${m.raza}</span></td>
+                        <td>${itemsHTML}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function quitarItemDeMiembro(itemId) {
+            if (!confirm(`¿Devolver el ítem #${itemId} al Baúl (sin asignar)?`)) return;
+            const res = await fetch('/api/items', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: itemId, asignado_a: null })
+            });
+            if (res.ok) {
+                await cargarItems();
+                buscarItemRuleta();
+            }
         }
 
         function buscarItemRuleta() {
-            const idVal = document.getElementById('ruletaItemId').value.trim();
+            const idInput = document.getElementById('ruletaItemId');
             const preview = document.getElementById('ruleta-item-preview');
+            if (!idInput || !preview) return;
+            const idVal = idInput.value.trim();
             if (!idVal) {
                 itemSeleccionadoRuleta = null;
-                preview.innerHTML = 'Escribí un ID para ver el ítem...';
+                preview.innerHTML = 'Escribí el número de ID para ver el ítem...';
                 return;
             }
             const encontrado = catalogo.find(x => String(x.id) === idVal);
@@ -694,8 +768,9 @@
         function obtenerParticipantesRuleta() {
             const lista = [];
             for (let i = 1; i <= 5; i++) {
-                const val = document.getElementById(`ruleta-pj-${i}`).value.trim();
-                lista.push(val || `Slot ${i}`);
+                const el = document.getElementById(`ruleta-pj-${i}`);
+                const val = el ? el.value.trim() : '';
+                if (val) lista.push(val);
             }
             return lista;
         }
@@ -704,7 +779,8 @@
             const canvas = document.getElementById('canvasRuleta');
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
-            const participantes = obtenerParticipantesRuleta();
+            const seleccionados = obtenerParticipantesRuleta();
+            const participantes = seleccionados.length ? seleccionados : ['Elegí', 'los', 'miembros', 'a', 'sortear'];
             const total = participantes.length;
             const arc = (2 * Math.PI) / total;
             const cx = canvas.width / 2;
@@ -735,7 +811,7 @@
                 ctx.textAlign = "right";
                 ctx.fillStyle = "#f8f5ee";
                 ctx.font = "bold 13px 'Segoe UI', sans-serif";
-                ctx.fillText(participantes[i].substring(0, 14), radio - 16, 5);
+                ctx.fillText(participantes[i].substring(0, 15), radio - 16, 5);
                 ctx.restore();
             }
 
@@ -751,13 +827,11 @@
         function girarRuleta() {
             if (ruletaGirando) return;
             if (!itemSeleccionadoRuleta) {
-                return alert("⚠️ Primero ingresá un ID de ítem válido arriba para sortear.");
+                return alert("⚠️ Primero ingresá un número de ID de ítem válido arriba para sortear.");
             }
-            const seleccionados = [];
-            for (let i = 1; i <= 5; i++) {
-                const val = document.getElementById(`ruleta-pj-${i}`).value.trim();
-                if (!val) return alert(`⚠️ Falta seleccionar el Participante #${i}.`);
-                seleccionados.push(val);
+            const seleccionados = obtenerParticipantesRuleta();
+            if (seleccionados.length < 2) {
+                return alert("⚠️ Seleccioná al menos 2 miembros participantes para girar la ruleta.");
             }
 
             ruletaGirando = true;
@@ -810,7 +884,6 @@
                 if (res.ok) {
                     document.getElementById('ruleta-detalle-asignacion').innerHTML = `✅ Ítem <strong>#${itemSeleccionadoRuleta.id} - ${itemSeleccionadoRuleta.nombre}</strong> asignado automáticamente a <strong>${ganador}</strong>.`;
                     await cargarItems();
-                    await cargarMiembros();
                     buscarItemRuleta();
                 } else {
                     document.getElementById('ruleta-detalle-asignacion').textContent = `⚠️ Ganó ${ganador}, pero hubo un error al guardar en la base de datos.`;
@@ -1037,7 +1110,17 @@
         async function cargarAsistenciasRanking() {
             const res = await fetch('/api/asistencias-ranking');
             if (res.ok) {
-                const data = await res.json();
+                const payload = await res.json();
+                const data = Array.isArray(payload) ? payload : (payload.ranking || []);
+                const ultimoReset = payload.ultimo_reset;
+
+                const badgeResetFecha = document.getElementById('texto-ultimo-reset');
+                if (badgeResetFecha) {
+                    badgeResetFecha.innerHTML = ultimoReset
+                        ? `🕒 Último: <strong class="text-[#fbd379]">${ultimoReset}</strong>`
+                        : `🕒 Último reset: <strong class="text-[#8a8073]">Sin registros</strong>`;
+                }
+
                 document.getElementById('tabla-asistencias-ranking').innerHTML = data.map(row => {
                     const resetsCount = row.total_resets || 0;
                     const badgeReset = resetsCount > 0 
