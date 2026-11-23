@@ -7,63 +7,124 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        body { background-color: #0a0814; color: #e6e1ff; font-family: 'Segoe UI', system-ui, sans-serif; }
-        .tabla-scroll-box { height: 500px !important; overflow-y: scroll !important; border: 1px solid #3b2d6b; border-radius: 8px; background: #0d0a1a; }
+        body { 
+            background-color: #090a0f; 
+            background-image: radial-gradient(circle at top center, #161b29 0%, #090a0f 65%);
+            color: #e5e7eb; 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+        }
+        .tabla-scroll-box { 
+            height: 500px !important; 
+            overflow-y: scroll !important; 
+            border: 1px solid #262b3d; 
+            border-radius: 8px; 
+            background: #0d0f17; 
+        }
         .tabla-scroll-box::-webkit-scrollbar { width: 8px; }
-        .tabla-scroll-box::-webkit-scrollbar-thumb { background: #6d28d9; border-radius: 4px; }
+        .tabla-scroll-box::-webkit-scrollbar-track { background: #090a0f; }
+        .tabla-scroll-box::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+        .tabla-scroll-box::-webkit-scrollbar-thumb:hover { background: #d4af37; }
         .tabla-items { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
-        .tabla-items th { background: #17112e; padding: 10px 12px; color: #c4b5fd; font-weight: 700; text-transform: uppercase; font-size: 11px; border-bottom: 2px solid #3b2d6b; position: sticky; top: 0; z-index: 10; }
-        .tabla-items td { padding: 8px 12px; border-bottom: 1px solid #1f1838; vertical-align: middle; }
-        .tabla-items tr:hover { background: rgba(139, 92, 246, 0.1); }
-        .badge-pj { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.4); color: #c4b5fd; }
-        .badge-opt { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 4px; margin-bottom: 3px; background: rgba(6, 182, 212, 0.15); border: 1px solid #06b6d4; color: #67e8f9; }
+        .tabla-items th { 
+            background: #151924; 
+            padding: 11px 12px; 
+            color: #d4af37; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            font-size: 11px; 
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid #2e354b; 
+            position: sticky; 
+            top: 0; 
+            z-index: 10; 
+        }
+        .tabla-items td { padding: 9px 12px; border-bottom: 1px solid #1a1f2e; vertical-align: middle; }
+        .tabla-items tr:hover { background: rgba(212, 175, 55, 0.06); }
+        .badge-pj { 
+            display: inline-block; 
+            padding: 2px 7px; 
+            border-radius: 4px; 
+            font-size: 10px; 
+            font-weight: 700; 
+            background: rgba(212, 175, 55, 0.12); 
+            border: 1px solid rgba(212, 175, 55, 0.35); 
+            color: #f3d066; 
+        }
+        .badge-opt { 
+            display: inline-block; 
+            padding: 2px 7px; 
+            border-radius: 4px; 
+            font-size: 11px; 
+            font-weight: 600; 
+            margin-right: 4px; 
+            margin-bottom: 3px; 
+            background: rgba(16, 185, 129, 0.12); 
+            border: 1px solid rgba(16, 185, 129, 0.4); 
+            color: #6ee7b7; 
+        }
+        .card-mudream {
+            background-color: #12151e;
+            border: 1px solid #262b3d;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
+        }
+        .input-mudream {
+            background-color: #090a0f;
+            border: 1px solid #2a3042;
+            color: #f3f4f6;
+            transition: border-color 0.2s;
+        }
+        .input-mudream:focus {
+            border-color: #d4af37;
+        }
     </style>
 </head>
-<body class="p-4 md:p-8 flex flex-col items-center">
+<body class="p-4 md:p-8 flex flex-col items-center min-h-screen">
 
-    <header class="w-full max-w-7xl mb-6 border-b border-purple-900/50 pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
+    <header class="w-full max-w-7xl mb-6 border-b border-[#262b3d] pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
-            <h1 class="text-3xl font-extrabold text-emerald-400">🛡️ MULTIVERSO - GESTIÓN TOTAL</h1>
-            <p class="text-xs text-purple-300">Inventario, Armas, Asistencia a Invasiones y Donaciones</p>
+            <h1 class="text-3xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-[#f3d066] via-[#d4af37] to-[#b48a28]">
+                🛡️ MULTIVERSO - GESTIÓN TOTAL
+            </h1>
+            <p class="text-xs text-gray-400 mt-0.5">Inventario, Armas, Asistencia a Invasiones y Donaciones • Estilo MuDream</p>
         </div>
-        <div class="flex items-center gap-3">
-            <span id="session-user-badge" class="text-xs text-purple-300 font-bold bg-[#141126] px-3 py-1.5 rounded-lg border border-purple-900">
+        <div class="flex flex-wrap items-center gap-3">
+            <span id="session-user-badge" class="text-xs text-gray-300 font-bold bg-[#12151e] px-3 py-1.5 rounded-lg border border-[#2a3042]">
                 Invitado (Público)
             </span>
             <div id="admin-backup-buttons" class="hidden flex flex-wrap gap-2 items-center">
-                <button onclick="descargarBackup()" class="bg-blue-700 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">💾 Backup DB</button>
-                <button onclick="exportarExcelAsignados()" class="bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">📊 Excel Asignados</button>
-                <button onclick="exportarExcelAsistencias()" class="bg-indigo-700 hover:bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">📊 Excel Asistencias</button>
-                <label class="bg-amber-700 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
+                <button onclick="descargarBackup()" class="bg-[#1e2436] hover:bg-[#2a324a] border border-[#3b4463] text-gray-200 px-3 py-1.5 rounded-lg text-xs font-bold transition">💾 Backup DB</button>
+                <button onclick="exportarExcelAsignados()" class="bg-emerald-900/60 hover:bg-emerald-800/80 border border-emerald-600/50 text-emerald-300 px-3 py-1.5 rounded-lg text-xs font-bold transition">📊 Excel Asignados</button>
+                <button onclick="exportarExcelAsistencias()" class="bg-sky-900/60 hover:bg-sky-800/80 border border-sky-600/50 text-sky-300 px-3 py-1.5 rounded-lg text-xs font-bold transition">📊 Excel Asistencias</button>
+                <label class="bg-amber-900/60 hover:bg-amber-800/80 border border-amber-500/50 text-amber-300 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
                     📂 Subir Excel <input type="file" id="fileExcelInput" onchange="subirExcelBackup(event)" class="hidden" accept=".xlsx, .xls">
                 </label>
             </div>
-            <button onclick="toggleLoginModal()" id="btn-login-open" class="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">
+            <button onclick="toggleLoginModal()" id="btn-login-open" class="bg-gradient-to-r from-[#b91c1c] to-[#991b1b] hover:from-[#dc2626] hover:to-[#b91c1c] border border-red-500/40 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition shadow">
                 🔑 Ingresar
             </button>
-            <a href="/" class="bg-purple-900 hover:bg-purple-800 text-purple-200 px-3 py-1.5 rounded-lg text-xs font-bold">← Monitor</a>
+            <a href="/" class="bg-[#181c28] hover:bg-[#23293a] border border-[#2e354b] text-gray-300 px-3 py-1.5 rounded-lg text-xs font-bold transition">← Monitor</a>
         </div>
     </header>
 
     <div class="flex flex-wrap items-center justify-center gap-3 mb-6 w-full max-w-7xl">
-        <button onclick="cambiarSeccion('ITEMS')" id="btn-sec-items" class="bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition shadow">📋 Ítems & Baúles</button>
-        <button onclick="cambiarSeccion('CLAN')" id="btn-sec-clan" class="bg-gray-800 text-gray-400 px-4 py-2 rounded-lg text-xs font-bold transition">👥 Miembros</button>
-        <button onclick="cambiarSeccion('DONACIONES')" id="btn-sec-donaciones" class="bg-gray-800 text-gray-400 px-4 py-2 rounded-lg text-xs font-bold transition">💎 Donaciones & Asistencias</button>
-        <button onclick="cambiarSeccion('USERS')" id="btn-sec-users" class="bg-gray-800 text-gray-400 px-4 py-2 rounded-lg text-xs font-bold transition hidden">⚙️ Usuarios</button>
+        <button onclick="cambiarSeccion('ITEMS')" id="btn-sec-items" class="bg-gradient-to-r from-[#d4af37] to-[#b48a28] text-gray-950 px-4 py-2 rounded-lg text-xs font-extrabold transition shadow">📋 Ítems & Baúles</button>
+        <button onclick="cambiarSeccion('CLAN')" id="btn-sec-clan" class="bg-[#151924] hover:bg-[#1e2433] border border-[#262b3d] text-gray-400 px-4 py-2 rounded-lg text-xs font-bold transition">👥 Miembros</button>
+        <button onclick="cambiarSeccion('DONACIONES')" id="btn-sec-donaciones" class="bg-[#151924] hover:bg-[#1e2433] border border-[#262b3d] text-gray-400 px-4 py-2 rounded-lg text-xs font-bold transition">💎 Donaciones & Asistencias</button>
+        <button onclick="cambiarSeccion('USERS')" id="btn-sec-users" class="bg-[#151924] hover:bg-[#1e2433] border border-[#262b3d] text-gray-400 px-4 py-2 rounded-lg text-xs font-bold transition hidden">⚙️ Usuarios</button>
     </div>
 
     <!-- SECCIÓN 1: ÍTEMS -->
     <div id="seccion-items-view" class="w-full max-w-7xl space-y-4">
-        <div class="bg-[#141126] border border-purple-900/60 p-6 rounded-xl shadow-xl space-y-4">
-            <h3 class="text-sm font-bold text-purple-300 uppercase">🔍 Buscador / ➕ Cargador Interactivo de Ítems</h3>
+        <div class="card-mudream p-6 rounded-xl space-y-4">
+            <h3 class="text-sm font-bold text-[#d4af37] uppercase tracking-wider">🔍 Buscador / ➕ Cargador Interactivo de Ítems</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">🔍 Buscar por ID Exacto</label>
-                    <input type="number" id="inputFiltroId" oninput="aplicarFiltros()" placeholder="Ej. 105..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
+                    <label class="block text-xs uppercase text-gray-400 font-bold mb-1">🔍 Buscar por ID Exacto</label>
+                    <input type="number" id="inputFiltroId" oninput="aplicarFiltros()" placeholder="Ej. 105..." class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">📜 Set, Arma o Anillo (Escribí iniciales)</label>
-                    <input type="text" id="inputFiltroSetBase" list="listaItemsBase" oninput="aplicarFiltros()" placeholder="Escribí iniciales (Ej. Red, Chr, Sac...)" autocomplete="off" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
+                    <label class="block text-xs uppercase text-gray-400 font-bold mb-1">📜 Set, Arma o Anillo (Escribí iniciales)</label>
+                    <input type="text" id="inputFiltroSetBase" list="listaItemsBase" oninput="aplicarFiltros()" placeholder="Escribí iniciales (Ej. Red, Chr, Sac...)" autocomplete="off" class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
                     <datalist id="listaItemsBase">
                         <!-- Dark Knight -->
                         <option value="Leather"></option><option value="Bronze"></option><option value="Scale"></option><option value="Brass"></option><option value="Plate"></option><option value="Dragon"></option><option value="Black Dragon"></option><option value="Dark Phoenix"></option><option value="Great Dragon"></option><option value="Dragon Knight"></option><option value="Ashcrow"></option><option value="Titan"></option><option value="Brave"></option>
@@ -88,63 +149,63 @@
                     </datalist>
                 </div>
                 <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">📦 Tipo de Pieza</label>
-                    <select id="inputFiltroTipoPieza" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
+                    <label class="block text-xs uppercase text-gray-400 font-bold mb-1">📦 Tipo de Pieza</label>
+                    <select id="inputFiltroTipoPieza" onchange="aplicarFiltros()" class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
                         <option value="">-- Todos los Tipos --</option>
                         <option value="Armor">Armor (Pechera)</option><option value="Pants">Pants (Pantalón)</option><option value="Helm">Helm (Casco)</option><option value="Gloves">Gloves (Guantes)</option><option value="Boots">Boots (Botas)</option><option value="Shield">Shield (Escudo)</option><option value="Weapon">Weapon / Arma</option><option value="Ring">Ring (Anillo)</option><option value="Pendant">Pendant (Amuleto)</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">🏰 Nombre del Baúl</label>
-                    <input type="text" id="inputFiltroBaul" oninput="aplicarFiltros()" placeholder="Ej. Baúl Principal..." class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
+                    <label class="block text-xs uppercase text-gray-400 font-bold mb-1">🏰 Nombre del Baúl</label>
+                    <input type="text" id="inputFiltroBaul" oninput="aplicarFiltros()" placeholder="Ej. Baúl Principal..." class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">👤 Asignado a</label>
-                    <select id="inputFiltroAsignado" onchange="aplicarFiltros()" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
+                    <label class="block text-xs uppercase text-gray-400 font-bold mb-1">👤 Asignado a</label>
+                    <select id="inputFiltroAsignado" onchange="aplicarFiltros()" class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
                         <option value="">-- Todos --</option>
                     </select>
                 </div>
                 <div id="panel-custom-id" class="hidden">
-                    <label class="block text-xs uppercase text-purple-300 font-bold mb-1">🆔 ID Personalizado (Opcional)</label>
-                    <input type="number" id="inputCustomId" placeholder="Automático" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg text-xs outline-none">
+                    <label class="block text-xs uppercase text-gray-400 font-bold mb-1">🆔 ID Personalizado (Opcional)</label>
+                    <input type="number" id="inputCustomId" placeholder="Automático" class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
                 </div>
 
                 <!-- OPCIONES EXCELLENT COMPLETAS -->
                 <div class="md:col-span-3 space-y-3">
-                    <label class="block text-xs uppercase text-purple-300 font-bold">✨ Opciones Excellent</label>
-                    <div class="bg-[#0d0a1a] p-3 rounded-lg border border-purple-900/80">
-                        <span class="text-[10px] uppercase font-bold text-cyan-400 block mb-2">🛡️ Opciones para Armaduras, Escudos y Accesorios:</span>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Aumento de HP máximo" onchange="aplicarFiltros()"> Aumento de HP máximo</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Aumento de SD máximo" onchange="aplicarFiltros()"> Aumento de SD máximo</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Reducción de daño (DD)" onchange="aplicarFiltros()"> Reducción de daño (DD)</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Reflejo de daño (Reflect)" onchange="aplicarFiltros()"> Reflejo de daño (Reflect)</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Resistencia a daño crítico (Rate)" onchange="aplicarFiltros()"> Resistencia a crítico (Rate)</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Tasa de drop de Zen" onchange="aplicarFiltros()"> Tasa de drop de Zen</label>
+                    <label class="block text-xs uppercase text-[#d4af37] font-bold">✨ Opciones Excellent</label>
+                    <div class="bg-[#090a0f] p-3.5 rounded-lg border border-[#222738]">
+                        <span class="text-[10px] uppercase font-bold text-emerald-400 block mb-2">🛡️ Opciones para Armaduras, Escudos y Accesorios:</span>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-gray-300">
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#d4af37]" value="Aumento de HP máximo" onchange="aplicarFiltros()"> Aumento de HP máximo</label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#d4af37]" value="Aumento de SD máximo" onchange="aplicarFiltros()"> Aumento de SD máximo</label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#d4af37]" value="Reducción de daño (DD)" onchange="aplicarFiltros()"> Reducción de daño (DD)</label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#d4af37]" value="Reflejo de daño (Reflect)" onchange="aplicarFiltros()"> Reflejo de daño (Reflect)</label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#d4af37]" value="Resistencia a daño crítico (Rate)" onchange="aplicarFiltros()"> Resistencia a crítico (Rate)</label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#d4af37]" value="Tasa de drop de Zen" onchange="aplicarFiltros()"> Tasa de drop de Zen</label>
                         </div>
                     </div>
-                    <div class="bg-[#0d0a1a] p-3 rounded-lg border border-purple-900/80">
-                        <span class="text-[10px] uppercase font-bold text-amber-400 block mb-2">⚔️ Opciones para Armas y Bastones:</span>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Excellent damage rate %" onchange="aplicarFiltros()"> Excellent damage rate %</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Wizardry Damage increases +level/" onchange="aplicarFiltros()"> Wizardry Damage +level/</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Wizardry Damage increase %" onchange="aplicarFiltros()"> Wizardry Damage increase %</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Physical Damage increases +level/" onchange="aplicarFiltros()"> Physical Damage +level/</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Physical Damage increase %" onchange="aplicarFiltros()"> Physical Damage increase %</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Increases attack speed +" onchange="aplicarFiltros()"> Increases attack speed +</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Obtains (Life) when monster is killed" onchange="aplicarFiltros()"> Obtains (Life) when monster is killed</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Obtains (Mana) when monster is killed" onchange="aplicarFiltros()"> Obtains (Mana) when monster is killed</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Critical Damage rate %" onchange="aplicarFiltros()"> Critical Damage rate %</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="filtro-chk" value="Damage to Monster" onchange="aplicarFiltros()"> Damage to Monster</label>
+                    <div class="bg-[#090a0f] p-3.5 rounded-lg border border-[#222738]">
+                        <span class="text-[10px] uppercase font-bold text-[#f3d066] block mb-2">⚔️ Opciones para Armas y Bastones:</span>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-300">
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#d4af37]" value="Excellent damage rate %" onchange="aplicarFiltros()"> Excellent damage rate %</label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#d4af37]" value="Wizardry Damage increases +level/" onchange="aplicarFiltros()"> Wizardry Damage +level/</label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#d4af37]" value="Wizardry Damage increase %" onchange="aplicarFiltros()"> Wizardry Damage increase %</label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#d4af37]" value="Physical Damage increases +level/" onchange="aplicarFiltros()"> Physical Damage +level/</label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#d4af37]" value="Physical Damage increase %" onchange="aplicarFiltros()"> Physical Damage increase %</label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#d4af37]" value="Increases attack speed +" onchange="aplicarFiltros()"> Increases attack speed +</label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#d4af37]" value="Obtains (Life) when monster is killed" onchange="aplicarFiltros()"> Obtains (Life) when monster is killed</label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#d4af37]" value="Obtains (Mana) when monster is killed" onchange="aplicarFiltros()"> Obtains (Mana) when monster is killed</label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#d4af37]" value="Critical Damage rate %" onchange="aplicarFiltros()"> Critical Damage rate %</label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#d4af37]" value="Damage to Monster" onchange="aplicarFiltros()"> Damage to Monster</label>
                         </div>
                     </div>
                 </div>
 
-                <div class="md:col-span-3 flex justify-between items-center pt-2 border-t border-purple-900/40">
-                    <button onclick="limpiarFiltros()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg text-xs font-bold transition">🧹 Limpiar</button>
+                <div class="md:col-span-3 flex justify-between items-center pt-3 border-t border-[#262b3d]">
+                    <button onclick="limpiarFiltros()" class="bg-[#1b2030] hover:bg-[#252c42] border border-[#323a54] text-gray-300 px-4 py-2 rounded-lg text-xs font-bold transition">🧹 Limpiar</button>
                     <div class="flex gap-2">
-                        <button onclick="exportarExcelItems()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-4 py-2 rounded-lg text-xs transition shadow">📊 Exportar Excel</button>
-                        <button onclick="guardarItemDesdeFiltro()" id="btn-guardar-item" class="hidden bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2 rounded-lg text-xs transition shadow">💾 Guardar Ítem</button>
+                        <button onclick="exportarExcelItems()" class="bg-[#1b2030] hover:bg-[#252c42] border border-[#d4af37]/50 text-[#f3d066] font-bold px-4 py-2 rounded-lg text-xs transition shadow">📊 Exportar Excel</button>
+                        <button onclick="guardarItemDesdeFiltro()" id="btn-guardar-item" class="hidden bg-gradient-to-r from-[#d4af37] to-[#b48a28] hover:from-[#e5c158] hover:to-[#c59b38] text-gray-950 font-extrabold px-6 py-2 rounded-lg text-xs transition shadow">💾 Guardar Ítem</button>
                     </div>
                 </div>
             </div>
@@ -171,16 +232,16 @@
 
     <!-- SECCIÓN 2: MIEMBROS -->
     <div id="seccion-clan-view" class="w-full max-w-7xl space-y-4 hidden">
-        <div id="panel-miembros-crud" class="bg-[#141126] border border-indigo-700/60 p-4 rounded-xl shadow-lg hidden">
+        <div id="panel-miembros-crud" class="card-mudream p-4 rounded-xl hidden">
             <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end w-full">
-                <div><label class="block text-[11px] text-gray-300 mb-1">NICK DEL PJ:</label><input type="text" id="clanPjNombre" placeholder="Nick" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs"></div>
-                <div><label class="block text-[11px] text-gray-300 mb-1">RAZA:</label>
-                    <select id="clanPjRaza" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs">
+                <div><label class="block text-[11px] text-gray-400 font-bold mb-1">NICK DEL PJ:</label><input type="text" id="clanPjNombre" placeholder="Nick" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[11px] text-gray-400 font-bold mb-1">RAZA:</label>
+                    <select id="clanPjRaza" class="w-full input-mudream p-2 rounded text-xs">
                         <option value="DK">DK</option><option value="RF">RF</option><option value="SM">SM</option><option value="ELF">ELF</option><option value="MG">MG</option><option value="DL">DL</option>
                     </select>
                 </div>
-                <div><span class="text-[10px] text-purple-400 block">ℹ️ Clave autom.: <b>nick+123</b></span></div>
-                <div><button onclick="guardarMiembroClan()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded text-xs">➕ Agregar Miembro</button></div>
+                <div><span class="text-[10px] text-[#d4af37] block">ℹ️ Clave autom.: <b>nick+123</b></span></div>
+                <div><button onclick="guardarMiembroClan()" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b48a28] text-gray-950 font-extrabold py-2 rounded text-xs">➕ Agregar Miembro</button></div>
             </div>
         </div>
         <div class="tabla-scroll-box">
@@ -193,17 +254,17 @@
 
     <!-- SECCIÓN 3: DONACIONES Y ASISTENCIAS CON BOTÓN RESET -->
     <div id="seccion-donaciones-view" class="w-full max-w-7xl space-y-6 hidden">
-        <div class="bg-[#141126] border border-indigo-600/50 p-5 rounded-xl shadow-lg space-y-4">
+        <div class="card-mudream p-5 rounded-xl space-y-4">
             <div class="flex justify-between items-center">
-                <h2 class="text-sm font-bold text-indigo-400 uppercase">⚔️ Asistencias a Invasiones (Ranking)</h2>
-                <button onclick="resetSemanalAsistencias()" id="btn-reset-semanal" class="hidden bg-purple-700 hover:bg-purple-600 text-white px-3 py-1.5 rounded text-xs font-bold transition">🔄 Reset Mensual (20%)</button>
+                <h2 class="text-sm font-bold text-[#d4af37] uppercase tracking-wider">⚔️ Asistencias a Invasiones (Ranking)</h2>
+                <button onclick="resetSemanalAsistencias()" id="btn-reset-semanal" class="hidden bg-red-900/70 hover:bg-red-800 border border-red-500/50 text-red-200 px-3 py-1.5 rounded text-xs font-bold transition">🔄 Reset Mensual (20%)</button>
             </div>
-            <div id="panel-asistencia-ctrl" class="flex flex-wrap gap-3 items-center hidden bg-[#0d0a1a] p-3 rounded-lg border border-purple-900">
-                <span class="text-xs text-purple-300 font-bold">Miembro:</span>
-                <select id="asistPjSelect" class="bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"><option value="">-- Seleccionar --</option></select>
+            <div id="panel-asistencia-ctrl" class="flex flex-wrap gap-3 items-center hidden bg-[#090a0f] p-3 rounded-lg border border-[#222738]">
+                <span class="text-xs text-gray-300 font-bold">Miembro:</span>
+                <select id="asistPjSelect" class="input-mudream p-2 rounded text-xs"><option value="">-- Seleccionar --</option></select>
                 <div class="flex gap-2 ml-auto">
-                    <button onclick="modificarAsistencia(1)" class="bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-1.5 rounded text-xs font-bold">➕ Sumar</button>
-                    <button onclick="modificarAsistencia(-1)" class="bg-red-900 hover:bg-red-800 text-white px-3 py-1.5 rounded text-xs font-bold">➖ Restar</button>
+                    <button onclick="modificarAsistencia(1)" class="bg-emerald-800 hover:bg-emerald-700 border border-emerald-500/40 text-white px-3 py-1.5 rounded text-xs font-bold">➕ Sumar</button>
+                    <button onclick="modificarAsistencia(-1)" class="bg-red-900 hover:bg-red-800 border border-red-500/40 text-white px-3 py-1.5 rounded text-xs font-bold">➖ Restar</button>
                 </div>
             </div>
             <div class="tabla-scroll-box" style="height: 220px !important;">
@@ -220,16 +281,16 @@
             </div>
         </div>
 
-        <div class="bg-[#141126] border border-amber-600/50 p-5 rounded-xl shadow-lg space-y-3">
+        <div class="card-mudream p-5 rounded-xl space-y-3">
             <div class="flex justify-between items-center">
-                <h2 class="text-sm font-bold text-amber-400 uppercase">🏛️ Banco Guild (Acumulado Neto & Talismanes)</h2>
-                <button onclick="abrirModalGasto()" id="btn-gasto-modal" class="hidden bg-red-700 hover:bg-red-600 text-white px-3 py-1.5 rounded text-xs font-bold">📉 Registrar Uso / Gasto</button>
+                <h2 class="text-sm font-bold text-[#d4af37] uppercase tracking-wider">🏛️ Banco Guild (Acumulado Neto & Talismanes)</h2>
+                <button onclick="abrirModalGasto()" id="btn-gasto-modal" class="hidden bg-red-900/70 hover:bg-red-800 border border-red-500/50 text-red-200 px-3 py-1.5 rounded text-xs font-bold">📉 Registrar Uso / Gasto</button>
             </div>
             <div class="overflow-x-auto">
                 <table class="tabla-items text-center">
                     <thead><tr><th>Bless</th><th>Soul</th><th>Life</th><th>Chaos</th><th>Creation</th><th>Assembly</th><th>Luck</th><th>Zen</th></tr></thead>
                     <tbody>
-                        <tr class="font-bold text-amber-300 text-sm">
+                        <tr class="font-bold text-[#f3d066] text-sm">
                             <td id="banco-bless">0</td><td id="banco-soul">0</td><td id="banco-life">0</td><td id="banco-chaos">0</td><td id="banco-creation">0</td><td id="banco-assembly">0</td><td id="banco-luck">0</td><td id="banco-zen">0</td>
                         </tr>
                     </tbody>
@@ -237,27 +298,27 @@
             </div>
         </div>
 
-        <div id="panel-donacion-crud" class="bg-[#141126] border border-amber-600/50 p-5 rounded-xl shadow-lg space-y-4 hidden">
-            <h2 class="text-sm font-bold text-amber-400 uppercase">💎 Registrar Donación de Joyas / Talismanes</h2>
-            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 items-end bg-[#0d0a1a] p-3 rounded-lg border border-purple-900">
+        <div id="panel-donacion-crud" class="card-mudream p-5 rounded-xl space-y-4 hidden">
+            <h2 class="text-sm font-bold text-[#d4af37] uppercase tracking-wider">💎 Registrar Donación de Joyas / Talismanes</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 items-end bg-[#090a0f] p-3 rounded-lg border border-[#222738]">
                 <div class="col-span-2">
-                    <label class="block text-[10px] text-gray-300 mb-1">MIEMBRO:</label>
-                    <select id="donPj" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"><option value="">-- Seleccionar --</option></select>
+                    <label class="block text-[10px] text-gray-400 font-bold mb-1">MIEMBRO:</label>
+                    <select id="donPj" class="w-full input-mudream p-2 rounded text-xs"><option value="">-- Seleccionar --</option></select>
                 </div>
-                <div><label class="block text-[10px]">BLESS:</label><input type="number" id="donBless" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px]">SOUL:</label><input type="number" id="donSoul" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px]">LIFE:</label><input type="number" id="donLife" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px]">CHAOS:</label><input type="number" id="donChaos" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px]">CREATION:</label><input type="number" id="donCreation" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px]">ASSEMBLY:</label><input type="number" id="donAssembly" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px]">LUCK:</label><input type="number" id="donLuck" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-                <div class="col-span-2"><label class="block text-[10px]">ZEN:</label><input type="number" id="donZen" value="0" min="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-                <div class="col-span-5"><button onclick="guardarDonacionJoyas()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 rounded text-xs">💾 Registrar Donación</button></div>
+                <div><label class="block text-[10px] text-gray-400">BLESS:</label><input type="number" id="donBless" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-gray-400">SOUL:</label><input type="number" id="donSoul" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-gray-400">LIFE:</label><input type="number" id="donLife" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-gray-400">CHAOS:</label><input type="number" id="donChaos" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-gray-400">CREATION:</label><input type="number" id="donCreation" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-gray-400">ASSEMBLY:</label><input type="number" id="donAssembly" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-gray-400">LUCK:</label><input type="number" id="donLuck" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div class="col-span-2"><label class="block text-[10px] text-gray-400">ZEN:</label><input type="number" id="donZen" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div class="col-span-5"><button onclick="guardarDonacionJoyas()" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b48a28] text-gray-950 font-extrabold py-2 rounded text-xs mt-1">💾 Registrar Donación</button></div>
             </div>
         </div>
 
-        <div class="bg-[#141126] border border-amber-600/50 p-5 rounded-xl shadow-lg space-y-4">
-            <h2 class="text-sm font-bold text-amber-400 uppercase">📜 Historial de Donaciones</h2>
+        <div class="card-mudream p-5 rounded-xl space-y-4">
+            <h2 class="text-sm font-bold text-[#d4af37] uppercase tracking-wider">📜 Historial de Donaciones</h2>
             <div class="tabla-scroll-box" style="height: 300px !important;">
                 <table class="tabla-items text-center">
                     <thead><tr><th style="text-align: left;">Miembro</th><th>Bless</th><th>Soul</th><th>Life</th><th>Chaos</th><th>Creation</th><th>Assembly</th><th>Luck</th><th>Zen</th><th>Fecha</th></tr></thead>
@@ -269,15 +330,15 @@
 
     <!-- SECCIÓN 4: USUARIOS -->
     <div id="seccion-users-view" class="w-full max-w-7xl space-y-4 hidden">
-        <div class="bg-[#141126] p-6 rounded-xl border border-purple-700 space-y-4">
-            <h2 class="text-lg font-bold text-purple-400">👑 Gestión de Usuarios & Accesos</h2>
+        <div class="card-mudream p-6 rounded-xl space-y-4">
+            <h2 class="text-lg font-bold text-[#d4af37]">👑 Gestión de Usuarios & Accesos</h2>
             <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
-                <input type="text" id="nuevoUsuario" placeholder="Usuario" class="bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs">
-                <input type="password" id="nuevaPassword" placeholder="Contraseña temporal" class="bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs">
-                <select id="nuevoRol" class="bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded text-xs">
+                <input type="text" id="nuevoUsuario" placeholder="Usuario" class="input-mudream p-2 rounded text-xs">
+                <input type="password" id="nuevaPassword" placeholder="Contraseña temporal" class="input-mudream p-2 rounded text-xs">
+                <select id="nuevoRol" class="input-mudream p-2 rounded text-xs">
                     <option value="operador">Operador</option><option value="lector">Lector</option>
                 </select>
-                <button onclick="crearUsuario()" class="bg-purple-600 text-white py-2 rounded text-xs font-bold">Crear / Actualizar</button>
+                <button onclick="crearUsuario()" class="bg-gradient-to-r from-[#d4af37] to-[#b48a28] text-gray-950 py-2 rounded text-xs font-extrabold">Crear / Actualizar</button>
             </div>
         </div>
         <div class="tabla-scroll-box">
@@ -290,48 +351,48 @@
 
     <!-- MODAL GASTO -->
     <div id="modal-gasto" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-[#141126] border border-red-600 p-6 rounded-xl max-w-md w-full flex flex-col shadow-2xl space-y-3">
+        <div class="bg-[#12151e] border border-red-600/70 p-6 rounded-xl max-w-md w-full flex flex-col shadow-2xl space-y-3">
             <h3 class="text-lg font-bold text-red-400 mb-2">📉 Registrar Gasto / Uso de Guild</h3>
-            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">Motivo:</label><input type="text" id="gastoMotivo" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2.5 rounded text-xs"></div>
-            <div class="grid grid-cols-3 gap-2 text-xs">
-                <div><label>Bless:</label><input type="number" id="gastoBless" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
-                <div><label>Soul:</label><input type="number" id="gastoSoul" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
-                <div><label>Life:</label><input type="number" id="gastoLife" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
-                <div><label>Chaos:</label><input type="number" id="gastoChaos" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
-                <div><label>Creation:</label><input type="number" id="gastoCreation" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
-                <div><label>Assembly:</label><input type="number" id="gastoAssembly" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
-                <div><label>Luck:</label><input type="number" id="gastoLuck" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
-                <div class="col-span-2"><label>Zen:</label><input type="number" id="gastoZen" value="0" class="w-full bg-[#0a0814] border border-purple-900 text-white p-1 rounded"></div>
+            <div><label class="block text-xs uppercase text-gray-400 font-bold mb-1">Motivo:</label><input type="text" id="gastoMotivo" class="w-full input-mudream p-2.5 rounded text-xs"></div>
+            <div class="grid grid-cols-3 gap-2 text-xs text-gray-300">
+                <div><label>Bless:</label><input type="number" id="gastoBless" value="0" class="w-full input-mudream p-1.5 rounded"></div>
+                <div><label>Soul:</label><input type="number" id="gastoSoul" value="0" class="w-full input-mudream p-1.5 rounded"></div>
+                <div><label>Life:</label><input type="number" id="gastoLife" value="0" class="w-full input-mudream p-1.5 rounded"></div>
+                <div><label>Chaos:</label><input type="number" id="gastoChaos" value="0" class="w-full input-mudream p-1.5 rounded"></div>
+                <div><label>Creation:</label><input type="number" id="gastoCreation" value="0" class="w-full input-mudream p-1.5 rounded"></div>
+                <div><label>Assembly:</label><input type="number" id="gastoAssembly" value="0" class="w-full input-mudream p-1.5 rounded"></div>
+                <div><label>Luck:</label><input type="number" id="gastoLuck" value="0" class="w-full input-mudream p-1.5 rounded"></div>
+                <div class="col-span-2"><label>Zen:</label><input type="number" id="gastoZen" value="0" class="w-full input-mudream p-1.5 rounded"></div>
             </div>
             <div class="flex gap-2 justify-end pt-3">
-                <button onclick="guardarGastoGuild()" class="bg-red-700 text-white px-4 py-2 rounded text-xs font-bold">Descontar</button>
-                <button onclick="cerrarModalGasto()" class="bg-gray-800 text-white px-4 py-2 rounded text-xs font-bold">Cancelar</button>
+                <button onclick="guardarGastoGuild()" class="bg-red-700 hover:bg-red-600 text-white px-4 py-2 rounded text-xs font-bold">Descontar</button>
+                <button onclick="cerrarModalGasto()" class="bg-[#1b2030] text-gray-300 px-4 py-2 rounded text-xs font-bold">Cancelar</button>
             </div>
         </div>
     </div>
 
     <!-- MODAL LOGIN -->
     <div id="modal-login" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50">
-        <div class="bg-[#141126] border border-purple-600 p-6 rounded-xl w-80 text-center shadow-2xl">
-            <h3 class="text-lg font-bold text-purple-300 mb-4">🔐 Iniciar Sesión</h3>
-            <input type="text" id="loginUser" placeholder="Usuario" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm">
-            <input type="password" id="loginPass" placeholder="Contraseña" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-4 text-sm">
+        <div class="bg-[#12151e] border border-[#d4af37]/60 p-6 rounded-xl w-80 text-center shadow-2xl">
+            <h3 class="text-lg font-bold text-[#d4af37] mb-4">🔐 Iniciar Sesión</h3>
+            <input type="text" id="loginUser" placeholder="Usuario" class="w-full input-mudream p-2.5 rounded mb-3 text-sm">
+            <input type="password" id="loginPass" placeholder="Contraseña" class="w-full input-mudream p-2.5 rounded mb-4 text-sm">
             <div class="flex gap-2">
-                <button onclick="ejecutarLogin()" class="w-full bg-purple-700 text-white font-bold py-2 rounded text-sm">Entrar</button>
-                <button onclick="toggleLoginModal()" class="w-full bg-gray-800 text-gray-400 font-bold py-2 rounded text-sm">Cancelar</button>
+                <button onclick="ejecutarLogin()" class="w-full bg-gradient-to-r from-[#d4af37] to-[#b48a28] text-gray-950 font-extrabold py-2 rounded text-sm">Entrar</button>
+                <button onclick="toggleLoginModal()" class="w-full bg-[#1b2030] text-gray-400 font-bold py-2 rounded text-sm">Cancelar</button>
             </div>
         </div>
     </div>
 
     <!-- MODAL EDITAR ÍTEM -->
     <div id="modal-editar-item" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-[#141126] border border-purple-500 p-6 rounded-xl max-w-lg w-full flex flex-col shadow-2xl space-y-3 max-h-[90vh] overflow-y-auto">
-            <h3 class="text-lg font-bold text-amber-400 mb-2">✏️ Editar Ítem</h3>
+        <div class="bg-[#12151e] border border-[#d4af37]/60 p-6 rounded-xl max-w-lg w-full flex flex-col shadow-2xl space-y-3 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-lg font-bold text-[#d4af37] mb-2">✏️ Editar Ítem</h3>
             <input type="hidden" id="editOldId">
-            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">ID:</label><input type="number" id="editId" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">Nombre / Baúl:</label><input type="text" id="editNombre" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs"></div>
-            <div><label class="block text-xs uppercase text-purple-300 font-bold mb-1">Tipo de Pieza:</label>
-                <select id="editTipo" onchange="actualizarOpcionesEdicion()" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs">
+            <div><label class="block text-xs uppercase text-gray-400 font-bold mb-1">ID:</label><input type="number" id="editId" class="w-full input-mudream p-2 rounded text-xs"></div>
+            <div><label class="block text-xs uppercase text-gray-400 font-bold mb-1">Nombre / Baúl:</label><input type="text" id="editNombre" class="w-full input-mudream p-2 rounded text-xs"></div>
+            <div><label class="block text-xs uppercase text-gray-400 font-bold mb-1">Tipo de Pieza:</label>
+                <select id="editTipo" onchange="actualizarOpcionesEdicion()" class="w-full input-mudream p-2 rounded text-xs">
                     <option value="Armor">Armor</option>
                     <option value="Pants">Pants</option>
                     <option value="Helm">Helm</option>
@@ -344,44 +405,44 @@
                 </select>
             </div>
             <div>
-                <label class="block text-xs uppercase text-purple-300 font-bold mb-1">👤 Asignado a (Baúl o Miembro):</label>
-                <select id="editAsignado" class="w-full bg-[#0a0814] border border-purple-900 text-white p-2 rounded text-xs">
+                <label class="block text-xs uppercase text-gray-400 font-bold mb-1">👤 Asignado a (Baúl o Miembro):</label>
+                <select id="editAsignado" class="w-full input-mudream p-2 rounded text-xs">
                     <option value="">En Baúl (Sin asignar)</option>
                 </select>
             </div>
 
             <!-- BLOQUE DINÁMICO DE OPCIONES EN EDICIÓN -->
             <div id="edit-opciones-defensivas" class="space-y-1">
-                <span class="text-[10px] uppercase font-bold text-cyan-400 block">🛡️ Opciones de Armadura / Escudo / Anillo:</span>
-                <div class="grid grid-cols-2 gap-1 text-xs">
-                    <label><input type="checkbox" name="editChkOpt" value="Aumento de HP máximo"> HP Máximo</label>
-                    <label><input type="checkbox" name="editChkOpt" value="Aumento de SD máximo"> SD Máximo</label>
-                    <label><input type="checkbox" name="editChkOpt" value="Reducción de daño (DD)"> Reducción de daño (DD)</label>
-                    <label><input type="checkbox" name="editChkOpt" value="Reflejo de daño (Reflect)"> Reflect</label>
-                    <label><input type="checkbox" name="editChkOpt" value="Resistencia a daño crítico (Rate)"> Resistencia Crítico</label>
-                    <label><input type="checkbox" name="editChkOpt" value="Tasa de drop de Zen"> Drop Zen</label>
+                <span class="text-[10px] uppercase font-bold text-emerald-400 block">🛡️ Opciones de Armadura / Escudo / Anillo:</span>
+                <div class="grid grid-cols-2 gap-1 text-xs text-gray-300">
+                    <label><input type="checkbox" name="editChkOpt" class="accent-[#d4af37]" value="Aumento de HP máximo"> HP Máximo</label>
+                    <label><input type="checkbox" name="editChkOpt" class="accent-[#d4af37]" value="Aumento de SD máximo"> SD Máximo</label>
+                    <label><input type="checkbox" name="editChkOpt" class="accent-[#d4af37]" value="Reducción de daño (DD)"> Reducción de daño (DD)</label>
+                    <label><input type="checkbox" name="editChkOpt" class="accent-[#d4af37]" value="Reflejo de daño (Reflect)"> Reflect</label>
+                    <label><input type="checkbox" name="editChkOpt" class="accent-[#d4af37]" value="Resistencia a daño crítico (Rate)"> Resistencia Crítico</label>
+                    <label><input type="checkbox" name="editChkOpt" class="accent-[#d4af37]" value="Tasa de drop de Zen"> Drop Zen</label>
                 </div>
             </div>
 
             <div id="edit-opciones-ofensivas" class="space-y-1 hidden">
-                <span class="text-[10px] uppercase font-bold text-amber-400 block">⚔️ Opciones de Arma / Colgante:</span>
-                <div class="grid grid-cols-1 gap-1 text-xs">
-                    <label><input type="checkbox" name="editChkOpt" value="Excellent damage rate %"> Excellent damage rate %</label>
-                    <label><input type="checkbox" name="editChkOpt" value="Wizardry Damage increases +level/"> Wizardry Damage +level/</label>
-                    <label><input type="checkbox" name="editChkOpt" value="Wizardry Damage increase %"> Wizardry Damage increase %</label>
-                    <label><input type="checkbox" name="editChkOpt" value="Physical Damage increases +level/"> Physical Damage +level/</label>
-                    <label><input type="checkbox" name="editChkOpt" value="Physical Damage increase %"> Physical Damage increase %</label>
-                    <label><input type="checkbox" name="editChkOpt" value="Increases attack speed +"> Increases attack speed +</label>
-                    <label><input type="checkbox" name="editChkOpt" value="Obtains (Life) when monster is killed"> Life per kill</label>
-                    <label><input type="checkbox" name="editChkOpt" value="Obtains (Mana) when monster is killed"> Mana per kill</label>
-                    <label><input type="checkbox" name="editChkOpt" value="Critical Damage rate %"> Critical Damage rate %</label>
-                    <label><input type="checkbox" name="editChkOpt" value="Damage to Monster"> Damage to Monster</label>
+                <span class="text-[10px] uppercase font-bold text-[#f3d066] block">⚔️ Opciones de Arma / Colgante:</span>
+                <div class="grid grid-cols-1 gap-1 text-xs text-gray-300">
+                    <label><input type="checkbox" name="editChkOpt" class="accent-[#d4af37]" value="Excellent damage rate %"> Excellent damage rate %</label>
+                    <label><input type="checkbox" name="editChkOpt" class="accent-[#d4af37]" value="Wizardry Damage increases +level/"> Wizardry Damage +level/</label>
+                    <label><input type="checkbox" name="editChkOpt" class="accent-[#d4af37]" value="Wizardry Damage increase %"> Wizardry Damage increase %</label>
+                    <label><input type="checkbox" name="editChkOpt" class="accent-[#d4af37]" value="Physical Damage increases +level/"> Physical Damage +level/</label>
+                    <label><input type="checkbox" name="editChkOpt" class="accent-[#d4af37]" value="Physical Damage increase %"> Physical Damage increase %</label>
+                    <label><input type="checkbox" name="editChkOpt" class="accent-[#d4af37]" value="Increases attack speed +"> Increases attack speed +</label>
+                    <label><input type="checkbox" name="editChkOpt" class="accent-[#d4af37]" value="Obtains (Life) when monster is killed"> Life per kill</label>
+                    <label><input type="checkbox" name="editChkOpt" class="accent-[#d4af37]" value="Obtains (Mana) when monster is killed"> Mana per kill</label>
+                    <label><input type="checkbox" name="editChkOpt" class="accent-[#d4af37]" value="Critical Damage rate %"> Critical Damage rate %</label>
+                    <label><input type="checkbox" name="editChkOpt" class="accent-[#d4af37]" value="Damage to Monster"> Damage to Monster</label>
                 </div>
             </div>
 
             <div class="flex gap-2 justify-end pt-2">
-                <button onclick="guardarEdicionItem()" class="bg-emerald-600 text-white px-4 py-2 rounded text-xs font-bold">Guardar</button>
-                <button onclick="cerrarModalEditar()" class="bg-gray-800 text-white px-4 py-2 rounded text-xs font-bold">Cancelar</button>
+                <button onclick="guardarEdicionItem()" class="bg-gradient-to-r from-[#d4af37] to-[#b48a28] text-gray-950 px-4 py-2 rounded text-xs font-extrabold">Guardar</button>
+                <button onclick="cerrarModalEditar()" class="bg-[#1b2030] text-gray-300 px-4 py-2 rounded text-xs font-bold">Cancelar</button>
             </div>
         </div>
     </div>
@@ -397,9 +458,9 @@
                     sesionAutorizada = data.autorizado;
                     esAdmin = data.es_admin;
                     const badge = document.getElementById('session-user-badge');
-                    if (badge) badge.innerHTML = `👤 <strong>${data.user}</strong> (${data.rol})`;
+                    if (badge) badge.innerHTML = `👤 <strong class="text-[#f3d066]">${data.user}</strong> (${data.rol})`;
                     const loginBtn = document.getElementById('btn-login-open');
-                    if (loginBtn) loginBtn.outerHTML = `<a href="/logout" class="bg-red-700 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">Salir</a>`;
+                    if (loginBtn) loginBtn.outerHTML = `<a href="/logout" class="bg-red-900/80 hover:bg-red-800 border border-red-500/40 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">Salir</a>`;
                     
                     if (sesionAutorizada) {
                         ['btn-guardar-item', 'panel-custom-id', 'dummy-div', 'panel-miembros-crud', 'panel-asistencia-ctrl', 'panel-donacion-crud', 'btn-gasto-modal', 'btn-reset-semanal', 'th-acciones-head', 'th-miembro-acciones', 'admin-backup-buttons'].forEach(id => {
@@ -432,10 +493,10 @@
         function cambiarSeccion(sec) {
             ['items', 'clan', 'donaciones', 'users'].forEach(s => {
                 document.getElementById(`seccion-${s}-view`).classList.add('hidden');
-                document.getElementById(`btn-sec-${s}`).className = "bg-gray-800 text-gray-400 px-4 py-2 rounded-lg text-xs font-bold transition";
+                document.getElementById(`btn-sec-${s}`).className = "bg-[#151924] hover:bg-[#1e2433] border border-[#262b3d] text-gray-400 px-4 py-2 rounded-lg text-xs font-bold transition";
             });
             document.getElementById(`seccion-${sec.toLowerCase()}-view`).classList.remove('hidden');
-            document.getElementById(`btn-sec-${sec.toLowerCase()}`).className = "bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition shadow";
+            document.getElementById(`btn-sec-${sec.toLowerCase()}`).className = "bg-gradient-to-r from-[#d4af37] to-[#b48a28] text-gray-950 px-4 py-2 rounded-lg text-xs font-extrabold transition shadow";
             
             if (sec === 'ITEMS') { cargarItems(); }
             if (sec === 'CLAN') { cargarMiembros(); }
@@ -476,10 +537,10 @@
                     tbody.innerHTML = miembrosClan.map(m => `
                         <tr>
                             <td class="font-bold text-white">
-                                <input type="text" id="edit-pj-${m.id}" value="${m.nombre_pj}" class="bg-[#0d0a1a] border border-purple-900 text-white px-2 py-1 rounded text-xs ${!sesionAutorizada ? 'pointer-events-none border-none' : ''}">
+                                <input type="text" id="edit-pj-${m.id}" value="${m.nombre_pj}" class="input-mudream px-2 py-1 rounded text-xs ${!sesionAutorizada ? 'pointer-events-none border-none bg-transparent' : ''}">
                             </td>
                             <td>
-                                <select id="edit-raza-${m.id}" class="bg-[#0d0a1a] border border-purple-900 text-white px-2 py-1 rounded text-xs ${!sesionAutorizada ? 'pointer-events-none border-none' : ''}">
+                                <select id="edit-raza-${m.id}" class="input-mudream px-2 py-1 rounded text-xs ${!sesionAutorizada ? 'pointer-events-none border-none bg-transparent' : ''}">
                                     <option value="DK" ${m.raza === 'DK' ? 'selected' : ''}>DK</option>
                                     <option value="RF" ${m.raza === 'RF' ? 'selected' : ''}>RF</option>
                                     <option value="SM" ${m.raza === 'SM' ? 'selected' : ''}>SM</option>
@@ -488,10 +549,10 @@
                                     <option value="DL" ${m.raza === 'DL' ? 'selected' : ''}>DL</option>
                                 </select>
                             </td>
-                            <td>${Array.isArray(m.items_asignados) ? m.items_asignados.map(id => `#${id}`).join(', ') : 'Ninguno'}</td>
+                            <td class="text-gray-300">${Array.isArray(m.items_asignados) ? m.items_asignados.map(id => `#${id}`).join(', ') : 'Ninguno'}</td>
                             <td class="${sesionAutorizada ? 'text-center space-x-1' : 'hidden'}">
-                                <button onclick="actualizarMiembro(${m.id})" class="bg-blue-950 text-blue-300 border border-blue-700 px-2 py-1 rounded text-xs font-bold" title="Guardar Cambios">💾</button>
-                                <button onclick="eliminarMiembro(${m.id}, '${m.nombre_pj}')" class="bg-red-950 text-red-300 border border-red-700 px-2 py-1 rounded text-xs font-bold" title="Eliminar">🗑️</button>
+                                <button onclick="actualizarMiembro(${m.id})" class="bg-[#1b2030] text-[#f3d066] border border-[#d4af37]/50 px-2 py-1 rounded text-xs font-bold" title="Guardar Cambios">💾</button>
+                                <button onclick="eliminarMiembro(${m.id}, '${m.nombre_pj}')" class="bg-red-950 text-red-300 border border-red-800 px-2 py-1 rounded text-xs font-bold" title="Eliminar">🗑️</button>
                             </td>
                         </tr>
                     `).join('') || '<tr><td colspan="4" class="text-center py-8 text-gray-500">Sin miembros.</td></tr>';
@@ -587,17 +648,17 @@
             }
             tbody.innerHTML = items.map(item => {
                 const opcionesBadges = Array.isArray(item.opciones) ? item.opciones.map(opt => `<span class="badge-opt">${opt}</span>`).join('') : '-';
-                let asignadoHTML = item.asignado_a ? `<span class="bg-indigo-950 text-indigo-200 px-2 py-0.5 rounded text-xs font-bold">${item.asignado_a}</span>` : '<span class="text-gray-500 text-xs">En Baúl</span>';
+                let asignadoHTML = item.asignado_a ? `<span class="bg-[#1b2030] border border-[#d4af37]/40 text-[#f3d066] px-2.5 py-0.5 rounded text-xs font-bold">${item.asignado_a}</span>` : '<span class="text-gray-500 text-xs">En Baúl</span>';
                 let accionesHTML = sesionAutorizada ? `
                     <td class="text-center space-x-1">
-                        <button onclick="abrirModalEditar(${item.id})" class="bg-blue-950 text-blue-300 border border-blue-700 px-2 py-1 rounded text-xs font-bold" title="Editar">✏️</button>
-                        <button onclick="eliminarItem(${item.id})" class="bg-red-950 text-red-300 border border-red-700 px-2 py-1 rounded text-xs font-bold" title="Borrar">🗑️</button>
+                        <button onclick="abrirModalEditar(${item.id})" class="bg-[#1b2030] text-[#f3d066] border border-[#d4af37]/50 px-2 py-1 rounded text-xs font-bold" title="Editar">✏️</button>
+                        <button onclick="eliminarItem(${item.id})" class="bg-red-950 text-red-300 border border-red-800 px-2 py-1 rounded text-xs font-bold" title="Borrar">🗑️</button>
                     </td>` : '';
 
                 return `
                     <tr>
-                        <td class="font-mono text-amber-400 font-extrabold text-sm">#${item.id}</td>
-                        <td class="font-bold text-emerald-400">${item.nombre}</td>
+                        <td class="font-mono text-[#d4af37] font-extrabold text-sm">#${item.id}</td>
+                        <td class="font-bold text-gray-100">${item.nombre}</td>
                         <td><span class="badge-pj">${item.tipo}</span></td>
                         <td>${opcionesBadges}</td>
                         <td class="text-center">${asignadoHTML}</td>
@@ -720,13 +781,13 @@
                 document.getElementById('tabla-asistencias-ranking').innerHTML = data.map(row => {
                     const resetsCount = row.total_resets || 0;
                     const badgeReset = resetsCount > 0 
-                        ? `<span class="bg-purple-950 text-purple-200 border border-purple-600 px-2.5 py-0.5 rounded-full text-xs font-bold">🔄 ${resetsCount} ${resetsCount === 1 ? 'Reset' : 'Resets'}</span>` 
+                        ? `<span class="bg-[#1b2030] text-[#f3d066] border border-[#d4af37]/50 px-2.5 py-0.5 rounded-full text-xs font-bold">🔄 ${resetsCount} ${resetsCount === 1 ? 'Reset' : 'Resets'}</span>` 
                         : `<span class="text-gray-600 text-xs">Sin resets</span>`;
                     return `
                         <tr>
-                            <td class="font-bold text-indigo-300">${row.pj_name}</td>
+                            <td class="font-bold text-gray-200">${row.pj_name}</td>
                             <td style="text-align: center;">${badgeReset}</td>
-                            <td style="text-align: right; padding-right: 40px;" class="font-extrabold text-amber-400 text-base">${row.total_asistencias}</td>
+                            <td style="text-align: right; padding-right: 40px;" class="font-extrabold text-[#d4af37] text-base">${row.total_asistencias}</td>
                         </tr>
                     `;
                 }).join('') || '<tr><td colspan="3" class="text-center py-4 text-gray-500">Sin asistencias.</td></tr>';
@@ -759,9 +820,9 @@
 
                 document.getElementById('tabla-donaciones-body').innerHTML = data.donaciones.map(d => `
                     <tr>
-                        <td style="text-align: left;" class="font-bold text-amber-400">${d.pj_name}</td>
+                        <td style="text-align: left;" class="font-bold text-[#f3d066]">${d.pj_name}</td>
                         <td>${d.bless}</td><td>${d.soul}</td><td>${d.life}</td><td>${d.chaos}</td><td>${d.creation}</td><td>${d.talisman_assembly}</td><td>${d.talisman_luck}</td><td>${d.zen.toLocaleString()}</td>
-                        <td class="text-xs text-purple-300">${new Date(d.created_at).toLocaleDateString()}</td>
+                        <td class="text-xs text-gray-400">${new Date(d.created_at).toLocaleDateString()}</td>
                     </tr>
                 `).join('') || '<tr><td colspan="10" class="text-center py-4 text-gray-500">Sin donaciones.</td></tr>';
             }
@@ -822,7 +883,7 @@
                     <tr>
                         <td class="font-bold text-white">${u.username}</td>
                         <td>
-                            <select onchange="cambiarRolUsuario(${u.id}, this.value)" class="bg-[#0d0a1a] border border-purple-900 text-white px-2 py-1 rounded text-xs" ${u.username.toLowerCase() === 'pinion' ? 'disabled' : ''}>
+                            <select onchange="cambiarRolUsuario(${u.id}, this.value)" class="input-mudream px-2 py-1 rounded text-xs" ${u.username.toLowerCase() === 'pinion' ? 'disabled' : ''}>
                                 <option value="admin" ${u.rol === 'admin' ? 'selected' : ''}>Admin</option>
                                 <option value="operador" ${u.rol === 'operador' ? 'selected' : ''}>Operador</option>
                                 <option value="lector" ${u.rol === 'lector' ? 'selected' : ''}>Lector</option>
