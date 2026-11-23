@@ -124,10 +124,12 @@
         </div>
     </header>
 
+    <!-- NAVEGACIÓN POR PESTAÑAS SEPARADAS -->
     <div class="flex flex-wrap items-center justify-center gap-2.5 mb-6 w-full max-w-7xl">
         <button onclick="cambiarSeccion('ITEMS')" id="btn-sec-items" class="btn-gold-mudream px-4 py-2 rounded-lg text-xs transition">📋 Ítems & Baúles</button>
         <button onclick="cambiarSeccion('CLAN')" id="btn-sec-clan" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition">👥 Miembros</button>
-        <button onclick="cambiarSeccion('DONACIONES')" id="btn-sec-donaciones" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition">💎 Donaciones & Asistencias</button>
+        <button onclick="cambiarSeccion('ASISTENCIAS')" id="btn-sec-asistencias" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition">⚔️ Asistencias</button>
+        <button onclick="cambiarSeccion('DONACIONES')" id="btn-sec-donaciones" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition">💎 Donaciones</button>
         <button onclick="cambiarSeccion('USERS')" id="btn-sec-users" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition hidden">⚙️ Usuarios</button>
     </div>
 
@@ -277,8 +279,8 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 3: DONACIONES Y ASISTENCIAS CON BOTÓN RESET -->
-    <div id="seccion-donaciones-view" class="w-full max-w-7xl space-y-6 hidden">
+    <!-- SECCIÓN 3: ASISTENCIAS (INDEPENDIENTE) -->
+    <div id="seccion-asistencias-view" class="w-full max-w-7xl space-y-6 hidden">
         <div class="card-mudream p-5 rounded-xl space-y-4">
             <div class="flex justify-between items-center">
                 <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">⚔️ Asistencias a Invasiones (Ranking)</h2>
@@ -292,7 +294,7 @@
                     <button onclick="modificarAsistencia(-1)" class="bg-red-950/80 hover:bg-red-900 border border-red-500/40 text-red-200 px-3 py-1.5 rounded text-xs font-bold">➖ Restar</button>
                 </div>
             </div>
-            <div class="tabla-scroll-box" style="height: 220px !important;">
+            <div class="tabla-scroll-box" style="height: 440px !important;">
                 <table class="tabla-items">
                     <thead>
                         <tr>
@@ -305,7 +307,10 @@
                 </table>
             </div>
         </div>
+    </div>
 
+    <!-- SECCIÓN 4: DONACIONES & BANCO GUILD (INDEPENDIENTE) -->
+    <div id="seccion-donaciones-view" class="w-full max-w-7xl space-y-6 hidden">
         <div class="card-mudream p-5 rounded-xl space-y-3">
             <div class="flex justify-between items-center">
                 <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">🏛️ Banco Guild (Acumulado Neto & Talismanes)</h2>
@@ -344,7 +349,7 @@
 
         <div class="card-mudream p-5 rounded-xl space-y-4">
             <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">📜 Historial de Donaciones</h2>
-            <div class="tabla-scroll-box" style="height: 300px !important;">
+            <div class="tabla-scroll-box" style="height: 340px !important;">
                 <table class="tabla-items text-center">
                     <thead><tr><th style="text-align: left;">Miembro</th><th>Bless</th><th>Soul</th><th>Life</th><th>Chaos</th><th>Creation</th><th>Assembly</th><th>Luck</th><th>Zen</th><th>Fecha</th></tr></thead>
                     <tbody id="tabla-donaciones-body"><tr><td colspan="10" class="text-center py-4 text-[#8a8073]">Sin donaciones.</td></tr></tbody>
@@ -353,7 +358,7 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 4: USUARIOS -->
+    <!-- SECCIÓN 5: USUARIOS -->
     <div id="seccion-users-view" class="w-full max-w-7xl space-y-4 hidden">
         <div class="card-mudream p-6 rounded-xl space-y-4">
             <h2 class="text-lg font-bold text-[#f5b942]">👑 Gestión de Usuarios & Accesos</h2>
@@ -410,7 +415,6 @@
 
                 <!-- CANVAS DE LA RULETA -->
                 <div class="flex flex-col items-center justify-center relative">
-                    <!-- Puntero superior -->
                     <div class="w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[22px] border-t-[#f5b942] drop-shadow z-10 -mb-2"></div>
                     <canvas id="canvasRuleta" width="290" height="290" class="rounded-full border-4 border-[#3d3122] shadow-2xl bg-[#0b0a08]"></canvas>
                 </div>
@@ -568,7 +572,7 @@
         }
 
         function cambiarSeccion(sec) {
-            ['items', 'clan', 'donaciones', 'users'].forEach(s => {
+            ['items', 'clan', 'asistencias', 'donaciones', 'users'].forEach(s => {
                 document.getElementById(`seccion-${s}-view`).classList.add('hidden');
                 document.getElementById(`btn-sec-${s}`).className = "bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition";
             });
@@ -577,7 +581,8 @@
             
             if (sec === 'ITEMS') { cargarItems(); }
             if (sec === 'CLAN') { cargarMiembros(); }
-            if (sec === 'DONACIONES') { cargarMiembros(); cargarAsistenciasRanking(); cargarDonacionesJoyas(); }
+            if (sec === 'ASISTENCIAS') { cargarMiembros(); cargarAsistenciasRanking(); }
+            if (sec === 'DONACIONES') { cargarMiembros(); cargarDonacionesJoyas(); }
             if (sec === 'USERS') { cargarUsuarios(); }
         }
 
@@ -787,7 +792,6 @@
         async function finalizarSorteoRuleta(participantes) {
             const total = participantes.length;
             const arc = (2 * Math.PI) / total;
-            // El puntero está arriba (-Math.PI / 2)
             let anguloNormalizado = ((-Math.PI / 2) - anguloActualRuleta) % (2 * Math.PI);
             if (anguloNormalizado < 0) anguloNormalizado += 2 * Math.PI;
             const indiceGanador = Math.floor(anguloNormalizado / arc) % total;
