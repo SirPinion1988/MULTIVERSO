@@ -3,7 +3,7 @@ import time
 import json
 import re
 import math
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -182,6 +182,7 @@ def api_asistencias_ranking():
     conn = get_db()
     if request.method == 'GET':
         ranking = []
+        ultimo_reset = None
         if conn:
             try:
                 with conn.cursor() as cur:
@@ -194,10 +195,21 @@ def api_asistencias_ranking():
                         ORDER BY total_asistencias DESC;
                     """)
                     ranking = cur.fetchall()
+
+                    cur.execute("""
+                        SELECT registrado_por 
+                        FROM public.asistencias_invasiones 
+                        WHERE registrado_por LIKE 'Reset (%' 
+                        ORDER BY id DESC 
+                        LIMIT 1;
+                    """)
+                    row_reset = cur.fetchone()
+                    if row_reset and row_reset.get('registrado_por'):
+                        ultimo_reset = row_reset['registrado_por']
                 conn.close()
             except Exception:
                 if conn: conn.close()
-        return jsonify(ranking)
+        return jsonify({"ranking": ranking, "ultimo_reset": ultimo_reset})
 
     if not usuario_es_autorizado(): return jsonify({"error": "No autorizado."}), 403
     data = request.json or {}
@@ -229,7 +241,7 @@ def api_asistencias_ranking():
             return jsonify({"error": str(e)}), 500
     return jsonify({"status": "ok"}), 201
 
-# --- API RESET MENSUAL / SEMANAL DE ASISTENCIAS (20% + CONTADOR DE RESETS) ---
+# --- API RESET MENSUAL / SEMANAL DE ASISTENCIAS (20% + CONTADOR DE RESETS + FECHA) ---
 @app.route('/api/asistencias/reset-semanal', methods=['POST'])
 def reset_semanal_asistencias():
     if not usuario_es_autorizado(): 
@@ -238,6 +250,10 @@ def reset_semanal_asistencias():
     conn = get_db()
     if not conn: 
         return jsonify({"error": "Sin conexión a DB."}), 500
+    
+    tz_arg = timezone(timedelta(hours=-3))
+    fecha_reset = datetime.now(tz_arg).strftime('%d/%m/%Y %H:%M')
+    etiqueta_reset = f"Reset ({session.get('user', 'Admin')}) - {fecha_reset}"
     
     try:
         with conn.cursor() as cur:
@@ -264,7 +280,7 @@ def reset_semanal_asistencias():
                     cur.execute("""
                         INSERT INTO public.asistencias_invasiones (pj_name, cantidad, resets, registrado_por)
                         VALUES (%s, %s, %s, %s);
-                    """, (pj, nuevo_valor, nuevos_resets, f"Reset ({session.get('user', 'Admin')})"))
+                    """, (pj, nuevo_valor, nuevos_resets, etiqueta_reset))
             
             conn.commit()
         conn.close()
@@ -272,7 +288,7 @@ def reset_semanal_asistencias():
         if conn: conn.close()
         return jsonify({"error": str(e)}), 500
         
-    return jsonify({"status": "ok"}), 200
+    return jsonify({"status": "ok", "ultimo_reset": etiqueta_reset}), 200
 
 # --- API DONACIONES JOYAS Y BANCO GUILD ---
 @app.route('/api/donaciones-joyas', methods=['GET', 'POST'])
