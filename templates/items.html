@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🛡️ Multiverso - Inventario, Armas, Asistencias & Donaciones</title>
+    <title>⚔️ MuDream Boss Timers - Multiverso ⚔️</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { 
             background-color: #0b0a08; 
@@ -13,55 +12,8 @@
             color: #f3efe6; 
             font-family: 'Segoe UI', system-ui, sans-serif; 
         }
-        .tabla-scroll-box { 
-            height: 500px !important; 
-            overflow-y: scroll !important; 
-            border: 1px solid #2c241b; 
-            border-radius: 10px; 
-            background: #110f0c; 
-        }
-        .tabla-scroll-box::-webkit-scrollbar { width: 8px; }
-        .tabla-scroll-box::-webkit-scrollbar-track { background: #0b0a08; }
-        .tabla-scroll-box::-webkit-scrollbar-thumb { background: #3d3224; border-radius: 4px; }
-        .tabla-scroll-box::-webkit-scrollbar-thumb:hover { background: #f5b942; }
-        .tabla-items { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
-        .tabla-items th { 
-            background: #191510; 
-            padding: 11px 12px; 
-            color: #f5b942; 
-            font-weight: 700; 
-            text-transform: uppercase; 
-            font-size: 11px; 
-            letter-spacing: 0.05em;
-            border-bottom: 1px solid #382e22; 
-            position: sticky; 
-            top: 0; 
-            z-index: 10; 
-        }
-        .tabla-items td { padding: 9px 12px; border-bottom: 1px solid #1f1a14; vertical-align: middle; }
-        .tabla-items tr:hover { background: rgba(245, 185, 66, 0.07); }
-        .badge-pj { 
-            display: inline-block; 
-            padding: 2px 8px; 
-            border-radius: 6px; 
-            font-size: 10px; 
-            font-weight: 700; 
-            background: rgba(245, 185, 66, 0.14); 
-            border: 1px solid rgba(245, 185, 66, 0.4); 
-            color: #fbd379; 
-        }
-        .badge-opt { 
-            display: inline-block; 
-            padding: 2px 8px; 
-            border-radius: 6px; 
-            font-size: 11px; 
-            font-weight: 600; 
-            margin-right: 4px; 
-            margin-bottom: 3px; 
-            background: rgba(52, 211, 153, 0.12); 
-            border: 1px solid rgba(52, 211, 153, 0.4); 
-            color: #6ee7b7; 
-        }
+        .grid-bosses { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+
         .card-mudream {
             background-color: rgba(22, 18, 14, 0.92);
             border: 1px solid #2e261c;
@@ -85,403 +37,200 @@
         .btn-gold-mudream:hover {
             background: linear-gradient(180deg, #fde096 0%, #f5b942 100%);
         }
-        @keyframes popGanador {
-            0% { transform: scale(0.8); opacity: 0; }
-            70% { transform: scale(1.05); opacity: 1; }
-            100% { transform: scale(1); opacity: 1; }
+
+        .map-wrapper {
+            position: relative;
+            width: 720px;
+            max-width: 95vw;
+            aspect-ratio: 1 / 1;
+            border: 2px solid #382e22;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #0b0a08;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.85);
         }
-        .anim-ganador { animation: popGanador 0.45s ease-out forwards; }
+        .map-bg { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+        .spot-btn {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            z-index: 10;
+            user-select: none;
+        }
+        .spot-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid #8a8073;
+            background: rgba(138, 128, 115, 0.2);
+            transition: transform 0.15s, background 0.2s, border-color 0.2s;
+        }
+        .spot-btn:hover .spot-circle { transform: scale(1.2); }
+
+        .spot-timer {
+            margin-top: 4px;
+            background: rgba(11, 10, 8, 0.94);
+            border: 1px solid #382e22;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            color: #d6cebf;
+            white-space: nowrap;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.75);
+        }
+
+        .state-idle .spot-circle { border-color: #f5b942; background: rgba(245, 185, 66, 0.25); box-shadow: 0 0 6px #f5b942; }
+        .state-idle .spot-timer { color: #f8f5ee; border-color: #f5b942; background: rgba(245, 185, 66, 0.2); }
+
+        .state-waiting .spot-circle { border-color: #ff4757; background: rgba(255, 71, 87, 0.25); box-shadow: 0 0 6px #ff4757; }
+        .state-waiting .spot-timer { color: #ff6b81; border-color: #ff4757; }
+
+        .state-window .spot-circle {
+            border-color: #2ed573; background: rgba(46, 213, 115, 0.4);
+            box-shadow: 0 0 14px #2ed573;
+            animation: pulse 0.9s infinite alternate;
+        }
+        .state-window .spot-timer { color: #2ed573; border-color: #2ed573; background: rgba(46, 213, 115, 0.15); }
+
+        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.3); } }
     </style>
 </head>
-<body class="p-4 md:p-8 flex flex-col items-center min-h-screen">
+<body class="p-4 md:p-8 flex flex-col items-center relative min-h-screen">
 
-    <header class="w-full max-w-7xl mb-6 border-b border-[#2e261c] pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
+    <div id="toast-notificacion" class="fixed bottom-5 right-5 bg-[#191510] border border-[#f5b942] text-[#f8f5ee] px-4 py-3 rounded-xl shadow-2xl transition-all duration-300 transform translate-y-20 opacity-0 z-50 flex items-center gap-2 text-sm font-semibold">
+        <span id="toast-icono">⚠️</span>
+        <span id="toast-mensaje">Notificación</span>
+    </div>
+
+    <!-- CABECERA ÚNICA -->
+    <header class="w-full max-w-6xl mb-6 border-b border-[#2e261c] pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
             <div class="inline-flex items-center gap-1.5 bg-[#1f1912] border border-[#3d3122] px-2.5 py-0.5 rounded-full text-[10px] font-bold text-[#f5b942] uppercase tracking-wider mb-1">
-                <span>🛡️ LEGEND X - 10</span>
+                <span>⚔️ LEGEND X - 10</span>
             </div>
             <h1 class="text-3xl font-black tracking-wide text-[#f8f5ee]">
-                MULTIVERSO - <span class="text-[#f5b942]">GESTIÓN TOTAL</span>
+                MONITOR MUDREAM <span class="text-[#f5b942]">MULTIVERSO</span>
             </h1>
-            <p class="text-xs text-[#a89f91] mt-0.5">Inventario, Armas, Distribución, Asistencia a Invasiones y Donaciones</p>
+            <p class="text-xs text-[#a89f91] mt-0.5">Control de Bosses, Timers, Mapas, Donaciones y Catálogo de Ítems en Tiempo Real</p>
         </div>
-        <div class="flex flex-wrap items-center gap-2.5">
-            <span id="session-user-badge" class="text-xs text-[#e5dec9] font-bold bg-[#16120e] px-3 py-1.5 rounded-lg border border-[#332a1f]">
-                Invitado (Público)
+        <div id="user-info-box" class="flex items-center gap-3 bg-[#16120e] border border-[#332a1f] px-4 py-2 rounded-xl text-xs">
+            <span id="user-display" class="text-[#e5dec9] font-bold">Invitado</span>
+            <span id="login-btn-container">
+                <button onclick="toggleLoginModal()" id="btn-login-trigger" class="btn-gold-mudream px-3.5 py-1 rounded transition">Ingresar</button>
             </span>
-            <div id="admin-backup-buttons" class="hidden flex flex-wrap gap-2 items-center">
-                <button onclick="descargarBackup()" class="bg-[#1c1712] hover:bg-[#29221a] border border-[#3d3122] text-[#e5dec9] px-3 py-1.5 rounded-lg text-xs font-bold transition">💾 Backup DB</button>
-                <button onclick="exportarExcelAsignados()" class="bg-emerald-950/70 hover:bg-emerald-900/80 border border-emerald-600/40 text-emerald-300 px-3 py-1.5 rounded-lg text-xs font-bold transition">📊 Excel Asignados</button>
-                <button onclick="exportarExcelAsistencias()" class="bg-amber-950/70 hover:bg-amber-900/80 border border-amber-500/40 text-[#fbd379] px-3 py-1.5 rounded-lg text-xs font-bold transition">📊 Excel Asistencias</button>
-                <label class="bg-[#292015] hover:bg-[#382b1c] border border-[#f5b942]/40 text-[#f5b942] px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
-                    📂 Subir Excel <input type="file" id="fileExcelInput" onchange="subirExcelBackup(event)" class="hidden" accept=".xlsx, .xls">
-                </label>
-            </div>
-            <button onclick="toggleLoginModal()" id="btn-login-open" class="btn-gold-mudream px-4 py-1.5 rounded-lg text-xs transition">
-                🔑 Ingresar
-            </button>
-            <a href="/" class="bg-[#1c1712] hover:bg-[#29221a] border border-[#3d3122] text-[#d6cebf] px-3 py-1.5 rounded-lg text-xs font-bold transition">← Monitor</a>
         </div>
     </header>
 
-    <!-- NAVEGACIÓN POR PESTAÑAS -->
-    <div class="flex flex-wrap items-center justify-center gap-2.5 mb-6 w-full max-w-7xl">
-        <button onclick="cambiarSeccion('ITEMS')" id="btn-sec-items" class="btn-gold-mudream px-4 py-2 rounded-lg text-xs transition">📋 Ítems & Baúles</button>
-        <button onclick="cambiarSeccion('CLAN')" id="btn-sec-clan" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition">👥 Miembros</button>
-        <button onclick="cambiarSeccion('DISTRIBUCION')" id="btn-sec-distribucion" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition">🎁 Distribución</button>
-        <button onclick="cambiarSeccion('ASISTENCIAS')" id="btn-sec-asistencias" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition">⚔️ Asistencias</button>
-        <button onclick="cambiarSeccion('DONACIONES')" id="btn-sec-donaciones" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition">💎 Donaciones</button>
-        <button onclick="cambiarSeccion('USERS')" id="btn-sec-users" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition hidden">⚙️ Usuarios</button>
+    <!-- NAVEGACIÓN PRINCIPAL -->
+    <div class="flex flex-wrap mb-6 overflow-x-auto w-full max-w-6xl justify-center gap-2">
+        <button onclick="setVista('TODOS')" class="btn-tab px-4 py-2 rounded-lg text-xs btn-gold-mudream transition" id="tab-TODOS">👁️ Vista General</button>
+        <button onclick="setVista('Server 1')" class="btn-tab px-4 py-2 rounded-lg text-xs font-bold bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] transition" id="tab-Server 1">Server 1</button>
+        <button onclick="setVista('Server 2')" class="btn-tab px-4 py-2 rounded-lg text-xs font-bold bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] transition" id="tab-Server 2">Server 2</button>
+        <button onclick="setVista('Server 3')" class="btn-tab px-4 py-2 rounded-lg text-xs font-bold bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] transition" id="tab-Server 3">Server 3</button>
+        <button onclick="setVista('Server 20')" class="btn-tab px-4 py-2 rounded-lg text-xs font-bold bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] transition" id="tab-Server 20">Server 20</button>
+        
+        <button onclick="setVista('MAPA_1')" class="btn-tab px-4 py-2 rounded-lg text-xs font-bold bg-[#16120e] hover:bg-[#221c15] border border-[#3d3122] text-[#fbd379] transition" id="tab-MAPA_1">🗺️ Mapa S1</button>
+        <button onclick="setVista('MAPA_2')" class="btn-tab px-4 py-2 rounded-lg text-xs font-bold bg-[#16120e] hover:bg-[#221c15] border border-[#3d3122] text-[#fbd379] transition" id="tab-MAPA_2">🗺️ Mapa S2</button>
+        <button onclick="setVista('MAPA_3')" class="btn-tab px-4 py-2 rounded-lg text-xs font-bold bg-[#16120e] hover:bg-[#221c15] border border-[#3d3122] text-[#fbd379] transition" id="tab-MAPA_3">🗺️ Mapa S3</button>
+
+        <!-- ENLACE DIRECTO A ITEMS SIN IFRAME PARA ELIMINAR DUPLICADOS -->
+        <a href="/items" class="px-4 py-2 rounded-lg text-xs font-bold bg-emerald-950/70 border border-emerald-600/40 text-emerald-300 hover:bg-emerald-900/80 flex items-center gap-1 transition">
+            🛡️ Ítems & Clan
+        </a>
+
+        <button onclick="setVista('BOTS')" class="btn-tab px-4 py-2 rounded-lg text-xs font-bold bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] transition" id="tab-BOTS">🤖 Bots Activos</button>
+        <button onclick="setVista('DONACIONES')" class="btn-tab px-4 py-2 rounded-lg text-xs font-bold bg-[#292015] border border-[#f5b942]/40 text-[#f5b942] hover:bg-[#382b1c] transition" id="tab-DONACIONES">💎 Donaciones</button>
     </div>
 
-    <!-- SECCIÓN 1: ÍTEMS -->
-    <div id="seccion-items-view" class="w-full max-w-7xl space-y-4">
-        <div class="card-mudream p-6 rounded-xl space-y-4">
-            <h3 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">🔍 Buscador / ➕ Cargador Interactivo de Ítems</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">🔍 Buscar por ID Exacto</label>
-                    <input type="number" id="inputFiltroId" oninput="aplicarFiltros()" placeholder="Ej. 105..." class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">📜 Set, Arma o Anillo (Escribí iniciales)</label>
-                    <input type="text" id="inputFiltroSetBase" list="listaItemsBase" oninput="aplicarFiltros()" placeholder="Escribí iniciales (Ej. Red, Chr, Sac...)" autocomplete="off" class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
-                    <datalist id="listaItemsBase">
-                        <!-- Dark Knight -->
-                        <option value="Leather"></option><option value="Bronze"></option><option value="Scale"></option><option value="Brass"></option><option value="Plate"></option><option value="Dragon"></option><option value="Black Dragon"></option><option value="Dark Phoenix"></option><option value="Great Dragon"></option><option value="Dragon Knight"></option><option value="Ashcrow"></option><option value="Titan"></option><option value="Brave"></option>
-                        <!-- Dark Wizard -->
-                        <option value="Pad"></option><option value="Bone"></option><option value="Sphinx"></option><option value="Legendary"></option><option value="Grand Soul"></option><option value="Dark Soul"></option><option value="Venom Mist"></option><option value="Eclipse"></option><option value="Hades"></option>
-                        <!-- Fairy Elf -->
-                        <option value="Vine"></option><option value="Silk"></option><option value="Wind"></option><option value="Spirit"></option><option value="Guardian"></option><option value="Divine"></option><option value="Holy Spirit"></option><option value="Red Spirit"></option><option value="Sylphid Ray"></option><option value="Iris"></option><option value="Seraphim"></option>
-                        <!-- Magic Gladiator -->
-                        <option value="Storm Crow"></option><option value="Unicorn"></option><option value="Thunder Hawk"></option><option value="Hurricane"></option><option value="Volcano"></option><option value="Valiant"></option><option value="Destroyer"></option><option value="Phantom"></option>
-                        <!-- Dark Lord -->
-                        <option value="Light Plate"></option><option value="Adamantine"></option><option value="Dark Steel"></option><option value="Dark Master"></option><option value="Sunlight"></option><option value="Glorious"></option><option value="Emperor"></option><option value="Royal"></option>
-                        <!-- Summoner -->
-                        <option value="Violent Wind"></option><option value="Red Wing"></option><option value="Ancient"></option><option value="Black Rose"></option><option value="Aura"></option><option value="Lilium"></option><option value="Queen"></option><option value="Demonic"></option><option value="Storm Blitz"></option><option value="Eternal Wing"></option>
-                        <!-- Rage Fighter -->
-                        <option value="Sacred"></option><option value="Storm Hard"></option><option value="Piercing"></option><option value="Phoenix Soul"></option><option value="Vega"></option><option value="Chamer"></option>
-                        <!-- Staff & Sticks -->
-                        <option value="Skull Staff"></option><option value="Angelic Staff"></option><option value="Serpent Staff"></option><option value="Thunder Staff"></option><option value="Thunder Two-Hand Staff"></option><option value="Gorgon Staff"></option><option value="Gorgon Two-Hand Staff"></option><option value="Legendary Staff"></option><option value="Staff of Resurrection"></option><option value="Resurrection Staff"></option><option value="Chaos Lightning Staff"></option><option value="Staff of Destruction"></option><option value="Destruction Two-Hand Staff"></option><option value="Dragon Soul Staff"></option><option value="Divine Staff of Archangel"></option><option value="Staff of Kundun"></option><option value="Kundun Staff"></option><option value="Grand Viper Staff"></option><option value="Platina Staff"></option><option value="Crystal Two-Hand Staff"></option><option value="Chromatic Staff"></option><option value="Imperial Staff"></option><option value="Deadly Staff"></option><option value="Mystery Stick"></option><option value="Violent Wind Stick"></option><option value="Red Wing Stick"></option><option value="Ancient Stick"></option><option value="Demonic Stick"></option><option value="Storm Blitz Stick"></option><option value="Eternal Wing Stick"></option>
-                        <!-- Espadas, Puños, Arcos y Armas -->
-                        <option value="Kris"></option><option value="Short Sword"></option><option value="Rapier"></option><option value="Katana"></option><option value="Sword of Assassin"></option><option value="Assassin Sword"></option><option value="Blade"></option><option value="Gladius"></option><option value="Falchion"></option><option value="Serpent Sword"></option><option value="Sword of Salamander"></option><option value="Light Saber"></option><option value="Legendary Sword"></option><option value="Heliacal Sword"></option><option value="Double Blade"></option><option value="Lighting Sword"></option><option value="Giant Sword"></option><option value="Sword of Destruction"></option><option value="Destruction Sword"></option><option value="Dark Breaker"></option><option value="Sacred Glove"></option><option value="Holly Storm Claw"></option><option value="Piercing Blade Glove"></option><option value="Phoenix Soul Star"></option><option value="Vega's Claw"></option><option value="Chamer's Claw"></option><option value="Cyclone Claw"></option><option value="Blast Break"></option><option value="Thunder Blade"></option><option value="Divine Sword of Archangel"></option><option value="Knight Blade"></option><option value="Dark Reign Blade"></option><option value="Dark Reign Two-Hand Blade"></option><option value="Rune Blade"></option><option value="Explosion Blade"></option><option value="Daybreak"></option><option value="Sword Dancer"></option><option value="Emerald Sword"></option><option value="Bone Blade"></option><option value="Bone Sword"></option><option value="Flameberge"></option><option value="Sword Breaker"></option><option value="Imperial Sword"></option><option value="Great Lord Scepter"></option><option value="Solay Scepter"></option><option value="Shining Scepter"></option><option value="Frost Mace"></option><option value="Absolute Scepter"></option><option value="Celestial Bow"></option><option value="Divine Crossbow of Archangel"></option><option value="Great Reign Crossbow"></option><option value="Arrow Viper Bow"></option><option value="Sylph Wind Bow"></option><option value="Albatross Bow"></option><option value="Stinger Bow"></option><option value="Air Lyn Bow"></option>
-                        <!-- Escudos y Accesorios -->
-                        <option value="Small Shield"></option><option value="Horn Shield"></option><option value="Kite Shield"></option><option value="Elven Shield"></option><option value="Buckler"></option><option value="Buckler Shield"></option><option value="Dragon Slayer Shield"></option><option value="Skull Shield"></option><option value="Spiked Shield"></option><option value="Tower Shield"></option><option value="Plate Shield"></option><option value="Big Round Shield"></option><option value="Round Shield"></option><option value="Serpent Shield"></option><option value="Bronze Shield"></option><option value="Dragon Shield"></option><option value="Legendary Shield"></option><option value="Grand Soul Shield"></option><option value="Elemental Shield"></option><option value="Chaos Dragon Shield"></option><option value="Cross Shield"></option><option value="Crimson Glory"></option><option value="Salamander Shield"></option><option value="Frost Barrier"></option><option value="Guardian Shield"></option><option value="Ring of Wind"></option><option value="Ring of Ice"></option><option value="Ring of Poison"></option><option value="Ring of Fire"></option><option value="Pendant of Fire"></option><option value="Pendant of Lighting"></option><option value="Pendant of Ice"></option><option value="Wings"></option><option value="Cape"></option>
-                    </datalist>
-                </div>
-                <div>
-                    <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">📦 Tipo de Pieza</label>
-                    <select id="inputFiltroTipoPieza" onchange="aplicarFiltros()" class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
-                        <option value="">-- Todos los Tipos --</option>
-                        <option value="Armor">Armor (Pechera)</option><option value="Pants">Pants (Pantalón)</option><option value="Helm">Helm (Casco)</option><option value="Gloves">Gloves (Guantes)</option><option value="Boots">Boots (Botas)</option><option value="Shield">Shield (Escudo)</option><option value="Weapon">Weapon / Arma</option><option value="Ring">Ring (Anillo)</option><option value="Pendant">Pendant (Amuleto)</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">🏰 Nombre del Baúl</label>
-                    <input type="text" id="inputFiltroBaul" oninput="aplicarFiltros()" placeholder="Ej. Baúl Principal..." class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">👤 Asignado a</label>
-                    <select id="inputFiltroAsignado" onchange="aplicarFiltros()" class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
-                        <option value="">-- Todos --</option>
-                    </select>
-                </div>
-                <div id="panel-custom-id" class="hidden">
-                    <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">🆔 ID Personalizado (Opcional)</label>
-                    <input type="number" id="inputCustomId" placeholder="Automático" class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
-                </div>
-
-                <!-- OPCIONES EXCELLENT COMPLETAS -->
-                <div class="md:col-span-3 space-y-3">
-                    <label class="block text-xs uppercase text-[#f5b942] font-bold">✨ Opciones Excellent</label>
-                    <div class="bg-[#0b0a08] p-3.5 rounded-lg border border-[#29221a]">
-                        <span class="text-[10px] uppercase font-bold text-emerald-400 block mb-2">🛡️ Opciones para Armaduras, Escudos y Accesorios:</span>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-[#e5dec9]">
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Aumento de HP máximo" onchange="aplicarFiltros()"> Aumento de HP máximo</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Aumento de SD máximo" onchange="aplicarFiltros()"> Aumento de SD máximo</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Reducción de daño (DD)" onchange="aplicarFiltros()"> Reducción de daño (DD)</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Reflejo de daño (Reflect)" onchange="aplicarFiltros()"> Reflejo de daño (Reflect)</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Resistencia a daño crítico (Rate)" onchange="aplicarFiltros()"> Resistencia a crítico (Rate)</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Tasa de drop de Zen" onchange="aplicarFiltros()"> Tasa de drop de Zen</label>
-                        </div>
-                    </div>
-                    <div class="bg-[#0b0a08] p-3.5 rounded-lg border border-[#29221a]">
-                        <span class="text-[10px] uppercase font-bold text-[#fbd379] block mb-2">⚔️ Opciones para Armas y Bastones:</span>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#e5dec9]">
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Excellent damage rate %" onchange="aplicarFiltros()"> Excellent damage rate %</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Wizardry Damage increases +level/" onchange="aplicarFiltros()"> Wizardry Damage +level/</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Wizardry Damage increase %" onchange="aplicarFiltros()"> Wizardry Damage increase %</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Physical Damage increases +level/" onchange="aplicarFiltros()"> Physical Damage +level/</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Physical Damage increase %" onchange="aplicarFiltros()"> Physical Damage increase %</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Increases attack speed +" onchange="aplicarFiltros()"> Increases attack speed +</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Obtains (Life) when monster is killed" onchange="aplicarFiltros()"> Obtains (Life) when monster is killed</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Obtains (Mana) when monster is killed" onchange="aplicarFiltros()"> Obtains (Mana) when monster is killed</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Critical Damage rate %" onchange="aplicarFiltros()"> Critical Damage rate %</label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Damage to Monster" onchange="aplicarFiltros()"> Damage to Monster</label>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="md:col-span-3 flex justify-between items-center pt-3 border-t border-[#2e261c]">
-                    <button onclick="limpiarFiltros()" class="bg-[#1c1712] hover:bg-[#29221a] border border-[#3d3122] text-[#d6cebf] px-4 py-2 rounded-lg text-xs font-bold transition">🧹 Limpiar</button>
-                    <div class="flex gap-2">
-                        <button onclick="exportarExcelItems()" class="bg-[#1c1712] hover:bg-[#29221a] border border-[#f5b942]/50 text-[#fbd379] font-bold px-4 py-2 rounded-lg text-xs transition shadow">📊 Exportar Excel</button>
-                        <button onclick="guardarItemDesdeFiltro()" id="btn-guardar-item" class="hidden btn-gold-mudream px-6 py-2 rounded-lg text-xs transition">💾 Guardar Ítem</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="tabla-scroll-box" id="scrollBox">
-            <table class="tabla-items">
-                <thead>
-                    <tr>
-                        <th style="width: 80px;">ID #</th>
-                        <th>Nombre del Ítem & Baúl</th>
-                        <th style="width: 140px;">Pieza</th>
-                        <th>Opciones</th>
-                        <th style="width: 220px; text-align: center;">Asignado a</th>
-                        <th style="width: 90px; text-align: center;" id="th-acciones-head" class="hidden">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-items-body">
-                    <tr><td colspan="6" class="text-center py-8 text-[#8a8073]">Cargando...</td></tr>
-                </tbody>
-            </table>
+    <!-- Panel de Kill Manual -->
+    <div id="panel-kill-manual" class="w-full max-w-6xl card-mudream rounded-xl p-4 mb-6">
+        <h3 class="text-center font-bold text-[#f5b942] mb-3 text-xs uppercase tracking-wider">⚡ Cargar Kill Manual / Iniciar Boss</h3>
+        <div class="flex flex-wrap gap-3 justify-center items-center">
+            <select id="manualServer" class="input-mudream text-sm rounded-lg p-2.5 outline-none">
+                <option value="Server 1">Server 1</option>
+                <option value="Server 2">Server 2</option>
+                <option value="Server 3">Server 3</option>
+                <option value="Server 20">Server 20</option>
+            </select>
+            <select id="manualBoss" class="input-mudream text-sm rounded-lg p-2.5 outline-none"></select>
+            <button onclick="ejecutarKillForm()" class="btn-gold-mudream text-sm px-5 py-2.5 rounded-lg transition">⚔️ Registrar Kill</button>
         </div>
     </div>
 
-    <!-- SECCIÓN 2: MIEMBROS -->
-    <div id="seccion-clan-view" class="w-full max-w-7xl space-y-4 hidden">
-        <div id="panel-miembros-crud" class="card-mudream p-4 rounded-xl hidden">
-            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end w-full">
-                <div><label class="block text-[11px] text-[#a89f91] font-bold mb-1">NICK DEL PJ:</label><input type="text" id="clanPjNombre" placeholder="Nick" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div><label class="block text-[11px] text-[#a89f91] font-bold mb-1">RAZA:</label>
-                    <select id="clanPjRaza" class="w-full input-mudream p-2 rounded text-xs">
-                        <option value="DK">DK</option><option value="RF">RF</option><option value="SM">SM</option><option value="ELF">ELF</option><option value="MG">MG</option><option value="DL">DL</option>
-                    </select>
-                </div>
-                <div><span class="text-[10px] text-[#f5b942] block">ℹ️ Clave autom.: <b>nick+123</b></span></div>
-                <div><button onclick="guardarMiembroClan()" class="w-full btn-gold-mudream py-2 rounded text-xs">➕ Agregar Miembro</button></div>
-            </div>
-        </div>
-        <div class="tabla-scroll-box">
-            <table class="tabla-items">
-                <thead><tr><th>Nick del PJ</th><th>Clase (Raza)</th><th>Ítems Asignados</th><th id="th-miembro-acciones" class="hidden text-center">Acción</th></tr></thead>
-                <tbody id="tabla-clan-body"><tr><td colspan="4" class="text-center py-8 text-[#8a8073]">Sin miembros.</td></tr></tbody>
-            </table>
+    <!-- Timers -->
+    <div id="seccion-timers" class="w-full max-w-6xl">
+        <div id="contenedor-bosses" class="grid-bosses">
+            <div class="text-[#8a8073] text-center col-span-full py-8">Cargando timers de bosses...</div>
         </div>
     </div>
 
-    <!-- SECCIÓN 3: DISTRIBUCIÓN & SORTEO RULETA -->
-    <div id="seccion-distribucion-view" class="w-full max-w-7xl space-y-6 hidden">
-        <!-- CUADRO DE SORTEO TIPO RULETA -->
-        <div id="panel-sorteo-ruleta" class="card-mudream p-6 rounded-xl space-y-5">
-            <div class="flex flex-wrap justify-between items-center border-b border-[#2e261c] pb-3 gap-2">
-                <h2 class="text-sm font-black text-[#f5b942] uppercase tracking-wider">🎡 Sorteo de Ítems por Ruleta</h2>
-                <span class="text-[11px] text-[#a89f91]">Ingresá el ID del ítem, elegí los participantes y girá la ruleta para asignarlo</span>
-            </div>
-
-            <!-- 1. BUSCAR ÍTEM POR NÚMERO DE ID -->
-            <div class="bg-[#0b0a08] border border-[#2e261c] p-4 rounded-xl space-y-2">
-                <label class="block text-xs uppercase text-[#f5b942] font-bold">1️⃣ Número de ID del Ítem a Sortear:</label>
-                <div class="flex flex-col sm:flex-row gap-3 items-center">
-                    <input type="number" id="ruletaItemId" oninput="buscarItemRuleta()" placeholder="Ej. 105" class="w-full sm:w-40 input-mudream p-2.5 rounded-lg text-sm font-mono font-bold text-[#f5b942] outline-none">
-                    <div id="ruleta-item-preview" class="flex-1 w-full bg-[#16120e] border border-[#29221a] px-3.5 py-2.5 rounded-lg text-xs text-[#8a8073]">
-                        Escribí el número de ID para ver el ítem...
-                    </div>
-                </div>
-            </div>
-
-            <!-- 2. ABAJO: SELECCIÓN DE MIEMBROS PARTICIPANTES + RULETA -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
-                <div class="bg-[#0b0a08] border border-[#2e261c] p-4 rounded-xl space-y-2.5">
-                    <label class="block text-xs uppercase text-[#f5b942] font-bold mb-1">2️⃣ Seleccioná los Miembros que Participan (hasta 5):</label>
-                    <select id="ruleta-pj-1" onchange="actualizarRuletaCanvas()" class="w-full input-mudream p-2 rounded-lg text-xs"></select>
-                    <select id="ruleta-pj-2" onchange="actualizarRuletaCanvas()" class="w-full input-mudream p-2 rounded-lg text-xs"></select>
-                    <select id="ruleta-pj-3" onchange="actualizarRuletaCanvas()" class="w-full input-mudream p-2 rounded-lg text-xs"></select>
-                    <select id="ruleta-pj-4" onchange="actualizarRuletaCanvas()" class="w-full input-mudream p-2 rounded-lg text-xs"></select>
-                    <select id="ruleta-pj-5" onchange="actualizarRuletaCanvas()" class="w-full input-mudream p-2 rounded-lg text-xs"></select>
-
-                    <button onclick="girarRuleta()" id="btn-girar-ruleta" class="hidden w-full btn-gold-mudream py-3 rounded-xl text-sm uppercase tracking-wider mt-3 transition">
-                        🎲 Girar Ruleta y Asignar Ítem
-                    </button>
-                    <p id="aviso-ruleta-invitado" class="text-[11px] text-center text-[#8a8073] pt-1">
-                        🔒 Iniciá sesión como Admin u Operador para ejecutar el sorteo y asignar el ítem.
-                    </p>
-                </div>
-
-                <!-- RULETA GIRATORIA -->
-                <div class="flex flex-col items-center justify-center relative py-2">
-                    <div class="w-0 h-0 border-l-[13px] border-l-transparent border-r-[13px] border-r-transparent border-t-[24px] border-t-[#f5b942] drop-shadow z-10 -mb-2"></div>
-                    <canvas id="canvasRuleta" width="300" height="300" class="rounded-full border-4 border-[#3d3122] shadow-2xl bg-[#0b0a08]"></canvas>
-                </div>
-            </div>
-
-            <!-- CARTEL DE GANADOR -->
-            <div id="ruleta-cartel-ganador" class="hidden anim-ganador bg-gradient-to-r from-[#292015] via-[#382b1c] to-[#292015] border-2 border-[#f5b942] p-4 rounded-xl text-center shadow-2xl space-y-1">
-                <div class="text-xs uppercase font-bold text-emerald-400 tracking-widest">🎉 ¡SORTEO FINALIZADO E ÍTEM ASIGNADO! 🎉</div>
-                <div class="text-2xl font-black text-[#f8f5ee]">🏆 GANÓ: <span id="ruleta-nombre-ganador" class="text-[#f5b942]">---</span></div>
-                <div id="ruleta-detalle-asignacion" class="text-xs text-[#e5dec9]"></div>
-            </div>
+    <!-- Mapa -->
+    <div id="seccion-mapa" class="w-full max-w-6xl hidden flex flex-col items-center">
+        <div class="mb-4 text-center">
+            <h2 id="mapa-titulo" class="text-2xl font-bold text-[#f5b942]">🗺️ Mapa de Bosses</h2>
+            <p class="text-xs text-[#a89f91] mt-1">Clic izquierdo: registrar muerte | Clic derecho: resetear spot</p>
         </div>
-
-        <!-- TABLA DE MIEMBROS CON LOS ÍTEMS CARGADOS -->
-        <div class="card-mudream p-5 rounded-xl space-y-4">
-            <div class="flex flex-wrap justify-between items-center gap-2">
-                <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">📦 Distribución Actual: Miembros con Ítems Cargados</h2>
-                <span id="contador-items-distribuidos" class="text-xs text-[#fbd379] bg-[#0b0a08] border border-[#2e261c] px-3 py-1 rounded-lg font-bold">0 ítems asignados</span>
-            </div>
-            <div class="tabla-scroll-box" style="height: 420px !important;">
-                <table class="tabla-items">
-                    <thead>
-                        <tr>
-                            <th style="width: 180px;">Miembro (PJ)</th>
-                            <th style="width: 90px;">Raza</th>
-                            <th>Ítems Asignados (ID # y Opciones)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-distribucion-body">
-                        <tr><td colspan="3" class="text-center py-8 text-[#8a8073]">Cargando distribución...</td></tr>
-                    </tbody>
-                </table>
-            </div>
+        <div class="map-wrapper">
+            <img src="mapa.jpg" alt="Mapa MU" class="map-bg">
+            <div class="spot-btn" style="left: 8.5%; top: 17%;" onclick="registrarMuerteMapa(1)" oncontextmenu="resetearSpotMapa(event, 1)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-1">Esperando</span></div>
+            <div class="spot-btn" style="left: 14.5%; top: 9.5%;" onclick="registrarMuerteMapa(2)" oncontextmenu="resetearSpotMapa(event, 2)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-2">Esperando</span></div>
+            <div class="spot-btn" style="left: 29.5%; top: 15.5%;" onclick="registrarMuerteMapa(3)" oncontextmenu="resetearSpotMapa(event, 3)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-3">Esperando</span></div>
+            <div class="spot-btn" style="left: 42.5%; top: 16%;" onclick="registrarMuerteMapa(4)" oncontextmenu="resetearSpotMapa(event, 4)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-4">Esperando</span></div>
+            <div class="spot-btn" style="left: 61.5%; top: 4.5%;" onclick="registrarMuerteMapa(5)" oncontextmenu="resetearSpotMapa(event, 5)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-5">Esperando</span></div>
+            <div class="spot-btn" style="left: 59.5%; top: 14%;" onclick="registrarMuerteMapa(6)" oncontextmenu="resetearSpotMapa(event, 6)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-6">Esperando</span></div>
+            <div class="spot-btn" style="left: 86.5%; top: 53%;" onclick="registrarMuerteMapa(7)" oncontextmenu="resetearSpotMapa(event, 7)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-7">Esperando</span></div>
+            <div class="spot-btn" style="left: 86.5%; top: 62.5%;" onclick="registrarMuerteMapa(8)" oncontextmenu="resetearSpotMapa(event, 8)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-8">Esperando</span></div>
+            <div class="spot-btn" style="left: 86.5%; top: 76%;" onclick="registrarMuerteMapa(9)" oncontextmenu="resetearSpotMapa(event, 9)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-9">Esperando</span></div>
+            <div class="spot-btn" style="left: 86.5%; top: 85%;" onclick="registrarMuerteMapa(10)" oncontextmenu="resetearSpotMapa(event, 10)"><div class="spot-circle"></div><span class="spot-timer" id="map-t-10">Esperando</span></div>
         </div>
     </div>
 
-    <!-- SECCIÓN 4: ASISTENCIAS (INDEPENDIENTE) -->
-    <div id="seccion-asistencias-view" class="w-full max-w-7xl space-y-6 hidden">
-        <div class="card-mudream p-5 rounded-xl space-y-4">
-            <div class="flex flex-wrap justify-between items-center gap-3">
-                <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">⚔️ Asistencias a Invasiones (Ranking)</h2>
-                <div class="flex flex-wrap items-center gap-3">
-                    <span id="texto-ultimo-reset" class="text-xs text-[#a89f91] bg-[#0b0a08] border border-[#2e261c] px-3 py-1.5 rounded-lg">
-                        🕒 Último reset: <strong class="text-[#fbd379]">Sin registros</strong>
-                    </span>
-                    <button onclick="resetSemanalAsistencias()" id="btn-reset-semanal" class="hidden bg-red-950/80 hover:bg-red-900 border border-red-600/50 text-red-200 px-3 py-1.5 rounded text-xs font-bold transition">🔄 Reset Mensual (20%)</button>
-                </div>
-            </div>
-            <div id="panel-asistencia-ctrl" class="flex flex-wrap gap-3 items-center hidden bg-[#0b0a08] p-3 rounded-lg border border-[#29221a]">
-                <span class="text-xs text-[#e5dec9] font-bold">Miembro:</span>
-                <select id="asistPjSelect" class="input-mudream p-2 rounded text-xs"><option value="">-- Seleccionar --</option></select>
-                <div class="flex gap-2 ml-auto">
-                    <button onclick="modificarAsistencia(1)" class="bg-emerald-900/80 hover:bg-emerald-800 border border-emerald-500/40 text-emerald-200 px-3 py-1.5 rounded text-xs font-bold">➕ Sumar</button>
-                    <button onclick="modificarAsistencia(-1)" class="bg-red-950/80 hover:bg-red-900 border border-red-500/40 text-red-200 px-3 py-1.5 rounded text-xs font-bold">➖ Restar</button>
-                </div>
-            </div>
-            <div class="tabla-scroll-box" style="height: 440px !important;">
-                <table class="tabla-items">
-                    <thead>
-                        <tr>
-                            <th>Miembro (PJ)</th>
-                            <th style="text-align: center;">Resets</th>
-                            <th style="text-align: right; padding-right: 40px;">Asistencias Totales</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-asistencias-ranking"><tr><td colspan="3" class="text-center py-4">Cargando...</td></tr></tbody>
-                </table>
-            </div>
-        </div>
+    <!-- Bots -->
+    <div id="seccion-bots" class="w-full max-w-6xl hidden space-y-4">
+        <h2 class="text-xl font-bold text-[#f5b942] mb-4 border-b border-[#2e261c] pb-2">🤖 Conexión de Clientes y PCs de la Guild</h2>
+        <div id="contenedor-bots-lista" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
     </div>
 
-    <!-- SECCIÓN 5: DONACIONES & BANCO GUILD (INDEPENDIENTE) -->
-    <div id="seccion-donaciones-view" class="w-full max-w-7xl space-y-6 hidden">
-        <div class="card-mudream p-5 rounded-xl space-y-3">
-            <div class="flex justify-between items-center">
-                <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">🏛️ Banco Guild (Acumulado Neto & Talismanes)</h2>
-                <button onclick="abrirModalGasto()" id="btn-gasto-modal" class="hidden bg-red-950/80 hover:bg-red-900 border border-red-600/50 text-red-200 px-3 py-1.5 rounded text-xs font-bold">📉 Registrar Uso / Gasto</button>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="tabla-items text-center">
-                    <thead><tr><th>Bless</th><th>Soul</th><th>Life</th><th>Chaos</th><th>Creation</th><th>Assembly</th><th>Luck</th><th>Zen</th></tr></thead>
-                    <tbody>
-                        <tr class="font-bold text-[#fbd379] text-sm">
-                            <td id="banco-bless">0</td><td id="banco-soul">0</td><td id="banco-life">0</td><td id="banco-chaos">0</td><td id="banco-creation">0</td><td id="banco-assembly">0</td><td id="banco-luck">0</td><td id="banco-zen">0</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="panel-donacion-crud" class="card-mudream p-5 rounded-xl space-y-4 hidden">
-            <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">💎 Registrar Donación de Joyas / Talismanes</h2>
-            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 items-end bg-[#0b0a08] p-3 rounded-lg border border-[#29221a]">
-                <div class="col-span-2">
-                    <label class="block text-[10px] text-[#a89f91] font-bold mb-1">MIEMBRO:</label>
-                    <select id="donPj" class="w-full input-mudream p-2 rounded text-xs"><option value="">-- Seleccionar --</option></select>
-                </div>
-                <div><label class="block text-[10px] text-[#a89f91]">BLESS:</label><input type="number" id="donBless" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-[#a89f91]">SOUL:</label><input type="number" id="donSoul" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-[#a89f91]">LIFE:</label><input type="number" id="donLife" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-[#a89f91]">CHAOS:</label><input type="number" id="donChaos" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-[#a89f91]">CREATION:</label><input type="number" id="donCreation" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-[#a89f91]">ASSEMBLY:</label><input type="number" id="donAssembly" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-[#a89f91]">LUCK:</label><input type="number" id="donLuck" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div class="col-span-2"><label class="block text-[10px] text-[#a89f91]">ZEN:</label><input type="number" id="donZen" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div class="col-span-5"><button onclick="guardarDonacionJoyas()" class="w-full btn-gold-mudream py-2 rounded text-xs mt-1">💾 Registrar Donación</button></div>
-            </div>
-        </div>
-
-        <div class="card-mudream p-5 rounded-xl space-y-4">
-            <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">📜 Historial de Donaciones</h2>
-            <div class="tabla-scroll-box" style="height: 340px !important;">
-                <table class="tabla-items text-center">
-                    <thead><tr><th style="text-align: left;">Miembro</th><th>Bless</th><th>Soul</th><th>Life</th><th>Chaos</th><th>Creation</th><th>Assembly</th><th>Luck</th><th>Zen</th><th>Fecha</th></tr></thead>
-                    <tbody id="tabla-donaciones-body"><tr><td colspan="10" class="text-center py-4 text-[#8a8073]">Sin donaciones.</td></tr></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- SECCIÓN 6: USUARIOS -->
-    <div id="seccion-users-view" class="w-full max-w-7xl space-y-4 hidden">
-        <div class="card-mudream p-6 rounded-xl space-y-4">
-            <h2 class="text-lg font-bold text-[#f5b942]">👑 Gestión de Usuarios & Accesos</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
-                <input type="text" id="nuevoUsuario" placeholder="Usuario" class="input-mudream p-2 rounded text-xs">
-                <input type="password" id="nuevaPassword" placeholder="Contraseña temporal" class="input-mudream p-2 rounded text-xs">
-                <select id="nuevoRol" class="input-mudream p-2 rounded text-xs">
-                    <option value="operador">Operador</option><option value="lector">Lector</option>
+    <!-- Donaciones -->
+    <div id="seccion-donaciones" class="w-full max-w-6xl hidden space-y-6">
+        <div class="card-mudream rounded-xl p-6">
+            <h2 class="text-xl font-bold text-[#f5b942] mb-4">💎 Registrar Nueva Donación</h2>
+            <div class="flex flex-wrap gap-4 items-center">
+                <input type="text" id="donacionPj" placeholder="Nombre de PJ" class="input-mudream p-2.5 rounded-lg outline-none text-sm w-48">
+                <select id="donacionTipo" class="input-mudream p-2.5 rounded-lg outline-none text-sm w-48">
+                    <option value="Jewel of Bless">Jewel of Bless</option>
+                    <option value="Jewel of Soul">Jewel of Soul</option>
+                    <option value="Jewel of Life">Jewel of Life</option>
+                    <option value="Jewel of Creation">Jewel of Creation</option>
+                    <option value="Zen">Zen</option>
+                    <option value="VIP Points">VIP Points</option>
                 </select>
-                <button onclick="crearUsuario()" class="btn-gold-mudream py-2 rounded text-xs">Crear / Actualizar</button>
+                <input type="number" id="donacionCantidad" placeholder="Cantidad" value="1" min="1" class="input-mudream p-2.5 rounded-lg outline-none text-sm w-32">
+                <button onclick="guardarDonacion()" class="btn-gold-mudream px-6 py-2.5 rounded-lg text-sm transition">💾 Registrar</button>
             </div>
         </div>
-        <div class="tabla-scroll-box">
-            <table class="tabla-items">
-                <thead><tr><th>Usuario</th><th>Rol Actual</th><th>Estado</th><th class="text-center">Control de Acceso</th></tr></thead>
-                <tbody id="tabla-usuarios-body"><tr><td colspan="4" class="text-center py-4">Cargando...</td></tr></tbody>
+        <div class="card-mudream rounded-xl p-6 overflow-x-auto">
+            <table class="w-full text-left text-sm text-[#e5dec9]">
+                <thead class="bg-[#191510] text-[#f5b942] uppercase text-xs border-b border-[#382e22]">
+                    <tr><th class="p-3">PJ</th><th class="p-3">Tipo</th><th class="p-3">Cantidad</th><th class="p-3">Registrado Por</th></tr>
+                </thead>
+                <tbody id="tabla-donaciones-body"></tbody>
             </table>
         </div>
     </div>
 
-    <!-- MODAL GASTO -->
-    <div id="modal-gasto" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-[#16120e] border border-red-700/70 p-6 rounded-xl max-w-md w-full flex flex-col shadow-2xl space-y-3">
-            <h3 class="text-lg font-bold text-red-400 mb-2">📉 Registrar Gasto / Uso de Guild</h3>
-            <div><label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">Motivo:</label><input type="text" id="gastoMotivo" class="w-full input-mudream p-2.5 rounded text-xs"></div>
-            <div class="grid grid-cols-3 gap-2 text-xs text-[#e5dec9]">
-                <div><label>Bless:</label><input type="number" id="gastoBless" value="0" class="w-full input-mudream p-1.5 rounded"></div>
-                <div><label>Soul:</label><input type="number" id="gastoSoul" value="0" class="w-full input-mudream p-1.5 rounded"></div>
-                <div><label>Life:</label><input type="number" id="gastoLife" value="0" class="w-full input-mudream p-1.5 rounded"></div>
-                <div><label>Chaos:</label><input type="number" id="gastoChaos" value="0" class="w-full input-mudream p-1.5 rounded"></div>
-                <div><label>Creation:</label><input type="number" id="gastoCreation" value="0" class="w-full input-mudream p-1.5 rounded"></div>
-                <div><label>Assembly:</label><input type="number" id="gastoAssembly" value="0" class="w-full input-mudream p-1.5 rounded"></div>
-                <div><label>Luck:</label><input type="number" id="gastoLuck" value="0" class="w-full input-mudream p-1.5 rounded"></div>
-                <div class="col-span-2"><label>Zen:</label><input type="number" id="gastoZen" value="0" class="w-full input-mudream p-1.5 rounded"></div>
-            </div>
-            <div class="flex gap-2 justify-end pt-3">
-                <button onclick="guardarGastoGuild()" class="bg-red-800 hover:bg-red-700 text-white px-4 py-2 rounded text-xs font-bold">Descontar</button>
-                <button onclick="cerrarModalGasto()" class="bg-[#221c15] text-[#d6cebf] px-4 py-2 rounded text-xs font-bold">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL LOGIN -->
+    <!-- Login Modal -->
     <div id="modal-login" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50">
         <div class="bg-[#16120e] border border-[#f5b942]/50 p-6 rounded-xl w-80 text-center shadow-2xl">
             <h3 class="text-lg font-bold text-[#f5b942] mb-4">🔐 Iniciar Sesión</h3>
-            <input type="text" id="loginUser" placeholder="Usuario" class="w-full input-mudream p-2.5 rounded mb-3 text-sm">
-            <input type="password" id="loginPass" placeholder="Contraseña" class="w-full input-mudream p-2.5 rounded mb-4 text-sm">
+            <input type="text" id="loginUser" placeholder="Usuario (Pinion, tolkien, nasda)" class="w-full input-mudream p-2.5 rounded mb-3 text-sm outline-none">
+            <input type="password" id="loginPass" placeholder="Contraseña" class="w-full input-mudream p-2.5 rounded mb-4 text-sm outline-none">
             <div class="flex gap-2">
                 <button onclick="ejecutarLogin()" class="w-full btn-gold-mudream py-2 rounded text-sm">Entrar</button>
                 <button onclick="toggleLoginModal()" class="w-full bg-[#221c15] text-[#a89f91] font-bold py-2 rounded text-sm">Cancelar</button>
@@ -489,100 +238,71 @@
         </div>
     </div>
 
-    <!-- MODAL EDITAR ÍTEM -->
-    <div id="modal-editar-item" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-[#16120e] border border-[#f5b942]/50 p-6 rounded-xl max-w-lg w-full flex flex-col shadow-2xl space-y-3 max-h-[90vh] overflow-y-auto">
-            <h3 class="text-lg font-bold text-[#f5b942] mb-2">✏️ Editar Ítem</h3>
-            <input type="hidden" id="editOldId">
-            <div><label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">ID:</label><input type="number" id="editId" class="w-full input-mudream p-2 rounded text-xs"></div>
-            <div><label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">Nombre / Baúl:</label><input type="text" id="editNombre" class="w-full input-mudream p-2 rounded text-xs"></div>
-            <div><label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">Tipo de Pieza:</label>
-                <select id="editTipo" onchange="actualizarOpcionesEdicion()" class="w-full input-mudream p-2 rounded text-xs">
-                    <option value="Armor">Armor</option>
-                    <option value="Pants">Pants</option>
-                    <option value="Helm">Helm</option>
-                    <option value="Gloves">Gloves</option>
-                    <option value="Boots">Boots</option>
-                    <option value="Shield">Shield</option>
-                    <option value="Weapon">Weapon</option>
-                    <option value="Ring">Ring</option>
-                    <option value="Pendant">Pendant</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">👤 Asignado a (Baúl o Miembro):</label>
-                <select id="editAsignado" class="w-full input-mudream p-2 rounded text-xs">
-                    <option value="">En Baúl (Sin asignar)</option>
-                </select>
-            </div>
-
-            <!-- BLOQUE DINÁMICO DE OPCIONES EN EDICIÓN -->
-            <div id="edit-opciones-defensivas" class="space-y-1">
-                <span class="text-[10px] uppercase font-bold text-emerald-400 block">🛡️ Opciones de Armadura / Escudo / Anillo:</span>
-                <div class="grid grid-cols-2 gap-1 text-xs text-[#e5dec9]">
-                    <label><input type="checkbox" name="editChkOpt" class="accent-[#f5b942]" value="Aumento de HP máximo"> HP Máximo</label>
-                    <label><input type="checkbox" name="editChkOpt" class="accent-[#f5b942]" value="Aumento de SD máximo"> SD Máximo</label>
-                    <label><input type="checkbox" name="editChkOpt" class="accent-[#f5b942]" value="Reducción de daño (DD)"> Reducción de daño (DD)</label>
-                    <label><input type="checkbox" name="editChkOpt" class="accent-[#f5b942]" value="Reflejo de daño (Reflect)"> Reflect</label>
-                    <label><input type="checkbox" name="editChkOpt" class="accent-[#f5b942]" value="Resistencia a daño crítico (Rate)"> Resistencia Crítico</label>
-                    <label><input type="checkbox" name="editChkOpt" class="accent-[#f5b942]" value="Tasa de drop de Zen"> Drop Zen</label>
-                </div>
-            </div>
-
-            <div id="edit-opciones-ofensivas" class="space-y-1 hidden">
-                <span class="text-[10px] uppercase font-bold text-[#fbd379] block">⚔️ Opciones de Arma / Colgante:</span>
-                <div class="grid grid-cols-1 gap-1 text-xs text-[#e5dec9]">
-                    <label><input type="checkbox" name="editChkOpt" class="accent-[#f5b942]" value="Excellent damage rate %"> Excellent damage rate %</label>
-                    <label><input type="checkbox" name="editChkOpt" class="accent-[#f5b942]" value="Wizardry Damage increases +level/"> Wizardry Damage +level/</label>
-                    <label><input type="checkbox" name="editChkOpt" class="accent-[#f5b942]" value="Wizardry Damage increase %"> Wizardry Damage increase %</label>
-                    <label><input type="checkbox" name="editChkOpt" class="accent-[#f5b942]" value="Physical Damage increases +level/"> Physical Damage +level/</label>
-                    <label><input type="checkbox" name="editChkOpt" class="accent-[#f5b942]" value="Physical Damage increase %"> Physical Damage increase %</label>
-                    <label><input type="checkbox" name="editChkOpt" class="accent-[#f5b942]" value="Increases attack speed +"> Increases attack speed +</label>
-                    <label><input type="checkbox" name="editChkOpt" class="accent-[#f5b942]" value="Obtains (Life) when monster is killed"> Life per kill</label>
-                    <label><input type="checkbox" name="editChkOpt" class="accent-[#f5b942]" value="Obtains (Mana) when monster is killed"> Mana per kill</label>
-                    <label><input type="checkbox" name="editChkOpt" class="accent-[#f5b942]" value="Critical Damage rate %"> Critical Damage rate %</label>
-                    <label><input type="checkbox" name="editChkOpt" class="accent-[#f5b942]" value="Damage to Monster"> Damage to Monster</label>
-                </div>
-            </div>
-
-            <div class="flex gap-2 justify-end pt-2">
-                <button onclick="guardarEdicionItem()" class="btn-gold-mudream px-4 py-2 rounded text-xs">Guardar</button>
-                <button onclick="cerrarModalEditar()" class="bg-[#221c15] text-[#d6cebf] px-4 py-2 rounded text-xs font-bold">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        let catalogo = [], miembrosClan = [], sesionAutorizada = false, esAdmin = false;
-        let ruletaGirando = false, anguloActualRuleta = 0, itemSeleccionadoRuleta = null;
+        let modoVista = 'TODOS';
+        let servidorMapaActivo = 1;
+        let estadoWeb = { timers: {}, ocultos: [], heartbeats: {} };
+        let estaLogueado = false;
 
-        async function chequearSesion() {
+        const BOSSES_FIJOS = {
+            "Server 1": ["Muggron", "Dreadhorn", "Moltragon", "Borgar", "Kharzul", "Vescrya"],
+            "Server 2": ["Muggron", "Dreadhorn", "Moltragon", "Borgar", "Kharzul", "Vescrya"],
+            "Server 3": ["Muggron", "Dreadhorn", "Moltragon", "Borgar", "Kharzul", "Vescrya"],
+            "Server 20": ["Muggron Barracks", "Muggron Crywolf", "Kharzul", "Vescrya"]
+        };
+        const COOLDOWNS_LOCAL = {
+            "Muggron": 180, "Dreadhorn": 60, "Moltragon": 60, "Borgar": 120,
+            "Kharzul": 420, "Vescrya": 420, "Muggron Barracks": 180, "Muggron Crywolf": 180,
+            "Yellow Goblin": 600, "Blue Goblin": 600, "Red Goblin": 600,
+            "Red Dragon": 360, "Santa": 360, "White Wizard": 360, "Skeleton King": 360
+        };
+
+        function setVista(vista) {
+            modoVista = vista;
+            document.querySelectorAll('.btn-tab').forEach(b => {
+                if (b.id.startsWith('tab-MAPA_')) {
+                    b.className = "btn-tab px-4 py-2 rounded-lg text-xs font-bold bg-[#16120e] hover:bg-[#221c15] border border-[#3d3122] text-[#fbd379] transition";
+                } else if (b.id === 'tab-DONACIONES') {
+                    b.className = "btn-tab px-4 py-2 rounded-lg text-xs font-bold bg-[#292015] border border-[#f5b942]/40 text-[#f5b942] hover:bg-[#382b1c] transition";
+                } else {
+                    b.className = "btn-tab px-4 py-2 rounded-lg text-xs font-bold bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] transition";
+                }
+            });
+            const activeTab = document.getElementById(`tab-${vista}`);
+            if (activeTab) activeTab.className = "btn-tab px-4 py-2 rounded-lg text-xs btn-gold-mudream transition";
+
+            document.getElementById('seccion-timers').classList.add('hidden');
+            document.getElementById('seccion-mapa').classList.add('hidden');
+            document.getElementById('seccion-bots').classList.add('hidden');
+            document.getElementById('seccion-donaciones').classList.add('hidden');
+            document.getElementById('panel-kill-manual').classList.add('hidden');
+
+            if (vista === 'DONACIONES') {
+                document.getElementById('seccion-donaciones').classList.remove('hidden');
+                cargarDonaciones();
+            } else if (vista === 'BOTS') {
+                document.getElementById('seccion-bots').classList.remove('hidden');
+            } else if (vista.startsWith('MAPA_')) {
+                servidorMapaActivo = parseInt(vista.split('_')[1]);
+                document.getElementById('mapa-titulo').textContent = `🗺️ Mapa Server ${servidorMapaActivo}`;
+                document.getElementById('seccion-mapa').classList.remove('hidden');
+            } else {
+                document.getElementById('seccion-timers').classList.remove('hidden');
+                document.getElementById('panel-kill-manual').classList.remove('hidden');
+                renderizarUI();
+            }
+        }
+
+        async function verificarSesion() {
             try {
                 const res = await fetch('/api/session');
                 const data = await res.json();
+                estaLogueado = data.logged_in;
                 if (data.logged_in) {
-                    sesionAutorizada = data.autorizado;
-                    esAdmin = data.es_admin;
-                    const badge = document.getElementById('session-user-badge');
-                    if (badge) badge.innerHTML = `👤 <strong class="text-[#f5b942]">${data.user}</strong> (${data.rol})`;
-                    const loginBtn = document.getElementById('btn-login-open');
-                    if (loginBtn) loginBtn.outerHTML = `<a href="/logout" class="bg-red-950/80 hover:bg-red-900 border border-red-600/40 text-red-200 px-3 py-1.5 rounded-lg text-xs font-bold transition">Salir</a>`;
-                    
-                    if (sesionAutorizada) {
-                        ['btn-guardar-item', 'panel-custom-id', 'dummy-div', 'panel-miembros-crud', 'btn-girar-ruleta', 'panel-asistencia-ctrl', 'panel-donacion-crud', 'btn-gasto-modal', 'btn-reset-semanal', 'th-acciones-head', 'th-miembro-acciones', 'admin-backup-buttons'].forEach(id => {
-                            const el = document.getElementById(id);
-                            if (el) el.classList.remove('hidden');
-                        });
-                        const avisoInv = document.getElementById('aviso-ruleta-invitado');
-                        if (avisoInv) avisoInv.classList.add('hidden');
-                    }
-                    if (esAdmin) {
-                        const btnUsers = document.getElementById('btn-sec-users');
-                        if (btnUsers) btnUsers.classList.remove('hidden');
-                        cargarUsuarios();
-                    }
+                    document.getElementById('user-display').innerHTML = `👤 <strong class="text-[#f5b942]">${data.user}</strong> (${data.rol})`;
+                    document.getElementById('login-btn-container').innerHTML = `<a href="/logout" class="bg-red-950/80 hover:bg-red-900 border border-red-600/40 text-red-200 px-3 py-1 rounded font-bold transition">Salir</a>`;
                 }
-            } catch(e) { console.error("Error sesión:", e); }
+            } catch (e) {}
         }
 
         function toggleLoginModal() { document.getElementById('modal-login').classList.toggle('hidden'); }
@@ -591,710 +311,110 @@
             const username = document.getElementById('loginUser').value;
             const password = document.getElementById('loginPass').value;
             const res = await fetch('/login', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
-            if (res.ok) { location.reload(); }
-            else { const err = await res.json(); alert(err.error || "Credenciales incorrectas"); }
+            if (res.ok) location.reload();
+            else alert("Usuario o contraseña incorrectos.");
         }
 
-        function cambiarSeccion(sec) {
-            ['items', 'clan', 'distribucion', 'asistencias', 'donaciones', 'users'].forEach(s => {
-                document.getElementById(`seccion-${s}-view`).classList.add('hidden');
-                document.getElementById(`btn-sec-${s}`).className = "bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition";
-            });
-            document.getElementById(`seccion-${sec.toLowerCase()}-view`).classList.remove('hidden');
-            document.getElementById(`btn-sec-${sec.toLowerCase()}`).className = "btn-gold-mudream px-4 py-2 rounded-lg text-xs transition";
-            
-            if (sec === 'ITEMS') { cargarItems(); }
-            if (sec === 'CLAN') { cargarMiembros(); }
-            if (sec === 'DISTRIBUCION') { prepararVistaDistribucion(); }
-            if (sec === 'ASISTENCIAS') { cargarMiembros(); cargarAsistenciasRanking(); }
-            if (sec === 'DONACIONES') { cargarMiembros(); cargarDonacionesJoyas(); }
-            if (sec === 'USERS') { cargarUsuarios(); }
-        }
-
-        async function cargarItems() {
-            const res = await fetch('/api/items');
-            if (res.ok) {
-                const data = await res.json();
-                catalogo = data.items || [];
-                aplicarFiltros();
-                renderizarTablaDistribucion();
-            }
-        }
-
-        async function cargarMiembros() {
-            const res = await fetch('/api/miembros');
-            if (res.ok) {
-                miembrosClan = await res.json();
-                const selAsist = document.getElementById('asistPjSelect');
-                const selDon = document.getElementById('donPj');
-                const selAsignado = document.getElementById('inputFiltroAsignado');
-                let opts = '<option value="">-- Todos --</option>';
-                let optsCtrl = '<option value="">-- Seleccionar --</option>';
-                
-                miembrosClan.forEach(m => { 
-                    opts += `<option value="${m.nombre_pj}">${m.nombre_pj}</option>`;
-                    optsCtrl += `<option value="${m.nombre_pj}">${m.nombre_pj} (${m.raza})</option>`;
-                });
-                
-                if (selAsist) selAsist.innerHTML = optsCtrl;
-                if (selDon) selDon.innerHTML = optsCtrl;
-                if (selAsignado) selAsignado.innerHTML = opts;
-
-                const tbody = document.getElementById('tabla-clan-body');
-                if (tbody) {
-                    tbody.innerHTML = miembrosClan.map(m => `
-                        <tr>
-                            <td class="font-bold text-white">
-                                <input type="text" id="edit-pj-${m.id}" value="${m.nombre_pj}" class="input-mudream px-2 py-1 rounded text-xs ${!sesionAutorizada ? 'pointer-events-none border-none bg-transparent' : ''}">
-                            </td>
-                            <td>
-                                <select id="edit-raza-${m.id}" class="input-mudream px-2 py-1 rounded text-xs ${!sesionAutorizada ? 'pointer-events-none border-none bg-transparent' : ''}">
-                                    <option value="DK" ${m.raza === 'DK' ? 'selected' : ''}>DK</option>
-                                    <option value="RF" ${m.raza === 'RF' ? 'selected' : ''}>RF</option>
-                                    <option value="SM" ${m.raza === 'SM' ? 'selected' : ''}>SM</option>
-                                    <option value="ELF" ${m.raza === 'ELF' ? 'selected' : ''}>ELF</option>
-                                    <option value="MG" ${m.raza === 'MG' ? 'selected' : ''}>MG</option>
-                                    <option value="DL" ${m.raza === 'DL' ? 'selected' : ''}>DL</option>
-                                </select>
-                            </td>
-                            <td class="text-[#d6cebf]">${Array.isArray(m.items_asignados) ? m.items_asignados.map(id => `#${id}`).join(', ') : 'Ninguno'}</td>
-                            <td class="${sesionAutorizada ? 'text-center space-x-1' : 'hidden'}">
-                                <button onclick="actualizarMiembro(${m.id})" class="bg-[#221c15] text-[#fbd379] border border-[#f5b942]/40 px-2 py-1 rounded text-xs font-bold" title="Guardar Cambios">💾</button>
-                                <button onclick="eliminarMiembro(${m.id}, '${m.nombre_pj}')" class="bg-red-950 text-red-300 border border-red-800 px-2 py-1 rounded text-xs font-bold" title="Eliminar">🗑️</button>
-                            </td>
-                        </tr>
-                    `).join('') || '<tr><td colspan="4" class="text-center py-8 text-[#8a8073]">Sin miembros.</td></tr>';
-                }
-                renderizarTablaDistribucion();
-            }
-        }
-
-        // --- SECCIÓN DISTRIBUCIÓN & RULETA ---
-        async function prepararVistaDistribucion() {
-            await Promise.all([cargarItems(), cargarMiembros()]);
-            for (let i = 1; i <= 5; i++) {
-                const sel = document.getElementById(`ruleta-pj-${i}`);
-                if (!sel) continue;
-                const valorPrevio = sel.value;
-                let opts = `<option value="">-- Participante #${i} (Vacío) --</option>`;
-                miembrosClan.forEach(m => {
-                    opts += `<option value="${m.nombre_pj}">${m.nombre_pj} (${m.raza})</option>`;
-                });
-                sel.innerHTML = opts;
-                if (valorPrevio) sel.value = valorPrevio;
-            }
-            actualizarRuletaCanvas();
-            renderizarTablaDistribucion();
-        }
-
-        function renderizarTablaDistribucion() {
-            const tbody = document.getElementById('tabla-distribucion-body');
-            if (!tbody) return;
-            const totalAsignados = catalogo.filter(it => it.asignado_a && it.asignado_a.trim() !== '').length;
-            const contadorEl = document.getElementById('contador-items-distribuidos');
-            if (contadorEl) contadorEl.textContent = `${totalAsignados} ítems asignados`;
-
-            if (!miembrosClan.length) {
-                tbody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-[#8a8073]">Sin miembros cargados.</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = miembrosClan.map(m => {
-                const itemsDelPj = catalogo.filter(it => it.asignado_a && it.asignado_a.toLowerCase() === m.nombre_pj.toLowerCase());
-                const itemsHTML = itemsDelPj.length
-                    ? itemsDelPj.map(it => {
-                        const opts = Array.isArray(it.opciones) && it.opciones.length ? ` <span class="text-emerald-300 text-[10px]">(${it.opciones.join(', ')})</span>` : '';
-                        const btnQuitar = sesionAutorizada
-                            ? `<button onclick="quitarItemDeMiembro(${it.id})" class="ml-1.5 text-red-400 hover:text-red-300 font-bold" title="Devolver al Baúl">✖</button>`
-                            : '';
-                        return `<div class="inline-flex items-center bg-[#191510] border border-[#f5b942]/40 px-2.5 py-1 rounded-lg mr-1.5 mb-1 text-xs">
-                                    <span class="font-mono font-extrabold text-[#f5b942] mr-1.5">#${it.id}</span>
-                                    <span class="font-bold text-[#f8f5ee]">${it.nombre}</span>${opts}${btnQuitar}
-                                </div>`;
-                    }).join('')
-                    : '<span class="text-xs text-[#8a8073] italic">Sin ítems asignados</span>';
-
-                return `
-                    <tr>
-                        <td class="font-bold text-[#f8f5ee]">${m.nombre_pj}</td>
-                        <td><span class="badge-pj">${m.raza}</span></td>
-                        <td>${itemsHTML}</td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        async function quitarItemDeMiembro(itemId) {
-            if (!confirm(`¿Devolver el ítem #${itemId} al Baúl (sin asignar)?`)) return;
-            const res = await fetch('/api/items', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: itemId, asignado_a: null })
-            });
-            if (res.ok) {
-                await cargarItems();
-                buscarItemRuleta();
-            }
-        }
-
-        function buscarItemRuleta() {
-            const idInput = document.getElementById('ruletaItemId');
-            const preview = document.getElementById('ruleta-item-preview');
-            if (!idInput || !preview) return;
-            const idVal = idInput.value.trim();
-            if (!idVal) {
-                itemSeleccionadoRuleta = null;
-                preview.innerHTML = 'Escribí el número de ID para ver el ítem...';
-                return;
-            }
-            const encontrado = catalogo.find(x => String(x.id) === idVal);
-            if (!encontrado) {
-                itemSeleccionadoRuleta = null;
-                preview.innerHTML = `<span class="text-red-400 font-bold">❌ No existe ningún ítem con ID #${idVal}</span>`;
-                return;
-            }
-            itemSeleccionadoRuleta = encontrado;
-            const optsText = Array.isArray(encontrado.opciones) && encontrado.opciones.length ? encontrado.opciones.join(' | ') : 'Sin opciones exc.';
-            const estadoAsig = encontrado.asignado_a ? `<span class="text-amber-400">(Actual: ${encontrado.asignado_a})</span>` : `<span class="text-emerald-400">(En Baúl)</span>`;
-            preview.innerHTML = `
-                <div class="font-bold text-[#f8f5ee]">#${encontrado.id} - <span class="text-[#f5b942]">${encontrado.nombre}</span> ${estadoAsig}</div>
-                <div class="text-[11px] text-emerald-300 mt-0.5">${optsText}</div>
-            `;
-        }
-
-        function obtenerParticipantesRuleta() {
-            const lista = [];
-            for (let i = 1; i <= 5; i++) {
-                const el = document.getElementById(`ruleta-pj-${i}`);
-                const val = el ? el.value.trim() : '';
-                if (val) lista.push(val);
-            }
-            return lista;
-        }
-
-        function actualizarRuletaCanvas() {
-            const canvas = document.getElementById('canvasRuleta');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            const seleccionados = obtenerParticipantesRuleta();
-            const participantes = seleccionados.length ? seleccionados : ['Elegí', 'los', 'miembros', 'a', 'sortear'];
-            const total = participantes.length;
-            const arc = (2 * Math.PI) / total;
-            const cx = canvas.width / 2;
-            const cy = canvas.height / 2;
-            const radio = cx - 8;
-
-            const colores = ['#292015', '#7f1d1d', '#b48a28', '#14532d', '#1c1712'];
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            for (let i = 0; i < total; i++) {
-                const anguloInicio = anguloActualRuleta + i * arc;
-                const anguloFin = anguloInicio + arc;
-
-                ctx.beginPath();
-                ctx.moveTo(cx, cy);
-                ctx.arc(cx, cy, radio, anguloInicio, anguloFin);
-                ctx.closePath();
-                ctx.fillStyle = colores[i % colores.length];
-                ctx.fill();
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = '#f5b942';
-                ctx.stroke();
-
-                ctx.save();
-                ctx.translate(cx, cy);
-                ctx.rotate(anguloInicio + arc / 2);
-                ctx.textAlign = "right";
-                ctx.fillStyle = "#f8f5ee";
-                ctx.font = "bold 13px 'Segoe UI', sans-serif";
-                ctx.fillText(participantes[i].substring(0, 15), radio - 16, 5);
-                ctx.restore();
-            }
-
-            ctx.beginPath();
-            ctx.arc(cx, cy, 22, 0, 2 * Math.PI);
-            ctx.fillStyle = '#0b0a08';
-            ctx.fill();
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = '#f5b942';
-            ctx.stroke();
-        }
-
-        function girarRuleta() {
-            if (ruletaGirando) return;
-            if (!itemSeleccionadoRuleta) {
-                return alert("⚠️ Primero ingresá un número de ID de ítem válido arriba para sortear.");
-            }
-            const seleccionados = obtenerParticipantesRuleta();
-            if (seleccionados.length < 2) {
-                return alert("⚠️ Seleccioná al menos 2 miembros participantes para girar la ruleta.");
-            }
-
-            ruletaGirando = true;
-            document.getElementById('btn-girar-ruleta').disabled = true;
-            document.getElementById('ruleta-cartel-ganador').classList.add('hidden');
-
-            const vueltasExtra = (Math.floor(Math.random() * 5) + 6) * 2 * Math.PI;
-            const anguloAleatorio = Math.random() * 2 * Math.PI;
-            const anguloObjetivo = anguloActualRuleta + vueltasExtra + anguloAleatorio;
-            const anguloInicial = anguloActualRuleta;
-            const duracion = 4200;
-            const inicioTiempo = performance.now();
-
-            function animar(ahora) {
-                const transcurrido = ahora - inicioTiempo;
-                const progreso = Math.min(transcurrido / duracion, 1);
-                const easeOut = 1 - Math.pow(1 - progreso, 4);
-                anguloActualRuleta = anguloInicial + (anguloObjetivo - anguloInicial) * easeOut;
-                actualizarRuletaCanvas();
-
-                if (progreso < 1) {
-                    requestAnimationFrame(animar);
-                } else {
-                    ruletaGirando = false;
-                    document.getElementById('btn-girar-ruleta').disabled = false;
-                    finalizarSorteoRuleta(seleccionados);
-                }
-            }
-            requestAnimationFrame(animar);
-        }
-
-        async function finalizarSorteoRuleta(participantes) {
-            const total = participantes.length;
-            const arc = (2 * Math.PI) / total;
-            let anguloNormalizado = ((-Math.PI / 2) - anguloActualRuleta) % (2 * Math.PI);
-            if (anguloNormalizado < 0) anguloNormalizado += 2 * Math.PI;
-            const indiceGanador = Math.floor(anguloNormalizado / arc) % total;
-            const ganador = participantes[indiceGanador];
-
-            document.getElementById('ruleta-nombre-ganador').textContent = ganador;
-            document.getElementById('ruleta-detalle-asignacion').textContent = `Asignando ítem #${itemSeleccionadoRuleta.id} (${itemSeleccionadoRuleta.nombre}) a ${ganador}...`;
-            document.getElementById('ruleta-cartel-ganador').classList.remove('hidden');
-
+        async function cargarDatos() {
             try {
-                const res = await fetch('/api/items', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: itemSeleccionadoRuleta.id, asignado_a: ganador })
-                });
+                const res = await fetch('/api/status_timers');
                 if (res.ok) {
-                    document.getElementById('ruleta-detalle-asignacion').innerHTML = `✅ Ítem <strong>#${itemSeleccionadoRuleta.id} - ${itemSeleccionadoRuleta.nombre}</strong> asignado automáticamente a <strong>${ganador}</strong>.`;
-                    await cargarItems();
-                    buscarItemRuleta();
-                } else {
-                    document.getElementById('ruleta-detalle-asignacion').textContent = `⚠️ Ganó ${ganador}, pero hubo un error al guardar en la base de datos.`;
+                    estadoWeb = await res.json();
+                    if (!modoVista.startsWith('MAPA_') && modoVista !== 'DONACIONES') {
+                        renderizarUI();
+                    }
                 }
-            } catch (e) {
-                document.getElementById('ruleta-detalle-asignacion').textContent = `⚠️ Error de conexión al asignar el ítem.`;
-            }
+            } catch (e) {}
         }
 
-        async function guardarMiembroClan() {
-            const nombre_pj = document.getElementById('clanPjNombre').value.trim();
-            const raza = document.getElementById('clanPjRaza').value;
-            if (!nombre_pj) return alert("Ingresá el nick.");
-            
-            const res = await fetch('/api/miembros', { 
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ nombre_pj, raza }) 
-            });
-            if (res.ok) {
-                alert(`¡Miembro agregado! Usuario creado automáticamente con clave: ${nombre_pj}123`);
-                document.getElementById('clanPjNombre').value = '';
-                cargarMiembros();
-            } else {
-                const err = await res.json();
-                alert("Error: " + err.error);
-            }
-        }
-
-        async function actualizarMiembro(id) {
-            const nombre_pj = document.getElementById(`edit-pj-${id}`).value.trim();
-            const raza = document.getElementById(`edit-raza-${id}`).value;
-            if (!nombre_pj) return alert("El nick no puede estar vacío.");
-            
-            const res = await fetch('/api/miembros', {
-                method: 'PUT', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, nombre_pj, raza })
-            });
-            if (res.ok) { alert("¡Miembro actualizado!"); cargarMiembros(); }
-            else { const err = await res.json(); alert("Error: " + err.error); }
-        }
-
-        async function eliminarMiembro(id, nombre_pj) {
-            if (!confirm(`¿Eliminar a ${nombre_pj}?`)) return;
-            await fetch('/api/miembros', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            cargarMiembros();
-        }
-
-        function limpiarFiltros() {
-            const idInput = document.getElementById('inputFiltroId');
-            if(idInput) idInput.value = "";
-            document.getElementById('inputFiltroSetBase').value = "";
-            document.getElementById('inputFiltroTipoPieza').value = "";
-            document.getElementById('inputFiltroBaul').value = "";
-            document.getElementById('inputFiltroAsignado').value = "";
-            const customIdEl = document.getElementById('inputCustomId');
-            if (customIdEl) customIdEl.value = "";
-            document.querySelectorAll('.filtro-chk').forEach(chk => chk.checked = false);
-            aplicarFiltros();
-        }
-
-        function aplicarFiltros() {
-            const filtroId = document.getElementById('inputFiltroId') ? document.getElementById('inputFiltroId').value.trim() : '';
-            const setBase = (document.getElementById('inputFiltroSetBase').value || '').trim().toLowerCase();
-            const tipoPieza = (document.getElementById('inputFiltroTipoPieza').value || '').toLowerCase();
-            const filtroBaul = (document.getElementById('inputFiltroBaul').value || '').toLowerCase();
-            const filtroAsignado = (document.getElementById('inputFiltroAsignado').value || '').toLowerCase();
-            const chkSeleccionados = Array.from(document.querySelectorAll('.filtro-chk:checked')).map(chk => chk.value.toLowerCase());
-
-            const filtrados = catalogo.filter(item => {
-                if (filtroId && String(item.id) !== filtroId) return false;
-
-                const nombre = String(item.nombre || '').toLowerCase();
-                const tipo = String(item.tipo || '').toLowerCase();
-                const asignado = String(item.asignado_a || '').toLowerCase();
-                const opcionesStr = Array.isArray(item.opciones) ? item.opciones.join(' ').toLowerCase() : '';
-
-                const matchSet = !setBase || nombre.includes(setBase);
-                const matchTipo = !tipoPieza || tipo.includes(tipoPieza);
-                const matchBaul = !filtroBaul || nombre.includes(filtroBaul);
-                const matchAsignado = !filtroAsignado || asignado === filtroAsignado;
-                const matchOpciones = chkSeleccionados.every(opt => opcionesStr.includes(opt));
-
-                return matchSet && matchTipo && matchBaul && matchAsignado && matchOpciones;
-            });
-
-            renderizarTabla(filtrados);
-        }
-
-        function renderizarTabla(items) {
-            const tbody = document.getElementById('tabla-items-body');
-            if (!tbody) return;
-            if (!items.length) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-[#8a8073]">Sin registros.</td></tr>';
-                return;
-            }
-            tbody.innerHTML = items.map(item => {
-                const opcionesBadges = Array.isArray(item.opciones) ? item.opciones.map(opt => `<span class="badge-opt">${opt}</span>`).join('') : '-';
-                let asignadoHTML = item.asignado_a ? `<span class="bg-[#221c15] border border-[#f5b942]/40 text-[#fbd379] px-2.5 py-0.5 rounded text-xs font-bold">${item.asignado_a}</span>` : '<span class="text-[#8a8073] text-xs">En Baúl</span>';
-                let accionesHTML = sesionAutorizada ? `
-                    <td class="text-center space-x-1">
-                        <button onclick="abrirModalEditar(${item.id})" class="bg-[#221c15] text-[#fbd379] border border-[#f5b942]/40 px-2 py-1 rounded text-xs font-bold" title="Editar">✏️</button>
-                        <button onclick="eliminarItem(${item.id})" class="bg-red-950 text-red-300 border border-red-800 px-2 py-1 rounded text-xs font-bold" title="Borrar">🗑️</button>
-                    </td>` : '';
-
-                return `
-                    <tr>
-                        <td class="font-mono text-[#f5b942] font-extrabold text-sm">#${item.id}</td>
-                        <td class="font-bold text-[#f8f5ee]">${item.nombre}</td>
-                        <td><span class="badge-pj">${item.tipo}</span></td>
-                        <td>${opcionesBadges}</td>
-                        <td class="text-center">${asignadoHTML}</td>
-                        ${accionesHTML}
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        async function resetSemanalAsistencias() {
-            if (!confirm("⚠️ ¿Estás seguro de realizar el Reset? Se dejará solo el 20% (redondeado hacia abajo) del puntaje actual y se sumará +1 Reset a cada miembro.")) return;
-            const res = await fetch('/api/asistencias/reset-semanal', { method: 'POST' });
-            if (res.ok) {
-                alert("¡Reset aplicado con éxito!");
-                cargarAsistenciasRanking();
-            } else {
-                const err = await res.json();
-                alert("Error al aplicar reset: " + (err.error || "Desconocido"));
-            }
-        }
-
-        function actualizarOpcionesEdicion() {
-            const tipo = document.getElementById('editTipo').value;
-            const defBox = document.getElementById('edit-opciones-defensivas');
-            const offBox = document.getElementById('edit-opciones-ofensivas');
-            
-            if (tipo === 'Weapon' || tipo === 'Pendant') {
-                defBox.classList.add('hidden');
-                offBox.classList.remove('hidden');
-            } else {
-                offBox.classList.add('hidden');
-                defBox.classList.remove('hidden');
-            }
-        }
-
-        function abrirModalEditar(id) {
-            const item = catalogo.find(x => x.id === id);
-            if (!item) return;
-            document.getElementById('editOldId').value = item.id;
-            document.getElementById('editId').value = item.id;
-            document.getElementById('editNombre').value = item.nombre;
-            document.getElementById('editTipo').value = item.tipo || 'Armor';
-            
-            const selectAsignado = document.getElementById('editAsignado');
-            let opts = '<option value="">En Baúl (Sin asignar)</option>';
-            miembrosClan.forEach(m => {
-                const selected = item.asignado_a === m.nombre_pj ? 'selected' : '';
-                opts += `<option value="${m.nombre_pj}" ${selected}>${m.nombre_pj} (${m.raza})</option>`;
-            });
-            selectAsignado.innerHTML = opts;
-            if (item.asignado_a) {
-                selectAsignado.value = item.asignado_a;
-            }
-
-            actualizarOpcionesEdicion();
-
-            const ops = item.opciones || [];
-            document.querySelectorAll('input[name="editChkOpt"]').forEach(chk => {
-                chk.checked = ops.includes(chk.value);
-            });
-
-            document.getElementById('modal-editar-item').classList.remove('hidden');
-        }
-
-        function cerrarModalEditar() { document.getElementById('modal-editar-item').classList.add('hidden'); }
-
-        async function guardarEdicionItem() {
-            const old_id = document.getElementById('editOldId').value;
-            const new_id = document.getElementById('editId').value;
-            const nombre = document.getElementById('editNombre').value.trim();
-            const tipo = document.getElementById('editTipo').value.trim();
-            const asignado_a = document.getElementById('editAsignado').value || null;
-            
-            const opciones = [];
-            document.querySelectorAll('input[name="editChkOpt"]:checked').forEach(chk => {
-                opciones.push(chk.value);
-            });
-
-            const res = await fetch('/api/items/editar', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ old_id, new_id, nombre, tipo, opciones, asignado_a })
-            });
-            if (res.ok) { alert("¡Ítem actualizado!"); cerrarModalEditar(); cargarItems(); }
-            else { const err = await res.json(); alert("Error: " + err.error); }
-        }
-
-        async function guardarItemDesdeFiltro() {
-            const set_base = document.getElementById('inputFiltroSetBase').value.trim();
-            const tipo = document.getElementById('inputFiltroTipoPieza').value;
-            const baul = document.getElementById('inputFiltroBaul').value.trim();
-            const asignado = document.getElementById('inputFiltroAsignado').value;
-            const customIdEl = document.getElementById('inputCustomId');
-            const custom_id = customIdEl ? customIdEl.value.trim() : '';
-
-            if (!set_base) return alert("Escribí o seleccioná un elemento.");
-
-            const opciones = [];
-            document.querySelectorAll('.filtro-chk:checked').forEach(chk => {
-                if (!opciones.includes(chk.value)) opciones.push(chk.value);
-            });
-
-            const res = await fetch('/api/items/agregar-manual', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ set_base, tipo, baul: baul || 'Baúl General', asignado: asignado || 'Sin asignar', custom_id, opciones })
-            });
-            if (res.ok) { alert("¡Ítem guardado!"); limpiarFiltros(); cargarItems(); }
-            else { const err = await res.json(); alert("Error: " + err.error); }
-        }
-
-        async function eliminarItem(id) {
-            if (!confirm(`¿Eliminar ítem #${id}?`)) return;
-            await fetch('/api/items/eliminar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            cargarItems();
-        }
-
-        async function cargarAsistenciasRanking() {
-            const res = await fetch('/api/asistencias-ranking');
-            if (res.ok) {
-                const payload = await res.json();
-                const data = Array.isArray(payload) ? payload : (payload.ranking || []);
-                const ultimoReset = payload.ultimo_reset;
-
-                const badgeResetFecha = document.getElementById('texto-ultimo-reset');
-                if (badgeResetFecha) {
-                    badgeResetFecha.innerHTML = ultimoReset
-                        ? `🕒 Último: <strong class="text-[#fbd379]">${ultimoReset}</strong>`
-                        : `🕒 Último reset: <strong class="text-[#8a8073]">Sin registros</strong>`;
-                }
-
-                document.getElementById('tabla-asistencias-ranking').innerHTML = data.map(row => {
-                    const resetsCount = row.total_resets || 0;
-                    const badgeReset = resetsCount > 0 
-                        ? `<span class="bg-[#221c15] text-[#fbd379] border border-[#f5b942]/40 px-2.5 py-0.5 rounded-full text-xs font-bold">🔄 ${resetsCount} ${resetsCount === 1 ? 'Reset' : 'Resets'}</span>` 
-                        : `<span class="text-[#8a8073] text-xs">Sin resets</span>`;
-                    return `
-                        <tr>
-                            <td class="font-bold text-[#f3efe6]">${row.pj_name}</td>
-                            <td style="text-align: center;">${badgeReset}</td>
-                            <td style="text-align: right; padding-right: 40px;" class="font-extrabold text-[#f5b942] text-base">${row.total_asistencias}</td>
-                        </tr>
+        function renderizarUI() {
+            const c = document.getElementById('contenedor-bosses');
+            c.innerHTML = '';
+            const ahoraUnix = Math.floor(Date.now() / 1000);
+            const servers = modoVista === 'TODOS' ? ["Server 1", "Server 2", "Server 3", "Server 20"] : [modoVista];
+            servers.forEach(svr => {
+                const timers = (estadoWeb.timers || {})[svr] || {};
+                (BOSSES_FIJOS[svr] || []).forEach(boss => {
+                    const k = timers[boss];
+                    const cd = (COOLDOWNS_LOCAL[boss] || 60) * 60;
+                    let txt = "DISPONIBLE";
+                    let txtColor = "text-emerald-400";
+                    let bg = "bg-[#16120e] border-[#3d3122] hover:border-[#f5b942]/50";
+                    if (k && ahoraUnix < k + cd) {
+                        txt = `Respawn en: ${Math.floor((k + cd - ahoraUnix)/60)}m`;
+                        txtColor = "text-red-300";
+                        bg = "bg-red-950/60 border-red-700/70";
+                    }
+                    c.innerHTML += `
+                        <div class="card p-4 rounded-xl ${bg} border shadow-lg text-center transition">
+                            <span class="text-[10px] font-bold text-[#f5b942] uppercase tracking-wider">${svr}</span>
+                            <h3 class="font-bold text-[#f8f5ee] text-base my-1">${boss}</h3>
+                            <div class="text-sm font-mono font-bold ${txtColor}">${txt}</div>
+                        </div>
                     `;
-                }).join('') || '<tr><td colspan="3" class="text-center py-4 text-[#8a8073]">Sin asistencias.</td></tr>';
-            }
-        }
-
-        async function modificarAsistencia(delta) {
-            const pj_name = document.getElementById('asistPjSelect').value;
-            if (!pj_name) return alert("Seleccioná un miembro.");
-            await fetch('/api/asistencias-ranking', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pj_name, delta })
+                });
             });
-            cargarAsistenciasRanking();
         }
 
-        async function cargarDonacionesJoyas() {
-            const res = await fetch('/api/donaciones-joyas');
+        function poblarSelector() {
+            const select = document.getElementById('manualBoss');
+            if (select.children.length > 0) return;
+            Object.keys(COOLDOWNS_LOCAL).forEach(b => {
+                let opt = document.createElement('option');
+                opt.value = b;
+                opt.textContent = `${b} (${COOLDOWNS_LOCAL[b]}m)`;
+                select.appendChild(opt);
+            });
+        }
+
+        async function ejecutarKillForm() {
+            const svr = document.getElementById('manualServer').value;
+            const boss = document.getElementById('manualBoss').value;
+            await fetch('/api/kill', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ server: svr, boss: boss })
+            });
+            cargarDatos();
+        }
+
+        async function cargarDonaciones() {
+            const res = await fetch('/api/donaciones');
             if (res.ok) {
                 const data = await res.json();
-                const b = data.banco_guild;
-                document.getElementById('banco-bless').textContent = b.bless;
-                document.getElementById('banco-soul').textContent = b.soul;
-                document.getElementById('banco-life').textContent = b.life;
-                document.getElementById('banco-chaos').textContent = b.chaos;
-                document.getElementById('banco-creation').textContent = b.creation;
-                document.getElementById('banco-assembly').textContent = b.talisman_assembly;
-                document.getElementById('banco-luck').textContent = b.talisman_luck;
-                document.getElementById('banco-zen').textContent = b.zen.toLocaleString();
-
-                document.getElementById('tabla-donaciones-body').innerHTML = data.donaciones.map(d => `
-                    <tr>
-                        <td style="text-align: left;" class="font-bold text-[#fbd379]">${d.pj_name}</td>
-                        <td>${d.bless}</td><td>${d.soul}</td><td>${d.life}</td><td>${d.chaos}</td><td>${d.creation}</td><td>${d.talisman_assembly}</td><td>${d.talisman_luck}</td><td>${d.zen.toLocaleString()}</td>
-                        <td class="text-xs text-[#a89f91]">${new Date(d.created_at).toLocaleDateString()}</td>
-                    </tr>
-                `).join('') || '<tr><td colspan="10" class="text-center py-4 text-[#8a8073]">Sin donaciones.</td></tr>';
-            }
-        }
-
-        async function guardarDonacionJoyas() {
-            const pj_name = document.getElementById('donPj').value;
-            if (!pj_name) return alert("Seleccioná un miembro.");
-            const payload = {
-                pj_name,
-                bless: parseInt(document.getElementById('donBless').value) || 0,
-                soul: parseInt(document.getElementById('donSoul').value) || 0,
-                life: parseInt(document.getElementById('donLife').value) || 0,
-                chaos: parseInt(document.getElementById('donChaos').value) || 0,
-                creation: parseInt(document.getElementById('donCreation').value) || 0,
-                talisman_assembly: parseInt(document.getElementById('donAssembly').value) || 0,
-                talisman_luck: parseInt(document.getElementById('donLuck').value) || 0,
-                zen: parseInt(document.getElementById('donZen').value) || 0
-            };
-            const res = await fetch('/api/donaciones-joyas', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-            });
-            if (res.ok) {
-                alert("¡Donación registrada!");
-                ['donBless', 'donSoul', 'donLife', 'donChaos', 'donCreation', 'donAssembly', 'donLuck', 'donZen'].forEach(id => document.getElementById(id).value = 0);
-                cargarDonacionesJoyas();
-            }
-        }
-
-        function abrirModalGasto() { document.getElementById('modal-gasto').classList.remove('hidden'); }
-        function cerrarModalGasto() { document.getElementById('modal-gasto').classList.add('hidden'); }
-
-        async function guardarGastoGuild() {
-            const motivo = document.getElementById('gastoMotivo').value.trim();
-            if (!motivo) return alert("Ingresá el motivo.");
-            const payload = {
-                motivo,
-                bless: parseInt(document.getElementById('gastoBless').value) || 0,
-                soul: parseInt(document.getElementById('gastoSoul').value) || 0,
-                life: parseInt(document.getElementById('gastoLife').value) || 0,
-                chaos: parseInt(document.getElementById('gastoChaos').value) || 0,
-                creation: parseInt(document.getElementById('gastoCreation').value) || 0,
-                talisman_assembly: parseInt(document.getElementById('gastoAssembly').value) || 0,
-                talisman_luck: parseInt(document.getElementById('gastoLuck').value) || 0,
-                zen: parseInt(document.getElementById('gastoZen').value) || 0
-            };
-            const res = await fetch('/api/guild-gastos', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-            });
-            if (res.ok) { alert("Gasto registrado."); cerrarModalGasto(); cargarDonacionesJoyas(); }
-        }
-
-        async function cargarUsuarios() {
-            const res = await fetch('/api/usuarios');
-            if (res.ok) {
-                const users = await res.json();
-                document.getElementById('tabla-usuarios-body').innerHTML = users.map(u => `
-                    <tr>
-                        <td class="font-bold text-white">${u.username}</td>
-                        <td>
-                            <select onchange="cambiarRolUsuario(${u.id}, this.value)" class="input-mudream px-2 py-1 rounded text-xs" ${u.username.toLowerCase() === 'pinion' ? 'disabled' : ''}>
-                                <option value="admin" ${u.rol === 'admin' ? 'selected' : ''}>Admin</option>
-                                <option value="operador" ${u.rol === 'operador' ? 'selected' : ''}>Operador</option>
-                                <option value="lector" ${u.rol === 'lector' ? 'selected' : ''}>Lector</option>
-                            </select>
-                        </td>
-                        <td>
-                            <span class="px-2 py-0.5 rounded text-xs font-bold ${u.activo !== false ? 'bg-emerald-950 text-emerald-300 border border-emerald-700' : 'bg-red-950 text-red-300 border border-red-700'}">
-                                ${u.activo !== false ? 'Activo' : 'Suspendido'}
-                            </span>
-                        </td>
-                        <td class="text-center space-x-1">
-                            ${u.username.toLowerCase() !== 'pinion' ? `
-                                <button onclick="toggleSuspenderUsuario(${u.id}, ${u.activo !== false ? false : true})" class="${u.activo !== false ? 'bg-amber-950 text-amber-300 border border-amber-700' : 'bg-emerald-950 text-emerald-300 border border-emerald-700'} px-2 py-1 rounded text-xs font-bold">
-                                    ${u.activo !== false ? '🚫 Suspender' : '✅ Activar'}
-                                </button>
-                                <button onclick="eliminarUsuario(${u.id})" class="bg-red-950 text-red-300 border border-red-700 px-2 py-1 rounded text-xs font-bold">🗑️ Eliminar</button>
-                            ` : '<span class="text-xs text-[#8a8073]">Principal</span>'}
-                        </td>
+                const tbody = document.getElementById('tabla-donaciones-body');
+                tbody.innerHTML = data.map(d => `
+                    <tr class="border-b border-[#1f1a14] hover:bg-[#f5b942]/5">
+                        <td class="p-3 font-bold text-[#f8f5ee]">${d.pj_name}</td>
+                        <td class="p-3 text-[#fbd379]">${d.tipo_donacion}</td>
+                        <td class="p-3">${d.cantidad}</td>
+                        <td class="p-3 text-[#a89f91]">${d.registrado_por}</td>
                     </tr>
                 `).join('');
             }
         }
 
-        async function cambiarRolUsuario(id, rol) {
-            await fetch('/api/usuarios', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, rol }) });
-            cargarUsuarios();
+        async function guardarDonacion() {
+            const pj = document.getElementById('donacionPj').value;
+            const tipo = document.getElementById('donacionTipo').value;
+            const cant = document.getElementById('donacionCantidad').value;
+            await fetch('/api/donaciones', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pj_name: pj, tipo_donacion: tipo, cantidad: cant })
+            });
+            document.getElementById('donacionPj').value = '';
+            cargarDonaciones();
         }
 
-        async function toggleSuspenderUsuario(id, nuevoEstado) {
-            await fetch('/api/usuarios', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, activo: nuevoEstado }) });
-            cargarUsuarios();
-        }
-
-        async function crearUsuario() {
-            const username = document.getElementById('nuevoUsuario').value.trim();
-            const password = document.getElementById('nuevaPassword').value.trim();
-            const rol = document.getElementById('nuevoRol').value;
-            if (!username || !password) return alert("Completá usuario y contraseña.");
-            await fetch('/api/usuarios', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password, rol }) });
-            document.getElementById('nuevoUsuario').value = ''; document.getElementById('nuevaPassword').value = '';
-            cargarUsuarios();
-        }
-
-        async function eliminarUsuario(id) {
-            if (!confirm("¿Eliminar usuario?")) return;
-            await fetch('/api/usuarios', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            cargarUsuarios();
-        }
-
-        function descargarBackup() { window.location.href = '/api/backup/exportar'; }
-        function exportarExcelAsignados() { window.location.href = '/api/backup/exportar-items-asignados'; }
-        function exportarExcelAsistencias() { window.location.href = '/api/backup/exportar-asistencias'; }
-
-        async function subirExcelBackup(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            if (!confirm("⚠️ ¿Deseas actualizar los datos con este archivo Excel?")) return;
-            const fd = new FormData(); fd.append('file', file);
-            const res = await fetch('/api/backup/importar-excel', { method: 'POST', body: fd });
-            if (res.ok) { alert("¡Excel importado con éxito!"); location.reload(); }
-            else { const err = await res.json(); alert("Error: " + (err.error || "Formato inválido")); }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => { 
-            chequearSesion(); 
-            cargarItems(); 
-            cargarMiembros(); 
-        });
+        verificarSesion();
+        poblarSelector();
+        cargarDatos();
+        setInterval(cargarDatos, 3000);
     </script>
 </body>
 </html>
