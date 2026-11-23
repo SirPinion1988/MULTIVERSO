@@ -6,19 +6,48 @@
     <title>⚔️ MuDream Boss Timers - Multiverso ⚔️</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #0a0814; color: #e6e1ff; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { 
+            background-color: #0b0a08; 
+            background-image: radial-gradient(circle at top center, #241c12 0%, #0b0a08 60%);
+            color: #f3efe6; 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+        }
         .grid-bosses { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+
+        .card-mudream {
+            background-color: rgba(22, 18, 14, 0.92);
+            border: 1px solid #2e261c;
+            box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.75);
+        }
+        .input-mudream {
+            background-color: #0b0a08;
+            border: 1px solid #30271d;
+            color: #f5f0e6;
+            transition: border-color 0.2s;
+        }
+        .input-mudream:focus {
+            border-color: #f5b942;
+        }
+        .btn-gold-mudream {
+            background: linear-gradient(180deg, #fbd379 0%, #e5a32e 100%);
+            color: #14100a;
+            font-weight: 800;
+            box-shadow: 0 2px 10px rgba(245, 185, 66, 0.25);
+        }
+        .btn-gold-mudream:hover {
+            background: linear-gradient(180deg, #fde096 0%, #f5b942 100%);
+        }
 
         .map-wrapper {
             position: relative;
             width: 720px;
             max-width: 95vw;
             aspect-ratio: 1 / 1;
-            border: 2px solid #3b2d6b;
+            border: 2px solid #382e22;
             border-radius: 12px;
             overflow: hidden;
-            background: #000;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+            background: #0b0a08;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.85);
         }
         .map-bg { width: 100%; height: 100%; object-fit: contain; display: block; }
 
@@ -36,28 +65,28 @@
             width: 32px;
             height: 32px;
             border-radius: 50%;
-            border: 2px solid #747d8c;
-            background: rgba(116, 125, 140, 0.2);
+            border: 2px solid #8a8073;
+            background: rgba(138, 128, 115, 0.2);
             transition: transform 0.15s, background 0.2s, border-color 0.2s;
         }
         .spot-btn:hover .spot-circle { transform: scale(1.2); }
 
         .spot-timer {
             margin-top: 4px;
-            background: rgba(10, 8, 20, 0.92);
-            border: 1px solid #3b2d6b;
+            background: rgba(11, 10, 8, 0.94);
+            border: 1px solid #382e22;
             padding: 2px 7px;
             border-radius: 4px;
             font-size: 11px;
             font-weight: bold;
-            color: #ced6e0;
+            color: #d6cebf;
             white-space: nowrap;
             text-align: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.7);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.75);
         }
 
-        .state-idle .spot-circle { border-color: #eccc68; background: rgba(236, 204, 104, 0.25); box-shadow: 0 0 6px #eccc68; }
-        .state-idle .spot-timer { color: #f1f2f6; border-color: #ffa502; background: rgba(255, 165, 2, 0.2); }
+        .state-idle .spot-circle { border-color: #f5b942; background: rgba(245, 185, 66, 0.25); box-shadow: 0 0 6px #f5b942; }
+        .state-idle .spot-timer { color: #f8f5ee; border-color: #f5b942; background: rgba(245, 185, 66, 0.2); }
 
         .state-waiting .spot-circle { border-color: #ff4757; background: rgba(255, 71, 87, 0.25); box-shadow: 0 0 6px #ff4757; }
         .state-waiting .spot-timer { color: #ff6b81; border-color: #ff4757; }
@@ -72,75 +101,80 @@
         @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.3); } }
     </style>
 </head>
-<body class="p-4 md:p-8 flex flex-col items-center relative">
+<body class="p-4 md:p-8 flex flex-col items-center relative min-h-screen">
 
-    <div id="toast-notificacion" class="fixed bottom-5 right-5 bg-purple-900 border border-purple-500 text-white px-4 py-3 rounded-xl shadow-2xl transition-all duration-300 transform translate-y-20 opacity-0 z-50 flex items-center gap-2 text-sm font-semibold">
+    <div id="toast-notificacion" class="fixed bottom-5 right-5 bg-[#191510] border border-[#f5b942] text-[#f8f5ee] px-4 py-3 rounded-xl shadow-2xl transition-all duration-300 transform translate-y-20 opacity-0 z-50 flex items-center gap-2 text-sm font-semibold">
         <span id="toast-icono">⚠️</span>
         <span id="toast-mensaje">Notificación</span>
     </div>
 
     <!-- CABECERA ÚNICA -->
-    <header class="w-full max-w-6xl mb-6 border-b border-purple-900/50 pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
+    <header class="w-full max-w-6xl mb-6 border-b border-[#2e261c] pb-4 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
-            <h1 class="text-3xl font-extrabold text-purple-400 drop-shadow">⚔️ MONITOR MUDREAM MULTIVERSO</h1>
-            <p class="text-xs text-purple-300">Control de Bosses, Timers, Mapas, Donaciones y Catálogo de Ítems en Tiempo Real</p>
+            <div class="inline-flex items-center gap-1.5 bg-[#1f1912] border border-[#3d3122] px-2.5 py-0.5 rounded-full text-[10px] font-bold text-[#f5b942] uppercase tracking-wider mb-1">
+                <span>⚔️ LEGEND X - 10</span>
+            </div>
+            <h1 class="text-3xl font-black tracking-wide text-[#f8f5ee]">
+                MONITOR MUDREAM <span class="text-[#f5b942]">MULTIVERSO</span>
+            </h1>
+            <p class="text-xs text-[#a89f91] mt-0.5">Control de Bosses, Timers, Mapas, Donaciones y Catálogo de Ítems en Tiempo Real</p>
         </div>
-        <div id="user-info-box" class="flex items-center gap-3 bg-[#141126] border border-purple-800/60 px-4 py-2 rounded-xl text-xs">
-            <span id="user-display" class="text-purple-300 font-bold">Invitado</span>
+        <div id="user-info-box" class="flex items-center gap-3 bg-[#16120e] border border-[#332a1f] px-4 py-2 rounded-xl text-xs">
+            <span id="user-display" class="text-[#e5dec9] font-bold">Invitado</span>
             <span id="login-btn-container">
-                <button onclick="toggleLoginModal()" id="btn-login-trigger" class="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1 rounded font-bold transition">Ingresar</button>
+                <button onclick="toggleLoginModal()" id="btn-login-trigger" class="btn-gold-mudream px-3.5 py-1 rounded transition">Ingresar</button>
             </span>
         </div>
     </header>
 
     <!-- NAVEGACIÓN PRINCIPAL -->
-    <div class="flex flex-wrap space-x-2 mb-6 overflow-x-auto w-full max-w-6xl justify-center gap-2">
-        <button onclick="setVista('TODOS')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-purple-700 text-white" id="tab-TODOS">👁️ Vista General</button>
-        <button onclick="setVista('Server 1')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 1">Server 1</button>
-        <button onclick="setVista('Server 2')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 2">Server 2</button>
-        <button onclick="setVista('Server 3')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 3">Server 3</button>
-        <button onclick="setVista('Server 20')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-Server 20">Server 20</button>
+    <div class="flex flex-wrap mb-6 overflow-x-auto w-full max-w-6xl justify-center gap-2">
+        <button onclick="setVista('TODOS')" class="btn-tab px-4 py-2 rounded-lg text-xs btn-gold-mudream transition" id="tab-TODOS">👁️ Vista General</button>
+        <button onclick="setVista('Server 1')" class="btn-tab px-4 py-2 rounded-lg text-xs font-bold bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] transition" id="tab-Server 1">Server 1</button>
+        <button onclick="setVista('Server 2')" class="btn-tab px-4 py-2 rounded-lg text-xs font-bold bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] transition" id="tab-Server 2">Server 2</button>
+        <button onclick="setVista('Server 3')" class="btn-tab px-4 py-2 rounded-lg text-xs font-bold bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] transition" id="tab-Server 3">Server 3</button>
+        <button onclick="setVista('Server 20')" class="btn-tab px-4 py-2 rounded-lg text-xs font-bold bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] transition" id="tab-Server 20">Server 20</button>
         
-        <button onclick="setVista('MAPA_1')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-purple-300 border border-purple-900 hover:bg-purple-950" id="tab-MAPA_1">🗺️ Mapa S1</button>
-        <button onclick="setVista('MAPA_2')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-purple-300 border border-purple-900 hover:bg-purple-950" id="tab-MAPA_2">🗺️ Mapa S2</button>
-        <button onclick="setVista('MAPA_3')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-purple-300 border border-purple-900 hover:bg-purple-950" id="tab-MAPA_3">🗺️ Mapa S3</button>
+        <button onclick="setVista('MAPA_1')" class="btn-tab px-4 py-2 rounded-lg text-xs font-bold bg-[#16120e] hover:bg-[#221c15] border border-[#3d3122] text-[#fbd379] transition" id="tab-MAPA_1">🗺️ Mapa S1</button>
+        <button onclick="setVista('MAPA_2')" class="btn-tab px-4 py-2 rounded-lg text-xs font-bold bg-[#16120e] hover:bg-[#221c15] border border-[#3d3122] text-[#fbd379] transition" id="tab-MAPA_2">🗺️ Mapa S2</button>
+        <button onclick="setVista('MAPA_3')" class="btn-tab px-4 py-2 rounded-lg text-xs font-bold bg-[#16120e] hover:bg-[#221c15] border border-[#3d3122] text-[#fbd379] transition" id="tab-MAPA_3">🗺️ Mapa S3</button>
 
         <!-- ENLACE DIRECTO A ITEMS SIN IFRAME PARA ELIMINAR DUPLICADOS -->
-        <a href="/items" class="btn-tab px-4 py-2 rounded-lg font-bold bg-emerald-950/80 border border-emerald-600 text-emerald-300 hover:bg-emerald-900 flex items-center gap-1">
+        <a href="/items" class="px-4 py-2 rounded-lg text-xs font-bold bg-emerald-950/70 border border-emerald-600/40 text-emerald-300 hover:bg-emerald-900/80 flex items-center gap-1 transition">
             🛡️ Ítems & Clan
         </a>
 
-        <button onclick="setVista('BOTS')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400" id="tab-BOTS">🤖 Bots Activos</button>
-        <button onclick="setVista('DONACIONES')" class="btn-tab px-4 py-2 rounded-lg font-bold bg-yellow-900/80 border border-yellow-600 text-yellow-300 hover:bg-yellow-800" id="tab-DONACIONES">💎 Donaciones</button>
+        <button onclick="setVista('BOTS')" class="btn-tab px-4 py-2 rounded-lg text-xs font-bold bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] transition" id="tab-BOTS">🤖 Bots Activos</button>
+        <button onclick="setVista('DONACIONES')" class="btn-tab px-4 py-2 rounded-lg text-xs font-bold bg-[#292015] border border-[#f5b942]/40 text-[#f5b942] hover:bg-[#382b1c] transition" id="tab-DONACIONES">💎 Donaciones</button>
     </div>
 
     <!-- Panel de Kill Manual -->
-    <div id="panel-kill-manual" class="w-full max-w-6xl bg-[#141126] border border-purple-800 rounded-xl p-4 mb-6 shadow-lg">
-        <h3 class="text-center font-bold text-purple-300 mb-3 text-sm uppercase tracking-wider">⚡ Cargar Kill Manual / Iniciar Boss</h3>
+    <div id="panel-kill-manual" class="w-full max-w-6xl card-mudream rounded-xl p-4 mb-6">
+        <h3 class="text-center font-bold text-[#f5b942] mb-3 text-xs uppercase tracking-wider">⚡ Cargar Kill Manual / Iniciar Boss</h3>
         <div class="flex flex-wrap gap-3 justify-center items-center">
-            <select id="manualServer" class="bg-[#0d0a1a] border border-purple-900 text-white text-sm rounded-lg p-2.5 outline-none">
+            <select id="manualServer" class="input-mudream text-sm rounded-lg p-2.5 outline-none">
                 <option value="Server 1">Server 1</option>
                 <option value="Server 2">Server 2</option>
                 <option value="Server 3">Server 3</option>
                 <option value="Server 20">Server 20</option>
             </select>
-            <select id="manualBoss" class="bg-[#0d0a1a] border border-purple-900 text-white text-sm rounded-lg p-2.5 outline-none"></select>
-            <button onclick="ejecutarKillForm()" class="bg-purple-700 hover:bg-purple-600 text-white font-bold text-sm px-5 py-2.5 rounded-lg transition">⚔️ Registrar Kill</button>
+            <select id="manualBoss" class="input-mudream text-sm rounded-lg p-2.5 outline-none"></select>
+            <button onclick="ejecutarKillForm()" class="btn-gold-mudream text-sm px-5 py-2.5 rounded-lg transition">⚔️ Registrar Kill</button>
         </div>
     </div>
 
     <!-- Timers -->
     <div id="seccion-timers" class="w-full max-w-6xl">
         <div id="contenedor-bosses" class="grid-bosses">
-            <div class="text-gray-500 text-center col-span-full py-8">Cargando timers de bosses...</div>
+            <div class="text-[#8a8073] text-center col-span-full py-8">Cargando timers de bosses...</div>
         </div>
     </div>
 
     <!-- Mapa -->
     <div id="seccion-mapa" class="w-full max-w-6xl hidden flex flex-col items-center">
         <div class="mb-4 text-center">
-            <h2 id="mapa-titulo" class="text-2xl font-bold text-purple-300">🗺️ Mapa de Bosses</h2>
-            <p class="text-xs text-purple-400 mt-1">Clic izquierdo: registrar muerte | Clic derecho: resetear spot</p>
+            <h2 id="mapa-titulo" class="text-2xl font-bold text-[#f5b942]">🗺️ Mapa de Bosses</h2>
+            <p class="text-xs text-[#a89f91] mt-1">Clic izquierdo: registrar muerte | Clic derecho: resetear spot</p>
         </div>
         <div class="map-wrapper">
             <img src="mapa.jpg" alt="Mapa MU" class="map-bg">
@@ -159,17 +193,17 @@
 
     <!-- Bots -->
     <div id="seccion-bots" class="w-full max-w-6xl hidden space-y-4">
-        <h2 class="text-xl font-bold text-purple-300 mb-4 border-b border-purple-800 pb-2">🤖 Conexión de Clientes y PCs de la Guild</h2>
+        <h2 class="text-xl font-bold text-[#f5b942] mb-4 border-b border-[#2e261c] pb-2">🤖 Conexión de Clientes y PCs de la Guild</h2>
         <div id="contenedor-bots-lista" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
     </div>
 
     <!-- Donaciones -->
     <div id="seccion-donaciones" class="w-full max-w-6xl hidden space-y-6">
-        <div class="bg-[#141126] border border-yellow-600/50 rounded-xl p-6 shadow-lg">
-            <h2 class="text-xl font-bold text-yellow-400 mb-4">💎 Registrar Nueva Donación</h2>
+        <div class="card-mudream rounded-xl p-6">
+            <h2 class="text-xl font-bold text-[#f5b942] mb-4">💎 Registrar Nueva Donación</h2>
             <div class="flex flex-wrap gap-4 items-center">
-                <input type="text" id="donacionPj" placeholder="Nombre de PJ" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-48">
-                <select id="donacionTipo" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-48">
+                <input type="text" id="donacionPj" placeholder="Nombre de PJ" class="input-mudream p-2.5 rounded-lg outline-none text-sm w-48">
+                <select id="donacionTipo" class="input-mudream p-2.5 rounded-lg outline-none text-sm w-48">
                     <option value="Jewel of Bless">Jewel of Bless</option>
                     <option value="Jewel of Soul">Jewel of Soul</option>
                     <option value="Jewel of Life">Jewel of Life</option>
@@ -177,13 +211,13 @@
                     <option value="Zen">Zen</option>
                     <option value="VIP Points">VIP Points</option>
                 </select>
-                <input type="number" id="donacionCantidad" placeholder="Cantidad" value="1" min="1" class="bg-[#0d0a1a] border border-purple-900 text-white p-2.5 rounded-lg outline-none text-sm w-32">
-                <button onclick="guardarDonacion()" class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold px-6 py-2.5 rounded-lg text-sm transition">💾 Registrar</button>
+                <input type="number" id="donacionCantidad" placeholder="Cantidad" value="1" min="1" class="input-mudream p-2.5 rounded-lg outline-none text-sm w-32">
+                <button onclick="guardarDonacion()" class="btn-gold-mudream px-6 py-2.5 rounded-lg text-sm transition">💾 Registrar</button>
             </div>
         </div>
-        <div class="bg-[#141126] border border-purple-900 rounded-xl p-6 shadow-lg">
-            <table class="w-full text-left text-sm text-purple-200">
-                <thead class="bg-[#0d0a1a] text-purple-400 uppercase text-xs">
+        <div class="card-mudream rounded-xl p-6 overflow-x-auto">
+            <table class="w-full text-left text-sm text-[#e5dec9]">
+                <thead class="bg-[#191510] text-[#f5b942] uppercase text-xs border-b border-[#382e22]">
                     <tr><th class="p-3">PJ</th><th class="p-3">Tipo</th><th class="p-3">Cantidad</th><th class="p-3">Registrado Por</th></tr>
                 </thead>
                 <tbody id="tabla-donaciones-body"></tbody>
@@ -193,13 +227,13 @@
 
     <!-- Login Modal -->
     <div id="modal-login" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50">
-        <div class="bg-[#141126] border border-purple-600 p-6 rounded-xl w-80 text-center shadow-2xl">
-            <h3 class="text-lg font-bold text-purple-300 mb-4">🔐 Iniciar Sesión</h3>
-            <input type="text" id="loginUser" placeholder="Usuario (Pinion, tolkien, nasda)" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-3 text-sm outline-none">
-            <input type="password" id="loginPass" placeholder="Contraseña" class="w-full bg-[#0d0a1a] border border-purple-900 text-white p-2 rounded mb-4 text-sm outline-none">
+        <div class="bg-[#16120e] border border-[#f5b942]/50 p-6 rounded-xl w-80 text-center shadow-2xl">
+            <h3 class="text-lg font-bold text-[#f5b942] mb-4">🔐 Iniciar Sesión</h3>
+            <input type="text" id="loginUser" placeholder="Usuario (Pinion, tolkien, nasda)" class="w-full input-mudream p-2.5 rounded mb-3 text-sm outline-none">
+            <input type="password" id="loginPass" placeholder="Contraseña" class="w-full input-mudream p-2.5 rounded mb-4 text-sm outline-none">
             <div class="flex gap-2">
-                <button onclick="ejecutarLogin()" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 rounded text-sm">Entrar</button>
-                <button onclick="toggleLoginModal()" class="w-full bg-gray-800 text-gray-400 font-bold py-2 rounded text-sm">Cancelar</button>
+                <button onclick="ejecutarLogin()" class="w-full btn-gold-mudream py-2 rounded text-sm">Entrar</button>
+                <button onclick="toggleLoginModal()" class="w-full bg-[#221c15] text-[#a89f91] font-bold py-2 rounded text-sm">Cancelar</button>
             </div>
         </div>
     </div>
@@ -225,9 +259,17 @@
 
         function setVista(vista) {
             modoVista = vista;
-            document.querySelectorAll('.btn-tab').forEach(b => b.className = "btn-tab px-4 py-2 rounded-lg font-bold bg-gray-800 text-gray-400");
+            document.querySelectorAll('.btn-tab').forEach(b => {
+                if (b.id.startsWith('tab-MAPA_')) {
+                    b.className = "btn-tab px-4 py-2 rounded-lg text-xs font-bold bg-[#16120e] hover:bg-[#221c15] border border-[#3d3122] text-[#fbd379] transition";
+                } else if (b.id === 'tab-DONACIONES') {
+                    b.className = "btn-tab px-4 py-2 rounded-lg text-xs font-bold bg-[#292015] border border-[#f5b942]/40 text-[#f5b942] hover:bg-[#382b1c] transition";
+                } else {
+                    b.className = "btn-tab px-4 py-2 rounded-lg text-xs font-bold bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] transition";
+                }
+            });
             const activeTab = document.getElementById(`tab-${vista}`);
-            if (activeTab) activeTab.className = "btn-tab px-4 py-2 rounded-lg font-bold bg-purple-700 text-white";
+            if (activeTab) activeTab.className = "btn-tab px-4 py-2 rounded-lg text-xs btn-gold-mudream transition";
 
             document.getElementById('seccion-timers').classList.add('hidden');
             document.getElementById('seccion-mapa').classList.add('hidden');
@@ -257,8 +299,8 @@
                 const data = await res.json();
                 estaLogueado = data.logged_in;
                 if (data.logged_in) {
-                    document.getElementById('user-display').innerHTML = `👤 <strong>${data.user}</strong> (${data.rol})`;
-                    document.getElementById('login-btn-container').innerHTML = `<a href="/logout" class="bg-red-700 px-3 py-1 rounded font-bold">Salir</a>`;
+                    document.getElementById('user-display').innerHTML = `👤 <strong class="text-[#f5b942]">${data.user}</strong> (${data.rol})`;
+                    document.getElementById('login-btn-container').innerHTML = `<a href="/logout" class="bg-red-950/80 hover:bg-red-900 border border-red-600/40 text-red-200 px-3 py-1 rounded font-bold transition">Salir</a>`;
                 }
             } catch (e) {}
         }
@@ -300,16 +342,18 @@
                     const k = timers[boss];
                     const cd = (COOLDOWNS_LOCAL[boss] || 60) * 60;
                     let txt = "DISPONIBLE";
-                    let bg = "bg-purple-950/40 border-purple-700";
+                    let txtColor = "text-emerald-400";
+                    let bg = "bg-[#16120e] border-[#3d3122] hover:border-[#f5b942]/50";
                     if (k && ahoraUnix < k + cd) {
                         txt = `Respawn en: ${Math.floor((k + cd - ahoraUnix)/60)}m`;
-                        bg = "bg-red-950/70 border-red-500";
+                        txtColor = "text-red-300";
+                        bg = "bg-red-950/60 border-red-700/70";
                     }
                     c.innerHTML += `
-                        <div class="card p-4 rounded-xl ${bg} border shadow text-center">
-                            <span class="text-[10px] font-bold text-purple-300">${svr}</span>
-                            <h3 class="font-bold text-white text-base my-1">${boss}</h3>
-                            <div class="text-sm font-mono font-bold">${txt}</div>
+                        <div class="card p-4 rounded-xl ${bg} border shadow-lg text-center transition">
+                            <span class="text-[10px] font-bold text-[#f5b942] uppercase tracking-wider">${svr}</span>
+                            <h3 class="font-bold text-[#f8f5ee] text-base my-1">${boss}</h3>
+                            <div class="text-sm font-mono font-bold ${txtColor}">${txt}</div>
                         </div>
                     `;
                 });
@@ -344,11 +388,11 @@
                 const data = await res.json();
                 const tbody = document.getElementById('tabla-donaciones-body');
                 tbody.innerHTML = data.map(d => `
-                    <tr class="border-b border-purple-900/40">
-                        <td class="p-3 font-bold text-white">${d.pj_name}</td>
-                        <td class="p-3 text-yellow-300">${d.tipo_donacion}</td>
+                    <tr class="border-b border-[#1f1a14] hover:bg-[#f5b942]/5">
+                        <td class="p-3 font-bold text-[#f8f5ee]">${d.pj_name}</td>
+                        <td class="p-3 text-[#fbd379]">${d.tipo_donacion}</td>
                         <td class="p-3">${d.cantidad}</td>
-                        <td class="p-3 text-purple-400">${d.registrado_por}</td>
+                        <td class="p-3 text-[#a89f91]">${d.registrado_por}</td>
                     </tr>
                 `).join('');
             }
