@@ -85,6 +85,12 @@
         .btn-gold-mudream:hover {
             background: linear-gradient(180deg, #fde096 0%, #f5b942 100%);
         }
+        @keyframes popGanador {
+            0% { transform: scale(0.8); opacity: 0; }
+            70% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .anim-ganador { animation: popGanador 0.45s ease-out forwards; }
     </style>
 </head>
 <body class="p-4 md:p-8 flex flex-col items-center min-h-screen">
@@ -242,8 +248,15 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 2: MIEMBROS -->
+    <!-- SECCIÓN 2: MIEMBROS + RULETA DE SORTEO -->
     <div id="seccion-clan-view" class="w-full max-w-7xl space-y-4 hidden">
+        <div class="flex flex-wrap justify-between items-center gap-3">
+            <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">👥 Roster de Miembros del Clan</h2>
+            <button onclick="abrirModalRuleta()" id="btn-abrir-ruleta" class="hidden btn-gold-mudream px-4 py-2 rounded-lg text-xs flex items-center gap-2 transition">
+                🎡 Ruleta de Sorteo (5 Miembros)
+            </button>
+        </div>
+
         <div id="panel-miembros-crud" class="card-mudream p-4 rounded-xl hidden">
             <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end w-full">
                 <div><label class="block text-[11px] text-[#a89f91] font-bold mb-1">NICK DEL PJ:</label><input type="text" id="clanPjNombre" placeholder="Nick" class="w-full input-mudream p-2 rounded text-xs"></div>
@@ -361,6 +374,57 @@
         </div>
     </div>
 
+    <!-- MODAL RULETA DE SORTEO DE ÍTEM (5 MIEMBROS) -->
+    <div id="modal-ruleta" class="fixed inset-0 bg-black/85 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-[#16120e] border border-[#f5b942]/60 p-6 rounded-2xl max-w-3xl w-full shadow-2xl space-y-5 max-h-[95vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-[#2e261c] pb-3">
+                <h3 class="text-lg font-black text-[#f5b942] uppercase tracking-wide">🎡 Ruleta de Sorteo de Ítem</h3>
+                <button onclick="cerrarModalRuleta()" class="text-[#a89f91] hover:text-white text-sm font-bold px-2 py-1">✖</button>
+            </div>
+
+            <!-- 1. BUSCAR ÍTEM POR ID ARRIBA -->
+            <div class="bg-[#0b0a08] border border-[#2e261c] p-4 rounded-xl space-y-2">
+                <label class="block text-xs uppercase text-[#f5b942] font-bold">1️⃣ Ingresá el ID del Ítem a Sortear:</label>
+                <div class="flex flex-col sm:flex-row gap-3 items-center">
+                    <input type="number" id="ruletaItemId" oninput="buscarItemRuleta()" placeholder="Ej. 105" class="w-full sm:w-36 input-mudream p-2.5 rounded-lg text-sm font-mono font-bold text-[#f5b942] outline-none">
+                    <div id="ruleta-item-preview" class="flex-1 w-full bg-[#16120e] border border-[#29221a] px-3.5 py-2 rounded-lg text-xs text-[#8a8073]">
+                        Escribí un ID para ver el ítem...
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. SELECCIÓN DE 5 MIEMBROS + RULETA -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                <div class="space-y-2.5">
+                    <label class="block text-xs uppercase text-[#f5b942] font-bold">2️⃣ Seleccioná los 5 Miembros Participantes:</label>
+                    <select id="ruleta-pj-1" onchange="actualizarRuletaCanvas()" class="w-full input-mudream p-2 rounded-lg text-xs"></select>
+                    <select id="ruleta-pj-2" onchange="actualizarRuletaCanvas()" class="w-full input-mudream p-2 rounded-lg text-xs"></select>
+                    <select id="ruleta-pj-3" onchange="actualizarRuletaCanvas()" class="w-full input-mudream p-2 rounded-lg text-xs"></select>
+                    <select id="ruleta-pj-4" onchange="actualizarRuletaCanvas()" class="w-full input-mudream p-2 rounded-lg text-xs"></select>
+                    <select id="ruleta-pj-5" onchange="actualizarRuletaCanvas()" class="w-full input-mudream p-2 rounded-lg text-xs"></select>
+
+                    <button onclick="girarRuleta()" id="btn-girar-ruleta" class="w-full btn-gold-mudream py-3 rounded-xl text-sm uppercase tracking-wider mt-3 transition">
+                        🎲 ¡Girar Ruleta y Sortear!
+                    </button>
+                </div>
+
+                <!-- CANVAS DE LA RULETA -->
+                <div class="flex flex-col items-center justify-center relative">
+                    <!-- Puntero superior -->
+                    <div class="w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[22px] border-t-[#f5b942] drop-shadow z-10 -mb-2"></div>
+                    <canvas id="canvasRuleta" width="290" height="290" class="rounded-full border-4 border-[#3d3122] shadow-2xl bg-[#0b0a08]"></canvas>
+                </div>
+            </div>
+
+            <!-- 3. CARTEL DE GANADOR -->
+            <div id="ruleta-cartel-ganador" class="hidden anim-ganador bg-gradient-to-r from-[#292015] via-[#382b1c] to-[#292015] border-2 border-[#f5b942] p-4 rounded-xl text-center shadow-2xl space-y-1">
+                <div class="text-xs uppercase font-bold text-emerald-400 tracking-widest">🎉 ¡SORTEO FINALIZADO E ÍTEM ASIGNADO! 🎉</div>
+                <div class="text-2xl font-black text-[#f8f5ee]">🏆 GANÓ: <span id="ruleta-nombre-ganador" class="text-[#f5b942]">---</span></div>
+                <div id="ruleta-detalle-asignacion" class="text-xs text-[#e5dec9]"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL GASTO -->
     <div id="modal-gasto" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4">
         <div class="bg-[#16120e] border border-red-700/70 p-6 rounded-xl max-w-md w-full flex flex-col shadow-2xl space-y-3">
@@ -461,6 +525,7 @@
 
     <script>
         let catalogo = [], miembrosClan = [], sesionAutorizada = false, esAdmin = false;
+        let ruletaGirando = false, anguloActualRuleta = 0, itemSeleccionadoRuleta = null;
 
         async function chequearSesion() {
             try {
@@ -475,7 +540,7 @@
                     if (loginBtn) loginBtn.outerHTML = `<a href="/logout" class="bg-red-950/80 hover:bg-red-900 border border-red-600/40 text-red-200 px-3 py-1.5 rounded-lg text-xs font-bold transition">Salir</a>`;
                     
                     if (sesionAutorizada) {
-                        ['btn-guardar-item', 'panel-custom-id', 'dummy-div', 'panel-miembros-crud', 'panel-asistencia-ctrl', 'panel-donacion-crud', 'btn-gasto-modal', 'btn-reset-semanal', 'th-acciones-head', 'th-miembro-acciones', 'admin-backup-buttons'].forEach(id => {
+                        ['btn-guardar-item', 'panel-custom-id', 'dummy-div', 'panel-miembros-crud', 'btn-abrir-ruleta', 'panel-asistencia-ctrl', 'panel-donacion-crud', 'btn-gasto-modal', 'btn-reset-semanal', 'th-acciones-head', 'th-miembro-acciones', 'admin-backup-buttons'].forEach(id => {
                             const el = document.getElementById(id);
                             if (el) el.classList.remove('hidden');
                         });
@@ -569,6 +634,185 @@
                         </tr>
                     `).join('') || '<tr><td colspan="4" class="text-center py-8 text-[#8a8073]">Sin miembros.</td></tr>';
                 }
+            }
+        }
+
+        // --- LÓGICA DE RULETA DE SORTEO ---
+        function abrirModalRuleta() {
+            if (!catalogo.length) cargarItems();
+            document.getElementById('ruletaItemId').value = '';
+            document.getElementById('ruleta-item-preview').innerHTML = 'Escribí un ID para ver el ítem...';
+            document.getElementById('ruleta-cartel-ganador').classList.add('hidden');
+            itemSeleccionadoRuleta = null;
+
+            for (let i = 1; i <= 5; i++) {
+                const sel = document.getElementById(`ruleta-pj-${i}`);
+                let opts = `<option value="">-- Participante #${i} --</option>`;
+                miembrosClan.forEach((m, idx) => {
+                    const selected = (idx === i - 1) ? 'selected' : '';
+                    opts += `<option value="${m.nombre_pj}" ${selected}>${m.nombre_pj} (${m.raza})</option>`;
+                });
+                sel.innerHTML = opts;
+            }
+            document.getElementById('modal-ruleta').classList.remove('hidden');
+            actualizarRuletaCanvas();
+        }
+
+        function cerrarModalRuleta() {
+            if (ruletaGirando) return;
+            document.getElementById('modal-ruleta').classList.add('hidden');
+        }
+
+        function buscarItemRuleta() {
+            const idVal = document.getElementById('ruletaItemId').value.trim();
+            const preview = document.getElementById('ruleta-item-preview');
+            if (!idVal) {
+                itemSeleccionadoRuleta = null;
+                preview.innerHTML = 'Escribí un ID para ver el ítem...';
+                return;
+            }
+            const encontrado = catalogo.find(x => String(x.id) === idVal);
+            if (!encontrado) {
+                itemSeleccionadoRuleta = null;
+                preview.innerHTML = `<span class="text-red-400 font-bold">❌ No existe ningún ítem con ID #${idVal}</span>`;
+                return;
+            }
+            itemSeleccionadoRuleta = encontrado;
+            const optsText = Array.isArray(encontrado.opciones) && encontrado.opciones.length ? encontrado.opciones.join(' | ') : 'Sin opciones exc.';
+            const estadoAsig = encontrado.asignado_a ? `<span class="text-amber-400">(Actual: ${encontrado.asignado_a})</span>` : `<span class="text-emerald-400">(En Baúl)</span>`;
+            preview.innerHTML = `
+                <div class="font-bold text-[#f8f5ee]">#${encontrado.id} - <span class="text-[#f5b942]">${encontrado.nombre}</span> ${estadoAsig}</div>
+                <div class="text-[11px] text-emerald-300 mt-0.5">${optsText}</div>
+            `;
+        }
+
+        function obtenerParticipantesRuleta() {
+            const lista = [];
+            for (let i = 1; i <= 5; i++) {
+                const val = document.getElementById(`ruleta-pj-${i}`).value.trim();
+                lista.push(val || `Slot ${i}`);
+            }
+            return lista;
+        }
+
+        function actualizarRuletaCanvas() {
+            const canvas = document.getElementById('canvasRuleta');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const participantes = obtenerParticipantesRuleta();
+            const total = participantes.length;
+            const arc = (2 * Math.PI) / total;
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+            const radio = cx - 8;
+
+            const colores = ['#292015', '#7f1d1d', '#b48a28', '#14532d', '#1c1712'];
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < total; i++) {
+                const anguloInicio = anguloActualRuleta + i * arc;
+                const anguloFin = anguloInicio + arc;
+
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, radio, anguloInicio, anguloFin);
+                ctx.closePath();
+                ctx.fillStyle = colores[i % colores.length];
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#f5b942';
+                ctx.stroke();
+
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(anguloInicio + arc / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#f8f5ee";
+                ctx.font = "bold 13px 'Segoe UI', sans-serif";
+                ctx.fillText(participantes[i].substring(0, 14), radio - 16, 5);
+                ctx.restore();
+            }
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, 22, 0, 2 * Math.PI);
+            ctx.fillStyle = '#0b0a08';
+            ctx.fill();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#f5b942';
+            ctx.stroke();
+        }
+
+        function girarRuleta() {
+            if (ruletaGirando) return;
+            if (!itemSeleccionadoRuleta) {
+                return alert("⚠️ Primero ingresá un ID de ítem válido arriba para sortear.");
+            }
+            const seleccionados = [];
+            for (let i = 1; i <= 5; i++) {
+                const val = document.getElementById(`ruleta-pj-${i}`).value.trim();
+                if (!val) return alert(`⚠️ Falta seleccionar el Participante #${i}.`);
+                seleccionados.push(val);
+            }
+
+            ruletaGirando = true;
+            document.getElementById('btn-girar-ruleta').disabled = true;
+            document.getElementById('ruleta-cartel-ganador').classList.add('hidden');
+
+            const vueltasExtra = (Math.floor(Math.random() * 5) + 6) * 2 * Math.PI;
+            const anguloAleatorio = Math.random() * 2 * Math.PI;
+            const anguloObjetivo = anguloActualRuleta + vueltasExtra + anguloAleatorio;
+            const anguloInicial = anguloActualRuleta;
+            const duracion = 4200;
+            const inicioTiempo = performance.now();
+
+            function animar(ahora) {
+                const transcurrido = ahora - inicioTiempo;
+                const progreso = Math.min(transcurrido / duracion, 1);
+                const easeOut = 1 - Math.pow(1 - progreso, 4);
+                anguloActualRuleta = anguloInicial + (anguloObjetivo - anguloInicial) * easeOut;
+                actualizarRuletaCanvas();
+
+                if (progreso < 1) {
+                    requestAnimationFrame(animar);
+                } else {
+                    ruletaGirando = false;
+                    document.getElementById('btn-girar-ruleta').disabled = false;
+                    finalizarSorteoRuleta(seleccionados);
+                }
+            }
+            requestAnimationFrame(animar);
+        }
+
+        async function finalizarSorteoRuleta(participantes) {
+            const total = participantes.length;
+            const arc = (2 * Math.PI) / total;
+            // El puntero está arriba (-Math.PI / 2)
+            let anguloNormalizado = ((-Math.PI / 2) - anguloActualRuleta) % (2 * Math.PI);
+            if (anguloNormalizado < 0) anguloNormalizado += 2 * Math.PI;
+            const indiceGanador = Math.floor(anguloNormalizado / arc) % total;
+            const ganador = participantes[indiceGanador];
+
+            document.getElementById('ruleta-nombre-ganador').textContent = ganador;
+            document.getElementById('ruleta-detalle-asignacion').textContent = `Asignando ítem #${itemSeleccionadoRuleta.id} (${itemSeleccionadoRuleta.nombre}) a ${ganador}...`;
+            document.getElementById('ruleta-cartel-ganador').classList.remove('hidden');
+
+            try {
+                const res = await fetch('/api/items', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: itemSeleccionadoRuleta.id, asignado_a: ganador })
+                });
+                if (res.ok) {
+                    document.getElementById('ruleta-detalle-asignacion').innerHTML = `✅ Ítem <strong>#${itemSeleccionadoRuleta.id} - ${itemSeleccionadoRuleta.nombre}</strong> asignado automáticamente a <strong>${ganador}</strong>.`;
+                    await cargarItems();
+                    await cargarMiembros();
+                    buscarItemRuleta();
+                } else {
+                    document.getElementById('ruleta-detalle-asignacion').textContent = `⚠️ Ganó ${ganador}, pero hubo un error al guardar en la base de datos.`;
+                }
+            } catch (e) {
+                document.getElementById('ruleta-detalle-asignacion').textContent = `⚠️ Error de conexión al asignar el ítem.`;
             }
         }
 
