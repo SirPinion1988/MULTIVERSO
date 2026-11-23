@@ -402,22 +402,32 @@
 
     <!-- SECCIÓN 5: DONACIONES & BANCO GUILD (INDEPENDIENTE) -->
     <div id="seccion-donaciones-view" class="w-full max-w-7xl space-y-6 hidden">
-        <div class="card-mudream p-5 rounded-xl space-y-3">
-            <div class="flex justify-between items-center">
-                <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">🏛️ Banco Guild (Acumulado Neto & Talismanes)</h2>
-                <button onclick="abrirModalGasto()" id="btn-gasto-modal" class="hidden bg-red-950/80 hover:bg-red-900 border border-red-600/50 text-red-200 px-3 py-1.5 rounded text-xs font-bold">📉 Registrar Uso / Gasto</button>
-            </div>
-            <div class="overflow-x-auto">
+        <div class="card-mudream p-5 rounded-xl space-y-4">
+            <h2 class="text-sm font-bold text-red-400 uppercase tracking-wider">📉 Historial de Gastos / Usos del Banco Guild</h2>
+            <div class="tabla-scroll-box" style="height: 260px !important;">
                 <table class="tabla-items text-center">
-                    <thead><tr><th>Bless</th><th>Soul</th><th>Life</th><th>Chaos</th><th>Creation</th><th>Assembly</th><th>Luck</th><th>Zen</th></tr></thead>
-                    <tbody>
-                        <tr class="font-bold text-[#fbd379] text-sm">
-                            <td id="banco-bless">0</td><td id="banco-soul">0</td><td id="banco-life">0</td><td id="banco-chaos">0</td><td id="banco-creation">0</td><td id="banco-assembly">0</td><td id="banco-luck">0</td><td id="banco-zen">0</td>
+                    <thead>
+                        <tr>
+                            <th style="text-align: left;">Motivo</th>
+                            <th>Bless</th>
+                            <th>Soul</th>
+                            <th>Life</th>
+                            <th>Chaos</th>
+                            <th>Creation</th>
+                            <th>Assembly</th>
+                            <th>Luck</th>
+                            <th>Zen</th>
+                            <th>Por</th>
+                            <th>Fecha</th>
                         </tr>
+                    </thead>
+                    <tbody id="tabla-gastos-body">
+                        <tr><td colspan="11" class="text-center py-4 text-[#8a8073]">Sin gastos registrados.</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
+       
 
         <div id="panel-donacion-crud" class="card-mudream p-5 rounded-xl space-y-4 hidden">
             <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">💎 Registrar Donación de Joyas / Talismanes</h2>
