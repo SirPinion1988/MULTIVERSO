@@ -86,16 +86,17 @@
             background: linear-gradient(180deg, #fde096 0%, #f5b942 100%);
         }
 
-        /* MEDALLAS DE RANKING EN ASISTENCIAS */
+        /* MEDALLAS DE RANKING AL FINAL DEL NICK */
         .medalla-rank {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 26px;
-            height: 26px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 900;
+            margin-left: 8px;
             vertical-align: middle;
             user-select: none;
         }
@@ -134,19 +135,15 @@
             color: #f9fafb;
             box-shadow: 0 0 6px rgba(107, 114, 128, 0.4);
         }
-        /* 6° al 10° Zombie */
-        .medalla-zombie {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 2px 9px;
-            border-radius: 999px;
-            font-size: 11px;
-            font-weight: 800;
-            background: rgba(20, 83, 45, 0.45);
-            border: 1px solid rgba(74, 222, 128, 0.45);
-            color: #86efac;
+        /* 6° al 10° Solo Emoji Zombie */
+        .medalla-zombie-emoji {
+            display: inline-block;
+            font-size: 16px;
+            margin-left: 8px;
             vertical-align: middle;
+            line-height: 1;
+            filter: drop-shadow(0 0 4px rgba(74, 222, 128, 0.45));
+            user-select: none;
         }
 
         @keyframes popGanador {
@@ -428,13 +425,16 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 4: ASISTENCIAS (NICK | MEDALLA | RESET | ASISTENCIA) -->
+    <!-- SECCIÓN 4: ASISTENCIAS (NICK + MEDALLA AL FINAL | RESET | ASISTENCIA) -->
     <div id="seccion-asistencias-view" class="w-full max-w-7xl space-y-6 hidden">
         <div class="card-mudream p-5 rounded-xl space-y-4">
             <div class="flex flex-wrap justify-between items-center gap-3">
                 <div>
                     <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">⚔️ Asistencias a Invasiones (Ranking & Listado Completo)</h2>
-                    <p class="text-[11px] text-[#a89f91] mt-0.5">🥇 1° Oro • 🥈 2° Plata • 🥉 3° Bronce • 🏅 4° Cobre • ⚙️ 5° Hierro • 🧟 6° al 10°</p>
+                    <p class="text-[11px] text-[#a89f91] mt-0.5">
+                        <span class="text-[#fbd379] font-bold">Top 1–5 Élite:</span> 1° Oro • 2° Plata • 3° Bronce • 4° Cobre • 5° Hierro &nbsp;|&nbsp; 
+                        <span class="text-emerald-300 font-bold">Top 6–10 Ranqueables:</span> 🧟
+                    </p>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
                     <span id="texto-ultimo-reset" class="text-xs text-[#a89f91] bg-[#0b0a08] border border-[#2e261c] px-3 py-1.5 rounded-lg">
@@ -448,13 +448,12 @@
                     <thead>
                         <tr>
                             <th>Nick</th>
-                            <th style="text-align: center; width: 130px;">Medalla</th>
                             <th style="text-align: center; width: 150px;">Reset</th>
                             <th style="text-align: center; width: 160px;">Asistencia</th>
                             <th id="th-asistencias-acciones" class="hidden" style="text-align: center; width: 140px;">Sumar / Restar</th>
                         </tr>
                     </thead>
-                    <tbody id="tabla-asistencias-ranking"><tr><td colspan="5" class="text-center py-4 text-[#8a8073]">Cargando...</td></tr></tbody>
+                    <tbody id="tabla-asistencias-ranking"><tr><td colspan="4" class="text-center py-4 text-[#8a8073]">Cargando...</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -1233,9 +1232,9 @@
             cargarItems();
         }
 
-        // --- GENERADOR DE MEDALLAS POR PUESTO (1° ORO, 2° PLATA, 3° BRONCE, 4° COBRE, 5° HIERRO, 6°-10° ZOMBIE) ---
+        // --- GENERADOR DE MEDALLAS POR PUESTO (1° ORO, 2° PLATA, 3° BRONCE, 4° COBRE, 5° HIERRO, 6°-10° SOLO ZOMBIE) ---
         function obtenerMedallaPuesto(puesto, asistencias) {
-            if (asistencias <= 0) return '<span class="text-[#8a8073] text-xs">-</span>';
+            if (asistencias <= 0) return '';
             if (puesto === 1) {
                 return `<span class="medalla-rank medalla-oro" title="1° Puesto - Oro">1</span>`;
             }
@@ -1252,12 +1251,12 @@
                 return `<span class="medalla-rank medalla-hierro" title="5° Puesto - Hierro">5</span>`;
             }
             if (puesto >= 6 && puesto <= 10) {
-                return `<span class="medalla-zombie" title="${puesto}° Puesto">🧟 #${puesto}</span>`;
+                return `<span class="medalla-zombie-emoji" title="${puesto}° Puesto - Ranqueable">🧟</span>`;
             }
-            return `<span class="text-[11px] text-[#8a8073] font-mono">#${puesto}</span>`;
+            return '';
         }
 
-        // --- ASISTENCIAS: NICK | MEDALLA | RESET | ASISTENCIA ---
+        // --- ASISTENCIAS: NICK + MEDALLA AL FINAL | RESET | ASISTENCIA ---
         async function cargarAsistenciasRanking() {
             const [resAsist, resMiembros] = await Promise.all([
                 fetch('/api/asistencias-ranking'),
@@ -1317,13 +1316,26 @@
 
                 const tbody = document.getElementById('tabla-asistencias-ranking');
                 if (!listadoCompleto.length) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-6 text-[#8a8073]">Sin miembros registrados.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-6 text-[#8a8073]">Sin miembros registrados.</td></tr>';
                     return;
                 }
 
                 tbody.innerHTML = listadoCompleto.map((row, index) => {
                     const puesto = index + 1;
+                    const tienePuntos = row.total_asistencias > 0;
                     const medallaHTML = obtenerMedallaPuesto(puesto, row.total_asistencias);
+
+                    // Estilos diferenciados: Top 1-5 (Dorado Élite) vs Top 6-10 (Verde Ranqueables) vs Resto
+                    let filaClase = '';
+                    let nickClase = 'font-bold text-[#f3efe6]';
+                    if (tienePuntos && puesto <= 5) {
+                        filaClase = 'bg-[#f5b942]/[0.06]';
+                        nickClase = 'font-extrabold text-[#fbd379]';
+                    } else if (tienePuntos && puesto >= 6 && puesto <= 10) {
+                        filaClase = 'bg-emerald-950/25';
+                        nickClase = 'font-bold text-emerald-300';
+                    }
+
                     const resetsCount = row.total_resets || 0;
                     const badgeReset = resetsCount > 0 
                         ? `<span class="bg-[#221c15] text-[#fbd379] border border-[#f5b942]/40 px-2.5 py-0.5 rounded-full text-xs font-bold">🔄 ${resetsCount} ${resetsCount === 1 ? 'Reset' : 'Resets'}</span>` 
@@ -1338,9 +1350,8 @@
                         : '';
 
                     return `
-                        <tr>
-                            <td class="font-bold text-[#f3efe6]">${row.pj_name}</td>
-                            <td style="text-align: center;">${medallaHTML}</td>
+                        <tr class="${filaClase}">
+                            <td class="${nickClase}">${row.pj_name}${medallaHTML}</td>
                             <td style="text-align: center;">${badgeReset}</td>
                             <td style="text-align: center;" class="font-extrabold text-[#f5b942] text-base">${row.total_asistencias}</td>
                             ${botonesHTML}
