@@ -85,6 +85,73 @@
         .btn-gold-mudream:hover {
             background: linear-gradient(180deg, #fde096 0%, #f5b942 100%);
         }
+
+        /* MEDALLAS DE RANKING EN ASISTENCIAS */
+        .medalla-rank {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            font-size: 11px;
+            font-weight: 900;
+            margin-left: 8px;
+            vertical-align: middle;
+            user-select: none;
+            position: relative;
+        }
+        /* 1° Oro */
+        .medalla-oro {
+            background: radial-gradient(circle at 30% 30%, #fff3b0, #f5b942 55%, #b45309 100%);
+            border: 2px solid #fef08a;
+            color: #1c1204;
+            box-shadow: 0 0 10px rgba(245, 185, 66, 0.65);
+        }
+        /* 2° Plata */
+        .medalla-plata {
+            background: radial-gradient(circle at 30% 30%, #ffffff, #cbd5e1 55%, #64748b 100%);
+            border: 2px solid #f1f5f9;
+            color: #0f172a;
+            box-shadow: 0 0 8px rgba(203, 213, 225, 0.5);
+        }
+        /* 3° Cobre */
+        .medalla-cobre {
+            background: radial-gradient(circle at 30% 30%, #fed7aa, #ea580c 55%, #9a3412 100%);
+            border: 2px solid #fdba74;
+            color: #1f0a03;
+            box-shadow: 0 0 8px rgba(234, 88, 12, 0.5);
+        }
+        /* 4° Bronce */
+        .medalla-bronce {
+            background: radial-gradient(circle at 30% 30%, #e7c697, #a16207 60%, #713f12 100%);
+            border: 2px solid #d97706;
+            color: #1c1104;
+            box-shadow: 0 0 6px rgba(161, 98, 7, 0.45);
+        }
+        /* 5° Hierro */
+        .medalla-hierro {
+            background: radial-gradient(circle at 30% 30%, #9ca3af, #4b5563 60%, #1f2937 100%);
+            border: 2px solid #6b7280;
+            color: #f9fafb;
+            box-shadow: 0 0 6px rgba(107, 114, 128, 0.4);
+        }
+        /* 6° al 10° Zombie */
+        .medalla-zombie {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 1px 7px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 800;
+            margin-left: 8px;
+            background: rgba(20, 83, 45, 0.45);
+            border: 1px solid rgba(74, 222, 128, 0.45);
+            color: #86efac;
+            vertical-align: middle;
+        }
+
         @keyframes popGanador {
             0% { transform: scale(0.8); opacity: 0; }
             70% { transform: scale(1.05); opacity: 1; }
@@ -263,7 +330,7 @@
                 <div><label class="block text-[11px] text-[#a89f91] font-bold mb-1">NICK DEL PJ:</label><input type="text" id="clanPjNombre" placeholder="Nick" class="w-full input-mudream p-2 rounded text-xs"></div>
                 <div><label class="block text-[11px] text-[#a89f91] font-bold mb-1">RAZA:</label>
                     <select id="clanPjRaza" class="w-full input-mudream p-2 rounded text-xs">
-                        <option value="DK">DK</option><option value="SUM">SUM</option><option value="RF">RF</option><option value="INTERNO">INTERNO</option><option value="GL">GL</option><option value="SM">SM</option><option value="ELF">ELF</option><option value="MG">MG</option><option value="DL">DL</option>
+                        <option value="DK">DK</option><option value="SUM">SUM</option><option value="INTERNO">INTERNO</option><option value="GL">GL</option><option value="RF">RF</option><option value="SM">SM</option><option value="ELF">ELF</option><option value="MG">MG</option><option value="DL">DL</option>
                     </select>
                 </div>
                 <div><span class="text-[10px] text-[#f5b942] block">ℹ️ Clave autom.: <b>nick+123</b></span></div>
@@ -364,11 +431,14 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 4: ASISTENCIAS (LISTADO COMPLETO + BOTONES POR MIEMBRO) -->
+    <!-- SECCIÓN 4: ASISTENCIAS (LISTADO COMPLETO + MEDALLAS DE PUESTO + BOTONES POR MIEMBRO) -->
     <div id="seccion-asistencias-view" class="w-full max-w-7xl space-y-6 hidden">
         <div class="card-mudream p-5 rounded-xl space-y-4">
             <div class="flex flex-wrap justify-between items-center gap-3">
-                <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">⚔️ Asistencias a Invasiones (Listado Completo de Miembros)</h2>
+                <div>
+                    <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">⚔️ Asistencias a Invasiones (Ranking & Listado Completo)</h2>
+                    <p class="text-[11px] text-[#a89f91] mt-0.5">🥇 1° Oro • 🥈 2° Plata • 🥉 3° Cobre • 🏅 4° Bronce • ⚙️ 5° Hierro • 🧟 6° al 10°</p>
+                </div>
                 <div class="flex flex-wrap items-center gap-3">
                     <span id="texto-ultimo-reset" class="text-xs text-[#a89f91] bg-[#0b0a08] border border-[#2e261c] px-3 py-1.5 rounded-lg">
                         🕒 Último reset: <strong class="text-[#fbd379]">Sin registros</strong>
@@ -380,7 +450,7 @@
                 <table class="tabla-items">
                     <thead>
                         <tr>
-                            <th>Miembro (PJ)</th>
+                            <th>Miembro (PJ) & Puesto</th>
                             <th style="width: 100px;">Raza</th>
                             <th style="text-align: center; width: 140px;">Resets</th>
                             <th style="text-align: center; width: 160px;">Asistencias</th>
@@ -1164,7 +1234,31 @@
             cargarItems();
         }
 
-        // --- ASISTENCIAS: LISTADO COMPLETO DE MIEMBROS CON BOTONES +/- POR FILA ---
+        // --- GENERADOR DE MEDALLAS POR PUESTO ---
+        function obtenerMedallaPuesto(puesto, asistencias) {
+            if (asistencias <= 0) return '';
+            if (puesto === 1) {
+                return `<span class="medalla-rank medalla-oro" title="1° Puesto - Oro">1</span>`;
+            }
+            if (puesto === 2) {
+                return `<span class="medalla-rank medalla-plata" title="2° Puesto - Plata">2</span>`;
+            }
+            if (puesto === 3) {
+                return `<span class="medalla-rank medalla-cobre" title="3° Puesto - Cobre">3</span>`;
+            }
+            if (puesto === 4) {
+                return `<span class="medalla-rank medalla-bronce" title="4° Puesto - Bronce">4</span>`;
+            }
+            if (puesto === 5) {
+                return `<span class="medalla-rank medalla-hierro" title="5° Puesto - Hierro">5</span>`;
+            }
+            if (puesto >= 6 && puesto <= 10) {
+                return `<span class="medalla-zombie" title="${puesto}° Puesto">🧟 #${puesto}</span>`;
+            }
+            return `<span class="text-[11px] text-[#8a8073] font-mono ml-2">#${puesto}</span>`;
+        }
+
+        // --- ASISTENCIAS: LISTADO COMPLETO DE MIEMBROS CON MEDALLAS Y BOTONES +/- POR FILA ---
         async function cargarAsistenciasRanking() {
             const [resAsist, resMiembros] = await Promise.all([
                 fetch('/api/asistencias-ranking'),
@@ -1230,7 +1324,9 @@
                     return;
                 }
 
-                tbody.innerHTML = listadoCompleto.map(row => {
+                tbody.innerHTML = listadoCompleto.map((row, index) => {
+                    const puesto = index + 1;
+                    const medallaHTML = obtenerMedallaPuesto(puesto, row.total_asistencias);
                     const resetsCount = row.total_resets || 0;
                     const badgeReset = resetsCount > 0 
                         ? `<span class="bg-[#221c15] text-[#fbd379] border border-[#f5b942]/40 px-2.5 py-0.5 rounded-full text-xs font-bold">🔄 ${resetsCount} ${resetsCount === 1 ? 'Reset' : 'Resets'}</span>` 
@@ -1246,7 +1342,7 @@
 
                     return `
                         <tr>
-                            <td class="font-bold text-[#f3efe6]">${row.pj_name}</td>
+                            <td class="font-bold text-[#f3efe6]">${row.pj_name}${medallaHTML}</td>
                             <td><span class="badge-pj">${row.raza}</span></td>
                             <td style="text-align: center;">${badgeReset}</td>
                             <td style="text-align: center;" class="font-extrabold text-[#f5b942] text-base">${row.total_asistencias}</td>
