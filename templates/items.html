@@ -124,7 +124,7 @@
         </div>
     </header>
 
-    <!-- NAVEGACIÓN POR PESTAÑAS (MIEMBROS AL LADO DE USUARIOS) -->
+    <!-- NAVEGACIÓN POR PESTAÑAS -->
     <div class="flex flex-wrap items-center justify-center gap-2.5 mb-6 w-full max-w-7xl">
         <button onclick="cambiarSeccion('ITEMS')" id="btn-sec-items" class="btn-gold-mudream px-4 py-2 rounded-lg text-xs transition">📋 Ítems & Baúles</button>
         <button onclick="cambiarSeccion('DISTRIBUCION')" id="btn-sec-distribucion" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition">🎁 Distribución</button>
@@ -364,11 +364,11 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 4: ASISTENCIAS (INDEPENDIENTE) -->
+    <!-- SECCIÓN 4: ASISTENCIAS (LISTADO COMPLETO + BOTONES POR MIEMBRO) -->
     <div id="seccion-asistencias-view" class="w-full max-w-7xl space-y-6 hidden">
         <div class="card-mudream p-5 rounded-xl space-y-4">
             <div class="flex flex-wrap justify-between items-center gap-3">
-                <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">⚔️ Asistencias a Invasiones (Ranking)</h2>
+                <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">⚔️ Asistencias a Invasiones (Listado Completo de Miembros)</h2>
                 <div class="flex flex-wrap items-center gap-3">
                     <span id="texto-ultimo-reset" class="text-xs text-[#a89f91] bg-[#0b0a08] border border-[#2e261c] px-3 py-1.5 rounded-lg">
                         🕒 Último reset: <strong class="text-[#fbd379]">Sin registros</strong>
@@ -376,24 +376,18 @@
                     <button onclick="resetSemanalAsistencias()" id="btn-reset-semanal" class="hidden bg-red-950/80 hover:bg-red-900 border border-red-600/50 text-red-200 px-3 py-1.5 rounded text-xs font-bold transition">🔄 Reset Mensual (20%)</button>
                 </div>
             </div>
-            <div id="panel-asistencia-ctrl" class="flex flex-wrap gap-3 items-center hidden bg-[#0b0a08] p-3 rounded-lg border border-[#29221a]">
-                <span class="text-xs text-[#e5dec9] font-bold">Miembro:</span>
-                <select id="asistPjSelect" class="input-mudream p-2 rounded text-xs"><option value="">-- Seleccionar --</option></select>
-                <div class="flex gap-2 ml-auto">
-                    <button onclick="modificarAsistencia(1)" class="bg-emerald-900/80 hover:bg-emerald-800 border border-emerald-500/40 text-emerald-200 px-3 py-1.5 rounded text-xs font-bold">➕ Sumar</button>
-                    <button onclick="modificarAsistencia(-1)" class="bg-red-950/80 hover:bg-red-900 border border-red-500/40 text-red-200 px-3 py-1.5 rounded text-xs font-bold">➖ Restar</button>
-                </div>
-            </div>
-            <div class="tabla-scroll-box" style="height: 440px !important;">
+            <div class="tabla-scroll-box" style="height: 500px !important;">
                 <table class="tabla-items">
                     <thead>
                         <tr>
                             <th>Miembro (PJ)</th>
-                            <th style="text-align: center;">Resets</th>
-                            <th style="text-align: right; padding-right: 40px;">Asistencias Totales</th>
+                            <th style="width: 100px;">Raza</th>
+                            <th style="text-align: center; width: 140px;">Resets</th>
+                            <th style="text-align: center; width: 160px;">Asistencias</th>
+                            <th id="th-asistencias-acciones" class="hidden" style="text-align: center; width: 140px;">Sumar / Restar</th>
                         </tr>
                     </thead>
-                    <tbody id="tabla-asistencias-ranking"><tr><td colspan="3" class="text-center py-4">Cargando...</td></tr></tbody>
+                    <tbody id="tabla-asistencias-ranking"><tr><td colspan="5" class="text-center py-4 text-[#8a8073]">Cargando...</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -610,7 +604,7 @@
                     if (loginBtn) loginBtn.outerHTML = `<a href="/logout" class="bg-red-950/80 hover:bg-red-900 border border-red-600/40 text-red-200 px-3 py-1.5 rounded-lg text-xs font-bold transition">Salir</a>`;
                     
                     if (sesionAutorizada) {
-                        ['btn-guardar-item', 'panel-custom-id', 'dummy-div', 'panel-miembros-crud', 'btn-girar-ruleta', 'panel-asistencia-ctrl', 'panel-donacion-crud', 'btn-gasto-modal', 'btn-reset-semanal', 'th-acciones-head', 'th-miembro-acciones', 'admin-backup-buttons'].forEach(id => {
+                        ['btn-guardar-item', 'panel-custom-id', 'dummy-div', 'panel-miembros-crud', 'btn-girar-ruleta', 'panel-donacion-crud', 'btn-gasto-modal', 'btn-reset-semanal', 'th-acciones-head', 'th-miembro-acciones', 'th-asistencias-acciones', 'admin-backup-buttons'].forEach(id => {
                             const el = document.getElementById(id);
                             if (el) el.classList.remove('hidden');
                         });
@@ -650,7 +644,7 @@
             if (sec === 'ITEMS') { cargarItems(); }
             if (sec === 'CLAN') { cargarMiembros(); }
             if (sec === 'DISTRIBUCION') { prepararVistaDistribucion(); }
-            if (sec === 'ASISTENCIAS') { cargarMiembros(); cargarAsistenciasRanking(); }
+            if (sec === 'ASISTENCIAS') { cargarAsistenciasRanking(); }
             if (sec === 'DONACIONES') { cargarMiembros(); cargarDonacionesJoyas(); }
             if (sec === 'USERS') { cargarUsuarios(); }
         }
@@ -669,7 +663,6 @@
             const res = await fetch('/api/miembros');
             if (res.ok) {
                 miembrosClan = await res.json();
-                const selAsist = document.getElementById('asistPjSelect');
                 const selDon = document.getElementById('donPj');
                 const selAsignado = document.getElementById('inputFiltroAsignado');
                 let opts = '<option value="">-- Todos --</option>';
@@ -680,7 +673,6 @@
                     optsCtrl += `<option value="${m.nombre_pj}">${m.nombre_pj} (${m.raza})</option>`;
                 });
                 
-                if (selAsist) selAsist.innerHTML = optsCtrl;
                 if (selDon) selDon.innerHTML = optsCtrl;
                 if (selAsignado) selAsignado.innerHTML = opts;
 
@@ -1172,10 +1164,19 @@
             cargarItems();
         }
 
+        // --- ASISTENCIAS: LISTADO COMPLETO DE MIEMBROS CON BOTONES +/- POR FILA ---
         async function cargarAsistenciasRanking() {
-            const res = await fetch('/api/asistencias-ranking');
-            if (res.ok) {
-                const payload = await res.json();
+            const [resAsist, resMiembros] = await Promise.all([
+                fetch('/api/asistencias-ranking'),
+                miembrosClan.length ? Promise.resolve(null) : fetch('/api/miembros')
+            ]);
+
+            if (resMiembros && resMiembros.ok) {
+                miembrosClan = await resMiembros.json();
+            }
+
+            if (resAsist.ok) {
+                const payload = await resAsist.json();
                 const data = Array.isArray(payload) ? payload : (payload.ranking || []);
                 const ultimoReset = payload.ultimo_reset;
 
@@ -1186,25 +1187,78 @@
                         : `🕒 Último reset: <strong class="text-[#8a8073]">Sin registros</strong>`;
                 }
 
-                document.getElementById('tabla-asistencias-ranking').innerHTML = data.map(row => {
+                const mapaAsist = {};
+                data.forEach(r => {
+                    mapaAsist[r.pj_name.toLowerCase()] = {
+                        total_asistencias: Number(r.total_asistencias) || 0,
+                        total_resets: Number(r.total_resets) || 0
+                    };
+                });
+
+                const nombresVistos = new Set();
+                const listadoCompleto = [];
+
+                miembrosClan.forEach(m => {
+                    const key = m.nombre_pj.toLowerCase();
+                    nombresVistos.add(key);
+                    const info = mapaAsist[key] || { total_asistencias: 0, total_resets: 0 };
+                    listadoCompleto.push({
+                        pj_name: m.nombre_pj,
+                        raza: m.raza,
+                        total_asistencias: info.total_asistencias,
+                        total_resets: info.total_resets
+                    });
+                });
+
+                data.forEach(r => {
+                    const key = r.pj_name.toLowerCase();
+                    if (!nombresVistos.has(key)) {
+                        listadoCompleto.push({
+                            pj_name: r.pj_name,
+                            raza: '-',
+                            total_asistencias: Number(r.total_asistencias) || 0,
+                            total_resets: Number(r.total_resets) || 0
+                        });
+                    }
+                });
+
+                listadoCompleto.sort((a, b) => b.total_asistencias - a.total_asistencias || a.pj_name.localeCompare(b.pj_name));
+
+                const tbody = document.getElementById('tabla-asistencias-ranking');
+                if (!listadoCompleto.length) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-6 text-[#8a8073]">Sin miembros registrados.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = listadoCompleto.map(row => {
                     const resetsCount = row.total_resets || 0;
                     const badgeReset = resetsCount > 0 
                         ? `<span class="bg-[#221c15] text-[#fbd379] border border-[#f5b942]/40 px-2.5 py-0.5 rounded-full text-xs font-bold">🔄 ${resetsCount} ${resetsCount === 1 ? 'Reset' : 'Resets'}</span>` 
                         : `<span class="text-[#8a8073] text-xs">Sin resets</span>`;
+
+                    const pjEscapado = row.pj_name.replace(/'/g, "\\'");
+                    const botonesHTML = sesionAutorizada
+                        ? `<td style="text-align: center;" class="space-x-1.5">
+                                <button onclick="modificarAsistenciaDirecta('${pjEscapado}', 1)" class="bg-emerald-900/80 hover:bg-emerald-800 border border-emerald-500/40 text-emerald-200 px-2.5 py-1 rounded text-xs font-bold transition" title="Sumar 1 asistencia">➕</button>
+                                <button onclick="modificarAsistenciaDirecta('${pjEscapado}', -1)" class="bg-red-950/80 hover:bg-red-900 border border-red-500/40 text-red-200 px-2.5 py-1 rounded text-xs font-bold transition" title="Restar 1 asistencia">➖</button>
+                           </td>`
+                        : '';
+
                     return `
                         <tr>
                             <td class="font-bold text-[#f3efe6]">${row.pj_name}</td>
+                            <td><span class="badge-pj">${row.raza}</span></td>
                             <td style="text-align: center;">${badgeReset}</td>
-                            <td style="text-align: right; padding-right: 40px;" class="font-extrabold text-[#f5b942] text-base">${row.total_asistencias}</td>
+                            <td style="text-align: center;" class="font-extrabold text-[#f5b942] text-base">${row.total_asistencias}</td>
+                            ${botonesHTML}
                         </tr>
                     `;
-                }).join('') || '<tr><td colspan="3" class="text-center py-4 text-[#8a8073]">Sin asistencias.</td></tr>';
+                }).join('');
             }
         }
 
-        async function modificarAsistencia(delta) {
-            const pj_name = document.getElementById('asistPjSelect').value;
-            if (!pj_name) return alert("Seleccioná un miembro.");
+        async function modificarAsistenciaDirecta(pj_name, delta) {
+            if (!pj_name) return;
             await fetch('/api/asistencias-ranking', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ pj_name, delta })
