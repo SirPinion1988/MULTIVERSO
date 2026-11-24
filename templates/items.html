@@ -100,42 +100,36 @@
             vertical-align: middle;
             user-select: none;
         }
-        /* 1° Oro */
         .medalla-oro {
             background: radial-gradient(circle at 30% 30%, #fff3b0, #f5b942 55%, #b45309 100%);
             border: 2px solid #fef08a;
             color: #1c1204;
             box-shadow: 0 0 10px rgba(245, 185, 66, 0.65);
         }
-        /* 2° Plata */
         .medalla-plata {
             background: radial-gradient(circle at 30% 30%, #ffffff, #cbd5e1 55%, #64748b 100%);
             border: 2px solid #f1f5f9;
             color: #0f172a;
             box-shadow: 0 0 8px rgba(203, 213, 225, 0.5);
         }
-        /* 3° Bronce */
         .medalla-bronce {
             background: radial-gradient(circle at 30% 30%, #e7c697, #a16207 60%, #713f12 100%);
             border: 2px solid #d97706;
             color: #1c1104;
             box-shadow: 0 0 6px rgba(161, 98, 7, 0.45);
         }
-        /* 4° Cobre */
         .medalla-cobre {
             background: radial-gradient(circle at 30% 30%, #fed7aa, #ea580c 55%, #9a3412 100%);
             border: 2px solid #fdba74;
             color: #1f0a03;
             box-shadow: 0 0 8px rgba(234, 88, 12, 0.5);
         }
-        /* 5° Hierro */
         .medalla-hierro {
             background: radial-gradient(circle at 30% 30%, #9ca3af, #4b5563 60%, #1f2937 100%);
             border: 2px solid #6b7280;
             color: #f9fafb;
             box-shadow: 0 0 6px rgba(107, 114, 128, 0.4);
         }
-        /* 6° al 10° Solo Emoji Zombie */
         .medalla-zombie-emoji {
             display: inline-block;
             font-size: 16px;
@@ -205,9 +199,29 @@
                     <input type="number" id="inputFiltroId" oninput="aplicarFiltros()" placeholder="Ej. 105..." class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">📜 Set, Arma o Anillo (Escribí iniciales)</label>
-                    <input type="text" id="inputFiltroSetBase" list="listaItemsBase" oninput="aplicarFiltros()" placeholder="Escribí iniciales (Ej. Red, Chr, Sac...)" autocomplete="off" class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
+                    <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">📜 Set, Arma, Caja o Joya (Escribí iniciales)</label>
+                    <input type="text" id="inputFiltroSetBase" list="listaItemsBase" oninput="aplicarFiltros()" placeholder="Escribí iniciales (Ej. Red, Box, Jewel...)" autocomplete="off" class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
                     <datalist id="listaItemsBase">
+                        <!-- Joyas, Talismanes y Cajas Especiales -->
+                        <option value="Jewel of Luck"></option>
+                        <option value="Jewel of Excellent"></option>
+                        <option value="Jewel of Brilliance"></option>
+                        <option value="Talisman of Assembly"></option>
+                        <option value="Talisman of Luck"></option>
+                        <option value="Box of Jewel 5"></option>
+                        <option value="Box of Jewel 10"></option>
+                        <option value="Box of Jewel 20"></option>
+                        <option value="Weapon Box +1"></option>
+                        <option value="Weapon Box +2"></option>
+                        <option value="Weapon Box +3"></option>
+                        <option value="Weapon Box +4"></option>
+                        <option value="Weapon Box +5"></option>
+                        <option value="Box of Kundun +1"></option>
+                        <option value="Box of Kundun +2"></option>
+                        <option value="Box of Kundun +3"></option>
+                        <option value="Box of Kundun +4"></option>
+                        <option value="Box of Kundun +5"></option>
+                        <option value="Necklace Box"></option>
                         <!-- Dark Knight -->
                         <option value="Leather"></option><option value="Bronze"></option><option value="Scale"></option><option value="Brass"></option><option value="Plate"></option><option value="Dragon"></option><option value="Black Dragon"></option><option value="Dark Phoenix"></option><option value="Great Dragon"></option><option value="Dragon Knight"></option><option value="Ashcrow"></option><option value="Titan"></option><option value="Brave"></option>
                         <!-- Dark Wizard -->
@@ -234,7 +248,18 @@
                     <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">📦 Tipo de Pieza</label>
                     <select id="inputFiltroTipoPieza" onchange="aplicarFiltros()" class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
                         <option value="">-- Todos los Tipos --</option>
-                        <option value="Armor">Armor (Pechera)</option><option value="Pants">Pants (Pantalón)</option><option value="Helm">Helm (Casco)</option><option value="Gloves">Gloves (Guantes)</option><option value="Boots">Boots (Botas)</option><option value="Shield">Shield (Escudo)</option><option value="Weapon">Weapon / Arma</option><option value="Ring">Ring (Anillo)</option><option value="Pendant">Pendant (Amuleto)</option>
+                        <option value="Armor">Armor (Pechera)</option>
+                        <option value="Pants">Pants (Pantalón)</option>
+                        <option value="Helm">Helm (Casco)</option>
+                        <option value="Gloves">Gloves (Guantes)</option>
+                        <option value="Boots">Boots (Botas)</option>
+                        <option value="Shield">Shield (Escudo)</option>
+                        <option value="Weapon">Weapon / Arma</option>
+                        <option value="Ring">Ring (Anillo)</option>
+                        <option value="Pendant">Pendant (Amuleto)</option>
+                        <option value="Jewel">Jewel (Joya)</option>
+                        <option value="Box">Box (Caja)</option>
+                        <option value="Talisman">Talisman</option>
                     </select>
                 </div>
                 <div>
@@ -459,19 +484,45 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 5: DONACIONES & BANCO GUILD (INDEPENDIENTE) -->
+    <!-- SECCIÓN 5: DONACIONES & BANCO GUILD (JOYAS NORMALES + DREAM COIN + ZEN, SIN ASSEMBLY NI LUCK) -->
     <div id="seccion-donaciones-view" class="w-full max-w-7xl space-y-6 hidden">
         <div class="card-mudream p-5 rounded-xl space-y-3">
             <div class="flex justify-between items-center">
-                <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">🏛️ Banco Guild (Acumulado Neto & Talismanes)</h2>
-                <button onclick="abrirModalGasto()" id="btn-gasto-modal" class="hidden bg-red-950/80 hover:bg-red-900 border border-red-600/50 text-red-200 px-3 py-1.5 rounded text-xs font-bold">📉 Registrar Uso / Gasto</button>
+                <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">🏛️ Banco Guild (Joyas, Piedras & Dream Coin)</h2>
+                <button onclick="abrirModalGasto()" id="btn-gasto-modal" class="hidden bg-red-950/80 hover:bg-red-900 border border-red-600/50 text-red-200 px-3 py-1.5 rounded text-xs font-bold">📉 Registrar Uso / Venta</button>
             </div>
             <div class="overflow-x-auto">
-                <table class="tabla-items text-center">
-                    <thead><tr><th>Bless</th><th>Soul</th><th>Life</th><th>Chaos</th><th>Creation</th><th>Assembly</th><th>Luck</th><th>Zen</th></tr></thead>
+                <table class="tabla-items text-center whitespace-nowrap">
+                    <thead>
+                        <tr>
+                            <th>Bless</th>
+                            <th>Soul</th>
+                            <th>Life</th>
+                            <th>Creation</th>
+                            <th>Guardian</th>
+                            <th>Gemstone</th>
+                            <th>Harmony</th>
+                            <th>Chaos</th>
+                            <th>Lower Ref.</th>
+                            <th>Higher Ref.</th>
+                            <th class="text-sky-300">Dream Coin</th>
+                            <th>Zen</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         <tr class="font-bold text-[#fbd379] text-sm">
-                            <td id="banco-bless">0</td><td id="banco-soul">0</td><td id="banco-life">0</td><td id="banco-chaos">0</td><td id="banco-creation">0</td><td id="banco-assembly">0</td><td id="banco-luck">0</td><td id="banco-zen">0</td>
+                            <td id="banco-bless">0</td>
+                            <td id="banco-soul">0</td>
+                            <td id="banco-life">0</td>
+                            <td id="banco-creation">0</td>
+                            <td id="banco-guardian">0</td>
+                            <td id="banco-gemstone">0</td>
+                            <td id="banco-harmony">0</td>
+                            <td id="banco-chaos">0</td>
+                            <td id="banco-lower-refining">0</td>
+                            <td id="banco-higher-refining">0</td>
+                            <td id="banco-dream-coin" class="text-sky-300 font-extrabold">0</td>
+                            <td id="banco-zen">0</td>
                         </tr>
                     </tbody>
                 </table>
@@ -479,8 +530,8 @@
         </div>
 
         <div id="panel-donacion-crud" class="card-mudream p-5 rounded-xl space-y-4 hidden">
-            <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">💎 Registrar Donación de Joyas / Talismanes</h2>
-            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 items-end bg-[#0b0a08] p-3 rounded-lg border border-[#29221a]">
+            <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">💎 Registrar Donación de Joyas / Dream Coin</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5 items-end bg-[#0b0a08] p-3.5 rounded-lg border border-[#29221a]">
                 <div class="col-span-2">
                     <label class="block text-[10px] text-[#a89f91] font-bold mb-1">MIEMBRO:</label>
                     <select id="donPj" class="w-full input-mudream p-2 rounded text-xs"><option value="">-- Seleccionar --</option></select>
@@ -488,46 +539,71 @@
                 <div><label class="block text-[10px] text-[#a89f91]">BLESS:</label><input type="number" id="donBless" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
                 <div><label class="block text-[10px] text-[#a89f91]">SOUL:</label><input type="number" id="donSoul" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
                 <div><label class="block text-[10px] text-[#a89f91]">LIFE:</label><input type="number" id="donLife" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-[#a89f91]">CHAOS:</label><input type="number" id="donChaos" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
                 <div><label class="block text-[10px] text-[#a89f91]">CREATION:</label><input type="number" id="donCreation" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-[#a89f91]">ASSEMBLY:</label><input type="number" id="donAssembly" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-[#a89f91]">LUCK:</label><input type="number" id="donLuck" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div class="col-span-2"><label class="block text-[10px] text-[#a89f91]">ZEN:</label><input type="number" id="donZen" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div class="col-span-5"><button onclick="guardarDonacionJoyas()" class="w-full btn-gold-mudream py-2 rounded text-xs mt-1">💾 Registrar Donación</button></div>
+                <div><label class="block text-[10px] text-[#a89f91]">GUARDIAN:</label><input type="number" id="donGuardian" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-[#a89f91]">GEMSTONE:</label><input type="number" id="donGemstone" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-[#a89f91]">HARMONY:</label><input type="number" id="donHarmony" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-[#a89f91]">CHAOS:</label><input type="number" id="donChaos" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-[#a89f91]">LOWER REF.:</label><input type="number" id="donLowerRefining" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-[#a89f91]">HIGHER REF.:</label><input type="number" id="donHigherRefining" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-sky-300 font-bold">DREAM COIN:</label><input type="number" id="donDreamCoin" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-[#a89f91]">ZEN:</label><input type="number" id="donZen" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div class="col-span-2 sm:col-span-4 md:col-span-7"><button onclick="guardarDonacionJoyas()" class="w-full btn-gold-mudream py-2 rounded text-xs mt-1">💾 Registrar Donación</button></div>
             </div>
         </div>
 
         <div class="card-mudream p-5 rounded-xl space-y-4">
             <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">📜 Historial de Donaciones</h2>
             <div class="tabla-scroll-box" style="height: 280px !important;">
-                <table class="tabla-items text-center">
-                    <thead><tr><th style="text-align: left;">Miembro</th><th>Bless</th><th>Soul</th><th>Life</th><th>Chaos</th><th>Creation</th><th>Assembly</th><th>Luck</th><th>Zen</th><th>Fecha</th></tr></thead>
-                    <tbody id="tabla-donaciones-body"><tr><td colspan="10" class="text-center py-4 text-[#8a8073]">Sin donaciones.</td></tr></tbody>
+                <table class="tabla-items text-center whitespace-nowrap">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left;">Miembro</th>
+                            <th>Bless</th>
+                            <th>Soul</th>
+                            <th>Life</th>
+                            <th>Creation</th>
+                            <th>Guardian</th>
+                            <th>Gemstone</th>
+                            <th>Harmony</th>
+                            <th>Chaos</th>
+                            <th>Lower Ref.</th>
+                            <th>Higher Ref.</th>
+                            <th class="text-sky-300">Dream Coin</th>
+                            <th>Zen</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-donaciones-body"><tr><td colspan="14" class="text-center py-4 text-[#8a8073]">Sin donaciones.</td></tr></tbody>
                 </table>
             </div>
         </div>
 
         <div class="card-mudream p-5 rounded-xl space-y-4">
-            <h2 class="text-sm font-bold text-red-400 uppercase tracking-wider">📉 Historial de Gastos / Usos del Banco Guild</h2>
-            <div class="tabla-scroll-box" style="height: 260px !important;">
-                <table class="tabla-items text-center">
+            <h2 class="text-sm font-bold text-red-400 uppercase tracking-wider">📉 Historial de Usos & Ventas del Banco Guild</h2>
+            <div class="tabla-scroll-box" style="height: 280px !important;">
+                <table class="tabla-items text-center whitespace-nowrap">
                     <thead>
                         <tr>
-                            <th style="text-align: left;">Motivo</th>
+                            <th style="text-align: left;">Tipo / Ítem (ID) & Motivo</th>
                             <th>Bless</th>
                             <th>Soul</th>
                             <th>Life</th>
-                            <th>Chaos</th>
                             <th>Creation</th>
-                            <th>Assembly</th>
-                            <th>Luck</th>
+                            <th>Guardian</th>
+                            <th>Gemstone</th>
+                            <th>Harmony</th>
+                            <th>Chaos</th>
+                            <th>Lower Ref.</th>
+                            <th>Higher Ref.</th>
+                            <th class="text-sky-300">Dream Coin</th>
                             <th>Zen</th>
                             <th>Por</th>
                             <th>Fecha</th>
                         </tr>
                     </thead>
                     <tbody id="tabla-gastos-body">
-                        <tr><td colspan="11" class="text-center py-4 text-[#8a8073]">Sin gastos registrados.</td></tr>
+                        <tr><td colspan="15" class="text-center py-4 text-[#8a8073]">Sin movimientos registrados.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -555,23 +631,57 @@
         </div>
     </div>
 
-    <!-- MODAL GASTO -->
+    <!-- MODAL USO / VENTA DE ÍTEM -->
     <div id="modal-gasto" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-[#16120e] border border-red-700/70 p-6 rounded-xl max-w-md w-full flex flex-col shadow-2xl space-y-3">
-            <h3 class="text-lg font-bold text-red-400 mb-2">📉 Registrar Gasto / Uso de Guild</h3>
-            <div><label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">Motivo:</label><input type="text" id="gastoMotivo" class="w-full input-mudream p-2.5 rounded text-xs"></div>
+        <div class="bg-[#16120e] border border-[#f5b942]/50 p-6 rounded-xl max-w-lg w-full flex flex-col shadow-2xl space-y-3 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-lg font-bold text-[#f5b942] mb-1">📉 Registrar Uso o Venta del Guild</h3>
+
+            <!-- TIPO DE OPERACIÓN -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">Tipo de Operación:</label>
+                    <select id="gastoTipoMovimiento" onchange="actualizarTextoModalGasto()" class="w-full input-mudream p-2 rounded text-xs font-bold">
+                        <option value="GASTO">📉 Uso / Gasto (Resta del Banco)</option>
+                        <option value="VENTA">💰 Venta de Ítem (Suma al Banco)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">🆔 ID del Ítem (Opcional):</label>
+                    <input type="number" id="gastoItemId" oninput="buscarItemGastoVenta()" placeholder="Ej. 105" class="w-full input-mudream p-2 rounded text-xs font-mono font-bold text-[#f5b942]">
+                </div>
+            </div>
+
+            <!-- VISTA PREVIA DEL ÍTEM BUSCADO POR ID -->
+            <div id="gasto-item-preview" class="bg-[#0b0a08] border border-[#29221a] px-3 py-2 rounded-lg text-xs text-[#8a8073]">
+                Si el movimiento corresponde a un artículo del inventario, ingresá su número de ID...
+            </div>
+
+            <label id="wrap-eliminar-vendido" class="hidden flex items-center gap-2 text-xs text-amber-300 cursor-pointer bg-[#0b0a08] p-2 rounded border border-amber-500/30">
+                <input type="checkbox" id="gastoEliminarItemVendido" class="accent-[#f5b942]">
+                <span>🗑️ Quitar este ítem del inventario al registrar la venta</span>
+            </label>
+
+            <div>
+                <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">Motivo / Comprador:</label>
+                <input type="text" id="gastoMotivo" placeholder="Ej. Venta a comprador / Compra de entrada / Uso clan..." class="w-full input-mudream p-2.5 rounded text-xs">
+            </div>
+
             <div class="grid grid-cols-3 gap-2 text-xs text-[#e5dec9]">
-                <div><label>Bless:</label><input type="number" id="gastoBless" value="0" class="w-full input-mudream p-1.5 rounded"></div>
-                <div><label>Soul:</label><input type="number" id="gastoSoul" value="0" class="w-full input-mudream p-1.5 rounded"></div>
-                <div><label>Life:</label><input type="number" id="gastoLife" value="0" class="w-full input-mudream p-1.5 rounded"></div>
-                <div><label>Chaos:</label><input type="number" id="gastoChaos" value="0" class="w-full input-mudream p-1.5 rounded"></div>
-                <div><label>Creation:</label><input type="number" id="gastoCreation" value="0" class="w-full input-mudream p-1.5 rounded"></div>
-                <div><label>Assembly:</label><input type="number" id="gastoAssembly" value="0" class="w-full input-mudream p-1.5 rounded"></div>
-                <div><label>Luck:</label><input type="number" id="gastoLuck" value="0" class="w-full input-mudream p-1.5 rounded"></div>
-                <div class="col-span-2"><label>Zen:</label><input type="number" id="gastoZen" value="0" class="w-full input-mudream p-1.5 rounded"></div>
+                <div><label>Bless:</label><input type="number" id="gastoBless" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
+                <div><label>Soul:</label><input type="number" id="gastoSoul" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
+                <div><label>Life:</label><input type="number" id="gastoLife" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
+                <div><label>Creation:</label><input type="number" id="gastoCreation" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
+                <div><label>Guardian:</label><input type="number" id="gastoGuardian" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
+                <div><label>Gemstone:</label><input type="number" id="gastoGemstone" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
+                <div><label>Harmony:</label><input type="number" id="gastoHarmony" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
+                <div><label>Chaos:</label><input type="number" id="gastoChaos" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
+                <div><label>Lower Ref.:</label><input type="number" id="gastoLowerRefining" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
+                <div><label>Higher Ref.:</label><input type="number" id="gastoHigherRefining" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
+                <div><label class="text-sky-300 font-bold">Dream Coin:</label><input type="number" id="gastoDreamCoin" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
+                <div><label>Zen:</label><input type="number" id="gastoZen" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
             </div>
             <div class="flex gap-2 justify-end pt-3">
-                <button onclick="guardarGastoGuild()" class="bg-red-800 hover:bg-red-700 text-white px-4 py-2 rounded text-xs font-bold">Descontar</button>
+                <button onclick="guardarGastoGuild()" id="btn-confirmar-gasto-venta" class="bg-red-800 hover:bg-red-700 text-white px-4 py-2 rounded text-xs font-bold">Registrar Gasto</button>
                 <button onclick="cerrarModalGasto()" class="bg-[#221c15] text-[#d6cebf] px-4 py-2 rounded text-xs font-bold">Cancelar</button>
             </div>
         </div>
@@ -608,6 +718,9 @@
                     <option value="Weapon">Weapon</option>
                     <option value="Ring">Ring</option>
                     <option value="Pendant">Pendant</option>
+                    <option value="Jewel">Jewel</option>
+                    <option value="Box">Box</option>
+                    <option value="Talisman">Talisman</option>
                 </select>
             </div>
             <div>
@@ -655,7 +768,7 @@
 
     <script>
         let catalogo = [], miembrosClan = [], sesionAutorizada = false, esAdmin = false;
-        let ruletaGirando = false, anguloActualRuleta = 0, itemSeleccionadoRuleta = null;
+        let ruletaGirando = false, anguloActualRuleta = 0, itemSeleccionadoRuleta = null, itemSeleccionadoGasto = null;
 
         async function chequearSesion() {
             try {
@@ -1232,31 +1345,19 @@
             cargarItems();
         }
 
-        // --- GENERADOR DE MEDALLAS POR PUESTO (1° ORO, 2° PLATA, 3° BRONCE, 4° COBRE, 5° HIERRO, 6°-10° SOLO ZOMBIE) ---
+        // --- GENERADOR DE MEDALLAS POR PUESTO ---
         function obtenerMedallaPuesto(puesto, asistencias) {
             if (asistencias <= 0) return '';
-            if (puesto === 1) {
-                return `<span class="medalla-rank medalla-oro" title="1° Puesto - Oro">1</span>`;
-            }
-            if (puesto === 2) {
-                return `<span class="medalla-rank medalla-plata" title="2° Puesto - Plata">2</span>`;
-            }
-            if (puesto === 3) {
-                return `<span class="medalla-rank medalla-bronce" title="3° Puesto - Bronce">3</span>`;
-            }
-            if (puesto === 4) {
-                return `<span class="medalla-rank medalla-cobre" title="4° Puesto - Cobre">4</span>`;
-            }
-            if (puesto === 5) {
-                return `<span class="medalla-rank medalla-hierro" title="5° Puesto - Hierro">5</span>`;
-            }
-            if (puesto >= 6 && puesto <= 10) {
-                return `<span class="medalla-zombie-emoji" title="${puesto}° Puesto - Ranqueable">🧟</span>`;
-            }
+            if (puesto === 1) return `<span class="medalla-rank medalla-oro" title="1° Puesto - Oro">1</span>`;
+            if (puesto === 2) return `<span class="medalla-rank medalla-plata" title="2° Puesto - Plata">2</span>`;
+            if (puesto === 3) return `<span class="medalla-rank medalla-bronce" title="3° Puesto - Bronce">3</span>`;
+            if (puesto === 4) return `<span class="medalla-rank medalla-cobre" title="4° Puesto - Cobre">4</span>`;
+            if (puesto === 5) return `<span class="medalla-rank medalla-hierro" title="5° Puesto - Hierro">5</span>`;
+            if (puesto >= 6 && puesto <= 10) return `<span class="medalla-zombie-emoji" title="${puesto}° Puesto - Ranqueable">🧟</span>`;
             return '';
         }
 
-        // --- ASISTENCIAS: MEDALLA A LA IZQUIERDA DEL NICK | RESET | ASISTENCIA ---
+        // --- ASISTENCIAS ---
         async function cargarAsistenciasRanking() {
             const [resAsist, resMiembros] = await Promise.all([
                 fetch('/api/asistencias-ranking'),
@@ -1325,7 +1426,6 @@
                     const tienePuntos = row.total_asistencias > 0;
                     const medallaHTML = obtenerMedallaPuesto(puesto, row.total_asistencias);
 
-                    // Estilos diferenciados: Top 1-5 (Dorado Élite) vs Top 6-10 (Verde Ranqueables) vs Resto
                     let filaClase = '';
                     let nickClase = 'font-bold text-[#f3efe6]';
                     if (tienePuntos && puesto <= 5) {
@@ -1370,38 +1470,76 @@
             cargarAsistenciasRanking();
         }
 
+        // --- BANCO GUILD, DONACIONES & USO / VENTA ---
         async function cargarDonacionesJoyas() {
             const res = await fetch('/api/donaciones-joyas');
             if (res.ok) {
                 const data = await res.json();
                 const b = data.banco_guild;
-                document.getElementById('banco-bless').textContent = b.bless;
-                document.getElementById('banco-soul').textContent = b.soul;
-                document.getElementById('banco-life').textContent = b.life;
-                document.getElementById('banco-chaos').textContent = b.chaos;
-                document.getElementById('banco-creation').textContent = b.creation;
-                document.getElementById('banco-assembly').textContent = b.talisman_assembly;
-                document.getElementById('banco-luck').textContent = b.talisman_luck;
-                document.getElementById('banco-zen').textContent = b.zen.toLocaleString();
+                document.getElementById('banco-bless').textContent = b.bless || 0;
+                document.getElementById('banco-soul').textContent = b.soul || 0;
+                document.getElementById('banco-life').textContent = b.life || 0;
+                document.getElementById('banco-creation').textContent = b.creation || 0;
+                document.getElementById('banco-guardian').textContent = b.guardian || 0;
+                document.getElementById('banco-gemstone').textContent = b.gemstone || 0;
+                document.getElementById('banco-harmony').textContent = b.harmony || 0;
+                document.getElementById('banco-chaos').textContent = b.chaos || 0;
+                document.getElementById('banco-lower-refining').textContent = b.lower_refining || 0;
+                document.getElementById('banco-higher-refining').textContent = b.higher_refining || 0;
+                document.getElementById('banco-dream-coin').textContent = Number(b.dream_coin || 0).toLocaleString();
+                document.getElementById('banco-zen').textContent = Number(b.zen || 0).toLocaleString();
 
                 document.getElementById('tabla-donaciones-body').innerHTML = data.donaciones.map(d => `
                     <tr>
                         <td style="text-align: left;" class="font-bold text-[#fbd379]">${d.pj_name}</td>
-                        <td>${d.bless}</td><td>${d.soul}</td><td>${d.life}</td><td>${d.chaos}</td><td>${d.creation}</td><td>${d.talisman_assembly}</td><td>${d.talisman_luck}</td><td>${d.zen.toLocaleString()}</td>
+                        <td>${d.bless || 0}</td>
+                        <td>${d.soul || 0}</td>
+                        <td>${d.life || 0}</td>
+                        <td>${d.creation || 0}</td>
+                        <td>${d.guardian || 0}</td>
+                        <td>${d.gemstone || 0}</td>
+                        <td>${d.harmony || 0}</td>
+                        <td>${d.chaos || 0}</td>
+                        <td>${d.lower_refining || 0}</td>
+                        <td>${d.higher_refining || 0}</td>
+                        <td class="text-sky-300 font-bold">${Number(d.dream_coin || 0).toLocaleString()}</td>
+                        <td>${Number(d.zen || 0).toLocaleString()}</td>
                         <td class="text-xs text-[#a89f91]">${new Date(d.created_at).toLocaleDateString()}</td>
                     </tr>
-                `).join('') || '<tr><td colspan="10" class="text-center py-4 text-[#8a8073]">Sin donaciones.</td></tr>';
+                `).join('') || '<tr><td colspan="14" class="text-center py-4 text-[#8a8073]">Sin donaciones.</td></tr>';
 
                 const tbodyGastos = document.getElementById('tabla-gastos-body');
                 if (tbodyGastos) {
-                    tbodyGastos.innerHTML = (data.gastos || []).map(g => `
-                        <tr>
-                            <td style="text-align: left;" class="font-bold text-red-300">${g.motivo}</td>
-                            <td>${g.bless}</td><td>${g.soul}</td><td>${g.life}</td><td>${g.chaos}</td><td>${g.creation}</td><td>${g.talisman_assembly}</td><td>${g.talisman_luck}</td><td>${Number(g.zen || 0).toLocaleString()}</td>
-                            <td class="text-xs text-[#fbd379]">${g.registrado_por || '-'}</td>
-                            <td class="text-xs text-[#a89f91]">${g.created_at ? new Date(g.created_at).toLocaleDateString() : '-'}</td>
-                        </tr>
-                    `).join('') || '<tr><td colspan="11" class="text-center py-4 text-[#8a8073]">Sin gastos registrados.</td></tr>';
+                    tbodyGastos.innerHTML = (data.gastos || []).map(g => {
+                        const esVenta = (g.tipo_movimiento || 'GASTO') === 'VENTA';
+                        const badgeTipo = esVenta
+                            ? `<span class="bg-emerald-950 text-emerald-300 border border-emerald-600/40 px-2 py-0.5 rounded text-[10px] font-bold mr-1.5">💰 VENTA</span>`
+                            : `<span class="bg-red-950 text-red-300 border border-red-600/40 px-2 py-0.5 rounded text-[10px] font-bold mr-1.5">📉 USO</span>`;
+                        const itemTag = g.item_id
+                            ? `<span class="text-[#f5b942] font-mono font-bold mr-1">[#${g.item_id}${g.item_nombre ? ' ' + g.item_nombre : ''}]</span>`
+                            : '';
+                        return `
+                            <tr>
+                                <td style="text-align: left;" class="${esVenta ? 'text-emerald-200' : 'text-red-300'} font-semibold">
+                                    ${badgeTipo}${itemTag}${g.motivo}
+                                </td>
+                                <td>${g.bless || 0}</td>
+                                <td>${g.soul || 0}</td>
+                                <td>${g.life || 0}</td>
+                                <td>${g.creation || 0}</td>
+                                <td>${g.guardian || 0}</td>
+                                <td>${g.gemstone || 0}</td>
+                                <td>${g.harmony || 0}</td>
+                                <td>${g.chaos || 0}</td>
+                                <td>${g.lower_refining || 0}</td>
+                                <td>${g.higher_refining || 0}</td>
+                                <td class="text-sky-300 font-bold">${Number(g.dream_coin || 0).toLocaleString()}</td>
+                                <td>${Number(g.zen || 0).toLocaleString()}</td>
+                                <td class="text-xs text-[#fbd379]">${g.registrado_por || '-'}</td>
+                                <td class="text-xs text-[#a89f91]">${g.created_at ? new Date(g.created_at).toLocaleDateString() : '-'}</td>
+                            </tr>
+                        `;
+                    }).join('') || '<tr><td colspan="15" class="text-center py-4 text-[#8a8073]">Sin movimientos registrados.</td></tr>';
                 }
             }
         }
@@ -1414,10 +1552,14 @@
                 bless: parseInt(document.getElementById('donBless').value) || 0,
                 soul: parseInt(document.getElementById('donSoul').value) || 0,
                 life: parseInt(document.getElementById('donLife').value) || 0,
-                chaos: parseInt(document.getElementById('donChaos').value) || 0,
                 creation: parseInt(document.getElementById('donCreation').value) || 0,
-                talisman_assembly: parseInt(document.getElementById('donAssembly').value) || 0,
-                talisman_luck: parseInt(document.getElementById('donLuck').value) || 0,
+                guardian: parseInt(document.getElementById('donGuardian').value) || 0,
+                gemstone: parseInt(document.getElementById('donGemstone').value) || 0,
+                harmony: parseInt(document.getElementById('donHarmony').value) || 0,
+                chaos: parseInt(document.getElementById('donChaos').value) || 0,
+                lower_refining: parseInt(document.getElementById('donLowerRefining').value) || 0,
+                higher_refining: parseInt(document.getElementById('donHigherRefining').value) || 0,
+                dream_coin: parseInt(document.getElementById('donDreamCoin').value) || 0,
                 zen: parseInt(document.getElementById('donZen').value) || 0
             };
             const res = await fetch('/api/donaciones-joyas', {
@@ -1425,32 +1567,119 @@
             });
             if (res.ok) {
                 alert("¡Donación registrada!");
-                ['donBless', 'donSoul', 'donLife', 'donChaos', 'donCreation', 'donAssembly', 'donLuck', 'donZen'].forEach(id => document.getElementById(id).value = 0);
+                [
+                    'donBless', 'donSoul', 'donLife', 'donCreation',
+                    'donGuardian', 'donGemstone', 'donHarmony', 'donChaos',
+                    'donLowerRefining', 'donHigherRefining',
+                    'donDreamCoin', 'donZen'
+                ].forEach(id => document.getElementById(id).value = 0);
                 cargarDonacionesJoyas();
             }
         }
 
-        function abrirModalGasto() { document.getElementById('modal-gasto').classList.remove('hidden'); }
+        function abrirModalGasto() {
+            document.getElementById('gastoItemId').value = '';
+            document.getElementById('gastoMotivo').value = '';
+            document.getElementById('gastoTipoMovimiento').value = 'GASTO';
+            document.getElementById('gastoEliminarItemVendido').checked = false;
+            itemSeleccionadoGasto = null;
+            document.getElementById('gasto-item-preview').innerHTML = 'Si el movimiento corresponde a un artículo del inventario, ingresá su número de ID...';
+            actualizarTextoModalGasto();
+            document.getElementById('modal-gasto').classList.remove('hidden');
+        }
         function cerrarModalGasto() { document.getElementById('modal-gasto').classList.add('hidden'); }
+
+        function actualizarTextoModalGasto() {
+            const tipo = document.getElementById('gastoTipoMovimiento').value;
+            const btn = document.getElementById('btn-confirmar-gasto-venta');
+            const wrapEliminar = document.getElementById('wrap-eliminar-vendido');
+            if (tipo === 'VENTA') {
+                btn.textContent = '💰 Registrar Venta (Sumar al Banco)';
+                btn.className = 'bg-emerald-800 hover:bg-emerald-700 text-white px-4 py-2 rounded text-xs font-bold';
+                if (itemSeleccionadoGasto) wrapEliminar.classList.remove('hidden');
+            } else {
+                btn.textContent = '📉 Descontar Gasto';
+                btn.className = 'bg-red-800 hover:bg-red-700 text-white px-4 py-2 rounded text-xs font-bold';
+                wrapEliminar.classList.add('hidden');
+            }
+        }
+
+        function buscarItemGastoVenta() {
+            const idInput = document.getElementById('gastoItemId');
+            const preview = document.getElementById('gasto-item-preview');
+            const wrapEliminar = document.getElementById('wrap-eliminar-vendido');
+            const idVal = idInput.value.trim();
+
+            if (!idVal) {
+                itemSeleccionadoGasto = null;
+                wrapEliminar.classList.add('hidden');
+                preview.innerHTML = 'Si el movimiento corresponde a un artículo del inventario, ingresá su número de ID...';
+                return;
+            }
+            const encontrado = catalogo.find(x => String(x.id) === idVal);
+            if (!encontrado) {
+                itemSeleccionadoGasto = null;
+                wrapEliminar.classList.add('hidden');
+                preview.innerHTML = `<span class="text-red-400 font-bold">❌ No se encontró ningún ítem con ID #${idVal}</span>`;
+                return;
+            }
+            itemSeleccionadoGasto = encontrado;
+            const optsText = Array.isArray(encontrado.opciones) && encontrado.opciones.length ? encontrado.opciones.join(' | ') : 'Sin opciones exc.';
+            const estadoAsig = encontrado.asignado_a ? `(Asignado a: ${encontrado.asignado_a})` : '(En Baúl)';
+            preview.innerHTML = `
+                <div class="font-bold text-[#f8f5ee]">#${encontrado.id} - <span class="text-[#f5b942]">${encontrado.nombre}</span> <span class="text-[#a89f91]">${estadoAsig}</span></div>
+                <div class="text-[11px] text-emerald-300 mt-0.5">${optsText}</div>
+            `;
+            if (document.getElementById('gastoTipoMovimiento').value === 'VENTA') {
+                wrapEliminar.classList.remove('hidden');
+            }
+        }
 
         async function guardarGastoGuild() {
             const motivo = document.getElementById('gastoMotivo').value.trim();
-            if (!motivo) return alert("Ingresá el motivo.");
+            if (!motivo) return alert("Ingresá el motivo o comprador.");
+
+            const tipo_movimiento = document.getElementById('gastoTipoMovimiento').value;
+            const item_id = document.getElementById('gastoItemId').value.trim() || null;
+            const eliminar_item_vendido = (tipo_movimiento === 'VENTA') && document.getElementById('gastoEliminarItemVendido').checked;
+
             const payload = {
+                tipo_movimiento,
+                item_id,
+                item_nombre: itemSeleccionadoGasto ? itemSeleccionadoGasto.nombre : null,
+                eliminar_item_vendido,
                 motivo,
                 bless: parseInt(document.getElementById('gastoBless').value) || 0,
                 soul: parseInt(document.getElementById('gastoSoul').value) || 0,
                 life: parseInt(document.getElementById('gastoLife').value) || 0,
-                chaos: parseInt(document.getElementById('gastoChaos').value) || 0,
                 creation: parseInt(document.getElementById('gastoCreation').value) || 0,
-                talisman_assembly: parseInt(document.getElementById('gastoAssembly').value) || 0,
-                talisman_luck: parseInt(document.getElementById('gastoLuck').value) || 0,
+                guardian: parseInt(document.getElementById('gastoGuardian').value) || 0,
+                gemstone: parseInt(document.getElementById('gastoGemstone').value) || 0,
+                harmony: parseInt(document.getElementById('gastoHarmony').value) || 0,
+                chaos: parseInt(document.getElementById('gastoChaos').value) || 0,
+                lower_refining: parseInt(document.getElementById('gastoLowerRefining').value) || 0,
+                higher_refining: parseInt(document.getElementById('gastoHigherRefining').value) || 0,
+                dream_coin: parseInt(document.getElementById('gastoDreamCoin').value) || 0,
                 zen: parseInt(document.getElementById('gastoZen').value) || 0
             };
             const res = await fetch('/api/guild-gastos', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });
-            if (res.ok) { alert("Gasto registrado."); cerrarModalGasto(); cargarDonacionesJoyas(); }
+            if (res.ok) {
+                alert(tipo_movimiento === 'VENTA' ? "¡Venta registrada y sumada al banco!" : "¡Gasto registrado!");
+                [
+                    'gastoBless', 'gastoSoul', 'gastoLife', 'gastoCreation',
+                    'gastoGuardian', 'gastoGemstone', 'gastoHarmony', 'gastoChaos',
+                    'gastoLowerRefining', 'gastoHigherRefining',
+                    'gastoDreamCoin', 'gastoZen'
+                ].forEach(id => document.getElementById(id).value = 0);
+                cerrarModalGasto();
+                cargarDonacionesJoyas();
+                if (eliminar_item_vendido) cargarItems();
+            } else {
+                const err = await res.json();
+                alert("Error: " + (err.error || "No se pudo registrar"));
+            }
         }
 
         async function cargarUsuarios() {
