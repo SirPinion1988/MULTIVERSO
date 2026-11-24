@@ -152,9 +152,15 @@ def importar_backup():
                 cur.execute("DELETE FROM public.donaciones_joyas;")
                 for d in backup_data['donaciones_joyas']:
                     cur.execute("""
-                        INSERT INTO public.donaciones_joyas (id, pj_name, bless, soul, life, chaos, creation, zen, talisman_assembly, talisman_luck, registrado_por, created_at)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
-                    """, (d.get('id'), d.get('pj_name'), d.get('bless', 0), d.get('soul', 0), d.get('life', 0), d.get('chaos', 0), d.get('creation', 0), d.get('zen', 0), d.get('talisman_assembly', 0), d.get('talisman_luck', 0), d.get('registrado_por', 'Sistema'), d.get('created_at')))
+                        INSERT INTO public.donaciones_joyas (id, pj_name, bless, soul, life, chaos, creation, guardian, gemstone, harmony, lower_refining, higher_refining, dream_coin, zen, registrado_por, created_at)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                    """, (
+                        d.get('id'), d.get('pj_name'), d.get('bless', 0), d.get('soul', 0), d.get('life', 0),
+                        d.get('chaos', 0), d.get('creation', 0), d.get('guardian', 0), d.get('gemstone', 0),
+                        d.get('harmony', 0), d.get('lower_refining', 0), d.get('higher_refining', 0),
+                        d.get('dream_coin', 0), d.get('zen', 0),
+                        d.get('registrado_por', 'Sistema'), d.get('created_at')
+                    ))
             if 'asistencias_invasiones' in backup_data:
                 cur.execute("DELETE FROM public.asistencias_invasiones;")
                 for a in backup_data['asistencias_invasiones']:
@@ -166,9 +172,16 @@ def importar_backup():
                 cur.execute("DELETE FROM public.guild_gastos;")
                 for g in backup_data['guild_gastos']:
                     cur.execute("""
-                        INSERT INTO public.guild_gastos (id, motivo, bless, soul, life, chaos, creation, zen, talisman_assembly, talisman_luck, registrado_por, created_at)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
-                    """, (g.get('id'), g.get('motivo'), g.get('bless', 0), g.get('soul', 0), g.get('life', 0), g.get('chaos', 0), g.get('creation', 0), g.get('zen', 0), g.get('talisman_assembly', 0), g.get('talisman_luck', 0), g.get('registrado_por', 'Sistema'), g.get('created_at')))
+                        INSERT INTO public.guild_gastos (id, tipo_movimiento, item_id, item_nombre, motivo, bless, soul, life, chaos, creation, guardian, gemstone, harmony, lower_refining, higher_refining, dream_coin, zen, registrado_por, created_at)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                    """, (
+                        g.get('id'), g.get('tipo_movimiento', 'GASTO'), g.get('item_id'), g.get('item_nombre'), g.get('motivo'),
+                        g.get('bless', 0), g.get('soul', 0), g.get('life', 0),
+                        g.get('chaos', 0), g.get('creation', 0), g.get('guardian', 0), g.get('gemstone', 0),
+                        g.get('harmony', 0), g.get('lower_refining', 0), g.get('higher_refining', 0),
+                        g.get('dream_coin', 0), g.get('zen', 0),
+                        g.get('registrado_por', 'Sistema'), g.get('created_at')
+                    ))
             conn.commit()
         conn.close()
     except Exception as e:
@@ -296,34 +309,112 @@ def api_donaciones_joyas():
     conn = get_db()
     if request.method == 'GET':
         registros = []
-        banco_total = {"bless": 0, "soul": 0, "life": 0, "chaos": 0, "creation": 0, "zen": 0, "talisman_assembly": 0, "talisman_luck": 0}
-        gastos_total = {"bless": 0, "soul": 0, "life": 0, "chaos": 0, "creation": 0, "zen": 0, "talisman_assembly": 0, "talisman_luck": 0}
+        campos_banco = [
+            "bless", "soul", "life", "creation",
+            "guardian", "gemstone", "harmony", "chaos",
+            "lower_refining", "higher_refining",
+            "dream_coin", "zen"
+        ]
+        banco_total = {k: 0 for k in campos_banco}
+        gastos_total = {k: 0 for k in campos_banco}
+        ventas_ingreso_total = {k: 0 for k in campos_banco}
         gastos_lista = []
         
         if conn:
             try:
                 with conn.cursor() as cur:
-                    cur.execute("SELECT id, pj_name, bless, soul, life, chaos, creation, zen, COALESCE(talisman_assembly, 0) as talisman_assembly, COALESCE(talisman_luck, 0) as talisman_luck, registrado_por, created_at FROM public.donaciones_joyas ORDER BY created_at DESC;")
+                    cur.execute("""
+                        SELECT id, pj_name, bless, soul, life, creation,
+                               COALESCE(guardian, 0) as guardian,
+                               COALESCE(gemstone, 0) as gemstone,
+                               COALESCE(harmony, 0) as harmony,
+                               chaos,
+                               COALESCE(lower_refining, 0) as lower_refining,
+                               COALESCE(higher_refining, 0) as higher_refining,
+                               COALESCE(dream_coin, 0) as dream_coin,
+                               zen, registrado_por, created_at
+                        FROM public.donaciones_joyas
+                        ORDER BY created_at DESC;
+                    """)
                     registros = cur.fetchall()
 
-                    cur.execute("SELECT SUM(bless) as bless, SUM(soul) as soul, SUM(life) as life, SUM(chaos) as chaos, SUM(creation) as creation, SUM(zen) as zen, SUM(COALESCE(talisman_assembly, 0)) as talisman_assembly, SUM(COALESCE(talisman_luck, 0)) as talisman_luck FROM public.donaciones_joyas;")
+                    cur.execute("""
+                        SELECT SUM(bless) as bless, SUM(soul) as soul, SUM(life) as life,
+                               SUM(creation) as creation,
+                               SUM(COALESCE(guardian, 0)) as guardian,
+                               SUM(COALESCE(gemstone, 0)) as gemstone,
+                               SUM(COALESCE(harmony, 0)) as harmony,
+                               SUM(chaos) as chaos,
+                               SUM(COALESCE(lower_refining, 0)) as lower_refining,
+                               SUM(COALESCE(higher_refining, 0)) as higher_refining,
+                               SUM(COALESCE(dream_coin, 0)) as dream_coin,
+                               SUM(zen) as zen
+                        FROM public.donaciones_joyas;
+                    """)
                     t = cur.fetchone()
                     if t:
-                        banco_total = {k: (t[k] or 0) for k in banco_total}
+                        banco_total = {k: (t[k] or 0) for k in campos_banco}
 
-                    cur.execute("SELECT id, motivo, bless, soul, life, chaos, creation, zen, COALESCE(talisman_assembly, 0) as talisman_assembly, COALESCE(talisman_luck, 0) as talisman_luck, registrado_por, created_at FROM public.guild_gastos ORDER BY created_at DESC;")
+                    cur.execute("""
+                        SELECT id, COALESCE(tipo_movimiento, 'GASTO') as tipo_movimiento,
+                               item_id, item_nombre, motivo,
+                               bless, soul, life, creation,
+                               COALESCE(guardian, 0) as guardian,
+                               COALESCE(gemstone, 0) as gemstone,
+                               COALESCE(harmony, 0) as harmony,
+                               chaos,
+                               COALESCE(lower_refining, 0) as lower_refining,
+                               COALESCE(higher_refining, 0) as higher_refining,
+                               COALESCE(dream_coin, 0) as dream_coin,
+                               zen, registrado_por, created_at
+                        FROM public.guild_gastos
+                        ORDER BY created_at DESC;
+                    """)
                     gastos_lista = cur.fetchall()
 
-                    cur.execute("SELECT SUM(bless) as bless, SUM(soul) as soul, SUM(life) as life, SUM(chaos) as chaos, SUM(creation) as creation, SUM(zen) as zen, SUM(COALESCE(talisman_assembly, 0)) as talisman_assembly, SUM(COALESCE(talisman_luck, 0)) as talisman_luck FROM public.guild_gastos;")
+                    # Sumar gastos (restan del banco)
+                    cur.execute("""
+                        SELECT SUM(bless) as bless, SUM(soul) as soul, SUM(life) as life,
+                               SUM(creation) as creation,
+                               SUM(COALESCE(guardian, 0)) as guardian,
+                               SUM(COALESCE(gemstone, 0)) as gemstone,
+                               SUM(COALESCE(harmony, 0)) as harmony,
+                               SUM(chaos) as chaos,
+                               SUM(COALESCE(lower_refining, 0)) as lower_refining,
+                               SUM(COALESCE(higher_refining, 0)) as higher_refining,
+                               SUM(COALESCE(dream_coin, 0)) as dream_coin,
+                               SUM(zen) as zen
+                        FROM public.guild_gastos
+                        WHERE COALESCE(tipo_movimiento, 'GASTO') != 'VENTA';
+                    """)
                     g = cur.fetchone()
                     if g:
-                        gastos_total = {k: (g[k] or 0) for k in gastos_total}
+                        gastos_total = {k: (g[k] or 0) for k in campos_banco}
+
+                    # Sumar ingresos por venta de ítems (suman al banco)
+                    cur.execute("""
+                        SELECT SUM(bless) as bless, SUM(soul) as soul, SUM(life) as life,
+                               SUM(creation) as creation,
+                               SUM(COALESCE(guardian, 0)) as guardian,
+                               SUM(COALESCE(gemstone, 0)) as gemstone,
+                               SUM(COALESCE(harmony, 0)) as harmony,
+                               SUM(chaos) as chaos,
+                               SUM(COALESCE(lower_refining, 0)) as lower_refining,
+                               SUM(COALESCE(higher_refining, 0)) as higher_refining,
+                               SUM(COALESCE(dream_coin, 0)) as dream_coin,
+                               SUM(zen) as zen
+                        FROM public.guild_gastos
+                        WHERE tipo_movimiento = 'VENTA';
+                    """)
+                    v = cur.fetchone()
+                    if v:
+                        ventas_ingreso_total = {k: (v[k] or 0) for k in campos_banco}
 
                 conn.close()
             except Exception:
                 if conn: conn.close()
 
-        banco_neto = {k: banco_total[k] - gastos_total[k] for k in banco_total}
+        banco_neto = {k: banco_total[k] + ventas_ingreso_total[k] - gastos_total[k] for k in campos_banco}
         return jsonify({"donaciones": registros, "banco_guild": banco_neto, "gastos": gastos_lista})
 
     if not usuario_es_autorizado(): return jsonify({"error": "No autorizado."}), 403
@@ -336,18 +427,26 @@ def api_donaciones_joyas():
         try:
             with conn.cursor() as cur:
                 cur.execute("""
-                    INSERT INTO public.donaciones_joyas (pj_name, bless, soul, life, chaos, creation, zen, talisman_assembly, talisman_luck, registrado_por)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                    INSERT INTO public.donaciones_joyas (
+                        pj_name, bless, soul, life, creation,
+                        guardian, gemstone, harmony, chaos, lower_refining, higher_refining,
+                        dream_coin, zen, registrado_por
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
                 """, (
                     pj_name,
                     int(data.get('bless', 0)),
                     int(data.get('soul', 0)),
                     int(data.get('life', 0)),
-                    int(data.get('chaos', 0)),
                     int(data.get('creation', 0)),
+                    int(data.get('guardian', 0)),
+                    int(data.get('gemstone', 0)),
+                    int(data.get('harmony', 0)),
+                    int(data.get('chaos', 0)),
+                    int(data.get('lower_refining', 0)),
+                    int(data.get('higher_refining', 0)),
+                    int(data.get('dream_coin', 0)),
                     int(data.get('zen', 0)),
-                    int(data.get('talisman_assembly', 0)),
-                    int(data.get('talisman_luck', 0)),
                     session.get('user', 'Sistema')
                 ))
                 conn.commit()
@@ -357,33 +456,65 @@ def api_donaciones_joyas():
             return jsonify({"error": str(e)}), 500
     return jsonify({"status": "ok"}), 201
 
-# --- API GASTOS GUILD ---
+# --- API GASTOS / USO / VENTA DE ÍTEMS DEL GUILD ---
 @app.route('/api/guild-gastos', methods=['POST'])
 def api_guild_gastos():
     if not usuario_es_autorizado(): return jsonify({"error": "No autorizado."}), 403
     data = request.json or {}
     motivo = data.get('motivo', '').strip()
-    if not motivo: return jsonify({"error": "Falta motivo"}), 400
+    tipo_movimiento = data.get('tipo_movimiento', 'GASTO').strip().upper()
+    if tipo_movimiento not in ['GASTO', 'VENTA']:
+        tipo_movimiento = 'GASTO'
+
+    item_id_raw = data.get('item_id')
+    item_id = int(item_id_raw) if item_id_raw not in [None, '', 0, '0'] else None
+    item_nombre = (data.get('item_nombre') or '').strip() or None
+    eliminar_item_vendido = bool(data.get('eliminar_item_vendido', False))
+
+    if not motivo:
+        return jsonify({"error": "Falta motivo"}), 400
 
     conn = get_db()
     if conn:
         try:
             with conn.cursor() as cur:
+                if item_id and not item_nombre:
+                    cur.execute("SELECT nombre FROM public.items_mu WHERE id = %s;", (item_id,))
+                    row_it = cur.fetchone()
+                    if row_it:
+                        item_nombre = row_it['nombre']
+
                 cur.execute("""
-                    INSERT INTO public.guild_gastos (motivo, bless, soul, life, chaos, creation, zen, talisman_assembly, talisman_luck, registrado_por)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                    INSERT INTO public.guild_gastos (
+                        tipo_movimiento, item_id, item_nombre, motivo,
+                        bless, soul, life, creation,
+                        guardian, gemstone, harmony, chaos, lower_refining, higher_refining,
+                        dream_coin, zen, registrado_por
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
                 """, (
+                    tipo_movimiento,
+                    item_id,
+                    item_nombre,
                     motivo,
                     int(data.get('bless', 0)),
                     int(data.get('soul', 0)),
                     int(data.get('life', 0)),
-                    int(data.get('chaos', 0)),
                     int(data.get('creation', 0)),
+                    int(data.get('guardian', 0)),
+                    int(data.get('gemstone', 0)),
+                    int(data.get('harmony', 0)),
+                    int(data.get('chaos', 0)),
+                    int(data.get('lower_refining', 0)),
+                    int(data.get('higher_refining', 0)),
+                    int(data.get('dream_coin', 0)),
                     int(data.get('zen', 0)),
-                    int(data.get('talisman_assembly', 0)),
-                    int(data.get('talisman_luck', 0)),
                     session.get('user', 'Sistema')
                 ))
+
+                if item_id and eliminar_item_vendido:
+                    cur.execute("DELETE FROM public.items_mu WHERE id = %s;", (item_id,))
+
                 conn.commit()
             conn.close()
         except Exception as e:
@@ -404,8 +535,11 @@ def agregar_item_manual():
     custom_id = data.get('custom_id')
 
     if not set_base: return jsonify({"error": "Falta seleccionar set"}), 400
-    nombre_completo = f"Excellent {set_base} {tipo} [Baúl: {baul}]"
-    clases_default = ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter"]
+    if tipo in ['Jewel', 'Box', 'Talisman']:
+        nombre_completo = f"{set_base} [Baúl: {baul}]"
+    else:
+        nombre_completo = f"Excellent {set_base} {tipo} [Baúl: {baul}]"
+    clases_default = ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter", "Grow Lancer"]
 
     conn = get_db()
     if conn:
@@ -677,7 +811,7 @@ def api_miembros():
             except Exception: pass
         return jsonify({"status": "ok"}), 200
 
-# --- EXCEL EXPORT & IMPORT (HABILITADO PARA ADMIN Y OPERADORES) ---
+# --- EXCEL EXPORT & IMPORT ---
 @app.route('/api/backup/exportar-items-asignados', methods=['GET'])
 def exportar_items_asignados():
     if not usuario_es_autorizado():
