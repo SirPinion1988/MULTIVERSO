@@ -86,7 +86,7 @@
             background: linear-gradient(180deg, #fde096 0%, #f5b942 100%);
         }
 
-        /* MEDALLAS DE RANKING AL FINAL DEL NICK */
+        /* MEDALLAS DE RANKING A LA IZQUIERDA DEL NICK */
         .medalla-rank {
             display: inline-flex;
             align-items: center;
@@ -96,7 +96,7 @@
             border-radius: 50%;
             font-size: 11px;
             font-weight: 900;
-            margin-left: 8px;
+            margin-right: 8px;
             vertical-align: middle;
             user-select: none;
         }
@@ -139,7 +139,7 @@
         .medalla-zombie-emoji {
             display: inline-block;
             font-size: 16px;
-            margin-left: 8px;
+            margin-right: 8px;
             vertical-align: middle;
             line-height: 1;
             filter: drop-shadow(0 0 4px rgba(74, 222, 128, 0.45));
@@ -339,16 +339,38 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 3: DISTRIBUCIÓN & SORTEO RULETA (5, 6, 8 O 9 INTEGRANTES) -->
+    <!-- SECCIÓN 3: DISTRIBUCIÓN (PRIMERO LISTADO DE MIEMBROS CON ÍTEMS, ABAJO RULETA) -->
     <div id="seccion-distribucion-view" class="w-full max-w-7xl space-y-6 hidden">
-        <!-- CUADRO DE SORTEO TIPO RULETA -->
+        <!-- 1. TABLA DE MIEMBROS CON LOS ÍTEMS CARGADOS (DOBLE DE LARGO) -->
+        <div class="card-mudream p-5 rounded-xl space-y-4">
+            <div class="flex flex-wrap justify-between items-center gap-2">
+                <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">📦 Distribución Actual: Miembros con Ítems Cargados</h2>
+                <span id="contador-items-distribuidos" class="text-xs text-[#fbd379] bg-[#0b0a08] border border-[#2e261c] px-3 py-1 rounded-lg font-bold">0 ítems asignados</span>
+            </div>
+            <div class="tabla-scroll-box" style="height: 840px !important;">
+                <table class="tabla-items">
+                    <thead>
+                        <tr>
+                            <th style="width: 180px;">Miembro (PJ)</th>
+                            <th style="width: 90px;">Raza</th>
+                            <th>Ítems Asignados (ID # y Opciones)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-distribucion-body">
+                        <tr><td colspan="3" class="text-center py-8 text-[#8a8073]">Cargando distribución...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 2. CUADRO DE SORTEO TIPO RULETA -->
         <div id="panel-sorteo-ruleta" class="card-mudream p-6 rounded-xl space-y-5">
             <div class="flex flex-wrap justify-between items-center border-b border-[#2e261c] pb-3 gap-2">
                 <h2 class="text-sm font-black text-[#f5b942] uppercase tracking-wider">🎡 Sorteo de Ítems por Ruleta</h2>
                 <span class="text-[11px] text-[#a89f91]">Ingresá el ID del ítem, elegí la cantidad de participantes y girá la ruleta para asignarlo</span>
             </div>
 
-            <!-- 1. BUSCAR ÍTEM POR NÚMERO DE ID -->
+            <!-- BUSCAR ÍTEM POR NÚMERO DE ID -->
             <div class="bg-[#0b0a08] border border-[#2e261c] p-4 rounded-xl space-y-2">
                 <label class="block text-xs uppercase text-[#f5b942] font-bold">1️⃣ Número de ID del Ítem a Sortear:</label>
                 <div class="flex flex-col sm:flex-row gap-3 items-center">
@@ -359,7 +381,7 @@
                 </div>
             </div>
 
-            <!-- 2. ABAJO: SELECCIÓN DE MIEMBROS PARTICIPANTES + RULETA -->
+            <!-- SELECCIÓN DE MIEMBROS PARTICIPANTES + RULETA -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
                 <div class="bg-[#0b0a08] border border-[#2e261c] p-4 rounded-xl space-y-3">
                     <div class="flex flex-wrap justify-between items-center gap-2">
@@ -401,31 +423,9 @@
                 <div id="ruleta-detalle-asignacion" class="text-xs text-[#e5dec9]"></div>
             </div>
         </div>
-
-        <!-- TABLA DE MIEMBROS CON LOS ÍTEMS CARGADOS -->
-        <div class="card-mudream p-5 rounded-xl space-y-4">
-            <div class="flex flex-wrap justify-between items-center gap-2">
-                <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">📦 Distribución Actual: Miembros con Ítems Cargados</h2>
-                <span id="contador-items-distribuidos" class="text-xs text-[#fbd379] bg-[#0b0a08] border border-[#2e261c] px-3 py-1 rounded-lg font-bold">0 ítems asignados</span>
-            </div>
-            <div class="tabla-scroll-box" style="height: 420px !important;">
-                <table class="tabla-items">
-                    <thead>
-                        <tr>
-                            <th style="width: 180px;">Miembro (PJ)</th>
-                            <th style="width: 90px;">Raza</th>
-                            <th>Ítems Asignados (ID # y Opciones)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-distribucion-body">
-                        <tr><td colspan="3" class="text-center py-8 text-[#8a8073]">Cargando distribución...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
     </div>
 
-    <!-- SECCIÓN 4: ASISTENCIAS (NICK + MEDALLA AL FINAL | RESET | ASISTENCIA) -->
+    <!-- SECCIÓN 4: ASISTENCIAS (MEDALLA A LA IZQUIERDA DEL NICK | RESET | ASISTENCIA - DOBLE DE LARGO) -->
     <div id="seccion-asistencias-view" class="w-full max-w-7xl space-y-6 hidden">
         <div class="card-mudream p-5 rounded-xl space-y-4">
             <div class="flex flex-wrap justify-between items-center gap-3">
@@ -443,7 +443,7 @@
                     <button onclick="resetSemanalAsistencias()" id="btn-reset-semanal" class="hidden bg-red-950/80 hover:bg-red-900 border border-red-600/50 text-red-200 px-3 py-1.5 rounded text-xs font-bold transition">🔄 Reset Mensual (20%)</button>
                 </div>
             </div>
-            <div class="tabla-scroll-box" style="height: 500px !important;">
+            <div class="tabla-scroll-box" style="height: 1000px !important;">
                 <table class="tabla-items">
                     <thead>
                         <tr>
@@ -1256,7 +1256,7 @@
             return '';
         }
 
-        // --- ASISTENCIAS: NICK + MEDALLA AL FINAL | RESET | ASISTENCIA ---
+        // --- ASISTENCIAS: MEDALLA A LA IZQUIERDA DEL NICK | RESET | ASISTENCIA ---
         async function cargarAsistenciasRanking() {
             const [resAsist, resMiembros] = await Promise.all([
                 fetch('/api/asistencias-ranking'),
@@ -1351,7 +1351,7 @@
 
                     return `
                         <tr class="${filaClase}">
-                            <td class="${nickClase}">${row.pj_name}${medallaHTML}</td>
+                            <td class="${nickClase}">${medallaHTML}${row.pj_name}</td>
                             <td style="text-align: center;">${badgeReset}</td>
                             <td style="text-align: center;" class="font-extrabold text-[#f5b942] text-base">${row.total_asistencias}</td>
                             ${botonesHTML}
