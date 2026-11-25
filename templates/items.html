@@ -217,11 +217,11 @@
     <!-- SECCIÓN 1: ÍTEMS -->
     <div id="seccion-items-view" class="w-full max-w-7xl space-y-4">
         <div class="card-mudream p-6 rounded-xl space-y-4">
-            <h3 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">🔍 Buscador / ➕ Cargador Interactivo de Ítems</h3>
+            <h3 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">➕ Cargador / 🔍 Buscador Interactivo de Ítems</h3>
             
-            <!-- FILA SUPERIOR: CARGA A LA IZQUIERDA (2 COLS) + BUSCADORES UNIFICADOS A LA DERECHA (1 COL) -->
+            <!-- FILA SUPERIOR: CARGADOR A LA IZQUIERDA (2 COLS) + BUSCADOR ÚNICO A LA DERECHA (1 COL) -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
-                <!-- BLOQUE IZQUIERDO: SELECCIÓN Y CARGA DE ÍTEMS -->
+                <!-- BLOQUE IZQUIERDO: CARGA / FILTRO POR ATRIBUTOS -->
                 <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 content-between">
                     <div>
                         <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">📜 Set, Arma, Caja o Joya (Escribí iniciales)</label>
@@ -288,32 +288,34 @@
                         </select>
                     </div>
                     <div>
+                        <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">🏰 Nombre del Baúl</label>
+                        <input type="text" id="inputFiltroBaul" oninput="aplicarFiltros()" placeholder="Ej. Baúl Principal..." class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
+                    </div>
+                    <div>
                         <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">👤 Asignado a</label>
                         <select id="inputFiltroAsignado" onchange="aplicarFiltros()" class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
                             <option value="">-- Todos --</option>
                         </select>
                     </div>
-                    <div id="panel-custom-id" class="hidden">
+                    <div id="panel-custom-id" class="hidden sm:col-span-2">
                         <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">🆔 ID Personalizado (Opcional)</label>
                         <input type="number" id="inputCustomId" placeholder="Automático" class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
                     </div>
                 </div>
 
-                <!-- BLOQUE DERECHO: BUSCADORES UNIFICADOS (ID EXACTO + NOMBRE DEL BAÚL) -->
-                <div class="bg-[#0b0a08] p-3.5 rounded-xl border border-[#2e261c] flex flex-col justify-between space-y-3">
+                <!-- BLOQUE DERECHO: BUSCADOR ÚNICO (ID O NOMBRE DEL ÍTEM) -->
+                <div class="bg-[#0b0a08] p-4 rounded-xl border border-[#2e261c] flex flex-col justify-center space-y-2.5">
                     <div class="flex items-center justify-between border-b border-[#241d15] pb-1.5">
-                        <span class="text-[11px] uppercase font-bold text-[#f5b942] tracking-wider">🔍 Buscadores Rápidos</span>
+                        <span class="text-xs uppercase font-bold text-[#f5b942] tracking-wider">🔍 Buscador Rápido</span>
+                        <span class="text-[10px] text-[#8a8073]">ID # o Nombre</span>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
-                        <div>
-                            <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">🔍 Buscar por ID Exacto</label>
-                            <input type="number" id="inputFiltroId" oninput="aplicarFiltros()" placeholder="Ej. 105..." class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">🏰 Nombre del Baúl</label>
-                            <input type="text" id="inputFiltroBaul" oninput="aplicarFiltros()" placeholder="Ej. Baúl Principal..." class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
-                        </div>
+                    <div>
+                        <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1.5">Ingresá ID o Nombre del Ítem</label>
+                        <input type="text" id="inputBuscadorUnificado" oninput="aplicarFiltros()" placeholder="Ej. 105, Dragon, Jewel, Baúl..." class="w-full input-mudream p-3 rounded-lg text-sm font-semibold text-[#fbd379] outline-none">
                     </div>
+                    <p class="text-[11px] text-[#8a8073] leading-relaxed">
+                        Escribí un número para buscar por <strong class="text-[#e5dec9]">ID exacto</strong> o texto para filtrar por <strong class="text-[#e5dec9]">nombre de ítem o baúl</strong>.
+                    </p>
                 </div>
             </div>
 
@@ -1239,8 +1241,8 @@
         }
 
         function limpiarFiltros() {
-            const idInput = document.getElementById('inputFiltroId');
-            if(idInput) idInput.value = "";
+            const buscadorUnificado = document.getElementById('inputBuscadorUnificado');
+            if (buscadorUnificado) buscadorUnificado.value = "";
             document.getElementById('inputFiltroSetBase').value = "";
             document.getElementById('inputFiltroTipoPieza').value = "";
             document.getElementById('inputFiltroBaul').value = "";
@@ -1252,7 +1254,10 @@
         }
 
         function aplicarFiltros() {
-            const filtroId = document.getElementById('inputFiltroId') ? document.getElementById('inputFiltroId').value.trim() : '';
+            const queryUnificada = (document.getElementById('inputBuscadorUnificado') ? document.getElementById('inputBuscadorUnificado').value : '').trim().toLowerCase();
+            const queryLimpiaId = queryUnificada.replace(/^#/, '');
+            const esBusquedaNumerica = queryLimpiaId !== '' && /^\d+$/.test(queryLimpiaId);
+
             const setBase = (document.getElementById('inputFiltroSetBase').value || '').trim().toLowerCase();
             const tipoPieza = (document.getElementById('inputFiltroTipoPieza').value || '').toLowerCase();
             const filtroBaul = (document.getElementById('inputFiltroBaul').value || '').toLowerCase();
@@ -1260,12 +1265,20 @@
             const chkSeleccionados = Array.from(document.querySelectorAll('.filtro-chk:checked')).map(chk => chk.value.toLowerCase());
 
             const filtrados = catalogo.filter(item => {
-                if (filtroId && String(item.id) !== filtroId) return false;
-
                 const nombre = String(item.nombre || '').toLowerCase();
                 const tipo = String(item.tipo || '').toLowerCase();
                 const asignado = String(item.asignado_a || '').toLowerCase();
                 const opcionesStr = Array.isArray(item.opciones) ? item.opciones.join(' ').toLowerCase() : '';
+
+                // Buscador único: busca por ID exacto si se escribe un número, o por nombre del ítem/baúl si es texto
+                let matchUnificado = true;
+                if (queryUnificada) {
+                    if (esBusquedaNumerica) {
+                        matchUnificado = String(item.id) === queryLimpiaId;
+                    } else {
+                        matchUnificado = nombre.includes(queryUnificada) || tipo.includes(queryUnificada) || asignado.includes(queryUnificada);
+                    }
+                }
 
                 const matchSet = !setBase || nombre.includes(setBase);
                 const matchTipo = !tipoPieza || tipo.includes(tipoPieza);
@@ -1273,7 +1286,7 @@
                 const matchAsignado = !filtroAsignado || asignado === filtroAsignado;
                 const matchOpciones = chkSeleccionados.every(opt => opcionesStr.includes(opt));
 
-                return matchSet && matchTipo && matchBaul && matchAsignado && matchOpciones;
+                return matchUnificado && matchSet && matchTipo && matchBaul && matchAsignado && matchOpciones;
             });
 
             renderizarTabla(filtrados);
