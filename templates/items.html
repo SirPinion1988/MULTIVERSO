@@ -221,8 +221,8 @@
             
             <!-- FILA SUPERIOR: CARGADOR A LA IZQUIERDA (2 COLS) + BUSCADOR ÚNICO A LA DERECHA (1 COL) -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
-                <!-- BLOQUE IZQUIERDO: CARGA / FILTRO POR ATRIBUTOS -->
-                <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 content-between">
+                <!-- BLOQUE IZQUIERDO: CARGA / FILTRO POR ATRIBUTOS (SIN NOMBRE DEL BAÚL) -->
+                <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 content-center">
                     <div>
                         <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">📜 Set, Arma, Caja o Joya (Escribí iniciales)</label>
                         <input type="text" id="inputFiltroSetBase" list="listaItemsBase" oninput="aplicarFiltros()" placeholder="Escribí iniciales (Ej. Red, Box, Jewel...)" autocomplete="off" class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
@@ -288,16 +288,12 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">🏰 Nombre del Baúl</label>
-                        <input type="text" id="inputFiltroBaul" oninput="aplicarFiltros()" placeholder="Ej. Baúl Principal..." class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
-                    </div>
-                    <div>
                         <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">👤 Asignado a</label>
                         <select id="inputFiltroAsignado" onchange="aplicarFiltros()" class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
                             <option value="">-- Todos --</option>
                         </select>
                     </div>
-                    <div id="panel-custom-id" class="hidden sm:col-span-2">
+                    <div id="panel-custom-id" class="hidden">
                         <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">🆔 ID Personalizado (Opcional)</label>
                         <input type="number" id="inputCustomId" placeholder="Automático" class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
                     </div>
@@ -311,10 +307,10 @@
                     </div>
                     <div>
                         <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1.5">Ingresá ID o Nombre del Ítem</label>
-                        <input type="text" id="inputBuscadorUnificado" oninput="aplicarFiltros()" placeholder="Ej. 105, Dragon, Jewel, Baúl..." class="w-full input-mudream p-3 rounded-lg text-sm font-semibold text-[#fbd379] outline-none">
+                        <input type="text" id="inputBuscadorUnificado" oninput="aplicarFiltros()" placeholder="Ej. 105, Dragon, Jewel..." class="w-full input-mudream p-3 rounded-lg text-sm font-semibold text-[#fbd379] outline-none">
                     </div>
                     <p class="text-[11px] text-[#8a8073] leading-relaxed">
-                        Escribí un número para buscar por <strong class="text-[#e5dec9]">ID exacto</strong> o texto para filtrar por <strong class="text-[#e5dec9]">nombre de ítem o baúl</strong>.
+                        Escribí un número para buscar por <strong class="text-[#e5dec9]">ID exacto</strong> o texto para filtrar por <strong class="text-[#e5dec9]">nombre de ítem</strong>.
                     </p>
                 </div>
             </div>
@@ -369,7 +365,7 @@
                 <thead>
                     <tr>
                         <th style="width: 80px;">ID #</th>
-                        <th>Nombre del Ítem & Baúl</th>
+                        <th>Nombre del Ítem</th>
                         <th style="width: 140px;">Pieza</th>
                         <th>Opciones</th>
                         <th style="width: 220px; text-align: center;">Asignado a</th>
@@ -747,7 +743,7 @@
             <h3 class="text-lg font-bold text-[#f5b942] mb-2">✏️ Editar Ítem</h3>
             <input type="hidden" id="editOldId">
             <div><label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">ID:</label><input type="number" id="editId" class="w-full input-mudream p-2 rounded text-xs"></div>
-            <div><label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">Nombre / Baúl:</label><input type="text" id="editNombre" class="w-full input-mudream p-2 rounded text-xs"></div>
+            <div><label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">Nombre del Ítem:</label><input type="text" id="editNombre" class="w-full input-mudream p-2 rounded text-xs"></div>
             <div><label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">Tipo de Pieza:</label>
                 <select id="editTipo" onchange="actualizarOpcionesEdicion()" class="w-full input-mudream p-2 rounded text-xs">
                     <option value="Armor">Armor</option>
@@ -765,9 +761,9 @@
                 </select>
             </div>
             <div>
-                <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">👤 Asignado a (Baúl o Miembro):</label>
+                <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">👤 Asignado a (Sin asignar o Miembro):</label>
                 <select id="editAsignado" class="w-full input-mudream p-2 rounded text-xs">
-                    <option value="">En Baúl (Sin asignar)</option>
+                    <option value="">Sin asignar</option>
                 </select>
             </div>
 
@@ -1009,7 +1005,7 @@
                     ? itemsDelPj.map(it => {
                         const opts = Array.isArray(it.opciones) && it.opciones.length ? ` <span class="text-emerald-300 text-[10px]">(${it.opciones.join(', ')})</span>` : '';
                         const btnQuitar = sesionAutorizada
-                            ? `<button onclick="quitarItemDeMiembro(${it.id})" class="ml-1.5 text-red-400 hover:text-red-300 font-bold" title="Devolver al Baúl">✖</button>`
+                            ? `<button onclick="quitarItemDeMiembro(${it.id})" class="ml-1.5 text-red-400 hover:text-red-300 font-bold" title="Devolver al Inventario">✖</button>`
                             : '';
                         return `<div class="inline-flex items-center bg-[#191510] border border-[#f5b942]/40 px-2.5 py-1 rounded-lg mr-1.5 mb-1 text-xs">
                                     <span class="font-mono font-extrabold text-[#f5b942] mr-1.5">#${it.id}</span>
@@ -1029,7 +1025,7 @@
         }
 
         async function quitarItemDeMiembro(itemId) {
-            if (!confirm(`¿Devolver el ítem #${itemId} al Baúl (sin asignar)?`)) return;
+            if (!confirm(`¿Quitar asignación del ítem #${itemId}?`)) return;
             const res = await fetch('/api/items', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -1059,7 +1055,7 @@
             }
             itemSeleccionadoRuleta = encontrado;
             const optsText = Array.isArray(encontrado.opciones) && encontrado.opciones.length ? encontrado.opciones.join(' | ') : 'Sin opciones exc.';
-            const estadoAsig = encontrado.asignado_a ? `<span class="text-amber-400">(Actual: ${encontrado.asignado_a})</span>` : `<span class="text-emerald-400">(En Baúl)</span>`;
+            const estadoAsig = encontrado.asignado_a ? `<span class="text-amber-400">(Actual: ${encontrado.asignado_a})</span>` : `<span class="text-emerald-400">(Disponible)</span>`;
             preview.innerHTML = `
                 <div class="font-bold text-[#f8f5ee]">#${encontrado.id} - <span class="text-[#f5b942]">${encontrado.nombre}</span> ${estadoAsig}</div>
                 <div class="text-[11px] text-emerald-300 mt-0.5">${optsText}</div>
@@ -1245,7 +1241,6 @@
             if (buscadorUnificado) buscadorUnificado.value = "";
             document.getElementById('inputFiltroSetBase').value = "";
             document.getElementById('inputFiltroTipoPieza').value = "";
-            document.getElementById('inputFiltroBaul').value = "";
             document.getElementById('inputFiltroAsignado').value = "";
             const customIdEl = document.getElementById('inputCustomId');
             if (customIdEl) customIdEl.value = "";
@@ -1260,7 +1255,6 @@
 
             const setBase = (document.getElementById('inputFiltroSetBase').value || '').trim().toLowerCase();
             const tipoPieza = (document.getElementById('inputFiltroTipoPieza').value || '').toLowerCase();
-            const filtroBaul = (document.getElementById('inputFiltroBaul').value || '').toLowerCase();
             const filtroAsignado = (document.getElementById('inputFiltroAsignado').value || '').toLowerCase();
             const chkSeleccionados = Array.from(document.querySelectorAll('.filtro-chk:checked')).map(chk => chk.value.toLowerCase());
 
@@ -1270,7 +1264,7 @@
                 const asignado = String(item.asignado_a || '').toLowerCase();
                 const opcionesStr = Array.isArray(item.opciones) ? item.opciones.join(' ').toLowerCase() : '';
 
-                // Buscador único: busca por ID exacto si se escribe un número, o por nombre del ítem/baúl si es texto
+                // Buscador único: busca por ID exacto si se escribe un número, o por nombre/tipo/asignado si es texto
                 let matchUnificado = true;
                 if (queryUnificada) {
                     if (esBusquedaNumerica) {
@@ -1282,11 +1276,10 @@
 
                 const matchSet = !setBase || nombre.includes(setBase);
                 const matchTipo = !tipoPieza || tipo.includes(tipoPieza);
-                const matchBaul = !filtroBaul || nombre.includes(filtroBaul);
                 const matchAsignado = !filtroAsignado || asignado === filtroAsignado;
                 const matchOpciones = chkSeleccionados.every(opt => opcionesStr.includes(opt));
 
-                return matchUnificado && matchSet && matchTipo && matchBaul && matchAsignado && matchOpciones;
+                return matchUnificado && matchSet && matchTipo && matchAsignado && matchOpciones;
             });
 
             renderizarTabla(filtrados);
@@ -1301,7 +1294,7 @@
             }
             tbody.innerHTML = items.map(item => {
                 const opcionesBadges = Array.isArray(item.opciones) ? item.opciones.map(opt => `<span class="badge-opt">${opt}</span>`).join('') : '-';
-                let asignadoHTML = item.asignado_a ? `<span class="bg-[#221c15] border border-[#f5b942]/40 text-[#fbd379] px-2.5 py-0.5 rounded text-xs font-bold">${item.asignado_a}</span>` : '<span class="text-[#8a8073] text-xs">En Baúl</span>';
+                let asignadoHTML = item.asignado_a ? `<span class="bg-[#221c15] border border-[#f5b942]/40 text-[#fbd379] px-2.5 py-0.5 rounded text-xs font-bold">${item.asignado_a}</span>` : '<span class="text-[#8a8073] text-xs">Sin asignar</span>';
                 let accionesHTML = sesionAutorizada ? `
                     <td class="text-center space-x-1">
                         <button onclick="abrirModalEditar(${item.id})" class="bg-[#221c15] text-[#fbd379] border border-[#f5b942]/40 px-2 py-1 rounded text-xs font-bold" title="Editar">✏️</button>
@@ -1356,7 +1349,7 @@
             document.getElementById('editTipo').value = item.tipo || 'Armor';
             
             const selectAsignado = document.getElementById('editAsignado');
-            let opts = '<option value="">En Baúl (Sin asignar)</option>';
+            let opts = '<option value="">Sin asignar</option>';
             miembrosClan.forEach(m => {
                 const selected = item.asignado_a === m.nombre_pj ? 'selected' : '';
                 opts += `<option value="${m.nombre_pj}" ${selected}>${m.nombre_pj} (${m.raza})</option>`;
@@ -1401,7 +1394,6 @@
         async function guardarItemDesdeFiltro() {
             const set_base = document.getElementById('inputFiltroSetBase').value.trim();
             const tipo = document.getElementById('inputFiltroTipoPieza').value;
-            const baul = document.getElementById('inputFiltroBaul').value.trim();
             const asignado = document.getElementById('inputFiltroAsignado').value;
             const customIdEl = document.getElementById('inputCustomId');
             const custom_id = customIdEl ? customIdEl.value.trim() : '';
@@ -1415,7 +1407,7 @@
 
             const res = await fetch('/api/items/agregar-manual', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ set_base, tipo, baul: baul || 'Baúl General', asignado: asignado || 'Sin asignar', custom_id, opciones })
+                body: JSON.stringify({ set_base, tipo, asignado: asignado || 'Sin asignar', custom_id, opciones })
             });
             if (res.ok) { alert("¡Ítem guardado!"); limpiarFiltros(); cargarItems(); }
             else { const err = await res.json(); alert("Error: " + err.error); }
@@ -1707,7 +1699,7 @@
             }
             itemSeleccionadoGasto = encontrado;
             const optsText = Array.isArray(encontrado.opciones) && encontrado.opciones.length ? encontrado.opciones.join(' | ') : 'Sin opciones exc.';
-            const estadoAsig = encontrado.asignado_a ? `(Asignado a: ${encontrado.asignado_a})` : '(En Baúl)';
+            const estadoAsig = encontrado.asignado_a ? `(Asignado a: ${encontrado.asignado_a})` : '(Sin asignar)';
             preview.innerHTML = `
                 <div class="font-bold text-[#f8f5ee]">#${encontrado.id} - <span class="text-[#f5b942]">${encontrado.nombre}</span> <span class="text-[#a89f91]">${estadoAsig}</span></div>
                 <div class="text-[11px] text-emerald-300 mt-0.5">${optsText}</div>
