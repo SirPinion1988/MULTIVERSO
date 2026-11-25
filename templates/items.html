@@ -524,9 +524,9 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 5: DONACIONES & BANCO GUILD (JOYAS NORMALES + DREAM COIN + ZEN) -->
+    <!-- SECCIÓN 5: DONACIONES & BANCO GUILD (JOYAS + BOXES CON BOTONES +/-) -->
     <div id="seccion-donaciones-view" class="w-full max-w-7xl space-y-6 hidden">
-        <div class="card-mudream p-5 rounded-xl space-y-3">
+        <div class="card-mudream p-5 rounded-xl space-y-4">
             <div class="flex justify-between items-center">
                 <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">🏛️ Banco Guild (Joyas, Piedras & Dream Coin)</h2>
                 <button onclick="abrirModalGasto()" id="btn-gasto-modal" class="hidden bg-red-950/80 hover:bg-red-900 border border-red-600/50 text-red-200 px-3 py-1.5 rounded text-xs font-bold">📉 Registrar Uso / Venta</button>
@@ -566,6 +566,39 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- SECCIÓN BOX DEBAJO DEL BANCO DEL CLAN -->
+            <div class="pt-3 border-t border-[#2e261c] space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xs font-black text-[#f5b942] uppercase tracking-wider">📦 BOX</h3>
+                    <span id="hint-boxes-permiso" class="text-[10px] text-[#8a8073]">Stock de Cajas del Clan</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="tabla-items text-center whitespace-nowrap">
+                        <thead>
+                            <tr>
+                                <th>Jewel 5</th>
+                                <th>Jewel 10</th>
+                                <th>Jewel 20</th>
+                                <th>K+1</th>
+                                <th>K+2</th>
+                                <th>K+3</th>
+                                <th>K+4</th>
+                                <th>K+5</th>
+                                <th>W+1</th>
+                                <th>W+2</th>
+                                <th>W+3</th>
+                                <th>W+4</th>
+                                <th>W+5</th>
+                                <th>Necklace</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-banco-boxes-body">
+                            <!-- Se renderiza dinámicamente con el valor y botones + / - por cada box -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -809,6 +842,19 @@
     <script>
         let catalogo = [], miembrosClan = [], sesionAutorizada = false, esAdmin = false;
         let ruletaGirando = false, anguloActualRuleta = 0, itemSeleccionadoRuleta = null, itemSeleccionadoGasto = null;
+        let cajasBanco = {
+            jewel_5: 0, jewel_10: 0, jewel_20: 0,
+            k_1: 0, k_2: 0, k_3: 0, k_4: 0, k_5: 0,
+            w_1: 0, w_2: 0, w_3: 0, w_4: 0, w_5: 0,
+            necklace: 0
+        };
+
+        const LISTA_CAMPOS_BOX = [
+            'jewel_5', 'jewel_10', 'jewel_20',
+            'k_1', 'k_2', 'k_3', 'k_4', 'k_5',
+            'w_1', 'w_2', 'w_3', 'w_4', 'w_5',
+            'necklace'
+        ];
 
         function esItemVendido(item) {
             return item && String(item.asignado_a || '').trim().toUpperCase() === 'VENDIDO';
@@ -880,6 +926,7 @@
                         if (avisoInv) avisoInv.classList.add('hidden');
                         cargarUsuarios();
                     }
+                    renderizarTablaBoxes();
                 }
             } catch(e) { console.error("Error sesión:", e); }
         }
@@ -1608,6 +1655,53 @@
             cargarAsistenciasRanking();
         }
 
+        // --- TABLA DE BOXES DEL BANCO GUILD (SUBIR / BAJAR POR CADA UNO) ---
+        function renderizarTablaBoxes() {
+            const tbody = document.getElementById('tabla-banco-boxes-body');
+            if (!tbody) return;
+
+            const celdas = LISTA_CAMPOS_BOX.map(campo => {
+                const valor = Number(cajasBanco[campo] || 0);
+                const controles = sesionAutorizada
+                    ? `<div class="inline-flex items-center justify-center gap-1 mt-1">
+                            <button onclick="modificarBoxGuild('${campo}', 1)" class="bg-emerald-900/80 hover:bg-emerald-800 border border-emerald-500/40 text-emerald-200 px-1.5 py-0.5 rounded text-[10px] font-bold transition" title="Sumar 1">➕</button>
+                            <button onclick="modificarBoxGuild('${campo}', -1)" class="bg-red-950/80 hover:bg-red-900 border border-red-500/40 text-red-200 px-1.5 py-0.5 rounded text-[10px] font-bold transition" title="Restar 1">➖</button>
+                       </div>`
+                    : '';
+
+                return `
+                    <td class="px-2 py-2">
+                        <div class="flex flex-col items-center justify-center">
+                            <span class="font-extrabold text-[#fbd379] text-sm">${valor}</span>
+                            ${controles}
+                        </div>
+                    </td>
+                `;
+            }).join('');
+
+            tbody.innerHTML = `<tr>${celdas}</tr>`;
+        }
+
+        async function modificarBoxGuild(campo, delta) {
+            if (!sesionAutorizada) return;
+            try {
+                const res = await fetch('/api/guild-boxes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ campo, delta })
+                });
+                if (res.ok) {
+                    cajasBanco = await res.json();
+                    renderizarTablaBoxes();
+                } else {
+                    const err = await res.json();
+                    alert("Error al actualizar Box: " + (err.error || "Desconocido"));
+                }
+            } catch (e) {
+                console.error("Error box:", e);
+            }
+        }
+
         // --- BANCO GUILD, DONACIONES & USO / VENTA ---
         async function cargarDonacionesJoyas() {
             const res = await fetch('/api/donaciones-joyas');
@@ -1626,6 +1720,11 @@
                 document.getElementById('banco-higher-refining').textContent = b.higher_refining || 0;
                 document.getElementById('banco-dream-coin').textContent = Number(b.dream_coin || 0).toLocaleString();
                 document.getElementById('banco-zen').textContent = Number(b.zen || 0).toLocaleString();
+
+                if (data.boxes) {
+                    cajasBanco = data.boxes;
+                }
+                renderizarTablaBoxes();
 
                 document.getElementById('tabla-donaciones-body').innerHTML = data.donaciones.map(d => `
                     <tr>
@@ -1912,6 +2011,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => { 
+            renderizarTablaBoxes();
             chequearSesion(); 
             cargarItems(); 
             cargarMiembros(); 
