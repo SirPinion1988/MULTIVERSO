@@ -290,7 +290,7 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">👤 Asignado a</label>
+                        <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">👤 Asignado / Estado</label>
                         <select id="inputFiltroAsignado" onchange="aplicarFiltros()" class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
                             <option value="">-- Todos --</option>
                         </select>
@@ -370,7 +370,7 @@
                         <th>Nombre del Ítem</th>
                         <th style="width: 140px;">Pieza</th>
                         <th>Opciones</th>
-                        <th style="width: 220px; text-align: center;">Asignado a</th>
+                        <th style="width: 220px; text-align: center;">Asignado / Estado</th>
                         <th style="width: 90px; text-align: center;" id="th-acciones-head" class="hidden">Acciones</th>
                     </tr>
                 </thead>
@@ -698,11 +698,11 @@
 
             <label id="wrap-eliminar-vendido" class="hidden flex items-center gap-2 text-xs text-amber-300 cursor-pointer bg-[#0b0a08] p-2 rounded border border-amber-500/30">
                 <input type="checkbox" id="gastoEliminarItemVendido" class="accent-[#f5b942]">
-                <span>🗑️ Quitar este ítem del inventario al registrar la venta</span>
+                <span>🗑️ Borrar definitivamente este ítem del listado (si no se marca, quedará como VENDIDO y bloqueado)</span>
             </label>
 
             <div>
-                <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">Motivo / Comprador:</label>
+                <label id="label-gasto-motivo" class="block text-xs uppercase text-[#a89f91] font-bold mb-1">Motivo / Comprador:</label>
                 <input type="text" id="gastoMotivo" placeholder="Ej. Venta a comprador / Compra de entrada / Uso clan..." class="w-full input-mudream p-2.5 rounded text-xs">
             </div>
 
@@ -809,6 +809,10 @@
     <script>
         let catalogo = [], miembrosClan = [], sesionAutorizada = false, esAdmin = false;
         let ruletaGirando = false, anguloActualRuleta = 0, itemSeleccionadoRuleta = null, itemSeleccionadoGasto = null;
+
+        function esItemVendido(item) {
+            return item && String(item.asignado_a || '').trim().toUpperCase() === 'VENDIDO';
+        }
 
         // --- MENÚ DESPLEGABLE ADMINISTRACIÓN ---
         function toggleMenuAdministracion(event) {
@@ -933,7 +937,7 @@
                 miembrosClan = await res.json();
                 const selDon = document.getElementById('donPj');
                 const selAsignado = document.getElementById('inputFiltroAsignado');
-                let opts = '<option value="">-- Todos --</option>';
+                let opts = '<option value="">-- Todos --</option><option value="VENDIDO">💰 Vendidos</option>';
                 let optsCtrl = '<option value="">-- Seleccionar --</option>';
                 
                 miembrosClan.forEach(m => { 
@@ -1012,7 +1016,7 @@
         function renderizarTablaDistribucion() {
             const tbody = document.getElementById('tabla-distribucion-body');
             if (!tbody) return;
-            const totalAsignados = catalogo.filter(it => it.asignado_a && it.asignado_a.trim() !== '').length;
+            const totalAsignados = catalogo.filter(it => it.asignado_a && it.asignado_a.trim() !== '' && !esItemVendido(it)).length;
             const contadorEl = document.getElementById('contador-items-distribuidos');
             if (contadorEl) contadorEl.textContent = `${totalAsignados} ítems asignados`;
 
@@ -1022,7 +1026,7 @@
             }
 
             tbody.innerHTML = miembrosClan.map(m => {
-                const itemsDelPj = catalogo.filter(it => it.asignado_a && it.asignado_a.toLowerCase() === m.nombre_pj.toLowerCase());
+                const itemsDelPj = catalogo.filter(it => it.asignado_a && !esItemVendido(it) && it.asignado_a.toLowerCase() === m.nombre_pj.toLowerCase());
                 const itemsHTML = itemsDelPj.length
                     ? itemsDelPj.map(it => {
                         const opts = Array.isArray(it.opciones) && it.opciones.length ? ` <span class="text-emerald-300 text-[10px]">(${it.opciones.join(', ')})</span>` : '';
@@ -1047,6 +1051,8 @@
         }
 
         async function quitarItemDeMiembro(itemId) {
+            const item = catalogo.find(x => x.id === itemId);
+            if (esItemVendido(item)) return alert("⚠️ Este ítem ya fue vendido y no se puede modificar.");
             if (!confirm(`¿Quitar asignación del ítem #${itemId}?`)) return;
             const res = await fetch('/api/items', {
                 method: 'PUT',
@@ -1073,6 +1079,11 @@
             if (!encontrado) {
                 itemSeleccionadoRuleta = null;
                 preview.innerHTML = `<span class="text-red-400 font-bold">❌ No existe ningún ítem con ID #${idVal}</span>`;
+                return;
+            }
+            if (esItemVendido(encontrado)) {
+                itemSeleccionadoRuleta = null;
+                preview.innerHTML = `<span class="text-red-400 font-bold">🚫 El ítem #${encontrado.id} (${encontrado.nombre}) ya fue VENDIDO y no se puede sortear ni asignar.</span>`;
                 return;
             }
             itemSeleccionadoRuleta = encontrado;
@@ -1156,6 +1167,9 @@
             if (!itemSeleccionadoRuleta) {
                 return alert("⚠️ Primero ingresá un número de ID de ítem válido arriba para sortear.");
             }
+            if (esItemVendido(itemSeleccionadoRuleta)) {
+                return alert("🚫 Este ítem ya fue vendido y no puede sortearse ni asignarse.");
+            }
             const seleccionados = obtenerParticipantesRuleta();
             if (seleccionados.length < 2) {
                 return alert("⚠️ Seleccioná al menos 2 miembros participantes para girar la ruleta.");
@@ -1213,7 +1227,8 @@
                     await cargarItems();
                     buscarItemRuleta();
                 } else {
-                    document.getElementById('ruleta-detalle-asignacion').textContent = `⚠️ Ganó ${ganador}, pero hubo un error al guardar en la base de datos.`;
+                    const err = await res.json();
+                    document.getElementById('ruleta-detalle-asignacion').textContent = `⚠️ ${err.error || 'Hubo un error al guardar en la base de datos.'}`;
                 }
             } catch (e) {
                 document.getElementById('ruleta-detalle-asignacion').textContent = `⚠️ Error de conexión al asignar el ítem.`;
@@ -1314,16 +1329,33 @@
                 return;
             }
             tbody.innerHTML = items.map(item => {
+                const vendido = esItemVendido(item);
                 const opcionesBadges = Array.isArray(item.opciones) ? item.opciones.map(opt => `<span class="badge-opt">${opt}</span>`).join('') : '-';
-                let asignadoHTML = item.asignado_a ? `<span class="bg-[#221c15] border border-[#f5b942]/40 text-[#fbd379] px-2.5 py-0.5 rounded text-xs font-bold">${item.asignado_a}</span>` : '<span class="text-[#8a8073] text-xs">Sin asignar</span>';
-                let accionesHTML = sesionAutorizada ? `
-                    <td class="text-center space-x-1">
-                        <button onclick="abrirModalEditar(${item.id})" class="bg-[#221c15] text-[#fbd379] border border-[#f5b942]/40 px-2 py-1 rounded text-xs font-bold" title="Editar">✏️</button>
-                        <button onclick="eliminarItem(${item.id})" class="bg-red-950 text-red-300 border border-red-800 px-2 py-1 rounded text-xs font-bold" title="Borrar">🗑️</button>
-                    </td>` : '';
+                
+                let asignadoHTML = '';
+                if (vendido) {
+                    asignadoHTML = `<span class="bg-red-950/90 border border-red-500/50 text-red-300 px-2.5 py-0.5 rounded text-xs font-extrabold tracking-wide">💰 VENDIDO</span>`;
+                } else if (item.asignado_a) {
+                    asignadoHTML = `<span class="bg-[#221c15] border border-[#f5b942]/40 text-[#fbd379] px-2.5 py-0.5 rounded text-xs font-bold">${item.asignado_a}</span>`;
+                } else {
+                    asignadoHTML = '<span class="text-[#8a8073] text-xs">Sin asignar</span>';
+                }
+
+                let accionesHTML = '';
+                if (sesionAutorizada) {
+                    if (vendido) {
+                        accionesHTML = `<td class="text-center"><span class="text-[11px] text-[#8a8073] font-semibold select-none" title="Ítem vendido y bloqueado">🔒 Bloqueado</span></td>`;
+                    } else {
+                        accionesHTML = `
+                            <td class="text-center space-x-1">
+                                <button onclick="abrirModalEditar(${item.id})" class="bg-[#221c15] text-[#fbd379] border border-[#f5b942]/40 px-2 py-1 rounded text-xs font-bold" title="Editar">✏️</button>
+                                <button onclick="eliminarItem(${item.id})" class="bg-red-950 text-red-300 border border-red-800 px-2 py-1 rounded text-xs font-bold" title="Borrar">🗑️</button>
+                            </td>`;
+                    }
+                }
 
                 return `
-                    <tr>
+                    <tr class="${vendido ? 'opacity-70 bg-red-950/10' : ''}">
                         <td class="font-mono text-[#f5b942] font-extrabold text-sm">#${item.id}</td>
                         <td class="font-bold text-[#f8f5ee]">${item.nombre}</td>
                         <td><span class="badge-pj">${item.tipo}</span></td>
@@ -1364,6 +1396,9 @@
         function abrirModalEditar(id) {
             const item = catalogo.find(x => x.id === id);
             if (!item) return;
+            if (esItemVendido(item)) {
+                return alert("🚫 Este ítem ya fue vendido y no se puede editar ni asignar.");
+            }
             document.getElementById('editOldId').value = item.id;
             document.getElementById('editId').value = item.id;
             document.getElementById('editNombre').value = item.nombre;
@@ -1420,6 +1455,7 @@
             const custom_id = customIdEl ? customIdEl.value.trim() : '';
 
             if (!set_base) return alert("Escribí o seleccioná un elemento.");
+            if (asignado.toUpperCase() === 'VENDIDO') return alert("No podés cargar un ítem nuevo directamente como vendido.");
 
             const opciones = [];
             document.querySelectorAll('.filtro-chk:checked').forEach(chk => {
@@ -1435,9 +1471,16 @@
         }
 
         async function eliminarItem(id) {
+            const item = catalogo.find(x => x.id === id);
+            if (esItemVendido(item)) return alert("🚫 Este ítem ya fue vendido y no se puede eliminar.");
             if (!confirm(`¿Eliminar ítem #${id}?`)) return;
-            await fetch('/api/items/eliminar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            cargarItems();
+            const res = await fetch('/api/items/eliminar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+            if (res.ok) {
+                cargarItems();
+            } else {
+                const err = await res.json();
+                alert("Error: " + (err.error || "No se pudo eliminar"));
+            }
         }
 
         // --- GENERADOR DE MEDALLAS POR PUESTO ---
@@ -1688,13 +1731,20 @@
             const tipo = document.getElementById('gastoTipoMovimiento').value;
             const btn = document.getElementById('btn-confirmar-gasto-venta');
             const wrapEliminar = document.getElementById('wrap-eliminar-vendido');
+            const labelMotivo = document.getElementById('label-gasto-motivo');
+            const inputMotivo = document.getElementById('gastoMotivo');
+
             if (tipo === 'VENTA') {
                 btn.textContent = '💰 Registrar Venta (Sumar al Banco)';
                 btn.className = 'bg-emerald-800 hover:bg-emerald-700 text-white px-4 py-2 rounded text-xs font-bold';
+                if (labelMotivo) labelMotivo.textContent = 'Descripción / Comprador (Opcional):';
+                if (inputMotivo) inputMotivo.placeholder = 'Opcional (Ej. Comprador o detalle de venta...)';
                 if (itemSeleccionadoGasto) wrapEliminar.classList.remove('hidden');
             } else {
                 btn.textContent = '📉 Descontar Gasto';
                 btn.className = 'bg-red-800 hover:bg-red-700 text-white px-4 py-2 rounded text-xs font-bold';
+                if (labelMotivo) labelMotivo.textContent = 'Motivo (Obligatorio):';
+                if (inputMotivo) inputMotivo.placeholder = 'Ej. Compra de entrada / Uso clan...';
                 wrapEliminar.classList.add('hidden');
             }
         }
@@ -1718,6 +1768,12 @@
                 preview.innerHTML = `<span class="text-red-400 font-bold">❌ No se encontró ningún ítem con ID #${idVal}</span>`;
                 return;
             }
+            if (esItemVendido(encontrado)) {
+                itemSeleccionadoGasto = null;
+                wrapEliminar.classList.add('hidden');
+                preview.innerHTML = `<span class="text-red-400 font-bold">🚫 El ítem #${encontrado.id} (${encontrado.nombre}) ya figura como VENDIDO.</span>`;
+                return;
+            }
             itemSeleccionadoGasto = encontrado;
             const optsText = Array.isArray(encontrado.opciones) && encontrado.opciones.length ? encontrado.opciones.join(' | ') : 'Sin opciones exc.';
             const estadoAsig = encontrado.asignado_a ? `(Asignado a: ${encontrado.asignado_a})` : '(Sin asignar)';
@@ -1731,10 +1787,16 @@
         }
 
         async function guardarGastoGuild() {
-            const motivo = document.getElementById('gastoMotivo').value.trim();
-            if (!motivo) return alert("Ingresá el motivo o comprador.");
-
             const tipo_movimiento = document.getElementById('gastoTipoMovimiento').value;
+            let motivo = document.getElementById('gastoMotivo').value.trim();
+
+            if (tipo_movimiento === 'GASTO' && !motivo) {
+                return alert("Ingresá el motivo del uso o gasto.");
+            }
+            if (tipo_movimiento === 'VENTA' && !motivo) {
+                motivo = "Venta de ítem";
+            }
+
             const item_id = document.getElementById('gastoItemId').value.trim() || null;
             const eliminar_item_vendido = (tipo_movimiento === 'VENTA') && document.getElementById('gastoEliminarItemVendido').checked;
 
@@ -1761,7 +1823,7 @@
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });
             if (res.ok) {
-                alert(tipo_movimiento === 'VENTA' ? "¡Venta registrada y sumada al banco!" : "¡Gasto registrado!");
+                alert(tipo_movimiento === 'VENTA' ? "¡Venta registrada, sumada al banco e ítem marcado como VENDIDO!" : "¡Gasto registrado!");
                 [
                     'gastoBless', 'gastoSoul', 'gastoLife', 'gastoCreation',
                     'gastoGuardian', 'gastoGemstone', 'gastoHarmony', 'gastoChaos',
@@ -1770,7 +1832,7 @@
                 ].forEach(id => document.getElementById(id).value = 0);
                 cerrarModalGasto();
                 cargarDonacionesJoyas();
-                if (eliminar_item_vendido) cargarItems();
+                if (item_id && tipo_movimiento === 'VENTA') cargarItems();
             } else {
                 const err = await res.json();
                 alert("Error: " + (err.error || "No se pudo registrar"));
