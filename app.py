@@ -372,7 +372,6 @@ def api_donaciones_joyas():
                     """)
                     gastos_lista = cur.fetchall()
 
-                    # Sumar gastos (restan del banco)
                     cur.execute("""
                         SELECT SUM(bless) as bless, SUM(soul) as soul, SUM(life) as life,
                                SUM(creation) as creation,
@@ -391,7 +390,6 @@ def api_donaciones_joyas():
                     if g:
                         gastos_total = {k: (g[k] or 0) for k in campos_banco}
 
-                    # Sumar ingresos por venta de ítems (suman al banco)
                     cur.execute("""
                         SELECT SUM(bless) as bless, SUM(soul) as soul, SUM(life) as life,
                                SUM(creation) as creation,
@@ -529,16 +527,15 @@ def agregar_item_manual():
     data = request.json or {}
     set_base = data.get('set_base', '').strip()
     tipo = data.get('tipo', 'Armor').strip()
-    baul = data.get('baul', '').strip() or 'Baúl General'
     asignado = data.get('asignado', '').strip() or None
     opciones = data.get('opciones', [])
     custom_id = data.get('custom_id')
 
     if not set_base: return jsonify({"error": "Falta seleccionar set"}), 400
     if tipo in ['Jewel', 'Box', 'Talisman']:
-        nombre_completo = f"{set_base} [Baúl: {baul}]"
+        nombre_completo = set_base
     else:
-        nombre_completo = f"Excellent {set_base} {tipo} [Baúl: {baul}]"
+        nombre_completo = f"Excellent {set_base} {tipo}"
     clases_default = ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter", "Grow Lancer"]
 
     conn = get_db()
