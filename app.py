@@ -459,28 +459,34 @@ def api_donaciones_joyas():
 def api_guild_gastos():
     if not usuario_es_autorizado(): return jsonify({"error": "No autorizado."}), 403
     data = request.json or {}
-    motivo = data.get('motivo', '').strip()
     tipo_movimiento = data.get('tipo_movimiento', 'GASTO').strip().upper()
     if tipo_movimiento not in ['GASTO', 'VENTA']:
         tipo_movimiento = 'GASTO'
+
+    motivo = (data.get('motivo') or '').strip()
+    if tipo_movimiento == 'GASTO' and not motivo:
+        return jsonify({"error": "Falta motivo"}), 400
+    if tipo_movimiento == 'VENTA' and not motivo:
+        motivo = "Venta de ítem"
 
     item_id_raw = data.get('item_id')
     item_id = int(item_id_raw) if item_id_raw not in [None, '', 0, '0'] else None
     item_nombre = (data.get('item_nombre') or '').strip() or None
     eliminar_item_vendido = bool(data.get('eliminar_item_vendido', False))
 
-    if not motivo:
-        return jsonify({"error": "Falta motivo"}), 400
-
     conn = get_db()
     if conn:
         try:
             with conn.cursor() as cur:
-                if item_id and not item_nombre:
-                    cur.execute("SELECT nombre FROM public.items_mu WHERE id = %s;", (item_id,))
+                if item_id:
+                    cur.execute("SELECT nombre, asignado_a FROM public.items_mu WHERE id = %s;", (item_id,))
                     row_it = cur.fetchone()
                     if row_it:
-                        item_nombre = row_it['nombre']
+                        if (row_it.get('asignado_a') or '').upper() == 'VENDIDO':
+                            conn.close()
+                            return jsonify({"error": f"El ítem #{item_id} ya fue vendido."}), 400
+                        if not item_nombre:
+                            item_nombre = row_it['nombre']
 
                 cur.execute("""
                     INSERT INTO public.guild_gastos (
@@ -510,8 +516,11 @@ def api_guild_gastos():
                     session.get('user', 'Sistema')
                 ))
 
-                if item_id and eliminar_item_vendido:
-                    cur.execute("DELETE FROM public.items_mu WHERE id = %s;", (item_id,))
+                if item_id and tipo_movimiento == 'VENTA':
+                    if eliminar_item_vendido:
+                        cur.execute("DELETE FROM public.items_mu WHERE id = %s;", (item_id,))
+                    else:
+                        cur.execute("UPDATE public.items_mu SET asignado_a = 'VENDIDO' WHERE id = %s;", (item_id,))
 
                 conn.commit()
             conn.close()
@@ -580,6 +589,12 @@ def editar_item():
     if conn:
         try:
             with conn.cursor() as cur:
+                cur.execute("SELECT asignado_a FROM public.items_mu WHERE id = %s;", (old_id,))
+                row_actual = cur.fetchone()
+                if row_actual and (row_actual.get('asignado_a') or '').upper() == 'VENDIDO':
+                    conn.close()
+                    return jsonify({"error": "Este ítem ya fue vendido y no puede modificarse."}), 400
+
                 if str(old_id) != str(new_id):
                     cur.execute("SELECT id FROM public.items_mu WHERE id = %s;", (new_id,))
                     if cur.fetchone(): return jsonify({"error": f"ID #{new_id} ya está en uso."}), 400
@@ -604,6 +619,12 @@ def eliminar_item_manual():
     if conn:
         try:
             with conn.cursor() as cur:
+                cur.execute("SELECT asignado_a FROM public.items_mu WHERE id = %s;", (item_id,))
+                row_actual = cur.fetchone()
+                if row_actual and (row_actual.get('asignado_a') or '').upper() == 'VENDIDO':
+                    conn.close()
+                    return jsonify({"error": "Este ítem ya fue vendido y no puede eliminarse."}), 400
+
                 cur.execute("DELETE FROM public.items_mu WHERE id = %s;", (item_id,))
                 conn.commit()
             conn.close()
@@ -643,6 +664,12 @@ def api_items():
     if conn:
         try:
             with conn.cursor() as cur:
+                cur.execute("SELECT asignado_a FROM public.items_mu WHERE id = %s;", (item_id,))
+                row_actual = cur.fetchone()
+                if row_actual and (row_actual.get('asignado_a') or '').upper() == 'VENDIDO':
+                    conn.close()
+                    return jsonify({"error": "Este ítem ya fue vendido y no puede asignarse."}), 400
+
                 cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE id = %s;", (asignado_a, item_id))
                 conn.commit()
             conn.close()
@@ -896,7 +923,7 @@ def importar_excel_web():
                     item_id = row.get('ID Ítem')
                     asignado = row.get('Miembro Asignado')
                     if pd.notna(item_id) and pd.notna(asignado):
-                        cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE id = %s;", (str(asignado), int(item_id)))
+                        cur.execute("UPDATE public.items_mu SET asignado_a = %s WHERE id = %s AND COALESCE(UPPER(asignado_a), '') != 'VENDIDO';", (str(asignado), int(item_id)))
             
             if 'Asistencias_Invasiones' in xls.sheet_names:
                 df_asist = pd.read_excel(xls, 'Asistencias_Invasiones')
