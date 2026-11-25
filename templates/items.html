@@ -164,14 +164,39 @@
             <span id="session-user-badge" class="text-xs text-[#e5dec9] font-bold bg-[#16120e] px-3 py-1.5 rounded-lg border border-[#332a1f]">
                 Invitado (Público)
             </span>
-            <div id="admin-backup-buttons" class="hidden flex flex-wrap gap-2 items-center">
-                <button onclick="descargarBackup()" class="bg-[#1c1712] hover:bg-[#29221a] border border-[#3d3122] text-[#e5dec9] px-3 py-1.5 rounded-lg text-xs font-bold transition">💾 Backup DB</button>
-                <button onclick="exportarExcelAsignados()" class="bg-emerald-950/70 hover:bg-emerald-900/80 border border-emerald-600/40 text-emerald-300 px-3 py-1.5 rounded-lg text-xs font-bold transition">📊 Excel Asignados</button>
-                <button onclick="exportarExcelAsistencias()" class="bg-amber-950/70 hover:bg-amber-900/80 border border-amber-500/40 text-[#fbd379] px-3 py-1.5 rounded-lg text-xs font-bold transition">📊 Excel Asistencias</button>
-                <label class="bg-[#292015] hover:bg-[#382b1c] border border-[#f5b942]/40 text-[#f5b942] px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
-                    📂 Subir Excel <input type="file" id="fileExcelInput" onchange="subirExcelBackup(event)" class="hidden" accept=".xlsx, .xls">
-                </label>
+
+            <!-- MENÚ DESPLEGABLE ADMINISTRACIÓN (TIPO ARCHIVO) -->
+            <div id="admin-backup-buttons" class="hidden relative">
+                <button onclick="toggleMenuAdministracion(event)" id="btn-admin-dropdown" class="bg-[#1c1712] hover:bg-[#29221a] border border-[#f5b942]/45 text-[#fbd379] px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow">
+                    <span>🛠️ Administración</span>
+                    <span id="admin-dropdown-arrow" class="text-[10px] transition-transform duration-150">▼</span>
+                </button>
+
+                <div id="menu-administracion-dropdown" class="hidden absolute right-0 mt-2 w-56 bg-[#16120e] border border-[#3d3122] rounded-xl shadow-2xl py-1.5 z-50">
+                    <div class="px-3 py-1 text-[10px] uppercase tracking-wider font-bold text-[#8a8073] border-b border-[#261f17]">
+                        Respaldos y Excel
+                    </div>
+                    <button onclick="cerrarMenuAdministracion(); descargarBackup()" class="w-full text-left px-3.5 py-2 text-xs text-[#e5dec9] hover:bg-[#241d15] hover:text-[#f5b942] font-semibold flex items-center gap-2.5 transition">
+                        <span>💾</span>
+                        <span>Backup DB</span>
+                    </button>
+                    <button onclick="cerrarMenuAdministracion(); exportarExcelAsignados()" class="w-full text-left px-3.5 py-2 text-xs text-emerald-300 hover:bg-[#241d15] font-semibold flex items-center gap-2.5 transition">
+                        <span>📊</span>
+                        <span>Excel Asignados</span>
+                    </button>
+                    <button onclick="cerrarMenuAdministracion(); exportarExcelAsistencias()" class="w-full text-left px-3.5 py-2 text-xs text-[#fbd379] hover:bg-[#241d15] font-semibold flex items-center gap-2.5 transition">
+                        <span>📊</span>
+                        <span>Excel Asistencias</span>
+                    </button>
+                    <div class="border-t border-[#261f17] my-1"></div>
+                    <label onclick="cerrarMenuAdministracion()" class="w-full text-left px-3.5 py-2 text-xs text-[#f5b942] hover:bg-[#241d15] font-bold flex items-center gap-2.5 transition cursor-pointer">
+                        <span>📂</span>
+                        <span>Subir Excel</span>
+                        <input type="file" id="fileExcelInput" onchange="subirExcelBackup(event)" class="hidden" accept=".xlsx, .xls">
+                    </label>
+                </div>
             </div>
+
             <button onclick="toggleLoginModal()" id="btn-login-open" class="btn-gold-mudream px-4 py-1.5 rounded-lg text-xs transition">
                 🔑 Ingresar
             </button>
@@ -769,6 +794,36 @@
     <script>
         let catalogo = [], miembrosClan = [], sesionAutorizada = false, esAdmin = false;
         let ruletaGirando = false, anguloActualRuleta = 0, itemSeleccionadoRuleta = null, itemSeleccionadoGasto = null;
+
+        // --- MENÚ DESPLEGABLE ADMINISTRACIÓN ---
+        function toggleMenuAdministracion(event) {
+            if (event) event.stopPropagation();
+            const menu = document.getElementById('menu-administracion-dropdown');
+            const arrow = document.getElementById('admin-dropdown-arrow');
+            if (!menu) return;
+            const abierto = !menu.classList.contains('hidden');
+            if (abierto) {
+                menu.classList.add('hidden');
+                if (arrow) arrow.style.transform = 'rotate(0deg)';
+            } else {
+                menu.classList.remove('hidden');
+                if (arrow) arrow.style.transform = 'rotate(180deg)';
+            }
+        }
+
+        function cerrarMenuAdministracion() {
+            const menu = document.getElementById('menu-administracion-dropdown');
+            const arrow = document.getElementById('admin-dropdown-arrow');
+            if (menu) menu.classList.add('hidden');
+            if (arrow) arrow.style.transform = 'rotate(0deg)';
+        }
+
+        document.addEventListener('click', (e) => {
+            const contenedor = document.getElementById('admin-backup-buttons');
+            if (contenedor && !contenedor.contains(e.target)) {
+                cerrarMenuAdministracion();
+            }
+        });
 
         async function chequearSesion() {
             try {
