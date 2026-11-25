@@ -524,13 +524,13 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 5: BANCO (BANCO GUILD + BOX + RECAUDACIÓN + HISTORIALES DEBAJO) -->
+    <!-- SECCIÓN 5: BANCO (BANCO GUILD + BOX + HISTORIAL DE USOS/VENTAS + RECAUDACIÓN + HISTORIAL RECAUDACIÓN) -->
     <div id="seccion-donaciones-view" class="w-full max-w-7xl space-y-6 hidden">
         <!-- 1. BANCO GUILD & BOX -->
         <div class="card-mudream p-5 rounded-xl space-y-4">
             <div class="flex justify-between items-center">
                 <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">🏛️ Banco Guild (Joyas, Piedras & Dream Coin)</h2>
-                <button onclick="abrirModalGasto()" id="btn-gasto-modal" class="hidden bg-red-950/80 hover:bg-red-900 border border-red-600/50 text-red-200 px-3 py-1.5 rounded text-xs font-bold">📉 Registrar Uso / Venta</button>
+                <button onclick="abrirModalGasto()" id="btn-gasto-modal" class="hidden bg-red-950/80 hover:bg-red-900 border border-red-600/50 text-red-200 px-3 py-1.5 rounded text-xs font-bold">📉 Registrar Uso / Venta / Quemado</button>
             </div>
             <div class="overflow-x-auto">
                 <table class="tabla-items text-center whitespace-nowrap">
@@ -603,61 +603,9 @@
             </div>
         </div>
 
-        <!-- 2. RECAUDACIÓN -->
-        <div id="panel-donacion-crud" class="card-mudream p-5 rounded-xl space-y-4 hidden">
-            <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">💎 Recaudación de Joyas / Dream Coin</h2>
-            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5 items-end bg-[#0b0a08] p-3.5 rounded-lg border border-[#29221a]">
-                <div class="col-span-2">
-                    <label class="block text-[10px] text-[#a89f91] font-bold mb-1">MIEMBRO:</label>
-                    <select id="donPj" class="w-full input-mudream p-2 rounded text-xs"><option value="">-- Seleccionar --</option></select>
-                </div>
-                <div><label class="block text-[10px] text-[#a89f91]">BLESS:</label><input type="number" id="donBless" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-[#a89f91]">SOUL:</label><input type="number" id="donSoul" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-[#a89f91]">LIFE:</label><input type="number" id="donLife" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-[#a89f91]">CREATION:</label><input type="number" id="donCreation" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-[#a89f91]">GUARDIAN:</label><input type="number" id="donGuardian" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-[#a89f91]">GEMSTONE:</label><input type="number" id="donGemstone" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-[#a89f91]">HARMONY:</label><input type="number" id="donHarmony" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-[#a89f91]">CHAOS:</label><input type="number" id="donChaos" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-[#a89f91]">LOWER REF.:</label><input type="number" id="donLowerRefining" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-[#a89f91]">HIGHER REF.:</label><input type="number" id="donHigherRefining" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-sky-300 font-bold">DREAM COIN:</label><input type="number" id="donDreamCoin" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-[#a89f91]">ZEN:</label><input type="number" id="donZen" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div class="col-span-2 sm:col-span-4 md:col-span-7"><button onclick="guardarDonacionJoyas()" class="w-full btn-gold-mudream py-2 rounded text-xs mt-1">💾 Registrar Recaudación</button></div>
-            </div>
-        </div>
-
-        <!-- 3. HISTORIAL DE RECAUDACIÓN (DEBAJO) -->
+        <!-- 2. HISTORIAL DE USOS, VENTAS & QUEMADOS (ENTRE EL BANCO/BOX Y RECAUDACIÓN) -->
         <div class="card-mudream p-5 rounded-xl space-y-4">
-            <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">📜 Historial de Recaudación</h2>
-            <div class="tabla-scroll-box" style="height: 280px !important;">
-                <table class="tabla-items text-center whitespace-nowrap">
-                    <thead>
-                        <tr>
-                            <th style="text-align: left;">Miembro</th>
-                            <th>Bless</th>
-                            <th>Soul</th>
-                            <th>Life</th>
-                            <th>Creation</th>
-                            <th>Guardian</th>
-                            <th>Gemstone</th>
-                            <th>Harmony</th>
-                            <th>Chaos</th>
-                            <th>Lower Ref.</th>
-                            <th>Higher Ref.</th>
-                            <th class="text-sky-300">Dream Coin</th>
-                            <th>Zen</th>
-                            <th>Fecha</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-donaciones-body"><tr><td colspan="14" class="text-center py-4 text-[#8a8073]">Sin recaudaciones registradas.</td></tr></tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- 4. HISTORIAL DE USOS & VENTAS DEL BANCO GUILD (DEBAJO) -->
-        <div class="card-mudream p-5 rounded-xl space-y-4">
-            <h2 class="text-sm font-bold text-red-400 uppercase tracking-wider">📉 Historial de Usos & Ventas del Banco Guild</h2>
+            <h2 class="text-sm font-bold text-red-400 uppercase tracking-wider">📉 Historial de Usos, Ventas & Quemados del Banco Guild</h2>
             <div class="tabla-scroll-box" style="height: 280px !important;">
                 <table class="tabla-items text-center whitespace-nowrap">
                     <thead>
@@ -685,6 +633,58 @@
                 </table>
             </div>
         </div>
+
+        <!-- 3. RECAUDACIÓN -->
+        <div id="panel-donacion-crud" class="card-mudream p-5 rounded-xl space-y-4 hidden">
+            <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">💎 Recaudación de Joyas / Dream Coin</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5 items-end bg-[#0b0a08] p-3.5 rounded-lg border border-[#29221a]">
+                <div class="col-span-2">
+                    <label class="block text-[10px] text-[#a89f91] font-bold mb-1">MIEMBRO:</label>
+                    <select id="donPj" class="w-full input-mudream p-2 rounded text-xs"><option value="">-- Seleccionar --</option></select>
+                </div>
+                <div><label class="block text-[10px] text-[#a89f91]">BLESS:</label><input type="number" id="donBless" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-[#a89f91]">SOUL:</label><input type="number" id="donSoul" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-[#a89f91]">LIFE:</label><input type="number" id="donLife" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-[#a89f91]">CREATION:</label><input type="number" id="donCreation" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-[#a89f91]">GUARDIAN:</label><input type="number" id="donGuardian" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-[#a89f91]">GEMSTONE:</label><input type="number" id="donGemstone" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-[#a89f91]">HARMONY:</label><input type="number" id="donHarmony" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-[#a89f91]">CHAOS:</label><input type="number" id="donChaos" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-[#a89f91]">LOWER REF.:</label><input type="number" id="donLowerRefining" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-[#a89f91]">HIGHER REF.:</label><input type="number" id="donHigherRefining" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-sky-300 font-bold">DREAM COIN:</label><input type="number" id="donDreamCoin" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-[#a89f91]">ZEN:</label><input type="number" id="donZen" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div class="col-span-2 sm:col-span-4 md:col-span-7"><button onclick="guardarDonacionJoyas()" class="w-full btn-gold-mudream py-2 rounded text-xs mt-1">💾 Registrar Recaudación</button></div>
+            </div>
+        </div>
+
+        <!-- 4. HISTORIAL DE RECAUDACIÓN (DEBAJO) -->
+        <div class="card-mudream p-5 rounded-xl space-y-4">
+            <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">📜 Historial de Recaudación</h2>
+            <div class="tabla-scroll-box" style="height: 280px !important;">
+                <table class="tabla-items text-center whitespace-nowrap">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left;">Miembro</th>
+                            <th>Bless</th>
+                            <th>Soul</th>
+                            <th>Life</th>
+                            <th>Creation</th>
+                            <th>Guardian</th>
+                            <th>Gemstone</th>
+                            <th>Harmony</th>
+                            <th>Chaos</th>
+                            <th>Lower Ref.</th>
+                            <th>Higher Ref.</th>
+                            <th class="text-sky-300">Dream Coin</th>
+                            <th>Zen</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-donaciones-body"><tr><td colspan="14" class="text-center py-4 text-[#8a8073]">Sin recaudaciones registradas.</td></tr></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <!-- SECCIÓN 6: USUARIOS (SOLO ADMIN Y OPERADORES) -->
@@ -708,10 +708,10 @@
         </div>
     </div>
 
-    <!-- MODAL USO / VENTA DE ÍTEM -->
+    <!-- MODAL USO / VENTA / QUEMADO DE ÍTEM -->
     <div id="modal-gasto" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4">
         <div class="bg-[#16120e] border border-[#f5b942]/50 p-6 rounded-xl max-w-lg w-full flex flex-col shadow-2xl space-y-3 max-h-[90vh] overflow-y-auto">
-            <h3 class="text-lg font-bold text-[#f5b942] mb-1">📉 Registrar Uso o Venta del Guild</h3>
+            <h3 class="text-lg font-bold text-[#f5b942] mb-1">📉 Registrar Uso, Venta o Quemado del Guild</h3>
 
             <!-- TIPO DE OPERACIÓN -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -720,6 +720,7 @@
                     <select id="gastoTipoMovimiento" onchange="actualizarTextoModalGasto()" class="w-full input-mudream p-2 rounded text-xs font-bold">
                         <option value="GASTO">📉 Uso / Gasto (Resta del Banco)</option>
                         <option value="VENTA">💰 Venta de Ítem (Suma al Banco)</option>
+                        <option value="QUEMADO">🔥 Quemado (Marca Ítem como Quemado)</option>
                     </select>
                 </div>
                 <div>
@@ -739,8 +740,8 @@
             </label>
 
             <div>
-                <label id="label-gasto-motivo" class="block text-xs uppercase text-[#a89f91] font-bold mb-1">Motivo / Comprador:</label>
-                <input type="text" id="gastoMotivo" placeholder="Ej. Venta a comprador / Compra de entrada / Uso clan..." class="w-full input-mudream p-2.5 rounded text-xs">
+                <label id="label-gasto-motivo" class="block text-xs uppercase text-[#a89f91] font-bold mb-1">Motivo (Obligatorio):</label>
+                <input type="text" id="gastoMotivo" placeholder="Ej. Compra de entrada / Uso clan..." class="w-full input-mudream p-2.5 rounded text-xs">
             </div>
 
             <div class="grid grid-cols-3 gap-2 text-xs text-[#e5dec9]">
@@ -758,7 +759,7 @@
                 <div><label>Zen:</label><input type="number" id="gastoZen" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
             </div>
             <div class="flex gap-2 justify-end pt-3">
-                <button onclick="guardarGastoGuild()" id="btn-confirmar-gasto-venta" class="bg-red-800 hover:bg-red-700 text-white px-4 py-2 rounded text-xs font-bold">Registrar Gasto</button>
+                <button onclick="guardarGastoGuild()" id="btn-confirmar-gasto-venta" class="bg-red-800 hover:bg-red-700 text-white px-4 py-2 rounded text-xs font-bold">📉 Descontar Gasto</button>
                 <button onclick="cerrarModalGasto()" class="bg-[#221c15] text-[#d6cebf] px-4 py-2 rounded text-xs font-bold">Cancelar</button>
             </div>
         </div>
@@ -801,9 +802,11 @@
                 </select>
             </div>
             <div>
-                <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">👤 Asignado a (Sin asignar o Miembro):</label>
+                <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">👤 Asignado / Estado (Sin asignar, Miembro, VENDIDO o QUEMADO):</label>
                 <select id="editAsignado" class="w-full input-mudream p-2 rounded text-xs">
                     <option value="">Sin asignar</option>
+                    <option value="VENDIDO">💰 VENDIDO</option>
+                    <option value="QUEMADO">🔥 QUEMADO</option>
                 </select>
             </div>
 
@@ -860,8 +863,11 @@
             'necklace'
         ];
 
-        function esItemVendido(item) {
-            return item && String(item.asignado_a || '').trim().toUpperCase() === 'VENDIDO';
+        function obtenerEstadoEspecialItem(item) {
+            if (!item) return null;
+            const est = String(item.asignado_a || '').trim().toUpperCase();
+            if (est === 'VENDIDO' || est === 'QUEMADO') return est;
+            return null;
         }
 
         // --- MENÚ DESPLEGABLE ADMINISTRACIÓN ---
@@ -988,7 +994,7 @@
                 miembrosClan = await res.json();
                 const selDon = document.getElementById('donPj');
                 const selAsignado = document.getElementById('inputFiltroAsignado');
-                let opts = '<option value="">-- Todos --</option><option value="VENDIDO">💰 Vendidos</option>';
+                let opts = '<option value="">-- Todos --</option><option value="VENDIDO">💰 Vendidos</option><option value="QUEMADO">🔥 Quemados</option>';
                 let optsCtrl = '<option value="">-- Seleccionar --</option>';
                 
                 miembrosClan.forEach(m => { 
@@ -1067,7 +1073,7 @@
         function renderizarTablaDistribucion() {
             const tbody = document.getElementById('tabla-distribucion-body');
             if (!tbody) return;
-            const totalAsignados = catalogo.filter(it => it.asignado_a && it.asignado_a.trim() !== '' && !esItemVendido(it)).length;
+            const totalAsignados = catalogo.filter(it => it.asignado_a && it.asignado_a.trim() !== '' && !obtenerEstadoEspecialItem(it)).length;
             const contadorEl = document.getElementById('contador-items-distribuidos');
             if (contadorEl) contadorEl.textContent = `${totalAsignados} ítems asignados`;
 
@@ -1077,7 +1083,7 @@
             }
 
             tbody.innerHTML = miembrosClan.map(m => {
-                const itemsDelPj = catalogo.filter(it => it.asignado_a && !esItemVendido(it) && it.asignado_a.toLowerCase() === m.nombre_pj.toLowerCase());
+                const itemsDelPj = catalogo.filter(it => it.asignado_a && !obtenerEstadoEspecialItem(it) && it.asignado_a.toLowerCase() === m.nombre_pj.toLowerCase());
                 const itemsHTML = itemsDelPj.length
                     ? itemsDelPj.map(it => {
                         const opts = Array.isArray(it.opciones) && it.opciones.length ? ` <span class="text-emerald-300 text-[10px]">(${it.opciones.join(', ')})</span>` : '';
@@ -1103,7 +1109,8 @@
 
         async function quitarItemDeMiembro(itemId) {
             const item = catalogo.find(x => x.id === itemId);
-            if (esItemVendido(item)) return alert("⚠️ Este ítem ya fue vendido y no se puede modificar.");
+            const est = obtenerEstadoEspecialItem(item);
+            if (est) return alert(`⚠️ Este ítem figura como ${est} y no se puede modificar.`);
             if (!confirm(`¿Quitar asignación del ítem #${itemId}?`)) return;
             const res = await fetch('/api/items', {
                 method: 'PUT',
@@ -1132,9 +1139,10 @@
                 preview.innerHTML = `<span class="text-red-400 font-bold">❌ No existe ningún ítem con ID #${idVal}</span>`;
                 return;
             }
-            if (esItemVendido(encontrado)) {
+            const est = obtenerEstadoEspecialItem(encontrado);
+            if (est) {
                 itemSeleccionadoRuleta = null;
-                preview.innerHTML = `<span class="text-red-400 font-bold">🚫 El ítem #${encontrado.id} (${encontrado.nombre}) ya fue VENDIDO y no se puede sortear ni asignar.</span>`;
+                preview.innerHTML = `<span class="text-red-400 font-bold">🚫 El ítem #${encontrado.id} (${encontrado.nombre}) está marcado como ${est} y no se puede usar ni sortear.</span>`;
                 return;
             }
             itemSeleccionadoRuleta = encontrado;
@@ -1218,8 +1226,9 @@
             if (!itemSeleccionadoRuleta) {
                 return alert("⚠️ Primero ingresá un número de ID de ítem válido arriba para sortear.");
             }
-            if (esItemVendido(itemSeleccionadoRuleta)) {
-                return alert("🚫 Este ítem ya fue vendido y no puede sortearse ni asignarse.");
+            const est = obtenerEstadoEspecialItem(itemSeleccionadoRuleta);
+            if (est) {
+                return alert(`🚫 Este ítem está marcado como ${est} y no puede sortearse ni asignarse.`);
             }
             const seleccionados = obtenerParticipantesRuleta();
             if (seleccionados.length < 2) {
@@ -1380,12 +1389,14 @@
                 return;
             }
             tbody.innerHTML = items.map(item => {
-                const vendido = esItemVendido(item);
+                const estadoEsp = obtenerEstadoEspecialItem(item);
                 const opcionesBadges = Array.isArray(item.opciones) ? item.opciones.map(opt => `<span class="badge-opt">${opt}</span>`).join('') : '-';
                 
                 let asignadoHTML = '';
-                if (vendido) {
+                if (estadoEsp === 'VENDIDO') {
                     asignadoHTML = `<span class="bg-red-950/90 border border-red-500/50 text-red-300 px-2.5 py-0.5 rounded text-xs font-extrabold tracking-wide">💰 VENDIDO</span>`;
+                } else if (estadoEsp === 'QUEMADO') {
+                    asignadoHTML = `<span class="bg-orange-950/90 border border-orange-500/50 text-orange-300 px-2.5 py-0.5 rounded text-xs font-extrabold tracking-wide">🔥 QUEMADO</span>`;
                 } else if (item.asignado_a) {
                     asignadoHTML = `<span class="bg-[#221c15] border border-[#f5b942]/40 text-[#fbd379] px-2.5 py-0.5 rounded text-xs font-bold">${item.asignado_a}</span>`;
                 } else {
@@ -1394,8 +1405,13 @@
 
                 let accionesHTML = '';
                 if (sesionAutorizada) {
-                    if (vendido) {
-                        accionesHTML = `<td class="text-center"><span class="text-[11px] text-[#8a8073] font-semibold select-none" title="Ítem vendido y bloqueado">🔒 Bloqueado</span></td>`;
+                    if (estadoEsp) {
+                        // Bloqueado para asignar o borrar directo; permite editar solo si fue por error
+                        accionesHTML = `
+                            <td class="text-center space-x-1">
+                                <button onclick="abrirModalEditar(${item.id})" class="bg-[#221c15] hover:bg-[#2d241b] text-[#fbd379] border border-[#f5b942]/40 px-2 py-1 rounded text-xs font-bold" title="Corregir si fue por error">✏️</button>
+                                <span class="text-[10px] text-[#8a8073] font-semibold select-none" title="No se puede asignar ni borrar">🔒</span>
+                            </td>`;
                     } else {
                         accionesHTML = `
                             <td class="text-center space-x-1">
@@ -1406,7 +1422,7 @@
                 }
 
                 return `
-                    <tr class="${vendido ? 'opacity-70 bg-red-950/10' : ''}">
+                    <tr class="${estadoEsp ? 'opacity-75 bg-red-950/10' : ''}">
                         <td class="font-mono text-[#f5b942] font-extrabold text-sm">#${item.id}</td>
                         <td class="font-bold text-[#f8f5ee]">${item.nombre}</td>
                         <td><span class="badge-pj">${item.tipo}</span></td>
@@ -1447,9 +1463,6 @@
         function abrirModalEditar(id) {
             const item = catalogo.find(x => x.id === id);
             if (!item) return;
-            if (esItemVendido(item)) {
-                return alert("🚫 Este ítem ya fue vendido y no se puede editar ni asignar.");
-            }
             document.getElementById('editOldId').value = item.id;
             document.getElementById('editId').value = item.id;
             document.getElementById('editNombre').value = item.nombre;
@@ -1461,6 +1474,9 @@
                 const selected = item.asignado_a === m.nombre_pj ? 'selected' : '';
                 opts += `<option value="${m.nombre_pj}" ${selected}>${m.nombre_pj} (${m.raza})</option>`;
             });
+            const estActual = String(item.asignado_a || '').trim().toUpperCase();
+            opts += `<option value="VENDIDO" ${estActual === 'VENDIDO' ? 'selected' : ''}>💰 VENDIDO</option>`;
+            opts += `<option value="QUEMADO" ${estActual === 'QUEMADO' ? 'selected' : ''}>🔥 QUEMADO</option>`;
             selectAsignado.innerHTML = opts;
             if (item.asignado_a) {
                 selectAsignado.value = item.asignado_a;
@@ -1506,7 +1522,9 @@
             const custom_id = customIdEl ? customIdEl.value.trim() : '';
 
             if (!set_base) return alert("Escribí o seleccioná un elemento.");
-            if (asignado.toUpperCase() === 'VENDIDO') return alert("No podés cargar un ítem nuevo directamente como vendido.");
+            if (['VENDIDO', 'QUEMADO'].includes(asignado.toUpperCase())) {
+                return alert("No podés cargar un ítem nuevo directamente como vendido o quemado.");
+            }
 
             const opciones = [];
             document.querySelectorAll('.filtro-chk:checked').forEach(chk => {
@@ -1523,7 +1541,8 @@
 
         async function eliminarItem(id) {
             const item = catalogo.find(x => x.id === id);
-            if (esItemVendido(item)) return alert("🚫 Este ítem ya fue vendido y no se puede eliminar.");
+            const est = obtenerEstadoEspecialItem(item);
+            if (est) return alert(`🚫 Este ítem está marcado como ${est} y no se puede eliminar desde acá (solo editar si fue por error).`);
             if (!confirm(`¿Eliminar ítem #${id}?`)) return;
             const res = await fetch('/api/items/eliminar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
             if (res.ok) {
@@ -1706,7 +1725,7 @@
             }
         }
 
-        // --- BANCO GUILD, RECAUDACIÓN & USO / VENTA ---
+        // --- BANCO GUILD, RECAUDACIÓN & USO / VENTA / QUEMADO ---
         async function cargarDonacionesJoyas() {
             const res = await fetch('/api/donaciones-joyas');
             if (res.ok) {
@@ -1752,16 +1771,24 @@
                 const tbodyGastos = document.getElementById('tabla-gastos-body');
                 if (tbodyGastos) {
                     tbodyGastos.innerHTML = (data.gastos || []).map(g => {
-                        const esVenta = (g.tipo_movimiento || 'GASTO') === 'VENTA';
-                        const badgeTipo = esVenta
-                            ? `<span class="bg-emerald-950 text-emerald-300 border border-emerald-600/40 px-2 py-0.5 rounded text-[10px] font-bold mr-1.5">💰 VENTA</span>`
-                            : `<span class="bg-red-950 text-red-300 border border-red-600/40 px-2 py-0.5 rounded text-[10px] font-bold mr-1.5">📉 USO</span>`;
+                        const tipoMov = (g.tipo_movimiento || 'GASTO').toUpperCase();
+                        let badgeTipo = '';
+                        let textoClase = 'text-red-300';
+                        if (tipoMov === 'VENTA') {
+                            badgeTipo = `<span class="bg-emerald-950 text-emerald-300 border border-emerald-600/40 px-2 py-0.5 rounded text-[10px] font-bold mr-1.5">💰 VENTA</span>`;
+                            textoClase = 'text-emerald-200';
+                        } else if (tipoMov === 'QUEMADO') {
+                            badgeTipo = `<span class="bg-orange-950 text-orange-300 border border-orange-600/40 px-2 py-0.5 rounded text-[10px] font-bold mr-1.5">🔥 QUEMADO</span>`;
+                            textoClase = 'text-orange-300';
+                        } else {
+                            badgeTipo = `<span class="bg-red-950 text-red-300 border border-red-600/40 px-2 py-0.5 rounded text-[10px] font-bold mr-1.5">📉 USO</span>`;
+                        }
                         const itemTag = g.item_id
                             ? `<span class="text-[#f5b942] font-mono font-bold mr-1">[#${g.item_id}${g.item_nombre ? ' ' + g.item_nombre : ''}]</span>`
                             : '';
                         return `
                             <tr>
-                                <td style="text-align: left;" class="${esVenta ? 'text-emerald-200' : 'text-red-300'} font-semibold">
+                                <td style="text-align: left;" class="${textoClase} font-semibold">
                                     ${badgeTipo}${itemTag}${g.motivo}
                                 </td>
                                 <td>${g.bless || 0}</td>
@@ -1843,6 +1870,12 @@
                 if (labelMotivo) labelMotivo.textContent = 'Descripción / Comprador (Opcional):';
                 if (inputMotivo) inputMotivo.placeholder = 'Opcional (Ej. Comprador o detalle de venta...)';
                 if (itemSeleccionadoGasto) wrapEliminar.classList.remove('hidden');
+            } else if (tipo === 'QUEMADO') {
+                btn.textContent = '🔥 Registrar Quemado';
+                btn.className = 'bg-orange-800 hover:bg-orange-700 text-white px-4 py-2 rounded text-xs font-bold';
+                if (labelMotivo) labelMotivo.textContent = 'Detalle / Motivo (Opcional):';
+                if (inputMotivo) inputMotivo.placeholder = 'Opcional (Ej. Quemado en chaos machine / drop...)';
+                wrapEliminar.classList.add('hidden');
             } else {
                 btn.textContent = '📉 Descontar Gasto';
                 btn.className = 'bg-red-800 hover:bg-red-700 text-white px-4 py-2 rounded text-xs font-bold';
@@ -1871,10 +1904,11 @@
                 preview.innerHTML = `<span class="text-red-400 font-bold">❌ No se encontró ningún ítem con ID #${idVal}</span>`;
                 return;
             }
-            if (esItemVendido(encontrado)) {
+            const est = obtenerEstadoEspecialItem(encontrado);
+            if (est) {
                 itemSeleccionadoGasto = null;
                 wrapEliminar.classList.add('hidden');
-                preview.innerHTML = `<span class="text-red-400 font-bold">🚫 El ítem #${encontrado.id} (${encontrado.nombre}) ya figura como VENDIDO.</span>`;
+                preview.innerHTML = `<span class="text-red-400 font-bold">🚫 El ítem #${encontrado.id} (${encontrado.nombre}) ya figura como ${est} y no puede usarse más.</span>`;
                 return;
             }
             itemSeleccionadoGasto = encontrado;
@@ -1898,6 +1932,9 @@
             }
             if (tipo_movimiento === 'VENTA' && !motivo) {
                 motivo = "Venta de ítem";
+            }
+            if (tipo_movimiento === 'QUEMADO' && !motivo) {
+                motivo = "Ítem quemado";
             }
 
             const item_id = document.getElementById('gastoItemId').value.trim() || null;
@@ -1926,7 +1963,13 @@
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });
             if (res.ok) {
-                alert(tipo_movimiento === 'VENTA' ? "¡Venta registrada, sumada al banco e ítem marcado como VENDIDO!" : "¡Gasto registrado!");
+                if (tipo_movimiento === 'VENTA') {
+                    alert("¡Venta registrada, sumada al banco e ítem marcado como VENDIDO!");
+                } else if (tipo_movimiento === 'QUEMADO') {
+                    alert("¡Quemado registrado e ítem marcado como QUEMADO!");
+                } else {
+                    alert("¡Gasto registrado!");
+                }
                 [
                     'gastoBless', 'gastoSoul', 'gastoLife', 'gastoCreation',
                     'gastoGuardian', 'gastoGemstone', 'gastoHarmony', 'gastoChaos',
@@ -1935,7 +1978,7 @@
                 ].forEach(id => document.getElementById(id).value = 0);
                 cerrarModalGasto();
                 cargarDonacionesJoyas();
-                if (item_id && tipo_movimiento === 'VENTA') cargarItems();
+                if (item_id && (tipo_movimiento === 'VENTA' || tipo_movimiento === 'QUEMADO')) cargarItems();
             } else {
                 const err = await res.json();
                 alert("Error: " + (err.error || "No se pudo registrar"));
