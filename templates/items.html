@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🛡️ Multiverso - Inventario, Armas, Asistencias & Donaciones</title>
+    <title>🛡️ Multiverso - Inventario, Armas, Asistencias & Banco</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
@@ -158,7 +158,7 @@
             <h1 class="text-3xl font-black tracking-wide text-[#f8f5ee]">
                 MULTIVERSO - <span class="text-[#f5b942]">GESTIÓN TOTAL</span>
             </h1>
-            <p class="text-xs text-[#a89f91] mt-0.5">Inventario, Armas, Distribución, Asistencia a Invasiones y Donaciones</p>
+            <p class="text-xs text-[#a89f91] mt-0.5">Inventario, Armas, Distribución, Asistencia a Invasiones y Banco</p>
         </div>
         <div class="flex flex-wrap items-center gap-2.5">
             <span id="session-user-badge" class="text-xs text-[#e5dec9] font-bold bg-[#16120e] px-3 py-1.5 rounded-lg border border-[#332a1f]">
@@ -209,7 +209,7 @@
         <button onclick="cambiarSeccion('ITEMS')" id="btn-sec-items" class="btn-gold-mudream px-4 py-2 rounded-lg text-xs transition">📋 Ítems</button>
         <button onclick="cambiarSeccion('DISTRIBUCION')" id="btn-sec-distribucion" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition">🎁 Distribución</button>
         <button onclick="cambiarSeccion('ASISTENCIAS')" id="btn-sec-asistencias" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition">⚔️ Asistencias</button>
-        <button onclick="cambiarSeccion('DONACIONES')" id="btn-sec-donaciones" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition">💎 Donaciones</button>
+        <button onclick="cambiarSeccion('DONACIONES')" id="btn-sec-donaciones" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition">🏛️ Banco</button>
         <button onclick="cambiarSeccion('CLAN')" id="btn-sec-clan" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition hidden">👥 Miembros</button>
         <button onclick="cambiarSeccion('USERS')" id="btn-sec-users" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition hidden">⚙️ Usuarios</button>
     </div>
@@ -524,8 +524,9 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 5: DONACIONES & BANCO GUILD (JOYAS + BOXES CON BOTONES +/-) -->
+    <!-- SECCIÓN 5: BANCO (BANCO GUILD + BOX + RECAUDACIÓN + HISTORIALES DEBAJO) -->
     <div id="seccion-donaciones-view" class="w-full max-w-7xl space-y-6 hidden">
+        <!-- 1. BANCO GUILD & BOX -->
         <div class="card-mudream p-5 rounded-xl space-y-4">
             <div class="flex justify-between items-center">
                 <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">🏛️ Banco Guild (Joyas, Piedras & Dream Coin)</h2>
@@ -602,8 +603,9 @@
             </div>
         </div>
 
+        <!-- 2. RECAUDACIÓN -->
         <div id="panel-donacion-crud" class="card-mudream p-5 rounded-xl space-y-4 hidden">
-            <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">💎 Registrar Donación de Joyas / Dream Coin</h2>
+            <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">💎 Recaudación de Joyas / Dream Coin</h2>
             <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5 items-end bg-[#0b0a08] p-3.5 rounded-lg border border-[#29221a]">
                 <div class="col-span-2">
                     <label class="block text-[10px] text-[#a89f91] font-bold mb-1">MIEMBRO:</label>
@@ -621,12 +623,13 @@
                 <div><label class="block text-[10px] text-[#a89f91]">HIGHER REF.:</label><input type="number" id="donHigherRefining" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
                 <div><label class="block text-[10px] text-sky-300 font-bold">DREAM COIN:</label><input type="number" id="donDreamCoin" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
                 <div><label class="block text-[10px] text-[#a89f91]">ZEN:</label><input type="number" id="donZen" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div class="col-span-2 sm:col-span-4 md:col-span-7"><button onclick="guardarDonacionJoyas()" class="w-full btn-gold-mudream py-2 rounded text-xs mt-1">💾 Registrar Donación</button></div>
+                <div class="col-span-2 sm:col-span-4 md:col-span-7"><button onclick="guardarDonacionJoyas()" class="w-full btn-gold-mudream py-2 rounded text-xs mt-1">💾 Registrar Recaudación</button></div>
             </div>
         </div>
 
+        <!-- 3. HISTORIAL DE RECAUDACIÓN (DEBAJO) -->
         <div class="card-mudream p-5 rounded-xl space-y-4">
-            <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">📜 Historial de Donaciones</h2>
+            <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">📜 Historial de Recaudación</h2>
             <div class="tabla-scroll-box" style="height: 280px !important;">
                 <table class="tabla-items text-center whitespace-nowrap">
                     <thead>
@@ -647,11 +650,12 @@
                             <th>Fecha</th>
                         </tr>
                     </thead>
-                    <tbody id="tabla-donaciones-body"><tr><td colspan="14" class="text-center py-4 text-[#8a8073]">Sin donaciones.</td></tr></tbody>
+                    <tbody id="tabla-donaciones-body"><tr><td colspan="14" class="text-center py-4 text-[#8a8073]">Sin recaudaciones registradas.</td></tr></tbody>
                 </table>
             </div>
         </div>
 
+        <!-- 4. HISTORIAL DE USOS & VENTAS DEL BANCO GUILD (DEBAJO) -->
         <div class="card-mudream p-5 rounded-xl space-y-4">
             <h2 class="text-sm font-bold text-red-400 uppercase tracking-wider">📉 Historial de Usos & Ventas del Banco Guild</h2>
             <div class="tabla-scroll-box" style="height: 280px !important;">
@@ -1702,7 +1706,7 @@
             }
         }
 
-        // --- BANCO GUILD, DONACIONES & USO / VENTA ---
+        // --- BANCO GUILD, RECAUDACIÓN & USO / VENTA ---
         async function cargarDonacionesJoyas() {
             const res = await fetch('/api/donaciones-joyas');
             if (res.ok) {
@@ -1743,7 +1747,7 @@
                         <td>${Number(d.zen || 0).toLocaleString()}</td>
                         <td class="text-xs text-[#a89f91]">${new Date(d.created_at).toLocaleDateString()}</td>
                     </tr>
-                `).join('') || '<tr><td colspan="14" class="text-center py-4 text-[#8a8073]">Sin donaciones.</td></tr>';
+                `).join('') || '<tr><td colspan="14" class="text-center py-4 text-[#8a8073]">Sin recaudaciones registradas.</td></tr>';
 
                 const tbodyGastos = document.getElementById('tabla-gastos-body');
                 if (tbodyGastos) {
@@ -1803,7 +1807,7 @@
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });
             if (res.ok) {
-                alert("¡Donación registrada!");
+                alert("¡Recaudación registrada!");
                 [
                     'donBless', 'donSoul', 'donLife', 'donCreation',
                     'donGuardian', 'donGemstone', 'donHarmony', 'donChaos',
