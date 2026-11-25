@@ -100,6 +100,8 @@ def exportar_backup():
                 backup_data['asistencias_invasiones'] = cur.fetchall()
                 cur.execute("SELECT * FROM public.guild_gastos;")
                 backup_data['guild_gastos'] = cur.fetchall()
+                cur.execute("SELECT * FROM public.guild_boxes;")
+                backup_data['guild_boxes'] = cur.fetchall()
                 cur.execute("SELECT id, username, rol, activo FROM public.usuarios;")
                 backup_data['usuarios'] = cur.fetchall()
             conn.close()
@@ -182,6 +184,18 @@ def importar_backup():
                         g.get('dream_coin', 0), g.get('zen', 0),
                         g.get('registrado_por', 'Sistema'), g.get('created_at')
                     ))
+            if 'guild_boxes' in backup_data and backup_data['guild_boxes']:
+                b = backup_data['guild_boxes'][0]
+                cur.execute("DELETE FROM public.guild_boxes;")
+                cur.execute("""
+                    INSERT INTO public.guild_boxes (id, jewel_5, jewel_10, jewel_20, k_1, k_2, k_3, k_4, k_5, w_1, w_2, w_3, w_4, w_5, necklace)
+                    VALUES (1, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                """, (
+                    b.get('jewel_5', 0), b.get('jewel_10', 0), b.get('jewel_20', 0),
+                    b.get('k_1', 0), b.get('k_2', 0), b.get('k_3', 0), b.get('k_4', 0), b.get('k_5', 0),
+                    b.get('w_1', 0), b.get('w_2', 0), b.get('w_3', 0), b.get('w_4', 0), b.get('w_5', 0),
+                    b.get('necklace', 0)
+                ))
             conn.commit()
         conn.close()
     except Exception as e:
@@ -303,6 +317,66 @@ def reset_semanal_asistencias():
         
     return jsonify({"status": "ok", "ultimo_reset": etiqueta_reset}), 200
 
+# --- API BOXES DEL BANCO GUILD (SUBIR / BAJAR CANTIDAD POR CADA UNO) ---
+BOX_CAMPOS_VALIDOS = [
+    "jewel_5", "jewel_10", "jewel_20",
+    "k_1", "k_2", "k_3", "k_4", "k_5",
+    "w_1", "w_2", "w_3", "w_4", "w_5",
+    "necklace"
+]
+
+@app.route('/api/guild-boxes', methods=['GET', 'POST'])
+def api_guild_boxes():
+    conn = get_db()
+    boxes_default = {k: 0 for k in BOX_CAMPOS_VALIDOS}
+
+    if request.method == 'GET':
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("INSERT INTO public.guild_boxes (id) VALUES (1) ON CONFLICT (id) DO NOTHING;")
+                    cur.execute("SELECT * FROM public.guild_boxes WHERE id = 1;")
+                    row = cur.fetchone()
+                    conn.commit()
+                    if row:
+                        boxes_default = {k: int(row.get(k) or 0) for k in BOX_CAMPOS_VALIDOS}
+                conn.close()
+            except Exception:
+                if conn: conn.close()
+        return jsonify(boxes_default)
+
+    if not usuario_es_autorizado():
+        return jsonify({"error": "No autorizado."}), 403
+
+    data = request.json or {}
+    campo = (data.get('campo') or '').strip()
+    delta = int(data.get('delta', 0))
+
+    if campo not in BOX_CAMPOS_VALIDOS:
+        return jsonify({"error": "Tipo de Box inválido."}), 400
+
+    if conn:
+        try:
+            with conn.cursor() as cur:
+                cur.execute("INSERT INTO public.guild_boxes (id) VALUES (1) ON CONFLICT (id) DO NOTHING;")
+                cur.execute(f"""
+                    UPDATE public.guild_boxes
+                    SET {campo} = GREATEST(0, COALESCE({campo}, 0) + %s),
+                        updated_at = NOW()
+                    WHERE id = 1
+                    RETURNING *;
+                """, (delta,))
+                row = cur.fetchone()
+                conn.commit()
+                if row:
+                    boxes_default = {k: int(row.get(k) or 0) for k in BOX_CAMPOS_VALIDOS}
+            conn.close()
+        except Exception as e:
+            if conn: conn.close()
+            return jsonify({"error": str(e)}), 500
+
+    return jsonify(boxes_default), 200
+
 # --- API DONACIONES JOYAS Y BANCO GUILD ---
 @app.route('/api/donaciones-joyas', methods=['GET', 'POST'])
 def api_donaciones_joyas():
@@ -319,6 +393,7 @@ def api_donaciones_joyas():
         gastos_total = {k: 0 for k in campos_banco}
         ventas_ingreso_total = {k: 0 for k in campos_banco}
         gastos_lista = []
+        boxes_data = {k: 0 for k in BOX_CAMPOS_VALIDOS}
         
         if conn:
             try:
@@ -408,12 +483,20 @@ def api_donaciones_joyas():
                     if v:
                         ventas_ingreso_total = {k: (v[k] or 0) for k in campos_banco}
 
+                    try:
+                        cur.execute("SELECT * FROM public.guild_boxes WHERE id = 1;")
+                        b_row = cur.fetchone()
+                        if b_row:
+                            boxes_data = {k: int(b_row.get(k) or 0) for k in BOX_CAMPOS_VALIDOS}
+                    except Exception:
+                        pass
+
                 conn.close()
             except Exception:
                 if conn: conn.close()
 
         banco_neto = {k: banco_total[k] + ventas_ingreso_total[k] - gastos_total[k] for k in campos_banco}
-        return jsonify({"donaciones": registros, "banco_guild": banco_neto, "gastos": gastos_lista})
+        return jsonify({"donaciones": registros, "banco_guild": banco_neto, "gastos": gastos_lista, "boxes": boxes_data})
 
     if not usuario_es_autorizado(): return jsonify({"error": "No autorizado."}), 403
     data = request.json or {}
