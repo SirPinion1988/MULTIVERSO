@@ -165,7 +165,7 @@
                 Invitado (Público)
             </span>
 
-            <!-- MENÚ DESPLEGABLE ADMINISTRACIÓN (TIPO ARCHIVO) -->
+            <!-- MENÚ DESPLEGABLE ADMINISTRACIÓN (TIPO ARCHIVO - SOLO ADMIN Y OPERADORES) -->
             <div id="admin-backup-buttons" class="hidden relative">
                 <button onclick="toggleMenuAdministracion(event)" id="btn-admin-dropdown" class="bg-[#1c1712] hover:bg-[#29221a] border border-[#f5b942]/45 text-[#fbd379] px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow">
                     <span>🛠️ Administración</span>
@@ -210,7 +210,7 @@
         <button onclick="cambiarSeccion('DISTRIBUCION')" id="btn-sec-distribucion" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition">🎁 Distribución</button>
         <button onclick="cambiarSeccion('ASISTENCIAS')" id="btn-sec-asistencias" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition">⚔️ Asistencias</button>
         <button onclick="cambiarSeccion('DONACIONES')" id="btn-sec-donaciones" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition">💎 Donaciones</button>
-        <button onclick="cambiarSeccion('CLAN')" id="btn-sec-clan" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition">👥 Miembros</button>
+        <button onclick="cambiarSeccion('CLAN')" id="btn-sec-clan" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition hidden">👥 Miembros</button>
         <button onclick="cambiarSeccion('USERS')" id="btn-sec-users" class="bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition hidden">⚙️ Usuarios</button>
     </div>
 
@@ -262,7 +262,7 @@
                             <!-- Rage Fighter -->
                             <option value="Sacred Fire"></option><option value="Sacred Claw"></option><option value="Sacred"></option><option value="Storm Zahard Claw"></option><option value="Storm Zahard"></option><option value="Piercing Claw"></option><option value="Piercing"></option><option value="Phoenix Soul Claw"></option><option value="Phoenix Soul"></option><option value="Vega"></option><option value="Chamer"></option>
                             <!-- Grow Lancer -->
-                            <option value="Princie"></option><option value="Gru Hill"></option><option value="Robust"></option><option value="Hirat"></option><option value="Sate"></option><option>
+                            <option value="Princie"></option><option value="Gru Hill"></option><option value="Robust"></option><option value="Hirat"></option><option value="Sate"></option>
                             <!-- Staff & Sticks -->
                             <option value="Skull Staff"></option><option value="Angelic Staff"></option><option value="Serpent Staff"></option><option value="Thunder Staff"></option><option value="Thunder Two-Hand Staff"></option><option value="Gorgon Staff"></option><option value="Gorgon Two-Hand Staff"></option><option value="Legendary Staff"></option><option value="Staff of Resurrection"></option><option value="Resurrection Staff"></option><option value="Chaos Lightning Staff"></option><option value="Staff of Destruction"></option><option value="Destruction Two-Hand Staff"></option><option value="Dragon Soul Staff"></option><option value="Divine Staff of Archangel"></option><option value="Staff of Kundun"></option><option value="Kundun Staff"></option><option value="Grand Viper Staff"></option><option value="Platina Staff"></option><option value="Crystal Two-Hand Staff"></option><option value="Chromatic Staff"></option><option value="Imperial Staff"></option><option value="Deadly Staff"></option><option value="Mystery Stick"></option><option value="Violent Wind Stick"></option><option value="Red Wing Stick"></option><option value="Ancient Stick"></option><option value="Demonic Stick"></option><option value="Storm Blitz Stick"></option><option value="Eternal Wing Stick"></option>
                             <!-- Espadas, Puños, Arcos y Armas -->
@@ -381,7 +381,7 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 2: MIEMBROS -->
+    <!-- SECCIÓN 2: MIEMBROS (SOLO ADMIN Y OPERADORES) -->
     <div id="seccion-clan-view" class="w-full max-w-7xl space-y-4 hidden">
         <div id="panel-miembros-crud" class="card-mudream p-4 rounded-xl hidden">
             <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end w-full">
@@ -649,7 +649,7 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 6: USUARIOS -->
+    <!-- SECCIÓN 6: USUARIOS (SOLO ADMIN Y OPERADORES) -->
     <div id="seccion-users-view" class="w-full max-w-7xl space-y-4 hidden">
         <div class="card-mudream p-6 rounded-xl space-y-4">
             <h2 class="text-lg font-bold text-[#f5b942]">👑 Gestión de Usuarios & Accesos</h2>
@@ -852,16 +852,27 @@
                     if (loginBtn) loginBtn.outerHTML = `<a href="/logout" class="bg-red-950/80 hover:bg-red-900 border border-red-600/40 text-red-200 px-3 py-1.5 rounded-lg text-xs font-bold transition">Salir</a>`;
                     
                     if (sesionAutorizada) {
-                        ['btn-guardar-item', 'panel-custom-id', 'dummy-div', 'panel-miembros-crud', 'btn-girar-ruleta', 'panel-donacion-crud', 'btn-gasto-modal', 'btn-reset-semanal', 'th-acciones-head', 'th-miembro-acciones', 'th-asistencias-acciones', 'admin-backup-buttons'].forEach(id => {
+                        [
+                            'btn-guardar-item',
+                            'panel-custom-id',
+                            'dummy-div',
+                            'btn-sec-clan',
+                            'btn-sec-users',
+                            'panel-miembros-crud',
+                            'btn-girar-ruleta',
+                            'panel-donacion-crud',
+                            'btn-gasto-modal',
+                            'btn-reset-semanal',
+                            'th-acciones-head',
+                            'th-miembro-acciones',
+                            'th-asistencias-acciones',
+                            'admin-backup-buttons'
+                        ].forEach(id => {
                             const el = document.getElementById(id);
                             if (el) el.classList.remove('hidden');
                         });
                         const avisoInv = document.getElementById('aviso-ruleta-invitado');
                         if (avisoInv) avisoInv.classList.add('hidden');
-                    }
-                    if (esAdmin) {
-                        const btnUsers = document.getElementById('btn-sec-users');
-                        if (btnUsers) btnUsers.classList.remove('hidden');
                         cargarUsuarios();
                     }
                 }
@@ -882,9 +893,17 @@
         }
 
         function cambiarSeccion(sec) {
+            if ((sec === 'CLAN' || sec === 'USERS') && !sesionAutorizada) {
+                sec = 'ITEMS';
+            }
+
             ['items', 'clan', 'distribucion', 'asistencias', 'donaciones', 'users'].forEach(s => {
                 document.getElementById(`seccion-${s}-view`).classList.add('hidden');
-                document.getElementById(`btn-sec-${s}`).className = "bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition";
+                const btn = document.getElementById(`btn-sec-${s}`);
+                if (btn) {
+                    const esRestringido = (s === 'clan' || s === 'users');
+                    btn.className = "bg-[#16120e] hover:bg-[#221c15] border border-[#2e261c] text-[#a89f91] px-4 py-2 rounded-lg text-xs font-bold transition" + (esRestringido && !sesionAutorizada ? " hidden" : "");
+                }
             });
             document.getElementById(`seccion-${sec.toLowerCase()}-view`).classList.remove('hidden');
             document.getElementById(`btn-sec-${sec.toLowerCase()}`).className = "btn-gold-mudream px-4 py-2 rounded-lg text-xs transition";
