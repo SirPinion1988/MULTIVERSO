@@ -545,7 +545,7 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 5: BANCO (BANCO GUILD + BOX + BARRA REGISTRAR DEBAJO + HISTORIAL USOS/VENTAS/DROPS + RECAUDACIÓN + HISTORIAL RECAUDACIÓN) -->
+    <!-- SECCIÓN 5: BANCO (ORDEN UNIFICADO: BLESS, SOUL, LIFE, CHAOS, CREATION, GUARDIAN, GEMSTONE, HARMONY, LOWER REF., HIGHER REF., DREAM COIN, ZEN) -->
     <div id="seccion-donaciones-view" class="w-full max-w-7xl space-y-6 hidden">
         <!-- 1. BANCO GUILD & BOX + BARRA REGISTRAR DEBAJO -->
         <div class="card-mudream p-5 rounded-xl space-y-4">
@@ -559,11 +559,11 @@
                             <th>Bless</th>
                             <th>Soul</th>
                             <th>Life</th>
+                            <th>Chaos</th>
                             <th>Creation</th>
                             <th>Guardian</th>
                             <th>Gemstone</th>
                             <th>Harmony</th>
-                            <th>Chaos</th>
                             <th>Lower Ref.</th>
                             <th>Higher Ref.</th>
                             <th class="text-sky-300">Dream Coin</th>
@@ -575,11 +575,11 @@
                             <td id="banco-bless">0</td>
                             <td id="banco-soul">0</td>
                             <td id="banco-life">0</td>
+                            <td id="banco-chaos">0</td>
                             <td id="banco-creation">0</td>
                             <td id="banco-guardian">0</td>
                             <td id="banco-gemstone">0</td>
                             <td id="banco-harmony">0</td>
-                            <td id="banco-chaos">0</td>
                             <td id="banco-lower-refining">0</td>
                             <td id="banco-higher-refining">0</td>
                             <td id="banco-dream-coin" class="text-sky-300 font-extrabold">0</td>
@@ -641,11 +641,11 @@
                             <th>Bless</th>
                             <th>Soul</th>
                             <th>Life</th>
+                            <th>Chaos</th>
                             <th>Creation</th>
                             <th>Guardian</th>
                             <th>Gemstone</th>
                             <th>Harmony</th>
-                            <th>Chaos</th>
                             <th>Lower Ref.</th>
                             <th>Higher Ref.</th>
                             <th class="text-sky-300">Dream Coin</th>
@@ -672,11 +672,11 @@
                 <div><label class="block text-[10px] text-[#a89f91]">BLESS:</label><input type="number" id="donBless" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
                 <div><label class="block text-[10px] text-[#a89f91]">SOUL:</label><input type="number" id="donSoul" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
                 <div><label class="block text-[10px] text-[#a89f91]">LIFE:</label><input type="number" id="donLife" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
+                <div><label class="block text-[10px] text-[#a89f91]">CHAOS:</label><input type="number" id="donChaos" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
                 <div><label class="block text-[10px] text-[#a89f91]">CREATION:</label><input type="number" id="donCreation" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
                 <div><label class="block text-[10px] text-[#a89f91]">GUARDIAN:</label><input type="number" id="donGuardian" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
                 <div><label class="block text-[10px] text-[#a89f91]">GEMSTONE:</label><input type="number" id="donGemstone" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
                 <div><label class="block text-[10px] text-[#a89f91]">HARMONY:</label><input type="number" id="donHarmony" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
-                <div><label class="block text-[10px] text-[#a89f91]">CHAOS:</label><input type="number" id="donChaos" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
                 <div><label class="block text-[10px] text-[#a89f91]">LOWER REF.:</label><input type="number" id="donLowerRefining" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
                 <div><label class="block text-[10px] text-[#a89f91]">HIGHER REF.:</label><input type="number" id="donHigherRefining" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
                 <div><label class="block text-[10px] text-sky-300 font-bold">DREAM COIN:</label><input type="number" id="donDreamCoin" value="0" min="0" class="w-full input-mudream p-2 rounded text-xs"></div>
@@ -696,11 +696,11 @@
                             <th>Bless</th>
                             <th>Soul</th>
                             <th>Life</th>
+                            <th>Chaos</th>
                             <th>Creation</th>
                             <th>Guardian</th>
                             <th>Gemstone</th>
                             <th>Harmony</th>
-                            <th>Chaos</th>
                             <th>Lower Ref.</th>
                             <th>Higher Ref.</th>
                             <th class="text-sky-300">Dream Coin</th>
@@ -790,11 +790,11 @@
                 <div><label>Bless:</label><input type="number" id="gastoBless" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
                 <div><label>Soul:</label><input type="number" id="gastoSoul" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
                 <div><label>Life:</label><input type="number" id="gastoLife" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
+                <div><label>Chaos:</label><input type="number" id="gastoChaos" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
                 <div><label>Creation:</label><input type="number" id="gastoCreation" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
                 <div><label>Guardian:</label><input type="number" id="gastoGuardian" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
                 <div><label>Gemstone:</label><input type="number" id="gastoGemstone" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
                 <div><label>Harmony:</label><input type="number" id="gastoHarmony" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
-                <div><label>Chaos:</label><input type="number" id="gastoChaos" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
                 <div><label>Lower Ref.:</label><input type="number" id="gastoLowerRefining" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
                 <div><label>Higher Ref.:</label><input type="number" id="gastoHigherRefining" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
                 <div><label class="text-sky-300 font-bold">Dream Coin:</label><input type="number" id="gastoDreamCoin" value="0" min="0" class="w-full input-mudream p-1.5 rounded"></div>
@@ -1889,11 +1889,11 @@
                 document.getElementById('banco-bless').textContent = b.bless || 0;
                 document.getElementById('banco-soul').textContent = b.soul || 0;
                 document.getElementById('banco-life').textContent = b.life || 0;
+                document.getElementById('banco-chaos').textContent = b.chaos || 0;
                 document.getElementById('banco-creation').textContent = b.creation || 0;
                 document.getElementById('banco-guardian').textContent = b.guardian || 0;
                 document.getElementById('banco-gemstone').textContent = b.gemstone || 0;
                 document.getElementById('banco-harmony').textContent = b.harmony || 0;
-                document.getElementById('banco-chaos').textContent = b.chaos || 0;
                 document.getElementById('banco-lower-refining').textContent = b.lower_refining || 0;
                 document.getElementById('banco-higher-refining').textContent = b.higher_refining || 0;
                 document.getElementById('banco-dream-coin').textContent = Number(b.dream_coin || 0).toLocaleString();
@@ -1910,11 +1910,11 @@
                         <td>${d.bless || 0}</td>
                         <td>${d.soul || 0}</td>
                         <td>${d.life || 0}</td>
+                        <td>${d.chaos || 0}</td>
                         <td>${d.creation || 0}</td>
                         <td>${d.guardian || 0}</td>
                         <td>${d.gemstone || 0}</td>
                         <td>${d.harmony || 0}</td>
-                        <td>${d.chaos || 0}</td>
                         <td>${d.lower_refining || 0}</td>
                         <td>${d.higher_refining || 0}</td>
                         <td class="text-sky-300 font-bold">${Number(d.dream_coin || 0).toLocaleString()}</td>
@@ -1952,11 +1952,11 @@
                                 <td>${g.bless || 0}</td>
                                 <td>${g.soul || 0}</td>
                                 <td>${g.life || 0}</td>
+                                <td>${g.chaos || 0}</td>
                                 <td>${g.creation || 0}</td>
                                 <td>${g.guardian || 0}</td>
                                 <td>${g.gemstone || 0}</td>
                                 <td>${g.harmony || 0}</td>
-                                <td>${g.chaos || 0}</td>
                                 <td>${g.lower_refining || 0}</td>
                                 <td>${g.higher_refining || 0}</td>
                                 <td class="text-sky-300 font-bold">${Number(g.dream_coin || 0).toLocaleString()}</td>
@@ -1978,11 +1978,11 @@
                 bless: parseInt(document.getElementById('donBless').value) || 0,
                 soul: parseInt(document.getElementById('donSoul').value) || 0,
                 life: parseInt(document.getElementById('donLife').value) || 0,
+                chaos: parseInt(document.getElementById('donChaos').value) || 0,
                 creation: parseInt(document.getElementById('donCreation').value) || 0,
                 guardian: parseInt(document.getElementById('donGuardian').value) || 0,
                 gemstone: parseInt(document.getElementById('donGemstone').value) || 0,
                 harmony: parseInt(document.getElementById('donHarmony').value) || 0,
-                chaos: parseInt(document.getElementById('donChaos').value) || 0,
                 lower_refining: parseInt(document.getElementById('donLowerRefining').value) || 0,
                 higher_refining: parseInt(document.getElementById('donHigherRefining').value) || 0,
                 dream_coin: parseInt(document.getElementById('donDreamCoin').value) || 0,
@@ -1994,8 +1994,8 @@
             if (res.ok) {
                 alert("¡Recaudación registrada!");
                 [
-                    'donBless', 'donSoul', 'donLife', 'donCreation',
-                    'donGuardian', 'donGemstone', 'donHarmony', 'donChaos',
+                    'donBless', 'donSoul', 'donLife', 'donChaos', 'donCreation',
+                    'donGuardian', 'donGemstone', 'donHarmony',
                     'donLowerRefining', 'donHigherRefining',
                     'donDreamCoin', 'donZen'
                 ].forEach(id => document.getElementById(id).value = 0);
@@ -2185,11 +2185,11 @@
                 bless: parseInt(document.getElementById('gastoBless').value) || 0,
                 soul: parseInt(document.getElementById('gastoSoul').value) || 0,
                 life: parseInt(document.getElementById('gastoLife').value) || 0,
+                chaos: parseInt(document.getElementById('gastoChaos').value) || 0,
                 creation: parseInt(document.getElementById('gastoCreation').value) || 0,
                 guardian: parseInt(document.getElementById('gastoGuardian').value) || 0,
                 gemstone: parseInt(document.getElementById('gastoGemstone').value) || 0,
                 harmony: parseInt(document.getElementById('gastoHarmony').value) || 0,
-                chaos: parseInt(document.getElementById('gastoChaos').value) || 0,
                 lower_refining: parseInt(document.getElementById('gastoLowerRefining').value) || 0,
                 higher_refining: parseInt(document.getElementById('gastoHigherRefining').value) || 0,
                 dream_coin: parseInt(document.getElementById('gastoDreamCoin').value) || 0,
@@ -2211,11 +2211,14 @@
                     alert("¡Gasto registrado!");
                 }
                 [
-                    'gastoBless', 'gastoSoul', 'gastoLife', 'gastoCreation',
-                    'gastoGuardian', 'gastoGemstone', 'gastoHarmony', 'gastoChaos',
+                    'gastoBless', 'gastoSoul', 'gastoLife', 'gastoChaos', 'donCreation',
+                    'gastoCreation', 'gastoGuardian', 'gastoGemstone', 'gastoHarmony',
                     'gastoLowerRefining', 'gastoHigherRefining',
                     'gastoDreamCoin', 'gastoZen'
-                ].forEach(id => document.getElementById(id).value = 0);
+                ].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = 0;
+                });
                 cerrarModalGasto();
                 cargarDonacionesJoyas();
                 if ((item_id && (tipo_movimiento === 'VENTA' || tipo_movimiento === 'QUEMADO')) || item_recibido) {
