@@ -62,6 +62,21 @@
             border: 1px solid rgba(52, 211, 153, 0.4); 
             color: #6ee7b7; 
         }
+        .badge-opt-raro {
+            background: rgba(244, 114, 182, 0.16);
+            border: 1px solid rgba(244, 114, 182, 0.55);
+            color: #f9a8d4;
+        }
+        .badge-opt-legendario {
+            background: rgba(251, 146, 60, 0.16);
+            border: 1px solid rgba(251, 146, 60, 0.55);
+            color: #fdba74;
+        }
+        .badge-opt-epico {
+            background: rgba(248, 113, 113, 0.16);
+            border: 1px solid rgba(248, 113, 113, 0.55);
+            color: #fca5a5;
+        }
         .card-mudream {
             background-color: rgba(22, 18, 14, 0.92);
             border: 1px solid #2e261c;
@@ -219,9 +234,24 @@
         <div class="card-mudream p-6 rounded-xl space-y-4">
             <h3 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">➕ Cargador / 🔍 Buscador Interactivo de Ítems</h3>
             
-            <!-- FILA SUPERIOR: CARGADOR A LA IZQUIERDA (2 COLS) + BUSCADOR ÚNICO A LA DERECHA (1 COL) -->
+            <!-- FILA SUPERIOR: BUSCADOR RÁPIDO A LA IZQUIERDA (1 COL) + CARGADOR A LA DERECHA (2 COLS) -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
-                <!-- BLOQUE IZQUIERDO: CARGA / FILTRO POR ATRIBUTOS -->
+                <!-- BLOQUE IZQUIERDO: BUSCADOR ÚNICO (ID O NOMBRE DEL ÍTEM) -->
+                <div class="bg-[#0b0a08] p-4 rounded-xl border border-[#2e261c] flex flex-col justify-center space-y-2.5">
+                    <div class="flex items-center justify-between border-b border-[#241d15] pb-1.5">
+                        <span class="text-xs uppercase font-bold text-[#f5b942] tracking-wider">🔍 Buscador Rápido</span>
+                        <span class="text-[10px] text-[#8a8073]">ID # o Nombre</span>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1.5">Ingresá ID o Nombre del Ítem</label>
+                        <input type="text" id="inputBuscadorUnificado" oninput="aplicarFiltros()" placeholder="Ej. 105, Dragon, Jewel..." class="w-full input-mudream p-3 rounded-lg text-sm font-semibold text-[#fbd379] outline-none">
+                    </div>
+                    <p class="text-[11px] text-[#8a8073] leading-relaxed">
+                        Escribí un número para buscar por <strong class="text-[#e5dec9]">ID exacto</strong> o texto para filtrar por <strong class="text-[#e5dec9]">nombre de ítem</strong>.
+                    </p>
+                </div>
+
+                <!-- BLOQUE DERECHO: CARGA / FILTRO POR ATRIBUTOS -->
                 <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 content-center">
                     <div>
                         <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">📜 Set, Arma, Caja o Joya (Escribí iniciales)</label>
@@ -300,39 +330,25 @@
                         <input type="number" id="inputCustomId" placeholder="Automático" class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
                     </div>
                 </div>
-
-                <!-- BLOQUE DERECHO: BUSCADOR ÚNICO (ID O NOMBRE DEL ÍTEM) -->
-                <div class="bg-[#0b0a08] p-4 rounded-xl border border-[#2e261c] flex flex-col justify-center space-y-2.5">
-                    <div class="flex items-center justify-between border-b border-[#241d15] pb-1.5">
-                        <span class="text-xs uppercase font-bold text-[#f5b942] tracking-wider">🔍 Buscador Rápido</span>
-                        <span class="text-[10px] text-[#8a8073]">ID # o Nombre</span>
-                    </div>
-                    <div>
-                        <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1.5">Ingresá ID o Nombre del Ítem</label>
-                        <input type="text" id="inputBuscadorUnificado" oninput="aplicarFiltros()" placeholder="Ej. 105, Dragon, Jewel..." class="w-full input-mudream p-3 rounded-lg text-sm font-semibold text-[#fbd379] outline-none">
-                    </div>
-                    <p class="text-[11px] text-[#8a8073] leading-relaxed">
-                        Escribí un número para buscar por <strong class="text-[#e5dec9]">ID exacto</strong> o texto para filtrar por <strong class="text-[#e5dec9]">nombre de ítem</strong>.
-                    </p>
-                </div>
             </div>
 
-            <!-- OPCIONES EXCELLENT COMPLETAS (2 COLUMNAS: SET A LA IZQUIERDA / ARMA A LA DERECHA) -->
+            <!-- OPCIONES EXCELLENT COMPLETAS (2 COLUMNAS: SET A LA IZQUIERDA / ARMA A LA DERECHA) CON 3 CHECKS DE RAREZA POR OPCIÓN -->
             <div class="space-y-2 pt-1">
-                <label class="block text-xs uppercase text-[#f5b942] font-bold">✨ Opciones Excellent</label>
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <label class="block text-xs uppercase text-[#f5b942] font-bold">✨ Opciones Excellent</label>
+                    <div class="flex flex-wrap items-center gap-3 text-[11px] font-bold">
+                        <span class="text-pink-400">● Rosa = Raro</span>
+                        <span class="text-orange-400">● Naranja = Legendario</span>
+                        <span class="text-red-400">● Rojo = Épico</span>
+                        <span class="text-emerald-400">● Verde = Sin rareza</span>
+                    </div>
+                </div>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
                     <!-- CUADRADO IZQUIERDO: SET / ARMADURAS -->
                     <div class="bg-[#0b0a08] p-3.5 rounded-lg border border-[#29221a] flex flex-col justify-between">
                         <div>
                             <span class="text-[10px] uppercase font-bold text-emerald-400 block mb-2.5">🛡️ Opciones para Armaduras, Escudos y Accesorios:</span>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#e5dec9]">
-                                <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Aumento de HP máximo" onchange="aplicarFiltros()"> Aumento de HP máximo</label>
-                                <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Aumento de SD máximo" onchange="aplicarFiltros()"> Aumento de SD máximo</label>
-                                <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Reducción de daño (DD)" onchange="aplicarFiltros()"> Reducción de daño (DD)</label>
-                                <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Reflejo de daño (Reflect)" onchange="aplicarFiltros()"> Reflejo de daño (Reflect)</label>
-                                <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Resistencia a daño crítico (Rate)" onchange="aplicarFiltros()"> Resistencia a crítico (Rate)</label>
-                                <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Tasa de drop de Zen" onchange="aplicarFiltros()"> Tasa de drop de Zen</label>
-                            </div>
+                            <div id="contenedor-opciones-armadura-main" class="grid grid-cols-1 gap-2 text-xs text-[#e5dec9]"></div>
                         </div>
                     </div>
 
@@ -340,14 +356,7 @@
                     <div class="bg-[#0b0a08] p-3.5 rounded-lg border border-[#29221a] flex flex-col justify-between">
                         <div>
                             <span class="text-[10px] uppercase font-bold text-[#fbd379] block mb-2.5">⚔️ Opciones para Armas y Bastones:</span>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#e5dec9]">
-                                <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Excellent damage rate %" onchange="aplicarFiltros()"> Excellent damage rate %</label>
-                                <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Physical Damage increase %" onchange="aplicarFiltros()"> Physical Damage increase %</label>
-                                <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Increases attack speed +" onchange="aplicarFiltros()"> Increases attack speed +</label>
-                                <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Obtains (Life) when monster is killed" onchange="aplicarFiltros()"> Obtains (Life) when monster is killed</label>
-                                <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Critical Damage rate %" onchange="aplicarFiltros()"> Critical Damage rate %</label>
-                                <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="filtro-chk accent-[#f5b942]" value="Damage to Monster" onchange="aplicarFiltros()"> Damage to Monster</label>
-                            </div>
+                            <div id="contenedor-opciones-arma-main" class="grid grid-cols-1 gap-2 text-xs text-[#e5dec9]"></div>
                         </div>
                     </div>
                 </div>
@@ -821,8 +830,9 @@
                     <input type="text" id="recItemSetBase" list="listaItemsBase" placeholder="Ej. Dragon, Red, Jewel..." autocomplete="off" class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">📦 Tipo de Pieza</label>
+                    <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">📦 Tipo de Pieza (Opcional)</label>
                     <select id="recItemTipo" class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
+                        <option value="" selected></option>
                         <option value="Armor">Armor (Pechera)</option>
                         <option value="Pants">Pants (Pantalón)</option>
                         <option value="Helm">Helm (Casco)</option>
@@ -843,31 +853,24 @@
                 </div>
             </div>
 
-            <!-- OPCIONES EXCELLENT DEL ÍTEM RECIBIDO -->
+            <!-- OPCIONES EXCELLENT DEL ÍTEM RECIBIDO CON 3 CHECKS DE RAREZA POR OPCIÓN -->
             <div class="space-y-2">
-                <label class="block text-xs uppercase text-[#f5b942] font-bold">✨ Opciones Excellent del Ítem Recibido</label>
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <label class="block text-xs uppercase text-[#f5b942] font-bold">✨ Opciones Excellent del Ítem Recibido</label>
+                    <div class="flex flex-wrap items-center gap-2.5 text-[10px] font-bold">
+                        <span class="text-pink-400">● Rosa = Raro</span>
+                        <span class="text-orange-400">● Naranja = Legendario</span>
+                        <span class="text-red-400">● Rojo = Épico</span>
+                    </div>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div class="bg-[#0b0a08] p-3 rounded-lg border border-[#29221a]">
                         <span class="text-[10px] uppercase font-bold text-emerald-400 block mb-2">🛡️ Armaduras, Escudos y Accesorios:</span>
-                        <div class="grid grid-cols-1 gap-1.5 text-xs text-[#e5dec9]">
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rec-item-chk accent-[#f5b942]" value="Aumento de HP máximo"> Aumento de HP máximo</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rec-item-chk accent-[#f5b942]" value="Aumento de SD máximo"> Aumento de SD máximo</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rec-item-chk accent-[#f5b942]" value="Reducción de daño (DD)"> Reducción de daño (DD)</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rec-item-chk accent-[#f5b942]" value="Reflejo de daño (Reflect)"> Reflejo de daño (Reflect)</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rec-item-chk accent-[#f5b942]" value="Resistencia a daño crítico (Rate)"> Resistencia a crítico (Rate)</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rec-item-chk accent-[#f5b942]" value="Tasa de drop de Zen"> Tasa de drop de Zen</label>
-                        </div>
+                        <div id="contenedor-opciones-armadura-rec" class="grid grid-cols-1 gap-2 text-xs text-[#e5dec9]"></div>
                     </div>
                     <div class="bg-[#0b0a08] p-3 rounded-lg border border-[#29221a]">
                         <span class="text-[10px] uppercase font-bold text-[#fbd379] block mb-2">⚔️ Armas y Bastones:</span>
-                        <div class="grid grid-cols-1 gap-1.5 text-xs text-[#e5dec9]">
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rec-item-chk accent-[#f5b942]" value="Excellent damage rate %"> Excellent damage rate %</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rec-item-chk accent-[#f5b942]" value="Physical Damage increase %"> Physical Damage increase %</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rec-item-chk accent-[#f5b942]" value="Increases attack speed +"> Increases attack speed +</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rec-item-chk accent-[#f5b942]" value="Obtains (Life) when monster is killed"> Obtains (Life) when monster is killed</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rec-item-chk accent-[#f5b942]" value="Critical Damage rate %"> Critical Damage rate %</label>
-                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rec-item-chk accent-[#f5b942]" value="Damage to Monster"> Damage to Monster</label>
-                        </div>
+                        <div id="contenedor-opciones-arma-rec" class="grid grid-cols-1 gap-2 text-xs text-[#e5dec9]"></div>
                     </div>
                 </div>
             </div>
@@ -901,6 +904,7 @@
             <div><label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">Nombre del Ítem:</label><input type="text" id="editNombre" class="w-full input-mudream p-2 rounded text-xs"></div>
             <div><label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">Tipo de Pieza:</label>
                 <select id="editTipo" onchange="actualizarOpcionesEdicion()" class="w-full input-mudream p-2 rounded text-xs">
+                    <option value=""></option>
                     <option value="Armor">Armor</option>
                     <option value="Pants">Pants</option>
                     <option value="Helm">Helm</option>
@@ -977,6 +981,98 @@
             'w_1', 'w_2', 'w_3', 'w_4', 'w_5',
             'necklace'
         ];
+
+        const OPCIONES_ARMADURA_LISTA = [
+            "Aumento de HP máximo",
+            "Aumento de SD máximo",
+            "Reducción de daño (DD)",
+            "Reflejo de daño (Reflect)",
+            "Resistencia a daño crítico (Rate)",
+            "Tasa de drop de Zen"
+        ];
+
+        const OPCIONES_ARMA_LISTA = [
+            "Excellent damage rate %",
+            "Physical Damage increase %",
+            "Increases attack speed +",
+            "Obtains (Life) when monster is killed",
+            "Critical Damage rate %",
+            "Damage to Monster"
+        ];
+
+        function renderizarFilasOpcionesRareza(containerId, opcionesArray, prefijoClase) {
+            const cont = document.getElementById(containerId);
+            if (!cont) return;
+
+            cont.innerHTML = opcionesArray.map(opt => `
+                <div class="flex flex-wrap items-center justify-between gap-2 py-0.5 border-b border-[#1c1712] last:border-b-0">
+                    <label class="flex items-center gap-2 cursor-pointer hover:text-white flex-1 min-w-[175px]">
+                        <input type="checkbox" class="${prefijoClase}-opt accent-[#f5b942]" data-opt="${opt}" onchange="aplicarFiltros()">
+                        <span>${opt}</span>
+                    </label>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <label class="inline-flex items-center gap-1 cursor-pointer text-[10px] font-bold text-pink-400" title="Raro (Rosa)">
+                            <input type="checkbox" class="${prefijoClase}-rar accent-pink-400" data-opt="${opt}" data-rareza="RARO" onchange="seleccionarRarezaUnica(this, '${prefijoClase}'); aplicarFiltros()">
+                            <span>Raro</span>
+                        </label>
+                        <label class="inline-flex items-center gap-1 cursor-pointer text-[10px] font-bold text-orange-400" title="Legendario (Naranja)">
+                            <input type="checkbox" class="${prefijoClase}-rar accent-orange-400" data-opt="${opt}" data-rareza="LEGENDARIO" onchange="seleccionarRarezaUnica(this, '${prefijoClase}'); aplicarFiltros()">
+                            <span>Legendario</span>
+                        </label>
+                        <label class="inline-flex items-center gap-1 cursor-pointer text-[10px] font-bold text-red-400" title="Épico (Rojo)">
+                            <input type="checkbox" class="${prefijoClase}-rar accent-red-400" data-opt="${opt}" data-rareza="EPICO" onchange="seleccionarRarezaUnica(this, '${prefijoClase}'); aplicarFiltros()">
+                            <span>Épico</span>
+                        </label>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function seleccionarRarezaUnica(chkActual, prefijoClase) {
+            if (!chkActual.checked) return;
+            const optNombre = chkActual.getAttribute('data-opt');
+            document.querySelectorAll(`.${prefijoClase}-rar[data-opt="${optNombre}"]`).forEach(other => {
+                if (other !== chkActual) other.checked = false;
+            });
+            // Si marca rareza, también marca la opción si no estaba marcada
+            const optChk = document.querySelector(`.${prefijoClase}-opt[data-opt="${optNombre}"]`);
+            if (optChk && !optChk.checked) optChk.checked = true;
+        }
+
+        function recolectarOpcionesConRareza(prefijoClase) {
+            const resultado = [];
+            document.querySelectorAll(`.${prefijoClase}-opt:checked`).forEach(chkOpt => {
+                const optNombre = chkOpt.getAttribute('data-opt');
+                const rarChk = document.querySelector(`.${prefijoClase}-rar[data-opt="${optNombre}"]:checked`);
+                const rareza = rarChk ? rarChk.getAttribute('data-rareza') : '';
+                const codificado = rareza ? `${optNombre}::${rareza}` : optNombre;
+                if (!resultado.includes(codificado)) resultado.push(codificado);
+            });
+            return resultado;
+        }
+
+        function limpiarControlesRareza(prefijoClase) {
+            document.querySelectorAll(`.${prefijoClase}-opt, .${prefijoClase}-rar`).forEach(chk => {
+                chk.checked = false;
+            });
+        }
+
+        function parsearOpcionRareza(rawOpt) {
+            const str = String(rawOpt || '');
+            const partes = str.split('::');
+            const texto = partes[0];
+            const rareza = (partes[1] || '').toUpperCase();
+            return { texto, rareza };
+        }
+
+        function formatearBadgeOpcion(rawOpt) {
+            const { texto, rareza } = parsearOpcionRareza(rawOpt);
+            let extraClase = '';
+            if (rareza === 'RARO') extraClase = ' badge-opt-raro';
+            else if (rareza === 'LEGENDARIO') extraClase = ' badge-opt-legendario';
+            else if (rareza === 'EPICO') extraClase = ' badge-opt-epico';
+            return `<span class="badge-opt${extraClase}">${texto}</span>`;
+        }
 
         function obtenerEstadoEspecialItem(item) {
             if (!item) return null;
@@ -1232,7 +1328,9 @@
                 const itemsDelPj = catalogo.filter(it => it.asignado_a && !obtenerEstadoEspecialItem(it) && it.asignado_a.toLowerCase() === m.nombre_pj.toLowerCase());
                 const itemsHTML = itemsDelPj.length
                     ? itemsDelPj.map(it => {
-                        const opts = Array.isArray(it.opciones) && it.opciones.length ? ` <span class="text-emerald-300 text-[10px]">(${it.opciones.join(', ')})</span>` : '';
+                        const opts = Array.isArray(it.opciones) && it.opciones.length
+                            ? ` <span class="inline-flex flex-wrap gap-1 ml-1">${it.opciones.map(o => formatearBadgeOpcion(o)).join('')}</span>`
+                            : '';
                         const btnQuitar = sesionAutorizada
                             ? `<button onclick="quitarItemDeMiembro(${it.id})" class="ml-1.5 text-red-400 hover:text-red-300 font-bold" title="Devolver al Inventario">✖</button>`
                             : '';
@@ -1292,7 +1390,9 @@
                 return;
             }
             itemSeleccionadoRuleta = encontrado;
-            const optsText = Array.isArray(encontrado.opciones) && encontrado.opciones.length ? encontrado.opciones.join(' | ') : 'Sin opciones exc.';
+            const optsText = Array.isArray(encontrado.opciones) && encontrado.opciones.length
+                ? encontrado.opciones.map(o => parsearOpcionRareza(o).texto).join(' | ')
+                : 'Sin opciones exc.';
             const estadoAsig = encontrado.asignado_a ? `<span class="text-amber-400">(Actual: ${encontrado.asignado_a})</span>` : `<span class="text-emerald-400">(Disponible)</span>`;
             preview.innerHTML = `
                 <div class="font-bold text-[#f8f5ee]">#${encontrado.id} - <span class="text-[#f5b942]">${encontrado.nombre}</span> ${estadoAsig}</div>
@@ -1497,7 +1597,7 @@
             document.getElementById('inputFiltroAsignado').value = "";
             const customIdEl = document.getElementById('inputCustomId');
             if (customIdEl) customIdEl.value = "";
-            document.querySelectorAll('.filtro-chk').forEach(chk => chk.checked = false);
+            limpiarControlesRareza('main');
             aplicarFiltros();
         }
 
@@ -1509,13 +1609,24 @@
             const setBase = (document.getElementById('inputFiltroSetBase').value || '').trim().toLowerCase();
             const tipoPieza = (document.getElementById('inputFiltroTipoPieza').value || '').toLowerCase();
             const filtroAsignado = (document.getElementById('inputFiltroAsignado').value || '').toLowerCase();
-            const chkSeleccionados = Array.from(document.querySelectorAll('.filtro-chk:checked')).map(chk => chk.value.toLowerCase());
+
+            const filtrosActivos = [];
+            document.querySelectorAll('.main-opt:checked').forEach(chkOpt => {
+                const optNombre = chkOpt.getAttribute('data-opt').toLowerCase();
+                const rarChk = document.querySelector(`.main-rar[data-opt="${chkOpt.getAttribute('data-opt')}"]:checked`);
+                const rarVal = rarChk ? rarChk.getAttribute('data-rareza').toLowerCase() : '';
+                filtrosActivos.push({ optNombre, rarVal });
+            });
 
             const filtrados = catalogo.filter(item => {
                 const nombre = String(item.nombre || '').toLowerCase();
                 const tipo = String(item.tipo || '').toLowerCase();
                 const asignado = String(item.asignado_a || '').toLowerCase();
-                const opcionesStr = Array.isArray(item.opciones) ? item.opciones.join(' ').toLowerCase() : '';
+                const opcionesArr = Array.isArray(item.opciones) ? item.opciones : [];
+                const opcionesParseadas = opcionesArr.map(o => {
+                    const p = parsearOpcionRareza(o);
+                    return { texto: p.texto.toLowerCase(), rareza: p.rareza.toLowerCase() };
+                });
 
                 let matchUnificado = true;
                 if (queryUnificada) {
@@ -1529,7 +1640,13 @@
                 const matchSet = !setBase || nombre.includes(setBase);
                 const matchTipo = !tipoPieza || tipo.includes(tipoPieza);
                 const matchAsignado = !filtroAsignado || asignado === filtroAsignado;
-                const matchOpciones = chkSeleccionados.every(opt => opcionesStr.includes(opt));
+
+                const matchOpciones = filtrosActivos.every(f => {
+                    const hallada = opcionesParseadas.find(op => op.texto.includes(f.optNombre));
+                    if (!hallada) return false;
+                    if (f.rarVal && hallada.rareza !== f.rarVal) return false;
+                    return true;
+                });
 
                 return matchUnificado && matchSet && matchTipo && matchAsignado && matchOpciones;
             });
@@ -1546,7 +1663,9 @@
             }
             tbody.innerHTML = items.map(item => {
                 const estadoEsp = obtenerEstadoEspecialItem(item);
-                const opcionesBadges = Array.isArray(item.opciones) ? item.opciones.map(opt => `<span class="badge-opt">${opt}</span>`).join('') : '-';
+                const opcionesBadges = Array.isArray(item.opciones) && item.opciones.length
+                    ? item.opciones.map(opt => formatearBadgeOpcion(opt)).join('')
+                    : '-';
                 
                 let asignadoHTML = '';
                 if (estadoEsp === 'VENDIDO') {
@@ -1580,7 +1699,7 @@
                     <tr class="${estadoEsp ? 'opacity-75 bg-red-950/10' : ''}">
                         <td class="font-mono text-[#f5b942] font-extrabold text-sm">#${item.id}</td>
                         <td class="font-bold text-[#f8f5ee]">${item.nombre}</td>
-                        <td><span class="badge-pj">${item.tipo}</span></td>
+                        <td><span class="badge-pj">${item.tipo || '-'}</span></td>
                         <td>${opcionesBadges}</td>
                         <td class="text-center">${asignadoHTML}</td>
                         ${accionesHTML}
@@ -1621,7 +1740,7 @@
             document.getElementById('editOldId').value = item.id;
             document.getElementById('editId').value = item.id;
             document.getElementById('editNombre').value = item.nombre;
-            document.getElementById('editTipo').value = item.tipo || 'Armor';
+            document.getElementById('editTipo').value = item.tipo || '';
             
             const selectAsignado = document.getElementById('editAsignado');
             let opts = '<option value="">Sin asignar</option>';
@@ -1639,9 +1758,9 @@
 
             actualizarOpcionesEdicion();
 
-            const ops = item.opciones || [];
+            const ops = Array.isArray(item.opciones) ? item.opciones : [];
             document.querySelectorAll('input[name="editChkOpt"]').forEach(chk => {
-                chk.checked = ops.includes(chk.value);
+                chk.checked = ops.some(raw => parsearOpcionRareza(raw).texto === chk.value);
             });
 
             document.getElementById('modal-editar-item').classList.remove('hidden');
@@ -1656,9 +1775,19 @@
             const tipo = document.getElementById('editTipo').value.trim();
             const asignado_a = document.getElementById('editAsignado').value || null;
             
+            const itemPrevio = catalogo.find(x => String(x.id) === String(old_id));
+            const rarezasPrevias = {};
+            if (itemPrevio && Array.isArray(itemPrevio.opciones)) {
+                itemPrevio.opciones.forEach(raw => {
+                    const p = parsearOpcionRareza(raw);
+                    if (p.rareza) rarezasPrevias[p.texto] = p.rareza;
+                });
+            }
+
             const opciones = [];
             document.querySelectorAll('input[name="editChkOpt"]:checked').forEach(chk => {
-                opciones.push(chk.value);
+                const rar = rarezasPrevias[chk.value];
+                opciones.push(rar ? `${chk.value}::${rar}` : chk.value);
             });
 
             const res = await fetch('/api/items/editar', {
@@ -1681,10 +1810,7 @@
                 return alert("No podés cargar un ítem nuevo directamente como vendido o quemado.");
             }
 
-            const opciones = [];
-            document.querySelectorAll('.filtro-chk:checked').forEach(chk => {
-                if (!opciones.includes(chk.value)) opciones.push(chk.value);
-            });
+            const opciones = recolectarOpcionesConRareza('main');
 
             const res = await fetch('/api/items/agregar-manual', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -2040,12 +2166,21 @@
 
         function abrirModalItemRecibido() {
             document.getElementById('recItemSetBase').value = itemRecibidoVentaData ? itemRecibidoVentaData.set_base : '';
-            document.getElementById('recItemTipo').value = itemRecibidoVentaData ? itemRecibidoVentaData.tipo : 'Armor';
+            document.getElementById('recItemTipo').value = itemRecibidoVentaData ? (itemRecibidoVentaData.tipo || '') : '';
             document.getElementById('recItemCustomId').value = itemRecibidoVentaData ? (itemRecibidoVentaData.custom_id || '') : '';
+            limpiarControlesRareza('rec');
+
             const opsPrev = itemRecibidoVentaData ? (itemRecibidoVentaData.opciones || []) : [];
-            document.querySelectorAll('.rec-item-chk').forEach(chk => {
-                chk.checked = opsPrev.includes(chk.value);
+            opsPrev.forEach(raw => {
+                const { texto, rareza } = parsearOpcionRareza(raw);
+                const optChk = document.querySelector(`.rec-opt[data-opt="${texto}"]`);
+                if (optChk) optChk.checked = true;
+                if (rareza) {
+                    const rarChk = document.querySelector(`.rec-rar[data-opt="${texto}"][data-rareza="${rareza}"]`);
+                    if (rarChk) rarChk.checked = true;
+                }
             });
+
             document.getElementById('modal-item-recibido').classList.remove('hidden');
         }
 
@@ -2065,14 +2200,11 @@
             const custom_id = document.getElementById('recItemCustomId').value.trim();
             if (!set_base) return alert("Escribí o seleccioná el nombre del ítem recibido.");
 
-            const opciones = [];
-            document.querySelectorAll('.rec-item-chk:checked').forEach(chk => {
-                if (!opciones.includes(chk.value)) opciones.push(chk.value);
-            });
+            const opciones = recolectarOpcionesConRareza('rec');
 
             itemRecibidoVentaData = { set_base, tipo, custom_id, opciones };
-            const nombrePrev = ['Jewel', 'Box', 'Talisman'].includes(tipo) ? set_base : `Excellent ${set_base} ${tipo}`;
-            const opsTxt = opciones.length ? ` (${opciones.join(', ')})` : '';
+            const nombrePrev = (!tipo || ['Jewel', 'Box', 'Talisman'].includes(tipo)) ? set_base : `Excellent ${set_base} ${tipo}`;
+            const opsTxt = opciones.length ? ` (${opciones.map(o => parsearOpcionRareza(o).texto).join(', ')})` : '';
             const idTxt = custom_id ? ` [ID #${custom_id}]` : '';
 
             const prev = document.getElementById('preview-item-recibido-venta');
@@ -2149,7 +2281,9 @@
                 return;
             }
             itemSeleccionadoGasto = encontrado;
-            const optsText = Array.isArray(encontrado.opciones) && encontrado.opciones.length ? encontrado.opciones.join(' | ') : 'Sin opciones exc.';
+            const optsText = Array.isArray(encontrado.opciones) && encontrado.opciones.length
+                ? encontrado.opciones.map(o => parsearOpcionRareza(o).texto).join(' | ')
+                : 'Sin opciones exc.';
             const estadoAsig = encontrado.asignado_a ? `(Asignado a: ${encontrado.asignado_a})` : '(Sin asignar)';
             preview.innerHTML = `
                 <div class="font-bold text-[#f8f5ee]">#${encontrado.id} - <span class="text-[#f5b942]">${encontrado.nombre}</span> <span class="text-[#a89f91]">${estadoAsig}</span></div>
@@ -2211,7 +2345,7 @@
                     alert("¡Gasto registrado!");
                 }
                 [
-                    'gastoBless', 'gastoSoul', 'gastoLife', 'gastoChaos', 'donCreation',
+                    'gastoBless', 'gastoSoul', 'gastoLife', 'gastoChaos',
                     'gastoCreation', 'gastoGuardian', 'gastoGemstone', 'gastoHarmony',
                     'gastoLowerRefining', 'gastoHigherRefining',
                     'gastoDreamCoin', 'gastoZen'
@@ -2302,7 +2436,11 @@
             else { const err = await res.json(); alert("Error: " + (err.error || "Formato inválido")); }
         }
 
-        document.addEventListener('DOMContentLoaded', () => { 
+        document.addEventListener('DOMContentLoaded', () => {
+            renderizarFilasOpcionesRareza('contenedor-opciones-armadura-main', OPCIONES_ARMADURA_LISTA, 'main');
+            renderizarFilasOpcionesRareza('contenedor-opciones-arma-main', OPCIONES_ARMA_LISTA, 'main');
+            renderizarFilasOpcionesRareza('contenedor-opciones-armadura-rec', OPCIONES_ARMADURA_LISTA, 'rec');
+            renderizarFilasOpcionesRareza('contenedor-opciones-arma-rec', OPCIONES_ARMA_LISTA, 'rec');
             renderizarTablaBoxes();
             chequearSesion(); 
             cargarItems(); 
