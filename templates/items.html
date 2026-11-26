@@ -403,7 +403,7 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 3: DISTRIBUCIÓN (PRIMERO LISTADO DE MIEMBROS CON ÍTEMS, ABAJO RULETA) -->
+    <!-- SECCIÓN 3: DISTRIBUCIÓN (MIEMBROS CON ÍTEMS + RULETA + HISTORIAL DE SORTEOS) -->
     <div id="seccion-distribucion-view" class="w-full max-w-7xl space-y-6 hidden">
         <!-- 1. TABLA DE MIEMBROS CON LOS ÍTEMS CARGADOS (DOBLE DE LARGO) -->
         <div class="card-mudream p-5 rounded-xl space-y-4">
@@ -488,6 +488,27 @@
                 <div id="ruleta-detalle-asignacion" class="text-xs text-[#e5dec9]"></div>
             </div>
         </div>
+
+        <!-- 3. HISTORIAL DE SORTEOS -->
+        <div class="card-mudream p-5 rounded-xl space-y-4">
+            <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">📜 Historial de Sorteos Realizados</h2>
+            <div class="tabla-scroll-box" style="height: 300px !important;">
+                <table class="tabla-items">
+                    <thead>
+                        <tr>
+                            <th style="width: 145px;">Fecha</th>
+                            <th>Ítem Sorteado</th>
+                            <th style="width: 160px;">Ganador</th>
+                            <th>Participantes</th>
+                            <th style="width: 120px; text-align: center;">Realizado por</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-historial-sorteos-body">
+                        <tr><td colspan="5" class="text-center py-6 text-[#8a8073]">Sin sorteos registrados.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <!-- SECCIÓN 4: ASISTENCIAS (MEDALLA A LA IZQUIERDA DEL NICK | RESET | ASISTENCIA - DOBLE DE LARGO) -->
@@ -524,13 +545,12 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 5: BANCO (BANCO GUILD + BOX + HISTORIAL DE USOS/VENTAS + RECAUDACIÓN + HISTORIAL RECAUDACIÓN) -->
+    <!-- SECCIÓN 5: BANCO (BANCO GUILD + BOX + BARRA REGISTRAR DEBAJO + HISTORIAL USOS/VENTAS/DROPS + RECAUDACIÓN + HISTORIAL RECAUDACIÓN) -->
     <div id="seccion-donaciones-view" class="w-full max-w-7xl space-y-6 hidden">
-        <!-- 1. BANCO GUILD & BOX -->
+        <!-- 1. BANCO GUILD & BOX + BARRA REGISTRAR DEBAJO -->
         <div class="card-mudream p-5 rounded-xl space-y-4">
             <div class="flex justify-between items-center">
                 <h2 class="text-sm font-bold text-[#f5b942] uppercase tracking-wider">🏛️ Banco Guild (Joyas, Piedras & Dream Coin)</h2>
-                <button onclick="abrirModalGasto()" id="btn-gasto-modal" class="hidden bg-red-950/80 hover:bg-red-900 border border-red-600/50 text-red-200 px-3 py-1.5 rounded text-xs font-bold">📉 Registrar Uso / Venta / Quemado</button>
             </div>
             <div class="overflow-x-auto">
                 <table class="tabla-items text-center whitespace-nowrap">
@@ -601,11 +621,18 @@
                     </table>
                 </div>
             </div>
+
+            <!-- BARRA COMPLETA REGISTRAR JUSTO DEBAJO DE LAS BOXES (KUNDUN / NECKLACE) -->
+            <div id="btn-gasto-modal" class="hidden pt-2 border-t border-[#2e261c]">
+                <button onclick="abrirModalGasto()" class="w-full bg-gradient-to-r from-[#292015] via-[#3d2b16] to-[#292015] hover:from-[#382b1c] hover:via-[#52391c] hover:to-[#382b1c] border border-[#f5b942]/50 text-[#fbd379] py-2.5 px-4 rounded-xl text-xs font-extrabold uppercase tracking-wider transition shadow-lg">
+                    📝 Registrar Uso / Venta / Drop / Quemado
+                </button>
+            </div>
         </div>
 
-        <!-- 2. HISTORIAL DE USOS, VENTAS & QUEMADOS (ENTRE EL BANCO/BOX Y RECAUDACIÓN) -->
+        <!-- 2. HISTORIAL DE USOS, VENTAS, DROPS & QUEMADOS (ENTRE EL BANCO/BOX Y RECAUDACIÓN) -->
         <div class="card-mudream p-5 rounded-xl space-y-4">
-            <h2 class="text-sm font-bold text-red-400 uppercase tracking-wider">📉 Historial de Usos, Ventas & Quemados del Banco Guild</h2>
+            <h2 class="text-sm font-bold text-red-400 uppercase tracking-wider">📉 Historial de Usos, Ventas, Drops & Quemados del Banco Guild</h2>
             <div class="tabla-scroll-box" style="height: 280px !important;">
                 <table class="tabla-items text-center whitespace-nowrap">
                     <thead>
@@ -708,10 +735,10 @@
         </div>
     </div>
 
-    <!-- MODAL USO / VENTA / QUEMADO DE ÍTEM -->
+    <!-- MODAL USO / VENTA / DROP / QUEMADO DE ÍTEM -->
     <div id="modal-gasto" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4">
         <div class="bg-[#16120e] border border-[#f5b942]/50 p-6 rounded-xl max-w-lg w-full flex flex-col shadow-2xl space-y-3 max-h-[90vh] overflow-y-auto">
-            <h3 class="text-lg font-bold text-[#f5b942] mb-1">📉 Registrar Uso, Venta o Quemado del Guild</h3>
+            <h3 class="text-lg font-bold text-[#f5b942] mb-1">📝 Registrar Uso, Venta, Drop o Quemado</h3>
 
             <!-- TIPO DE OPERACIÓN -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -720,6 +747,7 @@
                     <select id="gastoTipoMovimiento" onchange="actualizarTextoModalGasto()" class="w-full input-mudream p-2 rounded text-xs font-bold">
                         <option value="GASTO">📉 Uso / Gasto (Resta del Banco)</option>
                         <option value="VENTA">💰 Venta de Ítem (Suma al Banco)</option>
+                        <option value="DROP">🎁 Drop (Suma al Banco)</option>
                         <option value="QUEMADO">🔥 Quemado (Marca Ítem como Quemado)</option>
                     </select>
                 </div>
@@ -732,6 +760,20 @@
             <!-- VISTA PREVIA DEL ÍTEM BUSCADO POR ID -->
             <div id="gasto-item-preview" class="bg-[#0b0a08] border border-[#29221a] px-3 py-2 rounded-lg text-xs text-[#8a8073]">
                 Si el movimiento corresponde a un artículo del inventario, ingresá su número de ID...
+            </div>
+
+            <!-- SELECTOR: ¿SE RECIBE UN ÍTEM A CAMBIO? (SOLO EN VENTA) -->
+            <div id="wrap-recibe-item-venta" class="hidden bg-[#0b0a08] border border-[#f5b942]/35 p-3 rounded-lg space-y-2">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <label class="flex items-center gap-2 text-xs text-[#fbd379] font-bold cursor-pointer">
+                        <input type="checkbox" id="chkRecibeItemVenta" onchange="toggleRecibeItemVenta()" class="accent-[#f5b942]">
+                        <span>🔄 Se recibe un Ítem a cambio (Trade)</span>
+                    </label>
+                    <button type="button" onclick="abrirModalItemRecibido()" id="btn-abrir-modal-item-recibido" class="hidden bg-[#292015] hover:bg-[#382b1c] border border-[#f5b942]/50 text-[#f5b942] px-2.5 py-1 rounded text-[11px] font-bold transition">
+                        ➕ Cargar / Editar Ítem Recibido
+                    </button>
+                </div>
+                <div id="preview-item-recibido-venta" class="hidden text-[11px] text-emerald-300 bg-[#16120e] border border-emerald-600/30 px-2.5 py-1.5 rounded"></div>
             </div>
 
             <label id="wrap-eliminar-vendido" class="hidden flex items-center gap-2 text-xs text-amber-300 cursor-pointer bg-[#0b0a08] p-2 rounded border border-amber-500/30">
@@ -761,6 +803,78 @@
             <div class="flex gap-2 justify-end pt-3">
                 <button onclick="guardarGastoGuild()" id="btn-confirmar-gasto-venta" class="bg-red-800 hover:bg-red-700 text-white px-4 py-2 rounded text-xs font-bold">📉 Descontar Gasto</button>
                 <button onclick="cerrarModalGasto()" class="bg-[#221c15] text-[#d6cebf] px-4 py-2 rounded text-xs font-bold">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SECUNDARIO: CARGAR ÍTEM RECIBIDO EN VENTA / TRADE -->
+    <div id="modal-item-recibido" class="fixed inset-0 bg-black/85 flex items-center justify-center hidden z-[60] p-4">
+        <div class="bg-[#16120e] border-2 border-[#f5b942]/60 p-6 rounded-xl max-w-2xl w-full flex flex-col shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-[#2e261c] pb-2">
+                <h3 class="text-base font-black text-[#f5b942] uppercase tracking-wider">🎁 Cargar Ítem Recibido a Cambio</h3>
+                <button onclick="cerrarModalItemRecibido()" class="text-[#a89f91] hover:text-white text-sm font-bold">✖</button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="sm:col-span-2">
+                    <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">📜 Set, Arma, Caja o Joya (Iniciales)</label>
+                    <input type="text" id="recItemSetBase" list="listaItemsBase" placeholder="Ej. Dragon, Red, Jewel..." autocomplete="off" class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">📦 Tipo de Pieza</label>
+                    <select id="recItemTipo" class="w-full input-mudream p-2.5 rounded-lg text-xs outline-none">
+                        <option value="Armor">Armor (Pechera)</option>
+                        <option value="Pants">Pants (Pantalón)</option>
+                        <option value="Helm">Helm (Casco)</option>
+                        <option value="Gloves">Gloves (Guantes)</option>
+                        <option value="Boots">Boots (Botas)</option>
+                        <option value="Shield">Shield (Escudo)</option>
+                        <option value="Weapon">Weapon / Arma</option>
+                        <option value="Ring">Ring (Anillo)</option>
+                        <option value="Pendant">Pendant (Amuleto)</option>
+                        <option value="Jewel">Jewel (Joya)</option>
+                        <option value="Box">Box (Caja)</option>
+                        <option value="Talisman">Talisman</option>
+                    </select>
+                </div>
+                <div class="sm:col-span-3">
+                    <label class="block text-xs uppercase text-[#a89f91] font-bold mb-1">🆔 ID Personalizado (Opcional)</label>
+                    <input type="number" id="recItemCustomId" placeholder="Automático" class="w-full input-mudream p-2 rounded-lg text-xs outline-none">
+                </div>
+            </div>
+
+            <!-- OPCIONES EXCELLENT DEL ÍTEM RECIBIDO -->
+            <div class="space-y-2">
+                <label class="block text-xs uppercase text-[#f5b942] font-bold">✨ Opciones Excellent del Ítem Recibido</label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="bg-[#0b0a08] p-3 rounded-lg border border-[#29221a]">
+                        <span class="text-[10px] uppercase font-bold text-emerald-400 block mb-2">🛡️ Armaduras, Escudos y Accesorios:</span>
+                        <div class="grid grid-cols-1 gap-1.5 text-xs text-[#e5dec9]">
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rec-item-chk accent-[#f5b942]" value="Aumento de HP máximo"> Aumento de HP máximo</label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rec-item-chk accent-[#f5b942]" value="Aumento de SD máximo"> Aumento de SD máximo</label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rec-item-chk accent-[#f5b942]" value="Reducción de daño (DD)"> Reducción de daño (DD)</label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rec-item-chk accent-[#f5b942]" value="Reflejo de daño (Reflect)"> Reflejo de daño (Reflect)</label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rec-item-chk accent-[#f5b942]" value="Resistencia a daño crítico (Rate)"> Resistencia a crítico (Rate)</label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rec-item-chk accent-[#f5b942]" value="Tasa de drop de Zen"> Tasa de drop de Zen</label>
+                        </div>
+                    </div>
+                    <div class="bg-[#0b0a08] p-3 rounded-lg border border-[#29221a]">
+                        <span class="text-[10px] uppercase font-bold text-[#fbd379] block mb-2">⚔️ Armas y Bastones:</span>
+                        <div class="grid grid-cols-1 gap-1.5 text-xs text-[#e5dec9]">
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rec-item-chk accent-[#f5b942]" value="Excellent damage rate %"> Excellent damage rate %</label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rec-item-chk accent-[#f5b942]" value="Physical Damage increase %"> Physical Damage increase %</label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rec-item-chk accent-[#f5b942]" value="Increases attack speed +"> Increases attack speed +</label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rec-item-chk accent-[#f5b942]" value="Obtains (Life) when monster is killed"> Obtains (Life) when monster is killed</label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rec-item-chk accent-[#f5b942]" value="Critical Damage rate %"> Critical Damage rate %</label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rec-item-chk accent-[#f5b942]" value="Damage to Monster"> Damage to Monster</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2 border-t border-[#2e261c]">
+                <button onclick="confirmarItemRecibido()" class="btn-gold-mudream px-5 py-2 rounded-lg text-xs">✅ Confirmar Ítem Recibido</button>
+                <button onclick="cerrarModalItemRecibido()" class="bg-[#221c15] text-[#d6cebf] px-4 py-2 rounded-lg text-xs font-bold">Cancelar</button>
             </div>
         </div>
     </div>
@@ -849,6 +963,7 @@
     <script>
         let catalogo = [], miembrosClan = [], sesionAutorizada = false, esAdmin = false;
         let ruletaGirando = false, anguloActualRuleta = 0, itemSeleccionadoRuleta = null, itemSeleccionadoGasto = null;
+        let itemRecibidoVentaData = null;
         let cajasBanco = {
             jewel_5: 0, jewel_10: 0, jewel_20: 0,
             k_1: 0, k_2: 0, k_3: 0, k_4: 0, k_5: 0,
@@ -1037,11 +1152,42 @@
             }
         }
 
-        // --- SECCIÓN DISTRIBUCIÓN & RULETA ---
+        // --- SECCIÓN DISTRIBUCIÓN, RULETA & HISTORIAL DE SORTEOS ---
         async function prepararVistaDistribucion() {
-            await Promise.all([cargarItems(), cargarMiembros()]);
+            await Promise.all([cargarItems(), cargarMiembros(), cargarHistorialSorteos()]);
             cambiarCantidadRuleta();
             renderizarTablaDistribucion();
+        }
+
+        async function cargarHistorialSorteos() {
+            const tbody = document.getElementById('tabla-historial-sorteos-body');
+            if (!tbody) return;
+            try {
+                const res = await fetch('/api/sorteos-historial');
+                if (res.ok) {
+                    const lista = await res.json();
+                    if (!lista.length) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-6 text-[#8a8073]">Sin sorteos registrados.</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = lista.map(s => {
+                        const fechaStr = s.created_at ? new Date(s.created_at).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-';
+                        const itemTxt = s.item_id ? `<span class="font-mono font-bold text-[#f5b942] mr-1">#${s.item_id}</span> ${s.item_nombre}` : s.item_nombre;
+                        const partStr = Array.isArray(s.participantes) && s.participantes.length ? s.participantes.join(', ') : '-';
+                        return `
+                            <tr>
+                                <td class="text-xs text-[#a89f91]">${fechaStr}</td>
+                                <td class="font-bold text-[#f8f5ee]">${itemTxt}</td>
+                                <td><span class="bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 px-2.5 py-0.5 rounded text-xs font-extrabold">🏆 ${s.ganador}</span></td>
+                                <td class="text-xs text-[#d6cebf]">${partStr}</td>
+                                <td class="text-center text-xs text-[#fbd379]">${s.realizado_por || '-'}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            } catch (e) {
+                console.error("Error historial sorteos:", e);
+            }
         }
 
         function cambiarCantidadRuleta() {
@@ -1283,8 +1429,18 @@
                     body: JSON.stringify({ id: itemSeleccionadoRuleta.id, asignado_a: ganador })
                 });
                 if (res.ok) {
+                    await fetch('/api/sorteos-historial', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            item_id: itemSeleccionadoRuleta.id,
+                            item_nombre: itemSeleccionadoRuleta.nombre,
+                            ganador,
+                            participantes
+                        })
+                    });
                     document.getElementById('ruleta-detalle-asignacion').innerHTML = `✅ Ítem <strong>#${itemSeleccionadoRuleta.id} - ${itemSeleccionadoRuleta.nombre}</strong> asignado automáticamente a <strong>${ganador}</strong>.`;
-                    await cargarItems();
+                    await Promise.all([cargarItems(), cargarHistorialSorteos()]);
                     buscarItemRuleta();
                 } else {
                     const err = await res.json();
@@ -1406,7 +1562,6 @@
                 let accionesHTML = '';
                 if (sesionAutorizada) {
                     if (estadoEsp) {
-                        // Bloqueado para asignar o borrar directo; permite editar solo si fue por error
                         accionesHTML = `
                             <td class="text-center space-x-1">
                                 <button onclick="abrirModalEditar(${item.id})" class="bg-[#221c15] hover:bg-[#2d241b] text-[#fbd379] border border-[#f5b942]/40 px-2 py-1 rounded text-xs font-bold" title="Corregir si fue por error">✏️</button>
@@ -1725,7 +1880,7 @@
             }
         }
 
-        // --- BANCO GUILD, RECAUDACIÓN & USO / VENTA / QUEMADO ---
+        // --- BANCO GUILD, RECAUDACIÓN & USO / VENTA / DROP / QUEMADO ---
         async function cargarDonacionesJoyas() {
             const res = await fetch('/api/donaciones-joyas');
             if (res.ok) {
@@ -1777,6 +1932,9 @@
                         if (tipoMov === 'VENTA') {
                             badgeTipo = `<span class="bg-emerald-950 text-emerald-300 border border-emerald-600/40 px-2 py-0.5 rounded text-[10px] font-bold mr-1.5">💰 VENTA</span>`;
                             textoClase = 'text-emerald-200';
+                        } else if (tipoMov === 'DROP') {
+                            badgeTipo = `<span class="bg-sky-950 text-sky-300 border border-sky-500/40 px-2 py-0.5 rounded text-[10px] font-bold mr-1.5">🎁 DROP</span>`;
+                            textoClase = 'text-sky-200';
                         } else if (tipoMov === 'QUEMADO') {
                             badgeTipo = `<span class="bg-orange-950 text-orange-300 border border-orange-600/40 px-2 py-0.5 rounded text-[10px] font-bold mr-1.5">🔥 QUEMADO</span>`;
                             textoClase = 'text-orange-300';
@@ -1845,22 +2003,91 @@
             }
         }
 
+        // --- MODAL USO / VENTA / DROP / QUEMADO + ÍTEM RECIBIDO ---
         function abrirModalGasto() {
             document.getElementById('gastoItemId').value = '';
             document.getElementById('gastoMotivo').value = '';
             document.getElementById('gastoTipoMovimiento').value = 'GASTO';
             document.getElementById('gastoEliminarItemVendido').checked = false;
+            document.getElementById('chkRecibeItemVenta').checked = false;
+            document.getElementById('btn-abrir-modal-item-recibido').classList.add('hidden');
+            document.getElementById('preview-item-recibido-venta').classList.add('hidden');
+            document.getElementById('preview-item-recibido-venta').innerHTML = '';
             itemSeleccionadoGasto = null;
+            itemRecibidoVentaData = null;
             document.getElementById('gasto-item-preview').innerHTML = 'Si el movimiento corresponde a un artículo del inventario, ingresá su número de ID...';
             actualizarTextoModalGasto();
             document.getElementById('modal-gasto').classList.remove('hidden');
         }
         function cerrarModalGasto() { document.getElementById('modal-gasto').classList.add('hidden'); }
 
+        function toggleRecibeItemVenta() {
+            const chk = document.getElementById('chkRecibeItemVenta');
+            const btn = document.getElementById('btn-abrir-modal-item-recibido');
+            const prev = document.getElementById('preview-item-recibido-venta');
+            if (chk && chk.checked) {
+                if (btn) btn.classList.remove('hidden');
+                abrirModalItemRecibido();
+            } else {
+                itemRecibidoVentaData = null;
+                if (btn) btn.classList.add('hidden');
+                if (prev) {
+                    prev.classList.add('hidden');
+                    prev.innerHTML = '';
+                }
+            }
+        }
+
+        function abrirModalItemRecibido() {
+            document.getElementById('recItemSetBase').value = itemRecibidoVentaData ? itemRecibidoVentaData.set_base : '';
+            document.getElementById('recItemTipo').value = itemRecibidoVentaData ? itemRecibidoVentaData.tipo : 'Armor';
+            document.getElementById('recItemCustomId').value = itemRecibidoVentaData ? (itemRecibidoVentaData.custom_id || '') : '';
+            const opsPrev = itemRecibidoVentaData ? (itemRecibidoVentaData.opciones || []) : [];
+            document.querySelectorAll('.rec-item-chk').forEach(chk => {
+                chk.checked = opsPrev.includes(chk.value);
+            });
+            document.getElementById('modal-item-recibido').classList.remove('hidden');
+        }
+
+        function cerrarModalItemRecibido() {
+            document.getElementById('modal-item-recibido').classList.add('hidden');
+            if (!itemRecibidoVentaData) {
+                const chk = document.getElementById('chkRecibeItemVenta');
+                const btn = document.getElementById('btn-abrir-modal-item-recibido');
+                if (chk) chk.checked = false;
+                if (btn) btn.classList.add('hidden');
+            }
+        }
+
+        function confirmarItemRecibido() {
+            const set_base = document.getElementById('recItemSetBase').value.trim();
+            const tipo = document.getElementById('recItemTipo').value;
+            const custom_id = document.getElementById('recItemCustomId').value.trim();
+            if (!set_base) return alert("Escribí o seleccioná el nombre del ítem recibido.");
+
+            const opciones = [];
+            document.querySelectorAll('.rec-item-chk:checked').forEach(chk => {
+                if (!opciones.includes(chk.value)) opciones.push(chk.value);
+            });
+
+            itemRecibidoVentaData = { set_base, tipo, custom_id, opciones };
+            const nombrePrev = ['Jewel', 'Box', 'Talisman'].includes(tipo) ? set_base : `Excellent ${set_base} ${tipo}`;
+            const opsTxt = opciones.length ? ` (${opciones.join(', ')})` : '';
+            const idTxt = custom_id ? ` [ID #${custom_id}]` : '';
+
+            const prev = document.getElementById('preview-item-recibido-venta');
+            if (prev) {
+                prev.innerHTML = `✅ <strong>Ítem recibido a cargar:</strong> ${nombrePrev}${idTxt}${opsTxt}`;
+                prev.classList.remove('hidden');
+            }
+            document.getElementById('modal-item-recibido').classList.add('hidden');
+        }
+
         function actualizarTextoModalGasto() {
             const tipo = document.getElementById('gastoTipoMovimiento').value;
             const btn = document.getElementById('btn-confirmar-gasto-venta');
             const wrapEliminar = document.getElementById('wrap-eliminar-vendido');
+            const wrapRecibeItem = document.getElementById('wrap-recibe-item-venta');
             const labelMotivo = document.getElementById('label-gasto-motivo');
             const inputMotivo = document.getElementById('gastoMotivo');
 
@@ -1869,18 +2096,28 @@
                 btn.className = 'bg-emerald-800 hover:bg-emerald-700 text-white px-4 py-2 rounded text-xs font-bold';
                 if (labelMotivo) labelMotivo.textContent = 'Descripción / Comprador (Opcional):';
                 if (inputMotivo) inputMotivo.placeholder = 'Opcional (Ej. Comprador o detalle de venta...)';
+                if (wrapRecibeItem) wrapRecibeItem.classList.remove('hidden');
                 if (itemSeleccionadoGasto) wrapEliminar.classList.remove('hidden');
+            } else if (tipo === 'DROP') {
+                btn.textContent = '🎁 Registrar Drop (Sumar al Banco)';
+                btn.className = 'bg-sky-800 hover:bg-sky-700 text-white px-4 py-2 rounded text-xs font-bold';
+                if (labelMotivo) labelMotivo.textContent = 'Detalle / Boss / Evento (Opcional):';
+                if (inputMotivo) inputMotivo.placeholder = 'Opcional (Ej. Kundun, Selupan, Medusa...)';
+                if (wrapRecibeItem) wrapRecibeItem.classList.add('hidden');
+                wrapEliminar.classList.add('hidden');
             } else if (tipo === 'QUEMADO') {
                 btn.textContent = '🔥 Registrar Quemado';
                 btn.className = 'bg-orange-800 hover:bg-orange-700 text-white px-4 py-2 rounded text-xs font-bold';
                 if (labelMotivo) labelMotivo.textContent = 'Detalle / Motivo (Opcional):';
-                if (inputMotivo) inputMotivo.placeholder = 'Opcional (Ej. Quemado en chaos machine / drop...)';
+                if (inputMotivo) inputMotivo.placeholder = 'Opcional (Ej. Quemado en chaos machine...)';
+                if (wrapRecibeItem) wrapRecibeItem.classList.add('hidden');
                 wrapEliminar.classList.add('hidden');
             } else {
                 btn.textContent = '📉 Descontar Gasto';
                 btn.className = 'bg-red-800 hover:bg-red-700 text-white px-4 py-2 rounded text-xs font-bold';
                 if (labelMotivo) labelMotivo.textContent = 'Motivo (Obligatorio):';
                 if (inputMotivo) inputMotivo.placeholder = 'Ej. Compra de entrada / Uso clan...';
+                if (wrapRecibeItem) wrapRecibeItem.classList.add('hidden');
                 wrapEliminar.classList.add('hidden');
             }
         }
@@ -1930,21 +2167,20 @@
             if (tipo_movimiento === 'GASTO' && !motivo) {
                 return alert("Ingresá el motivo del uso o gasto.");
             }
-            if (tipo_movimiento === 'VENTA' && !motivo) {
-                motivo = "Venta de ítem";
-            }
-            if (tipo_movimiento === 'QUEMADO' && !motivo) {
-                motivo = "Ítem quemado";
-            }
+            if (tipo_movimiento === 'VENTA' && !motivo) motivo = "Venta de ítem";
+            if (tipo_movimiento === 'DROP' && !motivo) motivo = "Drop de clan";
+            if (tipo_movimiento === 'QUEMADO' && !motivo) motivo = "Ítem quemado";
 
             const item_id = document.getElementById('gastoItemId').value.trim() || null;
             const eliminar_item_vendido = (tipo_movimiento === 'VENTA') && document.getElementById('gastoEliminarItemVendido').checked;
+            const item_recibido = (tipo_movimiento === 'VENTA' && document.getElementById('chkRecibeItemVenta').checked) ? itemRecibidoVentaData : null;
 
             const payload = {
                 tipo_movimiento,
                 item_id,
                 item_nombre: itemSeleccionadoGasto ? itemSeleccionadoGasto.nombre : null,
                 eliminar_item_vendido,
+                item_recibido,
                 motivo,
                 bless: parseInt(document.getElementById('gastoBless').value) || 0,
                 soul: parseInt(document.getElementById('gastoSoul').value) || 0,
@@ -1963,8 +2199,12 @@
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });
             if (res.ok) {
+                const respData = await res.json();
                 if (tipo_movimiento === 'VENTA') {
-                    alert("¡Venta registrada, sumada al banco e ítem marcado como VENDIDO!");
+                    const extraMsg = respData.nuevo_item_id ? ` y se cargó el ítem recibido #${respData.nuevo_item_id}` : '';
+                    alert(`¡Venta registrada, sumada al banco${extraMsg}!`);
+                } else if (tipo_movimiento === 'DROP') {
+                    alert("¡Drop registrado y sumado al banco!");
                 } else if (tipo_movimiento === 'QUEMADO') {
                     alert("¡Quemado registrado e ítem marcado como QUEMADO!");
                 } else {
@@ -1978,7 +2218,9 @@
                 ].forEach(id => document.getElementById(id).value = 0);
                 cerrarModalGasto();
                 cargarDonacionesJoyas();
-                if (item_id && (tipo_movimiento === 'VENTA' || tipo_movimiento === 'QUEMADO')) cargarItems();
+                if ((item_id && (tipo_movimiento === 'VENTA' || tipo_movimiento === 'QUEMADO')) || item_recibido) {
+                    cargarItems();
+                }
             } else {
                 const err = await res.json();
                 alert("Error: " + (err.error || "No se pudo registrar"));
