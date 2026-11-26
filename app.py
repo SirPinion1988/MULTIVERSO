@@ -106,6 +106,11 @@ def exportar_backup():
                 backup_data['guild_gastos'] = cur.fetchall()
                 cur.execute("SELECT * FROM public.guild_boxes;")
                 backup_data['guild_boxes'] = cur.fetchall()
+                try:
+                    cur.execute("SELECT * FROM public.historial_sorteos;")
+                    backup_data['historial_sorteos'] = cur.fetchall()
+                except Exception:
+                    backup_data['historial_sorteos'] = []
                 cur.execute("SELECT id, username, rol, activo FROM public.usuarios;")
                 backup_data['usuarios'] = cur.fetchall()
             conn.close()
@@ -200,12 +205,86 @@ def importar_backup():
                     b.get('w_1', 0), b.get('w_2', 0), b.get('w_3', 0), b.get('w_4', 0), b.get('w_5', 0),
                     b.get('necklace', 0)
                 ))
+            if 'historial_sorteos' in backup_data:
+                cur.execute("DELETE FROM public.historial_sorteos;")
+                for s in backup_data['historial_sorteos']:
+                    cur.execute("""
+                        INSERT INTO public.historial_sorteos (id, item_id, item_nombre, ganador, participantes, realizado_por, created_at)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s);
+                    """, (
+                        s.get('id'), s.get('item_id'), s.get('item_nombre'), s.get('ganador'),
+                        json.dumps(normalizar_campo_json(s.get('participantes'), [])),
+                        s.get('realizado_por', 'Sistema'), s.get('created_at')
+                    ))
             conn.commit()
         conn.close()
     except Exception as e:
         if conn: conn.close()
         return jsonify({"error": str(e)}), 500
     return jsonify({"status": "ok"}), 200
+
+# --- API HISTORIAL DE SORTEOS ---
+@app.route('/api/sorteos-historial', methods=['GET', 'POST'])
+def api_sorteos_historial():
+    conn = get_db()
+    if request.method == 'GET':
+        historial = []
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        SELECT id, item_id, item_nombre, ganador, participantes, realizado_por, created_at
+                        FROM public.historial_sorteos
+                        ORDER BY created_at DESC
+                        LIMIT 100;
+                    """)
+                    filas = cur.fetchall()
+                    for r in filas:
+                        historial.append({
+                            "id": r['id'],
+                            "item_id": r.get('item_id'),
+                            "item_nombre": r.get('item_nombre') or '-',
+                            "ganador": r.get('ganador') or '-',
+                            "participantes": normalizar_campo_json(r.get('participantes'), []),
+                            "realizado_por": r.get('realizado_por') or '-',
+                            "created_at": r.get('created_at')
+                        })
+                conn.close()
+            except Exception:
+                if conn: conn.close()
+        return jsonify(historial)
+
+    if not usuario_es_autorizado():
+        return jsonify({"error": "No autorizado."}), 403
+
+    data = request.json or {}
+    item_id = data.get('item_id')
+    item_nombre = (data.get('item_nombre') or '').strip()
+    ganador = (data.get('ganador') or '').strip()
+    participantes = data.get('participantes', [])
+
+    if not ganador or not item_nombre:
+        return jsonify({"error": "Faltan datos del sorteo."}), 400
+
+    if conn:
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO public.historial_sorteos (item_id, item_nombre, ganador, participantes, realizado_por)
+                    VALUES (%s, %s, %s, %s, %s);
+                """, (
+                    int(item_id) if item_id not in [None, ''] else None,
+                    item_nombre,
+                    ganador,
+                    json.dumps(participantes if isinstance(participantes, list) else []),
+                    session.get('user', 'Sistema')
+                ))
+                conn.commit()
+            conn.close()
+        except Exception as e:
+            if conn: conn.close()
+            return jsonify({"error": str(e)}), 500
+    return jsonify({"status": "ok"}), 201
 
 # --- API ASISTENCIAS RANKING ---
 @app.route('/api/asistencias-ranking', methods=['GET', 'POST'])
@@ -395,7 +474,7 @@ def api_donaciones_joyas():
         ]
         banco_total = {k: 0 for k in campos_banco}
         gastos_total = {k: 0 for k in campos_banco}
-        ventas_ingreso_total = {k: 0 for k in campos_banco}
+        ingresos_extra_total = {k: 0 for k in campos_banco}
         gastos_lista = []
         boxes_data = {k: 0 for k in BOX_CAMPOS_VALIDOS}
         
@@ -451,6 +530,7 @@ def api_donaciones_joyas():
                     """)
                     gastos_lista = cur.fetchall()
 
+                    # Restan del banco: GASTO y QUEMADO
                     cur.execute("""
                         SELECT SUM(bless) as bless, SUM(soul) as soul, SUM(life) as life,
                                SUM(creation) as creation,
@@ -463,12 +543,13 @@ def api_donaciones_joyas():
                                SUM(COALESCE(dream_coin, 0)) as dream_coin,
                                SUM(zen) as zen
                         FROM public.guild_gastos
-                        WHERE COALESCE(tipo_movimiento, 'GASTO') != 'VENTA';
+                        WHERE COALESCE(tipo_movimiento, 'GASTO') NOT IN ('VENTA', 'DROP');
                     """)
                     g = cur.fetchone()
                     if g:
                         gastos_total = {k: (g[k] or 0) for k in campos_banco}
 
+                    # Suman al banco: VENTA y DROP
                     cur.execute("""
                         SELECT SUM(bless) as bless, SUM(soul) as soul, SUM(life) as life,
                                SUM(creation) as creation,
@@ -481,11 +562,11 @@ def api_donaciones_joyas():
                                SUM(COALESCE(dream_coin, 0)) as dream_coin,
                                SUM(zen) as zen
                         FROM public.guild_gastos
-                        WHERE tipo_movimiento = 'VENTA';
+                        WHERE tipo_movimiento IN ('VENTA', 'DROP');
                     """)
                     v = cur.fetchone()
                     if v:
-                        ventas_ingreso_total = {k: (v[k] or 0) for k in campos_banco}
+                        ingresos_extra_total = {k: (v[k] or 0) for k in campos_banco}
 
                     try:
                         cur.execute("SELECT * FROM public.guild_boxes WHERE id = 1;")
@@ -499,7 +580,7 @@ def api_donaciones_joyas():
             except Exception:
                 if conn: conn.close()
 
-        banco_neto = {k: banco_total[k] + ventas_ingreso_total[k] - gastos_total[k] for k in campos_banco}
+        banco_neto = {k: banco_total[k] + ingresos_extra_total[k] - gastos_total[k] for k in campos_banco}
         return jsonify({"donaciones": registros, "banco_guild": banco_neto, "gastos": gastos_lista, "boxes": boxes_data})
 
     if not usuario_es_autorizado(): return jsonify({"error": "No autorizado."}), 403
@@ -541,13 +622,13 @@ def api_donaciones_joyas():
             return jsonify({"error": str(e)}), 500
     return jsonify({"status": "ok"}), 201
 
-# --- API GASTOS / USO / VENTA / QUEMADO DE ÍTEMS DEL GUILD ---
+# --- API GASTOS / USO / VENTA / DROP / QUEMADO DE ÍTEMS DEL GUILD ---
 @app.route('/api/guild-gastos', methods=['POST'])
 def api_guild_gastos():
     if not usuario_es_autorizado(): return jsonify({"error": "No autorizado."}), 403
     data = request.json or {}
     tipo_movimiento = data.get('tipo_movimiento', 'GASTO').strip().upper()
-    if tipo_movimiento not in ['GASTO', 'VENTA', 'QUEMADO']:
+    if tipo_movimiento not in ['GASTO', 'VENTA', 'QUEMADO', 'DROP']:
         tipo_movimiento = 'GASTO'
 
     motivo = (data.get('motivo') or '').strip()
@@ -557,11 +638,15 @@ def api_guild_gastos():
         motivo = "Venta de ítem"
     if tipo_movimiento == 'QUEMADO' and not motivo:
         motivo = "Ítem quemado"
+    if tipo_movimiento == 'DROP' and not motivo:
+        motivo = "Drop de clan"
 
     item_id_raw = data.get('item_id')
     item_id = int(item_id_raw) if item_id_raw not in [None, '', 0, '0'] else None
     item_nombre = (data.get('item_nombre') or '').strip() or None
     eliminar_item_vendido = bool(data.get('eliminar_item_vendido', False))
+    item_recibido = data.get('item_recibido') if tipo_movimiento == 'VENTA' else None
+    nuevo_item_creado_id = None
 
     conn = get_db()
     if conn:
@@ -577,6 +662,46 @@ def api_guild_gastos():
                             return jsonify({"error": f"El ítem #{item_id} ya figura como {estado_actual}."}), 400
                         if not item_nombre:
                             item_nombre = row_it['nombre']
+
+                # Si en la venta se recibió un ítem a cambio, lo cargamos en items_mu
+                if item_recibido and isinstance(item_recibido, dict) and (item_recibido.get('set_base') or '').strip():
+                    rec_set = item_recibido.get('set_base', '').strip()
+                    rec_tipo = (item_recibido.get('tipo') or 'Armor').strip()
+                    rec_opciones = item_recibido.get('opciones', [])
+                    rec_custom_id = item_recibido.get('custom_id')
+
+                    if rec_tipo in ['Jewel', 'Box', 'Talisman']:
+                        rec_nombre = rec_set
+                    else:
+                        rec_nombre = f"Excellent {rec_set} {rec_tipo}"
+
+                    clases_default = ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter", "Grow Lancer"]
+
+                    if rec_custom_id is not None and str(rec_custom_id).strip() != "":
+                        try:
+                            target_id = int(rec_custom_id)
+                        except ValueError:
+                            conn.close()
+                            return jsonify({"error": "ID personalizado del ítem recibido inválido."}), 400
+                        cur.execute("SELECT id FROM public.items_mu WHERE id = %s;", (target_id,))
+                        if cur.fetchone():
+                            conn.close()
+                            return jsonify({"error": f"El ID #{target_id} del ítem recibido ya existe."}), 400
+                        nuevo_item_creado_id = target_id
+                    else:
+                        cur.execute("SELECT COALESCE(MAX(id), 1) as max_id FROM public.items_mu;")
+                        row_max = cur.fetchone()
+                        nuevo_item_creado_id = 2 if row_max['max_id'] < 2 else row_max['max_id'] + 1
+
+                    cur.execute("""
+                        INSERT INTO public.items_mu (id, archivo_id, nombre, tipo, clases, opciones, drive_id, asignado_a)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
+                    """, (
+                        nuevo_item_creado_id, f"{nuevo_item_creado_id}.png", rec_nombre, rec_tipo,
+                        json.dumps(clases_default), json.dumps(rec_opciones),
+                        f"manual_{nuevo_item_creado_id}", None
+                    ))
+                    motivo = f"{motivo} (Recibido: #{nuevo_item_creado_id} {rec_nombre})"
 
                 cur.execute("""
                     INSERT INTO public.guild_gastos (
@@ -619,7 +744,7 @@ def api_guild_gastos():
         except Exception as e:
             if conn: conn.close()
             return jsonify({"error": str(e)}), 500
-    return jsonify({"status": "ok"}), 201
+    return jsonify({"status": "ok", "nuevo_item_id": nuevo_item_creado_id}), 201
 
 # --- API ITEMS ---
 @app.route('/api/items/agregar-manual', methods=['POST'])
