@@ -76,6 +76,13 @@ def estado_item_cerrado(valor_asignado):
     est = (valor_asignado or '').strip().upper()
     return est in ['VENDIDO', 'QUEMADO']
 
+def construir_nombre_item(set_base, tipo):
+    set_limpio = (set_base or '').strip()
+    tipo_limpio = (tipo or '').strip()
+    if not tipo_limpio or tipo_limpio in ['Jewel', 'Box', 'Talisman']:
+        return set_limpio
+    return f"Excellent {set_limpio} {tipo_limpio}"
+
 @app.route('/')
 def index():
     return render_template('index.html', link_descarga=LINK_DESCARGA_BOT)
@@ -467,8 +474,8 @@ def api_donaciones_joyas():
     if request.method == 'GET':
         registros = []
         campos_banco = [
-            "bless", "soul", "life", "creation",
-            "guardian", "gemstone", "harmony", "chaos",
+            "bless", "soul", "life", "chaos", "creation",
+            "guardian", "gemstone", "harmony",
             "lower_refining", "higher_refining",
             "dream_coin", "zen"
         ]
@@ -482,11 +489,10 @@ def api_donaciones_joyas():
             try:
                 with conn.cursor() as cur:
                     cur.execute("""
-                        SELECT id, pj_name, bless, soul, life, creation,
+                        SELECT id, pj_name, bless, soul, life, chaos, creation,
                                COALESCE(guardian, 0) as guardian,
                                COALESCE(gemstone, 0) as gemstone,
                                COALESCE(harmony, 0) as harmony,
-                               chaos,
                                COALESCE(lower_refining, 0) as lower_refining,
                                COALESCE(higher_refining, 0) as higher_refining,
                                COALESCE(dream_coin, 0) as dream_coin,
@@ -498,11 +504,10 @@ def api_donaciones_joyas():
 
                     cur.execute("""
                         SELECT SUM(bless) as bless, SUM(soul) as soul, SUM(life) as life,
-                               SUM(creation) as creation,
+                               SUM(chaos) as chaos, SUM(creation) as creation,
                                SUM(COALESCE(guardian, 0)) as guardian,
                                SUM(COALESCE(gemstone, 0)) as gemstone,
                                SUM(COALESCE(harmony, 0)) as harmony,
-                               SUM(chaos) as chaos,
                                SUM(COALESCE(lower_refining, 0)) as lower_refining,
                                SUM(COALESCE(higher_refining, 0)) as higher_refining,
                                SUM(COALESCE(dream_coin, 0)) as dream_coin,
@@ -516,11 +521,10 @@ def api_donaciones_joyas():
                     cur.execute("""
                         SELECT id, COALESCE(tipo_movimiento, 'GASTO') as tipo_movimiento,
                                item_id, item_nombre, motivo,
-                               bless, soul, life, creation,
+                               bless, soul, life, chaos, creation,
                                COALESCE(guardian, 0) as guardian,
                                COALESCE(gemstone, 0) as gemstone,
                                COALESCE(harmony, 0) as harmony,
-                               chaos,
                                COALESCE(lower_refining, 0) as lower_refining,
                                COALESCE(higher_refining, 0) as higher_refining,
                                COALESCE(dream_coin, 0) as dream_coin,
@@ -530,14 +534,12 @@ def api_donaciones_joyas():
                     """)
                     gastos_lista = cur.fetchall()
 
-                    # Restan del banco: GASTO y QUEMADO
                     cur.execute("""
                         SELECT SUM(bless) as bless, SUM(soul) as soul, SUM(life) as life,
-                               SUM(creation) as creation,
+                               SUM(chaos) as chaos, SUM(creation) as creation,
                                SUM(COALESCE(guardian, 0)) as guardian,
                                SUM(COALESCE(gemstone, 0)) as gemstone,
                                SUM(COALESCE(harmony, 0)) as harmony,
-                               SUM(chaos) as chaos,
                                SUM(COALESCE(lower_refining, 0)) as lower_refining,
                                SUM(COALESCE(higher_refining, 0)) as higher_refining,
                                SUM(COALESCE(dream_coin, 0)) as dream_coin,
@@ -549,14 +551,12 @@ def api_donaciones_joyas():
                     if g:
                         gastos_total = {k: (g[k] or 0) for k in campos_banco}
 
-                    # Suman al banco: VENTA y DROP
                     cur.execute("""
                         SELECT SUM(bless) as bless, SUM(soul) as soul, SUM(life) as life,
-                               SUM(creation) as creation,
+                               SUM(chaos) as chaos, SUM(creation) as creation,
                                SUM(COALESCE(guardian, 0)) as guardian,
                                SUM(COALESCE(gemstone, 0)) as gemstone,
                                SUM(COALESCE(harmony, 0)) as harmony,
-                               SUM(chaos) as chaos,
                                SUM(COALESCE(lower_refining, 0)) as lower_refining,
                                SUM(COALESCE(higher_refining, 0)) as higher_refining,
                                SUM(COALESCE(dream_coin, 0)) as dream_coin,
@@ -594,8 +594,8 @@ def api_donaciones_joyas():
             with conn.cursor() as cur:
                 cur.execute("""
                     INSERT INTO public.donaciones_joyas (
-                        pj_name, bless, soul, life, creation,
-                        guardian, gemstone, harmony, chaos, lower_refining, higher_refining,
+                        pj_name, bless, soul, life, chaos, creation,
+                        guardian, gemstone, harmony, lower_refining, higher_refining,
                         dream_coin, zen, registrado_por
                     )
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
@@ -604,11 +604,11 @@ def api_donaciones_joyas():
                     int(data.get('bless', 0)),
                     int(data.get('soul', 0)),
                     int(data.get('life', 0)),
+                    int(data.get('chaos', 0)),
                     int(data.get('creation', 0)),
                     int(data.get('guardian', 0)),
                     int(data.get('gemstone', 0)),
                     int(data.get('harmony', 0)),
-                    int(data.get('chaos', 0)),
                     int(data.get('lower_refining', 0)),
                     int(data.get('higher_refining', 0)),
                     int(data.get('dream_coin', 0)),
@@ -663,18 +663,13 @@ def api_guild_gastos():
                         if not item_nombre:
                             item_nombre = row_it['nombre']
 
-                # Si en la venta se recibió un ítem a cambio, lo cargamos en items_mu
                 if item_recibido and isinstance(item_recibido, dict) and (item_recibido.get('set_base') or '').strip():
                     rec_set = item_recibido.get('set_base', '').strip()
-                    rec_tipo = (item_recibido.get('tipo') or 'Armor').strip()
+                    rec_tipo = (item_recibido.get('tipo') or '').strip()
                     rec_opciones = item_recibido.get('opciones', [])
                     rec_custom_id = item_recibido.get('custom_id')
 
-                    if rec_tipo in ['Jewel', 'Box', 'Talisman']:
-                        rec_nombre = rec_set
-                    else:
-                        rec_nombre = f"Excellent {rec_set} {rec_tipo}"
-
+                    rec_nombre = construir_nombre_item(rec_set, rec_tipo)
                     clases_default = ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter", "Grow Lancer"]
 
                     if rec_custom_id is not None and str(rec_custom_id).strip() != "":
@@ -706,8 +701,8 @@ def api_guild_gastos():
                 cur.execute("""
                     INSERT INTO public.guild_gastos (
                         tipo_movimiento, item_id, item_nombre, motivo,
-                        bless, soul, life, creation,
-                        guardian, gemstone, harmony, chaos, lower_refining, higher_refining,
+                        bless, soul, life, chaos, creation,
+                        guardian, gemstone, harmony, lower_refining, higher_refining,
                         dream_coin, zen, registrado_por
                     )
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
@@ -719,11 +714,11 @@ def api_guild_gastos():
                     int(data.get('bless', 0)),
                     int(data.get('soul', 0)),
                     int(data.get('life', 0)),
+                    int(data.get('chaos', 0)),
                     int(data.get('creation', 0)),
                     int(data.get('guardian', 0)),
                     int(data.get('gemstone', 0)),
                     int(data.get('harmony', 0)),
-                    int(data.get('chaos', 0)),
                     int(data.get('lower_refining', 0)),
                     int(data.get('higher_refining', 0)),
                     int(data.get('dream_coin', 0)),
@@ -752,16 +747,13 @@ def agregar_item_manual():
     if not usuario_es_autorizado(): return jsonify({"error": "No autorizado."}), 403
     data = request.json or {}
     set_base = data.get('set_base', '').strip()
-    tipo = data.get('tipo', 'Armor').strip()
+    tipo = (data.get('tipo') or '').strip()
     asignado = data.get('asignado', '').strip() or None
     opciones = data.get('opciones', [])
     custom_id = data.get('custom_id')
 
     if not set_base: return jsonify({"error": "Falta seleccionar set"}), 400
-    if tipo in ['Jewel', 'Box', 'Talisman']:
-        nombre_completo = set_base
-    else:
-        nombre_completo = f"Excellent {set_base} {tipo}"
+    nombre_completo = construir_nombre_item(set_base, tipo)
     clases_default = ["Dark Knight", "Dark Wizard", "Elf", "Magic Gladiator", "Dark Lord", "Summoner", "Rage Fighter", "Grow Lancer"]
 
     conn = get_db()
@@ -858,7 +850,7 @@ def api_items():
                             "id": r['id'],
                             "archivo_id": r.get('archivo_id') or str(r['id']),
                             "nombre": r.get('nombre') or 'Sin Nombre',
-                            "tipo": r.get('tipo') or 'Armor',
+                            "tipo": r.get('tipo') or '',
                             "clases": normalizar_campo_json(r.get('clases'), []),
                             "opciones": normalizar_campo_json(r.get('opciones'), []),
                             "asignado_a": r.get('asignado_a')
